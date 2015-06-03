@@ -11,7 +11,8 @@ greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 TARGET = gitmaster
 TEMPLATE = app
 
+SOURCES += main.cpp qgitmastermainwindow.cpp qgitrepository.cpp
+HEADERS +=          qgitmastermainwindow.h   qgitrepository.h
+FORMS   +=          qgitmastermainwindow.ui  qgitrepository.ui
 
-SOURCES += main.cpp qgitmastermainwindow.cpp
-HEADERS +=          qgitmastermainwindow.h
-FORMS   +=          qgitmastermainwindow.ui
+RESOURCES += resource.qrc
