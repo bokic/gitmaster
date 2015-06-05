@@ -2,6 +2,7 @@
 #define QGITMASTERMAINWINDOW_H
 
 #include <QMainWindow>
+#include "qgit.h"
 
 namespace Ui {
 class QGitMasterMainWindow;
@@ -17,6 +18,7 @@ public:
 
 private:
     Ui::QGitMasterMainWindow *ui;
+    QGit m_git;
 };
 
 #endif // QGITMASTERMAINWINDOW_H

@@ -3,7 +3,8 @@
 
 QGitMasterMainWindow::QGitMasterMainWindow(QWidget *parent) :
     QMainWindow(parent),
-    ui(new Ui::QGitMasterMainWindow)
+    ui(new Ui::QGitMasterMainWindow),
+    m_git(this)
 {
     ui->setupUi(this);
 
