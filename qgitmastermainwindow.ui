@@ -34,13 +34,6 @@
       </property>
       <widget class="QWidget" name="layoutWidget">
        <layout class="QGridLayout" name="gridLayout">
-        <item row="0" column="0" colspan="5">
-         <widget class="QListView" name="listView">
-          <property name="styleSheet">
-           <string notr="true">border-color:none</string>
-          </property>
-         </widget>
-        </item>
         <item row="1" column="0">
          <widget class="QToolButton" name="toolButton">
           <property name="icon">
@@ -96,6 +89,21 @@
             <height>32</height>
            </size>
           </property>
+         </widget>
+        </item>
+        <item row="0" column="0" colspan="5">
+         <widget class="QTreeWidget" name="treeWidget">
+          <property name="styleSheet">
+           <string notr="true">border-color:none</string>
+          </property>
+          <attribute name="headerVisible">
+           <bool>false</bool>
+          </attribute>
+          <column>
+           <property name="text">
+            <string notr="true">1</string>
+           </property>
+          </column>
          </widget>
         </item>
        </layout>
