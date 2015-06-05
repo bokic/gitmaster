@@ -18,3 +18,5 @@ HEADERS +=          qgitmastermainwindow.h   qgitrepository.h
 FORMS   +=          qgitmastermainwindow.ui  qgitrepository.ui
 
 RESOURCES += resource.qrc
+
+LIBS    += -lgit2
