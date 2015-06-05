@@ -43,6 +43,10 @@
         </item>
         <item row="1" column="0">
          <widget class="QToolButton" name="toolButton">
+          <property name="icon">
+           <iconset resource="resource.qrc">
+            <normaloff>:/images/database_add.svg</normaloff>:/images/database_add.svg</iconset>
+          </property>
           <property name="iconSize">
            <size>
             <width>32</width>
@@ -136,7 +140,7 @@
      <x>0</x>
      <y>0</y>
      <width>971</width>
-     <height>21</height>
+     <height>25</height>
     </rect>
    </property>
    <widget class="QMenu" name="menu_File">
@@ -225,6 +229,10 @@
   </widget>
   <widget class="QStatusBar" name="statusBar"/>
   <action name="actionCloneNew">
+   <property name="icon">
+    <iconset resource="resource.qrc">
+     <normaloff>:/images/database_add.svg</normaloff>:/images/database_add.svg</iconset>
+   </property>
    <property name="text">
     <string>Clone / New</string>
    </property>
@@ -319,6 +327,8 @@
    <container>1</container>
   </customwidget>
  </customwidgets>
- <resources/>
+ <resources>
+  <include location="resource.qrc"/>
+ </resources>
  <connections/>
 </ui>
