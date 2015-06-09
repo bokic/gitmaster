@@ -17,6 +17,8 @@ public:
     ~QGitMasterMainWindow();
 
 private:
+    void readSettings();
+
     Ui::QGitMasterMainWindow *ui;
     QGit m_git;
 };
