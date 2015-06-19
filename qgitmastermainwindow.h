@@ -16,6 +16,9 @@ public:
     explicit QGitMasterMainWindow(QWidget *parent = 0);
     ~QGitMasterMainWindow();
 
+private slots:
+    void on_actionCloneNew_triggered();
+
 private:
     void readSettings();
 

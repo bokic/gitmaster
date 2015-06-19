@@ -1,6 +1,7 @@
 #include "qgitmastermainwindow.h"
 #include "ui_qgitmastermainwindow.h"
 #include "qgitrepotreeitemdelegate.h"
+#include "qnewrepositorydialog.h"
 
 #include <QSettings>
 
@@ -57,5 +58,15 @@ void QGitMasterMainWindow::readSettings()
         item->setData(0, Qt::UserRole + 1, path);
 
         ui->treeWidget->addTopLevelItem(item);
+    }
+}
+
+void QGitMasterMainWindow::on_actionCloneNew_triggered()
+{
+    QNewRepositoryDialog dlg(this);
+
+    if (dlg.exec() == QDialog::Accepted)
+    {
+
     }
 }
