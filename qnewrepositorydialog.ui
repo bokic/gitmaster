@@ -260,6 +260,14 @@
   <tabstop>toolButtonCloneRepositoryBrowse</tabstop>
   <tabstop>checkBoxCloneRepositoryBookmark</tabstop>
   <tabstop>lineEditCloneRepositoryBookmark</tabstop>
+  <tabstop>lineEditAddWorkingCopyPath</tabstop>
+  <tabstop>toolButtonAddWorkingCopyBrowse</tabstop>
+  <tabstop>checkBoxAddWorkingCopyBookmark</tabstop>
+  <tabstop>lineEditAddWorkingCopyBookmark</tabstop>
+  <tabstop>lineEditCreateNewRepositoryPath</tabstop>
+  <tabstop>toolButtonCreateNewRepositoryBrowse</tabstop>
+  <tabstop>checkBoxCreateNewRepositoryBookmark</tabstop>
+  <tabstop>lineEditCreateNewRepositoryBookmark</tabstop>
  </tabstops>
  <resources/>
  <connections>
