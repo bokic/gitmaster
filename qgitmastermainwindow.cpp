@@ -13,6 +13,10 @@ QGitMasterMainWindow::QGitMasterMainWindow(QWidget *parent) :
 {
     ui->setupUi(this);
 
+    QWidget *spacer = new QWidget();
+    spacer->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+    ui->mainToolBar->insertWidget(ui->actionSettings, spacer);
+
     ui->splitter->setSizes(QList<int>() << 1000 << 4000);
 
     QGitRepoTreeItemDelegate *treeDelegate = new QGitRepoTreeItemDelegate(this);
