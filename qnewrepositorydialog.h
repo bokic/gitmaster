@@ -15,6 +15,11 @@ public:
     explicit QNewRepositoryDialog(QWidget *parent = 0);
     ~QNewRepositoryDialog();
 
+private slots:
+    void on_toolButtonCloneRepositoryBrowse_clicked();
+    void on_toolButtonAddWorkingCopyBrowse_clicked();
+    void on_toolButtonCreateNewRepositoryBrowse_clicked();
+
 private:
     Ui::QNewRepositoryDialog *ui;
 };
