@@ -2,6 +2,7 @@
 #define QGITMASTERMAINWINDOW_H
 
 #include <QMainWindow>
+#include <QTreeWidgetItem>
 #include "qgit.h"
 
 namespace Ui {
@@ -18,6 +19,7 @@ public:
 
 private slots:
     void on_actionCloneNew_triggered();
+    void on_treeWidget_itemDoubleClicked(QTreeWidgetItem *item, int column);
 
 private:
     void readSettings();

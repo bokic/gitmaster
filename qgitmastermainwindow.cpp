@@ -2,6 +2,7 @@
 #include "ui_qgitmastermainwindow.h"
 #include "qgitrepotreeitemdelegate.h"
 #include "qnewrepositorydialog.h"
+#include "qgitrepository.h"
 
 #include <QSettings>
 
@@ -73,4 +74,25 @@ void QGitMasterMainWindow::on_actionCloneNew_triggered()
     {
 
     }
+}
+
+void QGitMasterMainWindow::on_treeWidget_itemDoubleClicked(QTreeWidgetItem *item, int column)
+{
+    QString repositoryName = item->data(column, Qt::DisplayRole).toString();
+
+    for(int index = 0; index < ui->tabWidget->count(); index++)
+    {
+        if (repositoryName == ui->tabWidget->tabText(index))
+        {
+            ui->tabWidget->setCurrentIndex(index);
+
+            return;
+        }
+    }
+
+    QGitRepository *widget = new QGitRepository(this);
+
+    ui->tabWidget->addTab(widget, repositoryName);
+
+    ui->tabWidget->setCurrentWidget(widget);
 }
