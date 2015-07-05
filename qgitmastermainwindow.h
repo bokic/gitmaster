@@ -20,6 +20,7 @@ public:
 private slots:
     void on_actionCloneNew_triggered();
     void on_treeWidget_itemDoubleClicked(QTreeWidgetItem *item, int column);
+    void on_tabWidget_tabCloseRequested(int index);
 
 private:
     void readSettings();

@@ -40,7 +40,6 @@ QGitMasterMainWindow::~QGitMasterMainWindow()
     delete ui;
 }
 
-
 void QGitMasterMainWindow::readSettings()
 {
     QSettings settings;
@@ -95,4 +94,9 @@ void QGitMasterMainWindow::on_treeWidget_itemDoubleClicked(QTreeWidgetItem *item
     ui->tabWidget->addTab(widget, repositoryName);
 
     ui->tabWidget->setCurrentWidget(widget);
+}
+
+void QGitMasterMainWindow::on_tabWidget_tabCloseRequested(int index)
+{
+    ui->tabWidget->removeTab(index);
 }
