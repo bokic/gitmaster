@@ -117,7 +117,7 @@
                 </item>
                </layout>
               </widget>
-              <widget class="QWidget" name="layoutWidget">
+              <widget class="QWidget" name="layoutWidget_2">
                <layout class="QVBoxLayout" name="verticalLayout_3">
                 <item>
                  <widget class="QCheckBox" name="checkBox_2">
@@ -134,7 +134,7 @@
              </widget>
              <widget class="QWidget" name="widget" native="true"/>
             </widget>
-            <widget class="QWidget" name="layoutWidget">
+            <widget class="QWidget" name="layoutWidget_3">
              <layout class="QHBoxLayout" name="horizontalLayout_5">
               <item>
                <layout class="QVBoxLayout" name="verticalLayout_5">
