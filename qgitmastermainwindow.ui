@@ -92,7 +92,7 @@
          </widget>
         </item>
         <item row="0" column="0" colspan="5">
-         <widget class="QTreeWidget" name="treeWidget">
+         <widget class="QGitRepoTreeWidget" name="treeWidget">
           <property name="styleSheet">
            <string notr="true">border-color:none</string>
           </property>
@@ -308,6 +308,13 @@
   </action>
  </widget>
  <layoutdefault spacing="6" margin="11"/>
+ <customwidgets>
+  <customwidget>
+   <class>QGitRepoTreeWidget</class>
+   <extends>QTreeWidget</extends>
+   <header>qgitrepotreewidget.h</header>
+  </customwidget>
+ </customwidgets>
  <resources>
   <include location="resource.qrc"/>
  </resources>
