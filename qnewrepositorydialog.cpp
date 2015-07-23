@@ -2,9 +2,9 @@
 #include "ui_qnewrepositorydialog.h"
 #include <QFileDialog>
 
-QNewRepositoryDialog::QNewRepositoryDialog(QWidget *parent) :
-    QDialog(parent),
-    ui(new Ui::QNewRepositoryDialog)
+QNewRepositoryDialog::QNewRepositoryDialog(QWidget *parent)
+    : QDialog(parent)
+    , ui(new Ui::QNewRepositoryDialog)
 {
     ui->setupUi(this);
 }

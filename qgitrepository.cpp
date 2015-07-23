@@ -1,9 +1,9 @@
 #include "qgitrepository.h"
 #include "ui_qgitrepository.h"
 
-QGitRepository::QGitRepository(QWidget *parent) :
-    QWidget(parent),
-    ui(new Ui::QGitRepository)
+QGitRepository::QGitRepository(QWidget *parent)
+    : QWidget(parent)
+    , ui(new Ui::QGitRepository)
 {
     ui->setupUi(this);
 }

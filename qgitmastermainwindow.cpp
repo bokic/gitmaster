@@ -7,10 +7,10 @@
 #include <QSettings>
 
 
-QGitMasterMainWindow::QGitMasterMainWindow(QWidget *parent) :
-    QMainWindow(parent),
-    ui(new Ui::QGitMasterMainWindow),
-    m_git(this)
+QGitMasterMainWindow::QGitMasterMainWindow(QWidget *parent)
+    : QMainWindow(parent)
+    , ui(new Ui::QGitMasterMainWindow)
+    , m_git(this)
 {
     ui->setupUi(this);
 
