@@ -15,17 +15,36 @@ QGit::~QGit()
     git_libgit2_shutdown();
 }
 
-void QGit::statusRepository(const QDir &path)
+void QGit::repositoryStatus(QDir path)
 {
     git_repository *repo = nullptr;
     git_status_list *list = nullptr;
+    QHash<git_status_t, int> items;
     int result = 0;
+    int index = 0;
 
     result = git_repository_open(&repo, path.absolutePath().toUtf8().constData());
+    if (result)
+    {
+        emit error(__FUNCTION__, "git_repository_open", result);
+        return;
+    }
 
     result = git_status_list_new(&list, repo, nullptr);
+    if (result)
+    {
+        emit error(__FUNCTION__, "git_status_list_new", result);
+        return;
+    }
 
-    const git_status_entry *item = git_status_byindex(list, 0);
+    while(const git_status_entry *item = git_status_byindex(list, index))
+    {
+        items[item->status]++;
+
+        index++;
+    }
+
+    emit repositoryStatusReply(items);
 
     git_repository_free(repo);
     repo = nullptr;
