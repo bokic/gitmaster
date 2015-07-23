@@ -7,11 +7,17 @@ void setAppSettings()
     QCoreApplication::setApplicationName("GitMaster");
 }
 
+void registerTypes()
+{
+    qRegisterMetaType<QDir>("QDir");
+}
+
 int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
 
     setAppSettings();
+    registerTypes();
 
     QGitMasterMainWindow w;
     w.show();
