@@ -44,7 +44,7 @@ void QGit::repositoryStatus(QDir path)
         index++;
     }
 
-    emit repositoryStatusReply(items);
+    emit repositoryStatusReply(path, items);
 
     git_repository_free(repo);
     repo = nullptr;
