@@ -1,5 +1,7 @@
 #include "qgitmastermainwindow.h"
 #include <QApplication>
+#include <QHash>
+#include <QDir>
 
 void setAppSettings()
 {
@@ -10,6 +12,7 @@ void setAppSettings()
 void registerTypes()
 {
     qRegisterMetaType<QDir>("QDir");
+    qRegisterMetaType<QHash<git_status_t,int>>("QHash<git_status_t,int>");
 }
 
 int main(int argc, char *argv[])
