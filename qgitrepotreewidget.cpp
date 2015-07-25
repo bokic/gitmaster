@@ -39,7 +39,7 @@ void QGitRepoTreeWidget::repositoryStatusReply(QDir path, QHash<git_status_t, in
 
         QString item_path = item->data(0, Qt::UserRole + 1).toString();
 
-        if (item_path == path.absolutePath())
+        if (item_path == QDir::toNativeSeparators(path.absolutePath()))
         {
             //const QVariant &modifiedFiles = index.data(Qt::UserRole + 2);
             //const QVariant &deletedFiles = index.data(Qt::UserRole + 3);
