@@ -40,6 +40,16 @@ QGitMasterMainWindow::~QGitMasterMainWindow()
     delete ui;
 }
 
+bool QGitMasterMainWindow::event(QEvent *event)
+{
+    if (event->type() == QEvent::WindowActivate)
+    {
+        ui->treeWidget->refreshItems();
+    }
+
+    return QMainWindow::event(event);
+}
+
 void QGitMasterMainWindow::readSettings()
 {
     QSettings settings;
