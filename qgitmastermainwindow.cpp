@@ -77,6 +77,7 @@ void QGitMasterMainWindow::readSettings()
 
         item->setData(0, Qt::DisplayRole, name);
         item->setData(0, Qt::UserRole + 1, path);
+        item->setData(0, Qt::UserRole + 6, ""); // TODO: Add branch name
 
         ui->treeWidget->addTopLevelItem(item);
     }
