@@ -75,7 +75,53 @@ void QGitRepoTreeItemDelegate::paint(QPainter *painter, const QStyleOptionViewIt
 
     if ((modifiedFiles.isValid())&&(deletedFiles.isValid())&&(addedFiles.isValid())&&(unversionedFiles.isValid())&&(branchName.isValid()))
     {
+        x = 4;
+        y = 20;
 
+        QFontMetrics fm(m_normalFont);
+        QString tmpStr;
+
+        painter->setFont(m_normalFont);
+        painter->setPen(QPen(QPalette().color(QPalette::Active, QPalette::Text)));
+
+        if (modifiedFiles.toInt() > 0)
+        {
+            painter->drawImage(x, y, m_fileStatusModifiedImage);
+
+            x += m_fileStatusModifiedImage.width() + 3;
+
+            tmpStr = QString::number(modifiedFiles.toInt());
+
+            painter->drawText(x, y + fm.height(), tmpStr);
+
+            x += fm.width(tmpStr) + 3;
+        }
+
+        if (deletedFiles.toInt() > 0)
+        {
+            painter->drawImage(x, y, m_fileStatusRemovedImage);
+
+            x += m_fileStatusRemovedImage.width() + 3;
+
+            tmpStr = QString::number(deletedFiles.toInt());
+
+            painter->drawText(x, y + fm.height(), tmpStr);
+
+            x += fm.width(tmpStr) + 3;
+        }
+
+        if (addedFiles.toInt() > 0)
+        {
+            painter->drawImage(x, y, m_fileStatusAddedImage);
+
+            x += m_fileStatusAddedImage.width() + 3;
+
+            tmpStr = QString::number(addedFiles.toInt());
+
+            painter->drawText(x, y + fm.height(), tmpStr);
+
+            x += fm.width(tmpStr) + 3;
+        }
     }
 }
 
