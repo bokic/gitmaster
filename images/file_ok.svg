@@ -16,22 +16,22 @@
    version="1.1"
    inkscape:version="0.91 r13725"
    viewBox="0 0 16 16"
-   sodipodi:docname="file_unknown.svg">
+   sodipodi:docname="file_ok.svg">
   <defs
      id="defs3378">
     <linearGradient
        inkscape:collect="always"
        id="linearGradient4296">
       <stop
-         style="stop-color:#00aff4;stop-opacity:1"
+         style="stop-color:#00c51a;stop-opacity:1"
          offset="0"
          id="stop4298" />
       <stop
          id="stop4308"
          offset="0.51099718"
-         style="stop-color:#00657a;stop-opacity:1" />
+         style="stop-color:#005200;stop-opacity:1" />
       <stop
-         style="stop-color:#00aff4;stop-opacity:1"
+         style="stop-color:#00cd1a;stop-opacity:1"
          offset="1"
          id="stop4300" />
     </linearGradient>
@@ -53,8 +53,8 @@
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
      inkscape:zoom="22.197802"
-     inkscape:cx="9.6356701"
-     inkscape:cy="8.9729209"
+     inkscape:cx="6.7504023"
+     inkscape:cy="8"
      inkscape:current-layer="layer1"
      showgrid="true"
      inkscape:grid-bbox="true"
@@ -63,9 +63,34 @@
      inkscape:guide-bbox="true"
      inkscape:window-width="914"
      inkscape:window-height="730"
-     inkscape:window-x="947"
-     inkscape:window-y="208"
-     inkscape:window-maximized="0" />
+     inkscape:window-x="958"
+     inkscape:window-y="212"
+     inkscape:window-maximized="0">
+    <sodipodi:guide
+       position="14.5,8"
+       orientation="1,0"
+       id="guide3384"
+       inkscape:label=""
+       inkscape:color="rgb(0,0,255)" />
+    <sodipodi:guide
+       position="8,1.5"
+       orientation="0,1"
+       id="guide3386"
+       inkscape:label=""
+       inkscape:color="rgb(0,0,255)" />
+    <sodipodi:guide
+       position="1.5,8"
+       orientation="1,0"
+       id="guide3388"
+       inkscape:label=""
+       inkscape:color="rgb(0,0,255)" />
+    <sodipodi:guide
+       position="8,14.5"
+       orientation="0,1"
+       id="guide3390"
+       inkscape:label=""
+       inkscape:color="rgb(0,0,255)" />
+  </sodipodi:namedview>
   <metadata
      id="metadata3381">
     <rdf:RDF>
@@ -83,21 +108,15 @@
      inkscape:label="Layer 1"
      inkscape:groupmode="layer">
     <circle
-       style="fill:url(#linearGradient4306);fill-rule:evenodd;stroke:#1d5d8d;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;fill-opacity:1;opacity:1"
+       style="fill:url(#linearGradient4306);fill-rule:evenodd;stroke:#1d5d20;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;fill-opacity:1;opacity:1"
        id="path3394"
        cx="8"
        cy="8"
        r="6.5" />
     <path
-       style="fill:none;fill-rule:evenodd;stroke:#ffffff;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round;stroke-opacity:1;stroke-miterlimit:4;stroke-dasharray:none"
-       d="m 6.2168317,5.4809405 c 0,0.00217 0.3784866,-1.2408923 1.4155834,-1.2644785 0.7774647,0.00127 1.7371772,-0.059626 1.7827457,1.4366375 0.00532,1.3212707 -1.5036006,1.6704931 -1.56623,3.0363808 -0.014567,0.7113743 0.035108,0.7884534 -0.010313,1.2964104"
-       id="path4395"
-       inkscape:connector-curvature="0"
-       sodipodi:nodetypes="ccccc" />
-    <path
-       style="fill:none;fill-rule:evenodd;stroke:#ffffff;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
-       d="m 7.8386139,11.765346 0.04505,0.405446"
-       id="path4397"
+       style="fill:none;fill-rule:evenodd;stroke:#ffffff;stroke-width:2.0999999;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       d="M 11.352475,5.9990098 7.0277228,10.233663 4.640099,8.0712871"
+       id="path4310"
        inkscape:connector-curvature="0" />
   </g>
 </svg>
