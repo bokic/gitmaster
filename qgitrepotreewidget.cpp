@@ -15,7 +15,7 @@ QGitRepoTreeWidget::QGitRepoTreeWidget(QWidget *parent)
 
 QGitRepoTreeWidget::~QGitRepoTreeWidget()
 {
-    m_thread.terminate();
+    m_thread.quit();
     m_thread.wait();
 
     delete m_git; m_git = nullptr;
