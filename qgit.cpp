@@ -34,7 +34,7 @@ void QGit::repositoryStatus(QDir path)
     if (result)
     {
         emit error(__FUNCTION__, "git_status_list_new", result);
-        return;
+        goto exit1;
     }
 
     while(const git_status_entry *item = git_status_byindex(list, index))
@@ -45,6 +45,11 @@ void QGit::repositoryStatus(QDir path)
     }
 
     emit repositoryStatusReply(path, items);
+
+    git_status_list_free(list);
+    list = nullptr;
+
+    exit1:
 
     git_repository_free(repo);
     repo = nullptr;
