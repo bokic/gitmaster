@@ -14,6 +14,8 @@ public:
     explicit QGit(QObject *parent = 0);
     virtual ~QGit();
 
+    static QString getBranchNameFromPath(const QString &path);
+
 public slots:
     void repositoryStatus(QDir path);
 

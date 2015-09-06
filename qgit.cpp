@@ -15,6 +15,44 @@ QGit::~QGit()
     git_libgit2_shutdown();
 }
 
+QString QGit::getBranchNameFromPath(const QString &path)
+{
+    git_repository *repo = nullptr;
+    git_reference *ref = nullptr;
+    int result = 0;
+    const char *branch = nullptr;
+    QString ret;
+
+    git_libgit2_init();
+
+    result = git_repository_open(&repo, path.toUtf8().constData());
+    if (result)
+    {
+        goto exit1;
+    }
+
+    result = git_repository_head(&ref, repo);
+    if (result)
+    {
+        goto exit2;
+    }
+
+    git_branch_name(&branch, ref);
+    ret = branch;
+
+    git_reference_free(ref);
+    ref = nullptr;
+
+exit2:
+    git_repository_free(repo);
+    repo = nullptr;
+
+exit1:
+    git_libgit2_shutdown();
+
+    return ret;
+}
+
 void QGit::repositoryStatus(QDir path)
 {
     git_repository *repo = nullptr;
