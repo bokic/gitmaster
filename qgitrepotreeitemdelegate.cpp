@@ -67,7 +67,7 @@ void QGitRepoTreeItemDelegate::paint(QPainter *painter, const QStyleOptionViewIt
 
     const QVariant &modifiedFiles = index.data(QItemModifiedFiles);
     const QVariant &deletedFiles = index.data(QItemDeletedFiles);
-    const QVariant &addedFiles = index.data(QItemAddedFiles);
+    const QVariant &newFiles = index.data(QItemNewFiles);
     const QVariant &unversionedFiles = index.data(QItemUnversionedFiles);
     const QVariant &branchName = index.data(QItemBranchName);
 
@@ -75,7 +75,7 @@ void QGitRepoTreeItemDelegate::paint(QPainter *painter, const QStyleOptionViewIt
     y = option.rect.y() + 24;
 
 
-    if ((modifiedFiles.isValid())&&(deletedFiles.isValid())&&(addedFiles.isValid())&&(unversionedFiles.isValid())&&(branchName.isValid()))
+    if ((modifiedFiles.isValid())&&(deletedFiles.isValid())&&(newFiles.isValid())&&(unversionedFiles.isValid())&&(branchName.isValid()))
     {
 
         painter->setFont(m_normalFont);
@@ -107,20 +107,20 @@ void QGitRepoTreeItemDelegate::paint(QPainter *painter, const QStyleOptionViewIt
             x += fm.width(text) + 3;
         }
 
-        if (addedFiles.toInt() > 0)
+        if (newFiles.toInt() > 0)
         {
-            painter->drawImage(x, y, m_fileStatusAddedImage);
+            painter->drawImage(x, y, m_fileStatusNewImage);
 
-            x += m_fileStatusAddedImage.width() + 3;
+            x += m_fileStatusNewImage.width() + 3;
 
-            text = QString::number(addedFiles.toInt());
+            text = QString::number(newFiles.toInt());
 
             painter->drawText(x, y + fm.height() - fm.descent(), text);
 
             x += fm.width(text) + 3;
         }
 
-        if ((modifiedFiles.toInt() == 0)&&(deletedFiles.toInt() == 0)&&(addedFiles.toInt() == 0)) {
+        if ((modifiedFiles.toInt() == 0)&&(deletedFiles.toInt() == 0)&&(newFiles.toInt() == 0)) {
             painter->drawImage(x, y, m_fileStatusOkImage);
 
             x += m_fileStatusOkImage.width() + 3;
@@ -145,11 +145,11 @@ QSize QGitRepoTreeItemDelegate::sizeHint(const QStyleOptionViewItem &option, con
     return QSize(200, 44);
 }
 
-void QGitRepoTreeItemDelegate::setImages(const QImage &branch_logo, const QImage &file_ok, const QImage &file_add, const QImage &file_modified, const QImage &file_removed, const QImage &file_unknown, const QImage &current_branch)
+void QGitRepoTreeItemDelegate::setImages(const QImage &branch_logo, const QImage &file_ok, const QImage &file_new, const QImage &file_modified, const QImage &file_removed, const QImage &file_unknown, const QImage &current_branch)
 {
     m_branchLogoImage = branch_logo;
     m_fileStatusOkImage = file_ok;
-    m_fileStatusAddedImage = file_add;
+    m_fileStatusNewImage = file_new;
     m_fileStatusModifiedImage = file_modified;
     m_fileStatusRemovedImage = file_removed;
     m_fileStatusUnknownImage = file_unknown;

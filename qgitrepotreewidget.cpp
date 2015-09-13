@@ -44,7 +44,7 @@ void QGitRepoTreeWidget::repositoryStatusReply(QDir path, QHash<git_status_t, in
         {
             item->setData(0, QGitRepoTreeItemDelegate::QItemModifiedFiles, QVariant(0));
             item->setData(0, QGitRepoTreeItemDelegate::QItemDeletedFiles, QVariant(0));
-            item->setData(0, QGitRepoTreeItemDelegate::QItemAddedFiles, QVariant(0));
+            item->setData(0, QGitRepoTreeItemDelegate::QItemNewFiles, QVariant(0));
             item->setData(0, QGitRepoTreeItemDelegate::QItemUnversionedFiles, QVariant(0));
             item->setData(0, QGitRepoTreeItemDelegate::QItemBranchName, QGit::getBranchNameFromPath(item_path));
 
@@ -61,7 +61,7 @@ void QGitRepoTreeWidget::repositoryStatusReply(QDir path, QHash<git_status_t, in
                     item->setData(0, QGitRepoTreeItemDelegate::QItemDeletedFiles, QVariant(items[key]));
                     break;
                 case GIT_STATUS_WT_NEW:
-                    item->setData(0, QGitRepoTreeItemDelegate::QItemAddedFiles, QVariant(items[key]));
+                    item->setData(0, QGitRepoTreeItemDelegate::QItemNewFiles, QVariant(items[key]));
                     break;
                 default:
                     break;
