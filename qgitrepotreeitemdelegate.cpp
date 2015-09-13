@@ -85,45 +85,45 @@ void QGitRepoTreeItemDelegate::paint(QPainter *painter, const QStyleOptionViewIt
         {
             painter->drawImage(x, y, m_fileStatusModifiedImage);
 
-            x += m_fileStatusModifiedImage.width() + 3;
+            x += m_fileStatusModifiedImage.width() + 1;
 
             text = QString::number(modifiedFiles.toInt());
 
             painter->drawText(x, y + fm.height() - fm.descent(), text);
 
-            x += fm.width(text) + 3;
+            x += fm.width(text) + 4;
         }
 
         if (deletedFiles.toInt() > 0)
         {
             painter->drawImage(x, y, m_fileStatusRemovedImage);
 
-            x += m_fileStatusRemovedImage.width() + 3;
+            x += m_fileStatusRemovedImage.width() + 1;
 
             text = QString::number(deletedFiles.toInt());
 
             painter->drawText(x, y + fm.height() - fm.descent(), text);
 
-            x += fm.width(text) + 3;
+            x += fm.width(text) + 4;
         }
 
         if (newFiles.toInt() > 0)
         {
             painter->drawImage(x, y, m_fileStatusNewImage);
 
-            x += m_fileStatusNewImage.width() + 3;
+            x += m_fileStatusNewImage.width() + 1;
 
             text = QString::number(newFiles.toInt());
 
             painter->drawText(x, y + fm.height() - fm.descent(), text);
 
-            x += fm.width(text) + 3;
+            x += fm.width(text) + 4;
         }
 
         if ((modifiedFiles.toInt() == 0)&&(deletedFiles.toInt() == 0)&&(newFiles.toInt() == 0)) {
             painter->drawImage(x, y, m_fileStatusOkImage);
 
-            x += m_fileStatusOkImage.width() + 3;
+            x += m_fileStatusOkImage.width() + 4;
         }
     }
 
