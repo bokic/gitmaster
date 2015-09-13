@@ -24,6 +24,7 @@ QGitMasterMainWindow::QGitMasterMainWindow(QWidget *parent)
 
     treeDelegate->setImages(
                 QImage(":/images/gray_branch"),
+                QImage(":/images/file_ok"),
                 QImage(":/images/file_add"),
                 QImage(":/images/file_modified"),
                 QImage(":/images/file_remove"),

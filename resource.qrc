@@ -6,5 +6,6 @@
         <file>images/file_remove.svg</file>
         <file>images/file_unknown.svg</file>
         <file>images/gray_branch.svg</file>
+        <file>images/file_ok.svg</file>
     </qresource>
 </RCC>
