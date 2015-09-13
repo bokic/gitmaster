@@ -83,6 +83,10 @@
         </item>
         <item row="1" column="4">
          <widget class="QToolButton" name="toolButton_4">
+          <property name="icon">
+           <iconset resource="resource.qrc">
+            <normaloff>:/images/database_settings.svg</normaloff>:/images/database_settings.svg</iconset>
+          </property>
           <property name="iconSize">
            <size>
             <width>32</width>
