@@ -1,4 +1,5 @@
 #include "qgitrepotreewidget.h"
+#include "qgitrepotreeitemdelegate.h"
 
 QGitRepoTreeWidget::QGitRepoTreeWidget(QWidget *parent)
     : QTreeWidget(parent)
@@ -27,7 +28,7 @@ void QGitRepoTreeWidget::refreshItems()
     {
         QTreeWidgetItem *item = topLevelItem(index);
 
-        emit repositoryStatus(QDir(item->data(0, Qt::UserRole + 1).toString()));
+        emit repositoryStatus(QDir(item->data(0, QGitRepoTreeItemDelegate::QItemPath).toString()));
     }
 }
 
@@ -37,20 +38,15 @@ void QGitRepoTreeWidget::repositoryStatusReply(QDir path, QHash<git_status_t, in
     {
         QTreeWidgetItem *item = topLevelItem(index);
 
-        QString item_path = item->data(0, Qt::UserRole + 1).toString();
+        QString item_path = item->data(0, QGitRepoTreeItemDelegate::QItemPath).toString();
 
         if (item_path == QDir::toNativeSeparators(path.absolutePath()))
         {
-            //const QVariant &modifiedFiles = index.data(Qt::UserRole + 2);
-            //const QVariant &deletedFiles = index.data(Qt::UserRole + 3);
-            //const QVariant &addedFiles = index.data(Qt::UserRole + 4);
-            //const QVariant &unversionedFiles = index.data(Qt::UserRole + 5);
-
-            item->setData(0, Qt::UserRole + 2, QVariant(0));
-            item->setData(0, Qt::UserRole + 3, QVariant(0));
-            item->setData(0, Qt::UserRole + 4, QVariant(0));
-            item->setData(0, Qt::UserRole + 5, QVariant(0));
-            item->setData(0, Qt::UserRole + 6, QGit::getBranchNameFromPath(item_path));
+            item->setData(0, QGitRepoTreeItemDelegate::QItemModifiedFiles, QVariant(0));
+            item->setData(0, QGitRepoTreeItemDelegate::QItemDeletedFiles, QVariant(0));
+            item->setData(0, QGitRepoTreeItemDelegate::QItemAddedFiles, QVariant(0));
+            item->setData(0, QGitRepoTreeItemDelegate::QItemUnversionedFiles, QVariant(0));
+            item->setData(0, QGitRepoTreeItemDelegate::QItemBranchName, QGit::getBranchNameFromPath(item_path));
 
             for(int c = 0; c < items.count(); c++)
             {
@@ -59,13 +55,13 @@ void QGitRepoTreeWidget::repositoryStatusReply(QDir path, QHash<git_status_t, in
                 switch(key)
                 {
                 case GIT_STATUS_WT_MODIFIED:
-                    item->setData(0, Qt::UserRole + 2, QVariant(items[key]));
+                    item->setData(0, QGitRepoTreeItemDelegate::QItemModifiedFiles, QVariant(items[key]));
                     break;
                 case GIT_STATUS_WT_DELETED:
-                    item->setData(0, Qt::UserRole + 3, QVariant(items[key]));
+                    item->setData(0, QGitRepoTreeItemDelegate::QItemDeletedFiles, QVariant(items[key]));
                     break;
                 case GIT_STATUS_WT_NEW:
-                    item->setData(0, Qt::UserRole + 4, QVariant(items[key]));
+                    item->setData(0, QGitRepoTreeItemDelegate::QItemAddedFiles, QVariant(items[key]));
                     break;
                 default:
                     break;

@@ -77,7 +77,7 @@ void QGitMasterMainWindow::readSettings()
         QTreeWidgetItem *item = new QTreeWidgetItem();
 
         item->setData(0, Qt::DisplayRole, name);
-        item->setData(0, Qt::UserRole + 1, path);
+        item->setData(0, QGitRepoTreeItemDelegate::QItemPath, path);
 
         ui->treeWidget->addTopLevelItem(item);
     }

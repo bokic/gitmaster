@@ -54,7 +54,7 @@ void QGitRepoTreeItemDelegate::paint(QPainter *painter, const QStyleOptionViewIt
         x += fmb.width(text) + 6;
     }
 
-    text = index.data(Qt::UserRole + 1).toString();
+    text = index.data(QItemPath).toString();
 
     if (!text.isEmpty())
     {
@@ -65,11 +65,11 @@ void QGitRepoTreeItemDelegate::paint(QPainter *painter, const QStyleOptionViewIt
         x += fm.width(text) + 6;
     }
 
-    const QVariant &modifiedFiles = index.data(Qt::UserRole + 2);
-    const QVariant &deletedFiles = index.data(Qt::UserRole + 3);
-    const QVariant &addedFiles = index.data(Qt::UserRole + 4);
-    const QVariant &unversionedFiles = index.data(Qt::UserRole + 5);
-    const QVariant &branchName = index.data(Qt::UserRole + 6);
+    const QVariant &modifiedFiles = index.data(QItemModifiedFiles);
+    const QVariant &deletedFiles = index.data(QItemDeletedFiles);
+    const QVariant &addedFiles = index.data(QItemAddedFiles);
+    const QVariant &unversionedFiles = index.data(QItemUnversionedFiles);
+    const QVariant &branchName = index.data(QItemBranchName);
 
     x = option.rect.x() + 10;
     y = option.rect.y() + 24;
