@@ -50,6 +50,7 @@ void QGitRepoTreeWidget::repositoryStatusReply(QDir path, QHash<git_status_t, in
             item->setData(0, Qt::UserRole + 3, QVariant(0));
             item->setData(0, Qt::UserRole + 4, QVariant(0));
             item->setData(0, Qt::UserRole + 5, QVariant(0));
+            item->setData(0, Qt::UserRole + 6, QGit::getBranchNameFromPath(item_path));
 
             for(int c = 0; c < items.count(); c++)
             {
