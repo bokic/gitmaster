@@ -260,7 +260,6 @@
   </layout>
  </widget>
  <tabstops>
-  <tabstop>tabWidget</tabstop>
   <tabstop>lineEditCloneRepositorySourceURL</tabstop>
   <tabstop>lineEditCloneRepositoryDestinationPath</tabstop>
   <tabstop>toolButtonCloneRepositoryBrowse</tabstop>
@@ -274,6 +273,7 @@
   <tabstop>toolButtonCreateNewRepositoryBrowse</tabstop>
   <tabstop>checkBoxCreateNewRepositoryBookmark</tabstop>
   <tabstop>lineEditCreateNewRepositoryBookmark</tabstop>
+  <tabstop>tabWidget</tabstop>
  </tabstops>
  <resources/>
  <connections>
