@@ -15,7 +15,7 @@ public:
     virtual void paint(QPainter *painter, const QStyleOptionViewItem &option, const QModelIndex &index) const override;
     virtual QSize sizeHint(const QStyleOptionViewItem &option, const QModelIndex &index) const override;
 
-    void setImages(const QImage &branch_logo, const QImage &file_ok, const QImage &file_new, const QImage &file_modified, const QImage &file_removed, const QImage &file_unknown, const QImage &current_branch);
+    void setImages(const QImage &branch_logo, const QImage &file_ok, const QImage &file_new, const QImage &file_modified, const QImage &file_removed, const QImage &current_branch);
 signals:
 
 public slots:
@@ -28,7 +28,6 @@ private:
     QImage m_fileStatusNewImage;
     QImage m_fileStatusModifiedImage;
     QImage m_fileStatusRemovedImage;
-    QImage m_fileStatusUnknownImage;
     QImage m_currentBranchImage;
 };
 

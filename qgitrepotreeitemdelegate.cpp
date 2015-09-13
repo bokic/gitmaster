@@ -145,13 +145,12 @@ QSize QGitRepoTreeItemDelegate::sizeHint(const QStyleOptionViewItem &option, con
     return QSize(200, 44);
 }
 
-void QGitRepoTreeItemDelegate::setImages(const QImage &branch_logo, const QImage &file_ok, const QImage &file_new, const QImage &file_modified, const QImage &file_removed, const QImage &file_unknown, const QImage &current_branch)
+void QGitRepoTreeItemDelegate::setImages(const QImage &branch_logo, const QImage &file_ok, const QImage &file_new, const QImage &file_modified, const QImage &file_removed, const QImage &current_branch)
 {
     m_branchLogoImage = branch_logo;
     m_fileStatusOkImage = file_ok;
     m_fileStatusNewImage = file_new;
     m_fileStatusModifiedImage = file_modified;
     m_fileStatusRemovedImage = file_removed;
-    m_fileStatusUnknownImage = file_unknown;
     m_currentBranchImage = current_branch;
 }

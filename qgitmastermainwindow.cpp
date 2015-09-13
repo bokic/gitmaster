@@ -28,7 +28,6 @@ QGitMasterMainWindow::QGitMasterMainWindow(QWidget *parent)
                 QImage(":/images/file_new"),
                 QImage(":/images/file_modified"),
                 QImage(":/images/file_removed"),
-                QImage(":/images/file_unknown"),
                 QImage(":/images/branch_icon"));
 
     ui->treeWidget->setItemDelegate(treeDelegate);
