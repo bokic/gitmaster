@@ -75,8 +75,8 @@ void QGitRepoTreeItemDelegate::paint(QPainter *painter, const QStyleOptionViewIt
 
     if ((modifiedFiles.isValid())&&(deletedFiles.isValid())&&(addedFiles.isValid())&&(unversionedFiles.isValid())&&(branchName.isValid()))
     {
-        x = 4;
-        y = 20;
+        x = option.rect.x() + 4;
+        y = option.rect.y() + 20;
 
         QFontMetrics fm(m_normalFont);
         QString tmpStr;
