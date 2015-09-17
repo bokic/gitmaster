@@ -2,6 +2,7 @@
     <qresource prefix="/">
         <file>images/database_add.svg</file>
         <file>images/database_settings.svg</file>
+        <file>images/remove.svg</file>
         <file>images/file_new.svg</file>
         <file>images/file_modified.svg</file>
         <file>images/file_removed.svg</file>
