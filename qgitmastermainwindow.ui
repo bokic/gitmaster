@@ -242,11 +242,19 @@
    </property>
   </action>
   <action name="actionCommit">
+   <property name="icon">
+    <iconset resource="resource.qrc">
+     <normaloff>:/images/commit.svg</normaloff>:/images/commit.svg</iconset>
+   </property>
    <property name="text">
     <string>Commit</string>
    </property>
   </action>
   <action name="actionCheckout">
+   <property name="icon">
+    <iconset resource="resource.qrc">
+     <normaloff>:/images/checkout.svg</normaloff>:/images/checkout.svg</iconset>
+   </property>
    <property name="text">
     <string>Checkout</string>
    </property>

@@ -9,5 +9,7 @@
         <file>images/file_removed.svg</file>
         <file>images/gray_branch.svg</file>
         <file>images/file_ok.svg</file>
+        <file>images/checkout.svg</file>
+        <file>images/commit.svg</file>
     </qresource>
 </RCC>
