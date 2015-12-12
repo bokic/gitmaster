@@ -2,6 +2,7 @@
 #define QGIT_H
 
 #include "git2.h"
+#include "structs.h"
 
 #include <QObject>
 #include <QHash>
@@ -18,9 +19,11 @@ public:
 
 public slots:
     void repositoryStatus(QDir path);
+    void repositoryBranches(QDir path);
 
 signals:
     void repositoryStatusReply(QDir path, QHash<git_status_t, int> items);
+    void repositoryBranchesReply(QList<QGitBranch> branches);
     void error(QString qgit_function, QString git_function, int code);
 };
 

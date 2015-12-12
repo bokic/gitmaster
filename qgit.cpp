@@ -1,6 +1,7 @@
 #include "qgit.h"
 #include "git2.h"
 
+#include "structs.h"
 #include <QString>
 #include <QDir>
 
@@ -88,6 +89,53 @@ void QGit::repositoryStatus(QDir path)
     list = nullptr;
 
     exit1:
+
+    git_repository_free(repo);
+    repo = nullptr;
+}
+
+void QGit::repositoryBranches(QDir path)
+{
+    QList<QGitBranch> branches;
+    git_repository *repo = nullptr;
+    git_branch_iterator *it = nullptr;
+    git_reference *ref = nullptr;
+    git_branch_t type = GIT_BRANCH_ALL;
+    int result = 0;
+
+    result = git_repository_open(&repo, path.absolutePath().toUtf8().constData());
+    if (result)
+    {
+        emit error(__FUNCTION__, "git_repository_open", result);
+        return;
+    }
+
+    result = git_branch_iterator_new(&it, repo, GIT_BRANCH_ALL);
+
+    if (result)
+    {
+        emit error(__FUNCTION__, "git_branch_iterator_new", result);
+        goto exit1;
+    }
+
+    while(git_branch_next(&ref, &type, it) == 0)
+    {
+        const char *ref_name = git_reference_name(ref);
+
+        QGitBranch branch = QGitBranch(ref_name, type);
+        branches.append(branch);
+
+        ref_name = nullptr;
+        git_reference_free(ref);
+        ref = nullptr;
+    }
+
+    emit repositoryBranchesReply(branches);
+
+    git_branch_iterator_free(it);
+    it = nullptr;
+
+exit1:
 
     git_repository_free(repo);
     repo = nullptr;

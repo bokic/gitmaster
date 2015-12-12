@@ -1,4 +1,5 @@
 #include "qgitmastermainwindow.h"
+#include "structs.h"
 #include <QApplication>
 #include <QHash>
 #include <QDir>
@@ -13,6 +14,7 @@ void registerTypes()
 {
     qRegisterMetaType<QDir>("QDir");
     qRegisterMetaType<QHash<git_status_t,int>>("QHash<git_status_t,int>");
+    qRegisterMetaType<QList<QGitBranch>>("QList<QGitBranch>");
 }
 
 int main(int argc, char *argv[])
