@@ -13,7 +13,7 @@ class QGitRepository : public QWidget
     Q_OBJECT
 
 public:
-    explicit QGitRepository(QWidget *parent = 0);
+    explicit QGitRepository(const QString &path, QWidget *parent);
     ~QGitRepository();
 
 signals:
@@ -24,6 +24,7 @@ private slots:
 
 private:
     Ui::QGitRepository *ui;
+    QString m_path;
     QGit *m_git;
 };
 

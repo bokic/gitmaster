@@ -95,6 +95,8 @@ void QGitMasterMainWindow::on_actionCloneNew_triggered()
 void QGitMasterMainWindow::on_treeWidget_itemDoubleClicked(QTreeWidgetItem *item, int column)
 {
     QString repositoryName = item->data(column, Qt::DisplayRole).toString();
+    QString repositoryPath = item->data(column, QGitRepoTreeItemDelegate::QItemPath).toString();
+
 
     for(int index = 0; index < ui->tabWidget->count(); index++)
     {
@@ -106,7 +108,7 @@ void QGitMasterMainWindow::on_treeWidget_itemDoubleClicked(QTreeWidgetItem *item
         }
     }
 
-    QGitRepository *widget = new QGitRepository(this);
+    QGitRepository *widget = new QGitRepository(repositoryPath, this);
 
     ui->tabWidget->addTab(widget, repositoryName);
 
