@@ -88,8 +88,7 @@ void QGit::repositoryStatus(QDir path)
     git_status_list_free(list);
     list = nullptr;
 
-    exit1:
-
+exit1:
     git_repository_free(repo);
     repo = nullptr;
 }
