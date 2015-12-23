@@ -127,12 +127,16 @@ void QGitRepoTreeItemDelegate::paint(QPainter *painter, const QStyleOptionViewIt
         }
     }
 
-    // draw vertical line
-    painter->drawLine(x, y + 1, x, y + 15);
-    x += 3;
+    text = branchName.toString();
 
-    // draw branch name
-    painter->drawText(x, y + fm.height() - fm.descent(), branchName.toString());
+    if (!text.isEmpty()) {
+        // draw vertical line
+        painter->drawLine(x, y + 1, x, y + 15);
+        x += 3;
+
+        // draw branch name
+        painter->drawText(x, y + fm.height() - fm.descent(), text);
+    }
 }
 
 QSize QGitRepoTreeItemDelegate::sizeHint(const QStyleOptionViewItem &option, const QModelIndex &index) const
