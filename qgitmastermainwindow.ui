@@ -341,6 +341,21 @@
     <string>Settings</string>
    </property>
   </action>
+  <action name="actionNewFolderRepository">
+   <property name="text">
+    <string>New Repository Folder</string>
+   </property>
+  </action>
+  <action name="actionDeleteRepository">
+   <property name="text">
+    <string>Delete Repository</string>
+   </property>
+  </action>
+  <action name="actionSettingsRepository">
+   <property name="text">
+    <string>Repository Settings</string>
+   </property>
+  </action>
  </widget>
  <layoutdefault spacing="6" margin="11"/>
  <customwidgets>
