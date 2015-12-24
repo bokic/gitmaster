@@ -36,6 +36,9 @@
        <layout class="QGridLayout" name="gridLayout">
         <item row="1" column="0">
          <widget class="QToolButton" name="toolButton_NewRepository">
+          <property name="toolTip">
+           <string>Clone / New</string>
+          </property>
           <property name="icon">
            <iconset resource="resource.qrc">
             <normaloff>:/images/database_add.svg</normaloff>:/images/database_add.svg</iconset>
@@ -50,6 +53,9 @@
         </item>
         <item row="1" column="1">
          <widget class="QToolButton" name="toolButton_NewFolder">
+          <property name="toolTip">
+           <string>New Folder</string>
+          </property>
           <property name="icon">
            <iconset resource="resource.qrc">
             <normaloff>:/images/repository_add_common.svg</normaloff>:/images/repository_add_common.svg</iconset>
@@ -64,6 +70,9 @@
         </item>
         <item row="1" column="2">
          <widget class="QToolButton" name="toolButton_RemoveItem">
+          <property name="toolTip">
+           <string>Delete Item</string>
+          </property>
           <property name="icon">
            <iconset resource="resource.qrc">
             <normaloff>:/images/remove.svg</normaloff>:/images/remove.svg</iconset>
@@ -91,6 +100,9 @@
         </item>
         <item row="1" column="4">
          <widget class="QToolButton" name="toolButton_RepositorySettings">
+          <property name="toolTip">
+           <string>Repository Settings</string>
+          </property>
           <property name="icon">
            <iconset resource="resource.qrc">
             <normaloff>:/images/database_settings.svg</normaloff>:/images/database_settings.svg</iconset>
