@@ -23,6 +23,9 @@ protected:
 
 private slots:
     void on_actionCloneNew_triggered();
+    void on_actionNewFolderRepository_triggered();
+    void on_actionDeleteRepository_triggered();
+    void on_actionSettingsRepository_triggered();
     void on_treeWidget_itemDoubleClicked(QTreeWidgetItem *item, int column);
     void on_tabWidget_tabCloseRequested(int index);
 

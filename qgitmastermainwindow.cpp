@@ -72,7 +72,6 @@ void QGitMasterMainWindow::readSettings()
             break;
         }
 
-
         QTreeWidgetItem *item = new QTreeWidgetItem();
 
         item->setData(0, Qt::DisplayRole, name);
@@ -88,15 +87,29 @@ void QGitMasterMainWindow::on_actionCloneNew_triggered()
 
     if (dlg.exec() == QDialog::Accepted)
     {
-
+        Q_UNIMPLEMENTED();
     }
+}
+
+void QGitMasterMainWindow::on_actionNewFolderRepository_triggered()
+{
+    Q_UNIMPLEMENTED();
+}
+
+void QGitMasterMainWindow::on_actionDeleteRepository_triggered()
+{
+    Q_UNIMPLEMENTED();
+}
+
+void QGitMasterMainWindow::on_actionSettingsRepository_triggered()
+{
+    Q_UNIMPLEMENTED();
 }
 
 void QGitMasterMainWindow::on_treeWidget_itemDoubleClicked(QTreeWidgetItem *item, int column)
 {
     QString repositoryName = item->data(column, Qt::DisplayRole).toString();
     QString repositoryPath = item->data(column, QGitRepoTreeItemDelegate::QItemPath).toString();
-
 
     for(int index = 0; index < ui->tabWidget->count(); index++)
     {
