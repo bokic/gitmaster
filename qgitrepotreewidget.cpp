@@ -55,13 +55,16 @@ void QGitRepoTreeWidget::repositoryStatusReply(QDir path, QHash<git_status_t, in
                 switch(key)
                 {
                 case GIT_STATUS_WT_MODIFIED:
-                    item->setData(0, QGitRepoTreeItemDelegate::QItemModifiedFiles, QVariant(items[key]));
+                case GIT_STATUS_INDEX_MODIFIED:
+                    item->setData(0, QGitRepoTreeItemDelegate::QItemModifiedFiles, QVariant(item->data(0, QGitRepoTreeItemDelegate::QItemModifiedFiles).toInt() + items[key]));
                     break;
                 case GIT_STATUS_WT_DELETED:
-                    item->setData(0, QGitRepoTreeItemDelegate::QItemDeletedFiles, QVariant(items[key]));
+                case GIT_STATUS_INDEX_DELETED:
+                    item->setData(0, QGitRepoTreeItemDelegate::QItemDeletedFiles, QVariant(item->data(0, QGitRepoTreeItemDelegate::QItemDeletedFiles).toInt() + items[key]));
                     break;
                 case GIT_STATUS_WT_NEW:
-                    item->setData(0, QGitRepoTreeItemDelegate::QItemNewFiles, QVariant(items[key]));
+                case GIT_STATUS_INDEX_NEW:
+                    item->setData(0, QGitRepoTreeItemDelegate::QItemNewFiles, QVariant(item->data(0, QGitRepoTreeItemDelegate::QItemNewFiles).toInt() + items[key]));
                     break;
                 default:
                     break;
