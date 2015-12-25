@@ -18,9 +18,11 @@ public:
 
 signals:
     void repositoryBranches(QDir path);
+    void repositoryChangedFiles(QDir path);
 
 private slots:
     void repositoryBranchesReply(QList<QGitBranch> branches);
+    void repositoryChangedFilesReply(QDir path, QMap<QString, git_status_t> files);
     void on_repositoryDetail_currentChanged(int index);
 
 private:

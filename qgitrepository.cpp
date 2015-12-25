@@ -15,6 +15,11 @@ QGitRepository::QGitRepository(const QString &path, QWidget *parent)
     connect(this, SIGNAL(repositoryBranches(QDir)), m_git, SLOT(repositoryBranches(QDir)), Qt::QueuedConnection);
     connect(m_git, SIGNAL(repositoryBranchesReply(QList<QGitBranch>)), this, SLOT(repositoryBranchesReply(QList<QGitBranch>)), Qt::QueuedConnection);
 
+    connect(this, SIGNAL(repositoryChangedFiles(QDir)), m_git, SLOT(repositoryChangedFiles(QDir)), Qt::QueuedConnection);
+    connect(m_git, SIGNAL(repositoryChangedFilesReply(QDir,QMap<QString,git_status_t>)), this, SLOT(repositoryChangedFilesReply(QDir,QMap<QString,git_status_t>)), Qt::QueuedConnection);
+
+    on_repositoryDetail_currentChanged(ui->repositoryDetail->currentIndex());
+
     emit repositoryBranches(QDir(m_path));
 }
 
@@ -102,10 +107,39 @@ void QGitRepository::repositoryBranchesReply(QList<QGitBranch> branches)
     ui->branchesTreeView->expandAll();
 }
 
+void QGitRepository::repositoryChangedFilesReply(QDir path, QMap<QString, git_status_t> files)
+{
+    Q_UNUSED(path);
+
+    ui->listWidget_staged->clear();
+    ui->listWidget_unstaged->clear();
+
+    for(auto file: files.keys())
+    {
+        const git_status_t status = files.value(file);
+
+        if (status & GIT_STATUS_CONFLICTED)
+        {
+            continue;
+        }
+
+        if (status & (GIT_STATUS_INDEX_NEW | GIT_STATUS_INDEX_MODIFIED | GIT_STATUS_INDEX_DELETED | GIT_STATUS_INDEX_RENAMED | GIT_STATUS_INDEX_TYPECHANGE))
+        {
+            ui->listWidget_staged->addItem(file);
+        }
+
+        if (status & (GIT_STATUS_WT_NEW | GIT_STATUS_WT_MODIFIED | GIT_STATUS_WT_DELETED | GIT_STATUS_WT_RENAMED | GIT_STATUS_WT_TYPECHANGE | GIT_STATUS_WT_UNREADABLE))
+        {
+            ui->listWidget_unstaged->addItem(file);
+        }
+    }
+}
+
 void QGitRepository::on_repositoryDetail_currentChanged(int index)
 {
     switch(index) {
     case 0:
+        emit repositoryChangedFiles(m_path);
         break;
     case 1:
         break;
