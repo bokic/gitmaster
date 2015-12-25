@@ -118,10 +118,12 @@ void QGitRepository::repositoryChangedFilesReply(QDir path, QMap<QString, git_st
     {
         const git_status_t status = files.value(file);
 
+#if ((LIBGIT2_VER_MAJOR > 0)||(LIBGIT2_VER_MINOR >= 23))
         if (status & GIT_STATUS_CONFLICTED)
         {
             continue;
         }
+#endif
 
         if (status & (GIT_STATUS_INDEX_NEW | GIT_STATUS_INDEX_MODIFIED | GIT_STATUS_INDEX_DELETED | GIT_STATUS_INDEX_RENAMED | GIT_STATUS_INDEX_TYPECHANGE))
         {
