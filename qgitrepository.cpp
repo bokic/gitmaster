@@ -101,3 +101,19 @@ void QGitRepository::repositoryBranchesReply(QList<QGitBranch> branches)
 
     ui->branchesTreeView->expandAll();
 }
+
+void QGitRepository::on_repositoryDetail_currentChanged(int index)
+{
+    switch(index) {
+    case 0:
+        break;
+    case 1:
+        break;
+    case 2:
+        break;
+    default:
+        break;
+    }
+
+    Q_UNIMPLEMENTED();
+}

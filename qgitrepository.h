@@ -21,6 +21,7 @@ signals:
 
 private slots:
     void repositoryBranchesReply(QList<QGitBranch> branches);
+    void on_repositoryDetail_currentChanged(int index);
 
 private:
     Ui::QGitRepository *ui;
