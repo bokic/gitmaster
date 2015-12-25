@@ -27,7 +27,7 @@ signals:
     void repositoryStatus(QDir path);
 
 private slots:
-    void repositoryStatusReply(QDir path, QHash<git_status_t, int> items);
+    void repositoryStatusReply(QDir path, QMap<git_status_t, int> items);
 };
 
 #endif // QGITREPOTREEWIDGET_H

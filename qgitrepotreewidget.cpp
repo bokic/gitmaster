@@ -9,7 +9,7 @@ QGitRepoTreeWidget::QGitRepoTreeWidget(QWidget *parent)
     m_git->moveToThread(&m_thread);
 
     connect(this, SIGNAL(repositoryStatus(QDir)), m_git, SLOT(repositoryStatus(QDir)), Qt::QueuedConnection);
-    connect(m_git, SIGNAL(repositoryStatusReply(QDir,QHash<git_status_t,int>)), this, SLOT(repositoryStatusReply(QDir,QHash<git_status_t,int>)), Qt::QueuedConnection);
+    connect(m_git, SIGNAL(repositoryStatusReply(QDir,QMap<git_status_t,int>)), this, SLOT(repositoryStatusReply(QDir,QMap<git_status_t,int>)), Qt::QueuedConnection);
 
     m_thread.start();
 }
@@ -32,7 +32,7 @@ void QGitRepoTreeWidget::refreshItems()
     }
 }
 
-void QGitRepoTreeWidget::repositoryStatusReply(QDir path, QHash<git_status_t, int> items)
+void QGitRepoTreeWidget::repositoryStatusReply(QDir path, QMap<git_status_t, int> items)
 {
     for(int index = 0; index < topLevelItemCount(); index++)
     {

@@ -58,7 +58,7 @@ void QGit::repositoryStatus(QDir path)
 {
     git_repository *repo = nullptr;
     git_status_list *list = nullptr;
-    QHash<git_status_t, int> items;
+    QMap<git_status_t, int> items;
     int result = 0;
     int index = 0;
 
