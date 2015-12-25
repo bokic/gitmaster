@@ -20,10 +20,12 @@ public:
 public slots:
     void repositoryStatus(QDir path);
     void repositoryBranches(QDir path);
+    void repositoryChangedFiles(QDir path);
 
 signals:
     void repositoryStatusReply(QDir path, QMap<git_status_t, int> items);
     void repositoryBranchesReply(QList<QGitBranch> branches);
+    void repositoryChangedFilesReply(QDir path, QMap<QString,git_status_t> files);
     void error(QString qgit_function, QString git_function, int code);
 };
 

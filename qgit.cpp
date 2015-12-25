@@ -139,3 +139,57 @@ exit1:
     git_repository_free(repo);
     repo = nullptr;
 }
+
+void QGit::repositoryChangedFiles(QDir path)
+{
+    git_repository *repo = nullptr;
+    git_status_list *list = nullptr;
+    QMap<QString,git_status_t> items;
+    int result = 0;
+    int index = 0;
+
+    result = git_repository_open(&repo, path.absolutePath().toUtf8().constData());
+    if (result)
+    {
+        emit error(__FUNCTION__, "git_repository_open", result);
+        return;
+    }
+
+    result = git_status_list_new(&list, repo, nullptr);
+    if (result)
+    {
+        emit error(__FUNCTION__, "git_status_list_new", result);
+        goto exit1;
+    }
+
+    while(const git_status_entry *item = git_status_byindex(list, index))
+    {
+        git_status_t status = item->status;
+        if ((status != GIT_STATUS_CURRENT)&&(status != GIT_STATUS_IGNORED))
+        {
+            if (item->index_to_workdir)
+            {
+                items.insert(QString::fromUtf8(item->index_to_workdir->new_file.path), status);
+            }
+            else if (item->head_to_index)
+            {
+                items.insert(QString::fromUtf8(item->head_to_index->new_file.path), status);
+            }
+            else
+            {
+                emit error(__FUNCTION__, "unknown scenario", result);
+            }
+        }
+
+        index++;
+    }
+
+    emit repositoryChangedFilesReply(path, items);
+
+    git_status_list_free(list);
+    list = nullptr;
+
+exit1:
+    git_repository_free(repo);
+    repo = nullptr;
+}
