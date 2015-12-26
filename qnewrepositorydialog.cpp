@@ -29,13 +29,68 @@ QNewRepositoryDialog::~QNewRepositoryDialog()
     delete ui;
 }
 
+int QNewRepositoryDialog::tabCurrentIndex() const
+{
+    return ui->tabWidget->currentIndex();
+}
+
+QString QNewRepositoryDialog::cloneRepositorySourceURL() const
+{
+    return ui->lineEditCloneRepositorySourceURL->text();
+}
+
+QString QNewRepositoryDialog::cloneRepositoryDestinationPath() const
+{
+    return ui->lineEditCloneRepositoryDestinationPath->text();
+}
+
+QString QNewRepositoryDialog::cloneRepositoryBookmarkText() const
+{
+    if (ui->checkBoxCloneRepositoryBookmark->isChecked())
+    {
+        return ui->lineEditCloneRepositoryBookmark->text();
+    }
+
+    return QString();
+}
+
+QString QNewRepositoryDialog::addWorkingCopyPath() const
+{
+    return ui->lineEditAddWorkingCopyPath->text();
+}
+
+QString QNewRepositoryDialog::addWorkingCopyBookmarkText() const
+{
+    if (ui->checkBoxAddWorkingCopyBookmark->isChecked())
+    {
+        return ui->lineEditAddWorkingCopyBookmark->text();
+    }
+
+    return QString();
+}
+
+QString QNewRepositoryDialog::createNewRepositoryPath() const
+{
+    return ui->lineEditCreateNewRepositoryPath->text();
+}
+
+QString QNewRepositoryDialog::createNewRepositoryBookmark() const
+{
+    if (ui->checkBoxCreateNewRepositoryBookmark->isChecked())
+    {
+        return ui->lineEditCreateNewRepositoryBookmark->text();
+    }
+
+    return QString();
+}
+
 void QNewRepositoryDialog::updateOkButton()
 {
     bool enable = false;
 
     switch(ui->tabWidget->currentIndex())
     {
-    case 0:
+    case QCloneRepository:
         if (
                 (!ui->lineEditCloneRepositorySourceURL->text().isEmpty())
                 &&
@@ -47,7 +102,7 @@ void QNewRepositoryDialog::updateOkButton()
             enable = true;
         }
         break;
-    case 1:
+    case QAddWorkingCopy:
         if (
                 (!ui->lineEditAddWorkingCopyPath->text().isEmpty())
                 &&
@@ -57,7 +112,7 @@ void QNewRepositoryDialog::updateOkButton()
             enable = true;
         }
         break;
-    case 2:
+    case QCreateNewRepository:
         if (
                 (!ui->lineEditCreateNewRepositoryPath->text().isEmpty())
                 &&

@@ -12,8 +12,17 @@ class QNewRepositoryDialog : public QDialog
     Q_OBJECT
 
 public:
+    enum {QCloneRepository, QAddWorkingCopy, QCreateNewRepository};
     explicit QNewRepositoryDialog(QWidget *parent = 0);
     ~QNewRepositoryDialog();
+    int tabCurrentIndex() const;
+    QString cloneRepositorySourceURL() const;
+    QString cloneRepositoryDestinationPath() const;
+    QString cloneRepositoryBookmarkText() const;
+    QString addWorkingCopyPath() const;
+    QString addWorkingCopyBookmarkText() const;
+    QString createNewRepositoryPath() const;
+    QString createNewRepositoryBookmark() const;
 
 private slots:
     void updateOkButton();
