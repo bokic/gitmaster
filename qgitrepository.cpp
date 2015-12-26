@@ -127,12 +127,54 @@ void QGitRepository::repositoryChangedFilesReply(QDir path, QMap<QString, git_st
 
         if (status & (GIT_STATUS_INDEX_NEW | GIT_STATUS_INDEX_MODIFIED | GIT_STATUS_INDEX_DELETED | GIT_STATUS_INDEX_RENAMED | GIT_STATUS_INDEX_TYPECHANGE))
         {
-            ui->listWidget_staged->addItem(file);
+            QListWidgetItem *item = new QListWidgetItem(file);
+
+            item->setFlags(item->flags() | Qt::ItemIsUserCheckable);
+            item->setCheckState(Qt::Checked);
+
+            switch(status)
+            {
+            case GIT_STATUS_INDEX_NEW:
+                item->setIcon(QIcon(":/images/file_new.svg"));
+                break;
+            case GIT_STATUS_INDEX_MODIFIED:
+                item->setIcon(QIcon(":/images/file_modified.svg"));
+                break;
+            case GIT_STATUS_INDEX_DELETED:
+                item->setIcon(QIcon(":/images/file_removed.svg"));
+                break;
+            default:
+                // TODO: Add some "unknown" image.
+                break;
+            }
+
+            ui->listWidget_staged->addItem(item);
         }
 
         if (status & (GIT_STATUS_WT_NEW | GIT_STATUS_WT_MODIFIED | GIT_STATUS_WT_DELETED | GIT_STATUS_WT_RENAMED | GIT_STATUS_WT_TYPECHANGE | GIT_STATUS_WT_UNREADABLE))
         {
-            ui->listWidget_unstaged->addItem(file);
+            QListWidgetItem *item = new QListWidgetItem(file);
+
+            item->setFlags(item->flags() | Qt::ItemIsUserCheckable);
+            item->setCheckState(Qt::Unchecked);
+
+            switch(status)
+            {
+            case GIT_STATUS_WT_NEW:
+                item->setIcon(QIcon(":/images/file_new.svg"));
+                break;
+            case GIT_STATUS_WT_MODIFIED:
+                item->setIcon(QIcon(":/images/file_modified.svg"));
+                break;
+            case GIT_STATUS_WT_DELETED:
+                item->setIcon(QIcon(":/images/file_removed.svg"));
+                break;
+            default:
+                // TODO: Add some "unknown" image.
+                break;
+            }
+
+            ui->listWidget_unstaged->addItem(item);
         }
     }
 }
