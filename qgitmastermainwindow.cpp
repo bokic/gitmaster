@@ -87,7 +87,32 @@ void QGitMasterMainWindow::on_actionCloneNew_triggered()
 
     if (dlg.exec() == QDialog::Accepted)
     {
-        Q_UNIMPLEMENTED();
+        QString bookmarkStr;
+
+        switch(dlg.tabCurrentIndex())
+        {
+        case QNewRepositoryDialog::QCloneRepository:
+            Q_UNIMPLEMENTED();
+            break;
+        case QNewRepositoryDialog::QAddWorkingCopy:
+            Q_UNIMPLEMENTED();
+            break;
+        case QNewRepositoryDialog::QCreateNewRepository:
+            QGit::createLocalRepository(QDir(dlg.createNewRepositoryPath()));
+
+            bookmarkStr = dlg.createNewRepositoryBookmark();
+
+            if(!bookmarkStr.isEmpty())
+            {
+                QTreeWidgetItem *item = new QTreeWidgetItem();
+
+                item->setData(0, Qt::DisplayRole, bookmarkStr);
+                item->setData(0, QGitRepoTreeItemDelegate::QItemPath, dlg.createNewRepositoryPath());
+
+                ui->treeWidget->addTopLevelItem(item);
+            }
+            break;
+        }
     }
 }
 
