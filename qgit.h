@@ -16,6 +16,7 @@ public:
     virtual ~QGit();
 
     static QString getBranchNameFromPath(const QString &path);
+    static int createLocalRepository(const QDir &path);
 
 public slots:
     void repositoryStatus(QDir path);
