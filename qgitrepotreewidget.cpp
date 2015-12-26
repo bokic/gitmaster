@@ -52,22 +52,19 @@ void QGitRepoTreeWidget::repositoryStatusReply(QDir path, QMap<git_status_t, int
             {
                 git_status_t key = items.keys()[c];
 
-                switch(key)
+                if (key & (GIT_STATUS_WT_MODIFIED | GIT_STATUS_INDEX_MODIFIED))
                 {
-                case GIT_STATUS_WT_MODIFIED:
-                case GIT_STATUS_INDEX_MODIFIED:
                     item->setData(0, QGitRepoTreeItemDelegate::QItemModifiedFiles, QVariant(item->data(0, QGitRepoTreeItemDelegate::QItemModifiedFiles).toInt() + items[key]));
-                    break;
-                case GIT_STATUS_WT_DELETED:
-                case GIT_STATUS_INDEX_DELETED:
+                }
+
+                if (key & (GIT_STATUS_WT_DELETED | GIT_STATUS_INDEX_DELETED))
+                {
                     item->setData(0, QGitRepoTreeItemDelegate::QItemDeletedFiles, QVariant(item->data(0, QGitRepoTreeItemDelegate::QItemDeletedFiles).toInt() + items[key]));
-                    break;
-                case GIT_STATUS_WT_NEW:
-                case GIT_STATUS_INDEX_NEW:
+                }
+
+                if (key & (GIT_STATUS_WT_NEW | GIT_STATUS_INDEX_NEW))
+                {
                     item->setData(0, QGitRepoTreeItemDelegate::QItemNewFiles, QVariant(item->data(0, QGitRepoTreeItemDelegate::QItemNewFiles).toInt() + items[key]));
-                    break;
-                default:
-                    break;
                 }
             }
 
