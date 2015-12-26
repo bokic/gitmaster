@@ -16,9 +16,13 @@ public:
     ~QNewRepositoryDialog();
 
 private slots:
+    void updateOkButton();
     void on_toolButtonCloneRepositoryBrowse_clicked();
     void on_toolButtonAddWorkingCopyBrowse_clicked();
     void on_toolButtonCreateNewRepositoryBrowse_clicked();
+    void on_checkBoxCloneRepositoryBookmark_clicked(bool checked);
+    void on_checkBoxAddWorkingCopyBookmark_clicked(bool checked);
+    void on_checkBoxCreateNewRepositoryBookmark_clicked(bool checked);
 
 private:
     Ui::QNewRepositoryDialog *ui;
