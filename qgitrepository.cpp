@@ -244,3 +244,31 @@ void QGitRepository::on_checkBox_UnstagedFiles_clicked()
 
     emit repositoryStageFiles(m_path, items);
 }
+
+void QGitRepository::on_listWidget_staged_itemChanged(QListWidgetItem *item)
+{
+    if (item->checkState() == Qt::Unchecked)
+    {
+        QStringList items;
+
+        items.append(item->text());
+
+        emit repositoryUnstageFiles(m_path, items);
+
+        ui->listWidget_staged->takeItem(ui->listWidget_staged->row(item));
+    }
+}
+
+void QGitRepository::on_listWidget_unstaged_itemChanged(QListWidgetItem *item)
+{
+    if (item->checkState() == Qt::Checked)
+    {
+        QStringList items;
+
+        items.append(item->text());
+
+        emit repositoryStageFiles(m_path, items);
+
+        ui->listWidget_unstaged->takeItem(ui->listWidget_unstaged->row(item));
+    }
+}

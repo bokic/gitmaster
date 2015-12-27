@@ -1,6 +1,7 @@
 #ifndef QGITREPOSITORY_H
 #define QGITREPOSITORY_H
 
+#include <QListWidgetItem>
 #include <QWidget>
 #include "qgit.h"
 
@@ -30,6 +31,9 @@ private slots:
     void on_repositoryDetail_currentChanged(int index);
     void on_checkBox_StagedFiles_clicked();
     void on_checkBox_UnstagedFiles_clicked();
+    void on_listWidget_staged_itemChanged(QListWidgetItem *item);
+
+    void on_listWidget_unstaged_itemChanged(QListWidgetItem *item);
 
 private:
     Ui::QGitRepository *ui;
