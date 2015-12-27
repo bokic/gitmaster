@@ -280,9 +280,9 @@ void QGit::repositoryUnstageFiles(QDir path, QStringList items)
     paths.count = items.count();
     paths.strings = (char **)malloc(sizeof(char *) * path.count());
 
-    for(int c = 0; c < tmpStrList.length(); c++)
+    for(int c = 0; c < items.count(); c++)
     {
-        tmpStrList[c] = items.at(c).toUtf8();
+        tmpStrList.append(items.at(c).toUtf8());
         paths.strings[c] = (char *)tmpStrList.at(c).data();
     }
 
