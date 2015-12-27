@@ -19,11 +19,17 @@ public:
 signals:
     void repositoryBranches(QDir path);
     void repositoryChangedFiles(QDir path);
+    void repositoryStageFiles(QDir path, QStringList items);
+    void repositoryUnstageFiles(QDir path, QStringList items);
 
 private slots:
     void repositoryBranchesReply(QList<QGitBranch> branches);
     void repositoryChangedFilesReply(QDir path, QMap<QString, git_status_t> files);
+    void repositoryStageFilesReply(QDir path);
+    void repositoryUnstageFilesReply(QDir path);
     void on_repositoryDetail_currentChanged(int index);
+    void on_checkBox_StagedFiles_clicked();
+    void on_checkBox_UnstagedFiles_clicked();
 
 private:
     Ui::QGitRepository *ui;

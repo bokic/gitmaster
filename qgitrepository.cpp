@@ -18,6 +18,12 @@ QGitRepository::QGitRepository(const QString &path, QWidget *parent)
     connect(this, SIGNAL(repositoryChangedFiles(QDir)), m_git, SLOT(repositoryChangedFiles(QDir)), Qt::QueuedConnection);
     connect(m_git, SIGNAL(repositoryChangedFilesReply(QDir,QMap<QString,git_status_t>)), this, SLOT(repositoryChangedFilesReply(QDir,QMap<QString,git_status_t>)), Qt::QueuedConnection);
 
+    connect(this, SIGNAL(repositoryStageFiles(QDir,QStringList)), m_git, SLOT(repositoryStageFiles(QDir,QStringList)), Qt::QueuedConnection);
+    connect(m_git, SIGNAL(repositoryStageFilesReply(QDir)), this, SLOT(repositoryStageFilesReply(QDir)), Qt::QueuedConnection);
+
+    connect(this, SIGNAL(repositoryUnstageFiles(QDir,QStringList)), m_git, SLOT(repositoryUnstageFiles(QDir,QStringList)), Qt::QueuedConnection);
+    connect(m_git, SIGNAL(repositoryUnstageFilesReply(QDir)), this, SLOT(repositoryUnstageFilesReply(QDir)), Qt::QueuedConnection);
+
     on_repositoryDetail_currentChanged(ui->repositoryDetail->currentIndex());
 
     emit repositoryBranches(QDir(m_path));
@@ -179,6 +185,16 @@ void QGitRepository::repositoryChangedFilesReply(QDir path, QMap<QString, git_st
     }
 }
 
+void QGitRepository::repositoryStageFilesReply(QDir path)
+{
+    emit repositoryChangedFiles(m_path);
+}
+
+void QGitRepository::repositoryUnstageFilesReply(QDir path)
+{
+    emit repositoryChangedFiles(m_path);
+}
+
 void QGitRepository::on_repositoryDetail_currentChanged(int index)
 {
     switch(index) {
@@ -186,12 +202,45 @@ void QGitRepository::on_repositoryDetail_currentChanged(int index)
         emit repositoryChangedFiles(m_path);
         break;
     case 1:
+        Q_UNIMPLEMENTED();
         break;
     case 2:
+        Q_UNIMPLEMENTED();
         break;
     default:
+        Q_UNIMPLEMENTED();
         break;
     }
+}
 
-    Q_UNIMPLEMENTED();
+void QGitRepository::on_checkBox_StagedFiles_clicked()
+{
+    QStringList items;
+
+    ui->checkBox_StagedFiles->setChecked(true);
+
+    for(int c = 0; c < ui->listWidget_staged->count(); c++)
+    {
+        QString file = ui->listWidget_staged->item(c)->text();
+
+        items.append(file);
+    }
+
+    emit repositoryUnstageFiles(m_path, items);
+}
+
+void QGitRepository::on_checkBox_UnstagedFiles_clicked()
+{
+    QStringList items;
+
+    ui->checkBox_UnstagedFiles->setChecked(false);
+
+    for(int c = 0; c < ui->listWidget_unstaged->count(); c++)
+    {
+        QString file = ui->listWidget_unstaged->item(c)->text();
+
+        items.append(file);
+    }
+
+    emit repositoryStageFiles(m_path, items);
 }
