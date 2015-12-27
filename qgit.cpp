@@ -213,3 +213,104 @@ exit1:
     git_repository_free(repo);
     repo = nullptr;
 }
+
+void QGit::repositoryStageFiles(QDir path, QStringList items)
+{
+    git_repository *repo = nullptr;
+    git_index *index = nullptr;
+    int result = 0;
+
+    result = git_repository_open(&repo, path.absolutePath().toUtf8().constData());
+    if (result)
+    {
+        emit error(__FUNCTION__, "git_repository_open", result);
+        return;
+    }
+
+    result = git_repository_index(&index, repo);
+    if (result)
+    {
+        emit error(__FUNCTION__, "git_repository_index", result);
+        goto exit1;
+    }
+
+    for(QString item: items)
+    {
+        result = git_index_add_bypath(index, item.toUtf8().constData());
+        if (result)
+        {
+            emit error(__FUNCTION__, "git_index_add_bypath", result);
+            goto exit1;
+        }
+    }
+
+    result = git_index_write(index);
+    if (result)
+    {
+        emit error(__FUNCTION__, "git_index_write", result);
+        goto exit2;
+    }
+
+    emit repositoryStageFilesReply(path);
+
+exit2:
+    git_index_free(index);
+    index = nullptr;
+
+exit1:
+    git_repository_free(repo);
+    repo = nullptr;
+}
+
+void QGit::repositoryUnstageFiles(QDir path, QStringList items)
+{
+    QList<QByteArray> tmpStrList;
+    git_repository *repo = nullptr;
+    git_strarray paths = {nullptr, 0};
+    git_object *target = nullptr;
+    int result = 0;
+
+    result = git_repository_open(&repo, path.absolutePath().toUtf8().constData());
+    if (result)
+    {
+        emit error(__FUNCTION__, "git_repository_open", result);
+        return;
+    }
+
+    paths.count = items.count();
+    paths.strings = (char **)malloc(sizeof(char *) * path.count());
+
+    for(int c = 0; c < tmpStrList.length(); c++)
+    {
+        tmpStrList[c] = items.at(c).toUtf8();
+        paths.strings[c] = (char *)tmpStrList.at(c).data();
+    }
+
+    result = git_revparse_single(&target, repo, "HEAD");
+    if (result)
+    {
+        emit error(__FUNCTION__, "git_revparse_single", result);
+        goto exit1;
+    }
+
+    result = git_reset_default(repo, target, &paths);
+    if (result)
+    {
+        emit error(__FUNCTION__, "git_reset_default", result);
+        goto exit2;
+    }
+
+    emit repositoryUnstageFilesReply(path);
+
+exit2:
+    git_object_free(target);
+    target = nullptr;
+
+exit1:
+    free(paths.strings);
+    paths.strings = nullptr;
+    paths.count = 0;
+
+    git_repository_free(repo);
+    repo = nullptr;
+}
