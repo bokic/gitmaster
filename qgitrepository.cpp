@@ -190,11 +190,15 @@ void QGitRepository::repositoryChangedFilesReply(QDir path, QMap<QString, git_st
 
 void QGitRepository::repositoryStageFilesReply(QDir path)
 {
+    Q_UNUSED(path);
+
     emit repositoryChangedFiles(m_path);
 }
 
 void QGitRepository::repositoryUnstageFilesReply(QDir path)
 {
+    Q_UNUSED(path);
+
     emit repositoryChangedFiles(m_path);
 }
 
