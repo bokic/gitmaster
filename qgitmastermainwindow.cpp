@@ -56,13 +56,6 @@ void QGitMasterMainWindow::readSettings()
 {
     QSettings settings;
 
-    //settings.setValue("0\\name", "{some name}");
-    //settings.setValue("0\\path", "{some path}");
-    //settings.setValue("1\\name", "{some name}");
-    //settings.setValue("1\\path", "{some path}");
-    //settings.setValue("2\\name", "{some name}");
-    //settings.setValue("2\\path", "{some path}");
-
     for(int c = 0; ; c++)
     {
         const QString counterStr = QString::number(c);
