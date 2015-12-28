@@ -229,7 +229,10 @@ void QGitRepository::on_checkBox_StagedFiles_clicked()
         items.append(file);
     }
 
-    emit repositoryUnstageFiles(m_path, items);
+    if (items.count() > 0)
+    {
+        emit repositoryUnstageFiles(m_path, items);
+    }
 }
 
 void QGitRepository::on_checkBox_UnstagedFiles_clicked()
@@ -245,7 +248,10 @@ void QGitRepository::on_checkBox_UnstagedFiles_clicked()
         items.append(file);
     }
 
-    emit repositoryStageFiles(m_path, items);
+    if (items.count() > 0)
+    {
+        emit repositoryStageFiles(m_path, items);
+    }
 }
 
 void QGitRepository::on_listWidget_staged_itemChanged(QListWidgetItem *item)
