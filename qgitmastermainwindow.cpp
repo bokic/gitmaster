@@ -81,6 +81,41 @@ void QGitMasterMainWindow::readSettings()
     }
 }
 
+void QGitMasterMainWindow::writeSettings()
+{
+    QSettings settings;
+
+    // Delete out of range settings.
+    for (int c = ui->treeWidget->topLevelItemCount(); ; c++)
+    {
+        const QString keyName = QString("%1\\name").arg(c);
+        const QString keyPath = QString("%1\\path").arg(c);
+
+        const QVariant name = settings.value(keyName);
+        const QVariant path = settings.value(keyPath);
+
+        if ((name.isNull())&&(path.isNull()))
+        {
+            break;
+        }
+
+        settings.remove(keyName);
+        settings.remove(keyPath);
+    }
+
+    // Store settings
+    for(int c = 0; c < ui->treeWidget->topLevelItemCount(); c++)
+    {
+        const QString keyName = QString("%1\\name").arg(c);
+        const QString keyPath = QString("%1\\path").arg(c);
+
+        QTreeWidgetItem *item = ui->treeWidget->topLevelItem(c);
+
+        settings.setValue(keyName, item->data(0, Qt::DisplayRole));
+        settings.setValue(keyPath, item->data(0, QGitRepoTreeItemDelegate::QItemPath));
+    }
+}
+
 void QGitMasterMainWindow::on_actionCloneNew_triggered()
 {
     QNewRepositoryDialog dlg(this);
@@ -110,6 +145,8 @@ void QGitMasterMainWindow::on_actionCloneNew_triggered()
                 item->setData(0, QGitRepoTreeItemDelegate::QItemPath, dlg.createNewRepositoryPath());
 
                 ui->treeWidget->addTopLevelItem(item);
+
+                writeSettings();
             }
             break;
         }

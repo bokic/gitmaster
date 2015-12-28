@@ -18,6 +18,8 @@ public:
     explicit QGitMasterMainWindow(QWidget *parent = 0);
     ~QGitMasterMainWindow();
 
+    void writeSettings();
+
 protected:
     bool event(QEvent *event) override;
 
