@@ -4,6 +4,8 @@
 #include "qnewrepositorydialog.h"
 #include "qgitrepository.h"
 
+#include <QTreeWidgetItem>
+#include <QMessageBox>
 #include <QSettings>
 
 
@@ -172,7 +174,19 @@ void QGitMasterMainWindow::on_actionNewFolderRepository_triggered()
 
 void QGitMasterMainWindow::on_actionDeleteRepository_triggered()
 {
-    Q_UNIMPLEMENTED();
+    QTreeWidgetItem *item = ui->treeWidget->currentItem();
+
+    if (item)
+    {
+        if (QMessageBox::question(this, tr("Remove git bookmark?"), tr("Remote git bookmark?\nIt will not remove files.")))
+        {
+            ui->treeWidget->takeTopLevelItem(ui->treeWidget->indexOfTopLevelItem(item));
+
+            writeSettings();
+
+            delete item;
+        }
+    }
 }
 
 void QGitMasterMainWindow::on_actionSettingsRepository_triggered()
