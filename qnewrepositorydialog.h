@@ -22,7 +22,7 @@ public:
     QString addWorkingCopyPath() const;
     QString addWorkingCopyBookmarkText() const;
     QString createNewRepositoryPath() const;
-    QString createNewRepositoryBookmark() const;
+    QString createNewRepositoryBookmarkText() const;
 
 private slots:
     void updateOkButton();

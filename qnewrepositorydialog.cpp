@@ -74,7 +74,7 @@ QString QNewRepositoryDialog::createNewRepositoryPath() const
     return ui->lineEditCreateNewRepositoryPath->text();
 }
 
-QString QNewRepositoryDialog::createNewRepositoryBookmark() const
+QString QNewRepositoryDialog::createNewRepositoryBookmarkText() const
 {
     if (ui->checkBoxCreateNewRepositoryBookmark->isChecked())
     {

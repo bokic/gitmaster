@@ -135,7 +135,7 @@ void QGitMasterMainWindow::on_actionCloneNew_triggered()
         case QNewRepositoryDialog::QCreateNewRepository:
             QGit::createLocalRepository(QDir(dlg.createNewRepositoryPath()));
 
-            bookmarkStr = dlg.createNewRepositoryBookmark();
+            bookmarkStr = dlg.createNewRepositoryBookmarkText();
 
             if(!bookmarkStr.isEmpty())
             {
