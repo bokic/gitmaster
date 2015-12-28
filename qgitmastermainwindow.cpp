@@ -63,9 +63,9 @@ void QGitMasterMainWindow::readSettings()
 
     for(int c = 0; ; c++)
     {
-        const QString &counterStr = QString::number(c);
-        const QVariant &name = settings.value(counterStr + "\\name");
-        const QVariant &path = settings.value(counterStr + "\\path");
+        const QString counterStr = QString::number(c);
+        const QVariant name = settings.value(counterStr + "\\name");
+        const QVariant path = settings.value(counterStr + "\\path");
 
         if ((name.isNull())||(path.isNull()))
         {
