@@ -62,7 +62,7 @@ void QGitMasterMainWindow::readSettings()
         const QVariant name = settings.value(counterStr + "\\name");
         const QVariant path = settings.value(counterStr + "\\path");
 
-        if ((name.isNull())||(path.isNull()))
+        if ((name.isNull())&&(path.isNull()))
         {
             break;
         }
