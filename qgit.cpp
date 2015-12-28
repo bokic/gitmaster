@@ -220,6 +220,13 @@ void QGit::repositoryStageFiles(QDir path, QStringList items)
     git_index *index = nullptr;
     int result = 0;
 
+    if (items.count() == 0)
+    {
+        emit repositoryStageFilesReply(path);
+
+        return;
+    }
+
     result = git_repository_open(&repo, path.absolutePath().toUtf8().constData());
     if (result)
     {
@@ -269,6 +276,13 @@ void QGit::repositoryUnstageFiles(QDir path, QStringList items)
     git_strarray paths = {nullptr, 0};
     git_object *target = nullptr;
     int result = 0;
+
+    if (items.count() == 0)
+    {
+        emit repositoryUnstageFilesReply(path);
+
+        return;
+    }
 
     result = git_repository_open(&repo, path.absolutePath().toUtf8().constData());
     if (result)
