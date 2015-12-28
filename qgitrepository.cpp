@@ -123,6 +123,7 @@ void QGitRepository::repositoryChangedFilesReply(QDir path, QMap<QString, git_st
     for(auto file: files.keys())
     {
         const git_status_t status = files.value(file);
+        int tmp_status = GIT_STATUS_CURRENT;
 
 #if ((LIBGIT2_VER_MAJOR > 0)||(LIBGIT2_VER_MINOR >= 23))
         if (status & GIT_STATUS_CONFLICTED)
@@ -131,14 +132,15 @@ void QGitRepository::repositoryChangedFilesReply(QDir path, QMap<QString, git_st
         }
 #endif
 
-        if (status & (GIT_STATUS_INDEX_NEW | GIT_STATUS_INDEX_MODIFIED | GIT_STATUS_INDEX_DELETED | GIT_STATUS_INDEX_RENAMED | GIT_STATUS_INDEX_TYPECHANGE))
+        tmp_status = status & (GIT_STATUS_INDEX_NEW | GIT_STATUS_INDEX_MODIFIED | GIT_STATUS_INDEX_DELETED | GIT_STATUS_INDEX_RENAMED | GIT_STATUS_INDEX_TYPECHANGE);
+        if (tmp_status)
         {
             QListWidgetItem *item = new QListWidgetItem(file);
 
             item->setFlags(item->flags() | Qt::ItemIsUserCheckable);
             item->setCheckState(Qt::Checked);
 
-            switch(status)
+            switch(tmp_status)
             {
             case GIT_STATUS_INDEX_NEW:
                 item->setIcon(QIcon(":/images/file_new.svg"));
@@ -157,14 +159,15 @@ void QGitRepository::repositoryChangedFilesReply(QDir path, QMap<QString, git_st
             ui->listWidget_staged->addItem(item);
         }
 
-        if (status & (GIT_STATUS_WT_NEW | GIT_STATUS_WT_MODIFIED | GIT_STATUS_WT_DELETED | GIT_STATUS_WT_RENAMED | GIT_STATUS_WT_TYPECHANGE | GIT_STATUS_WT_UNREADABLE))
+        tmp_status = status & (GIT_STATUS_WT_NEW | GIT_STATUS_WT_MODIFIED | GIT_STATUS_WT_DELETED | GIT_STATUS_WT_RENAMED | GIT_STATUS_WT_TYPECHANGE | GIT_STATUS_WT_UNREADABLE);
+        if (tmp_status)
         {
             QListWidgetItem *item = new QListWidgetItem(file);
 
             item->setFlags(item->flags() | Qt::ItemIsUserCheckable);
             item->setCheckState(Qt::Unchecked);
 
-            switch(status)
+            switch(tmp_status)
             {
             case GIT_STATUS_WT_NEW:
                 item->setIcon(QIcon(":/images/file_new.svg"));
