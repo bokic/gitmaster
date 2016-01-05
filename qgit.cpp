@@ -328,3 +328,98 @@ exit1:
     git_repository_free(repo);
     repo = nullptr;
 }
+
+void QGit::repositoryCommit(QDir path, QString message)
+{
+    git_repository *repo = nullptr;
+    git_signature *me = nullptr;
+    git_commit *parent = nullptr;
+    git_index *index = nullptr;
+    git_tree *tree = nullptr;
+    git_oid new_commit_id;
+    git_oid parent_id;
+    git_oid tree_id;
+    int unborn = 0;
+    int result = 0;
+
+    memset(&new_commit_id, 0, sizeof(new_commit_id));
+    memset(&parent_id, 0, sizeof(parent_id));
+    memset(&tree_id, 0, sizeof(tree_id));
+
+    result = git_repository_open(&repo, path.absolutePath().toUtf8().constData());
+    if (result)
+    {
+        emit error(__FUNCTION__, "git_repository_open", result);
+        return;
+    }
+
+    result = git_signature_default(&me, repo);
+    if (result)
+    {
+        emit error(__FUNCTION__, "git_signature_default", result);
+        goto exit1;
+    }
+
+    result = git_repository_index(&index, repo);
+    result = git_index_write_tree(&tree_id, index);
+    result = git_tree_lookup(&tree, repo, &tree_id);
+
+    unborn = git_repository_head_unborn(repo);
+    if (unborn)
+    {
+        git_index_free(index);
+        index = nullptr;
+
+        result = git_commit_create_v(
+          &new_commit_id,
+          repo,
+          "HEAD",                        /* name of ref to update */
+          me,                            /* author */
+          me,                            /* committer */
+          nullptr,                       /* nullptr = UTF-8 message encoding */
+          message.toUtf8().constData(),  /* message */
+          tree,                          /* root tree */
+          0);                            /* parent count */
+    }
+    else
+    {
+        result = git_reference_name_to_id(&parent_id, repo, "HEAD");
+        result = git_commit_lookup(&parent, repo, &parent_id);
+
+        result = git_commit_create_v(
+          &new_commit_id,
+          repo,
+          "HEAD",                        /* name of ref to update */
+          me,                            /* author */
+          me,                            /* committer */
+          nullptr,                       /* nullptr = UTF-8 message encoding */
+          message.toUtf8().constData(),  /* message */
+          tree,                          /* root tree */
+          1,                             /* parent count */
+          parent);                       /* parent */
+    }
+
+    if (result == 0)
+    {
+        emit repositoryCommitReply(path, QString::fromUtf8((const char *)new_commit_id.id));
+    }
+    else
+    {
+        emit error(__FUNCTION__, "git_commit_create", result);
+    }
+
+    git_commit_free(parent);
+    parent = nullptr;
+
+exit3:
+    git_tree_free(tree);
+    tree = nullptr;
+
+exit2:
+    git_signature_free(me);
+    me = nullptr;
+
+exit1:
+    git_repository_free(repo);
+    repo = nullptr;
+}

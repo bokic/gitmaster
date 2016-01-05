@@ -24,6 +24,7 @@ public slots:
     void repositoryChangedFiles(QDir path);
     void repositoryStageFiles(QDir path, QStringList items);
     void repositoryUnstageFiles(QDir path, QStringList items);
+    void repositoryCommit(QDir path, QString message);
 
 signals:
     void repositoryStatusReply(QDir path, QMap<git_status_t, int> items);
@@ -31,6 +32,7 @@ signals:
     void repositoryChangedFilesReply(QDir path, QMap<QString,git_status_t> files);
     void repositoryStageFilesReply(QDir path);
     void repositoryUnstageFilesReply(QDir path);
+    void repositoryCommitReply(QDir path, QString commit_id);
     void error(QString qgit_function, QString git_function, int code);
 };
 

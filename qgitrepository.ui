@@ -218,7 +218,7 @@
                  </layout>
                 </item>
                 <item>
-                 <widget class="QPlainTextEdit" name="plainTextEdit"/>
+                 <widget class="QPlainTextEdit" name="plainTextEdit_commitMessage"/>
                 </item>
                 <item>
                  <layout class="QHBoxLayout" name="horizontalLayout_4">
@@ -243,7 +243,7 @@
                    </spacer>
                   </item>
                   <item>
-                   <widget class="QPushButton" name="pushButton">
+                   <widget class="QPushButton" name="pushButton_commit">
                     <property name="text">
                      <string>&amp;Commit</string>
                     </property>

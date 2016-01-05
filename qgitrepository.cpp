@@ -24,6 +24,9 @@ QGitRepository::QGitRepository(const QString &path, QWidget *parent)
     connect(this, SIGNAL(repositoryUnstageFiles(QDir,QStringList)), m_git, SLOT(repositoryUnstageFiles(QDir,QStringList)), Qt::QueuedConnection);
     connect(m_git, SIGNAL(repositoryUnstageFilesReply(QDir)), this, SLOT(repositoryUnstageFilesReply(QDir)), Qt::QueuedConnection);
 
+    connect(this, SIGNAL(repositoryCommit(QDir,QString)), m_git, SLOT(repositoryCommit(QDir,QString)), Qt::QueuedConnection);
+    connect(m_git, SIGNAL(repositoryCommitReply(QDir,QString)), this, SLOT(repositoryCommitReply(QDir,QString)), Qt::QueuedConnection);
+
     on_repositoryDetail_currentChanged(ui->repositoryDetail->currentIndex());
 
     emit repositoryBranches(QDir(m_path));
@@ -202,6 +205,18 @@ void QGitRepository::repositoryUnstageFilesReply(QDir path)
     emit repositoryChangedFiles(m_path);
 }
 
+void QGitRepository::repositoryCommitReply(QDir path, QString commit_id)
+{
+    Q_UNUSED(path);
+    Q_UNUSED(commit_id);
+
+    ui->plainTextEdit_commitMessage->clear();
+    ui->plainTextEdit_commitMessage->setEnabled(false);
+    ui->pushButton_commit->setEnabled(false);
+
+    on_repositoryDetail_currentChanged(ui->repositoryDetail->currentIndex());
+}
+
 void QGitRepository::on_repositoryDetail_currentChanged(int index)
 {
     switch(index) {
@@ -284,4 +299,12 @@ void QGitRepository::on_listWidget_unstaged_itemChanged(QListWidgetItem *item)
 
         ui->listWidget_unstaged->takeItem(ui->listWidget_unstaged->row(item));
     }
+}
+
+void QGitRepository::on_pushButton_commit_clicked()
+{
+    ui->plainTextEdit_commitMessage->setEnabled(false);
+    ui->pushButton_commit->setEnabled(false);
+
+    emit repositoryCommit(m_path, ui->plainTextEdit_commitMessage->toPlainText());
 }
