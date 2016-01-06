@@ -56,7 +56,7 @@ exit1:
 
 int QGit::createLocalRepository(const QDir &path)
 {
-    git_repository *repo = NULL;
+    git_repository *repo = nullptr;
     int err = 0;
 
     git_libgit2_init();
