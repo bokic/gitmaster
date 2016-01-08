@@ -186,7 +186,7 @@ void QGitMasterMainWindow::on_actionDeleteRepository_triggered()
 
     if (item)
     {
-        if (QMessageBox::question(this, tr("Remove git bookmark?"), tr("Remote git bookmark?\nIt will not remove files.")))
+        if (QMessageBox::question(this, tr("Remove git bookmark?"), tr("Remote git bookmark?\nIt will not remove files.")) == QMessageBox::Yes)
         {
             ui->treeWidget->takeTopLevelItem(ui->treeWidget->indexOfTopLevelItem(item));
 
