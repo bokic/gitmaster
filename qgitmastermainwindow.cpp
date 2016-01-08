@@ -111,6 +111,21 @@ void QGitMasterMainWindow::writeSettings()
     }
 }
 
+bool QGitMasterMainWindow::hasRepositoryWithName(const QString &name)
+{
+    for(int c = 0; c < ui->treeWidget->topLevelItemCount(); c++)
+    {
+        QString itemName = ui->treeWidget->topLevelItem(c)->data(0, Qt::DisplayRole).toString();
+
+        if (itemName == name)
+        {
+            return true;
+        }
+    }
+
+    return false;
+}
+
 void QGitMasterMainWindow::on_actionCloneNew_triggered()
 {
     QNewRepositoryDialog dlg(this);

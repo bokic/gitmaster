@@ -19,6 +19,7 @@ public:
     ~QGitMasterMainWindow();
 
     void writeSettings();
+    bool hasRepositoryWithName(const QString &name);
 
 protected:
     bool event(QEvent *event) override;
