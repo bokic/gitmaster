@@ -436,3 +436,50 @@ exit1:
     git_repository_free(repo);
     repo = nullptr;
 }
+
+void QGit::repositoryClone(QDir path, QUrl url)
+{
+    git_repository *repo = nullptr;
+    git_clone_options opts;
+    int result = 0;
+
+    result = git_clone_init_options(&opts, GIT_CLONE_OPTIONS_VERSION);
+    if (result)
+    {
+        emit error(__FUNCTION__, "git_clone_init_options", result);
+
+        goto exit;
+    }
+
+    opts.checkout_opts.progress_payload = this;
+    opts.checkout_opts.progress_cb = [](
+            const char *path,
+            size_t completed_steps,
+            size_t total_steps,
+            void *payload)
+    {
+        QGit *_this = (QGit *)payload;
+
+        emit _this->repositoryCloneProgressReply(QString::fromUtf8(path), completed_steps, total_steps);
+
+        _this = nullptr;
+    };
+
+    result = git_clone(&repo, url.toString().toUtf8().constData(), path.absolutePath().toUtf8().constData(), &opts);
+
+    if (result)
+    {
+        emit error(__FUNCTION__, "git_clone", result);
+    }
+    else
+    {
+        emit repositoryCloneReply(path);
+    }
+
+exit:
+    if (repo)
+    {
+        git_repository_free(repo);
+        repo = nullptr;
+    }
+}
