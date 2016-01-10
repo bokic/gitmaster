@@ -1,6 +1,7 @@
 #include "qgitrepository.h"
 #include "ui_qgitrepository.h"
 #include <QTreeWidgetItem>
+#include <QMessageBox>
 #include <QDebug>
 #include <QList>
 
@@ -26,6 +27,8 @@ QGitRepository::QGitRepository(const QString &path, QWidget *parent)
 
     connect(this, SIGNAL(repositoryCommit(QDir,QString)), m_git, SLOT(repositoryCommit(QDir,QString)), Qt::QueuedConnection);
     connect(m_git, SIGNAL(repositoryCommitReply(QDir,QString)), this, SLOT(repositoryCommitReply(QDir,QString)), Qt::QueuedConnection);
+
+	connect(m_git, SIGNAL(error(QString,QString,int)), this, SLOT(repositoryError(QString,QString,int)), Qt::QueuedConnection);
 
     on_repositoryDetail_currentChanged(ui->repositoryDetail->currentIndex());
 
@@ -211,10 +214,18 @@ void QGitRepository::repositoryCommitReply(QDir path, QString commit_id)
     Q_UNUSED(commit_id);
 
     ui->plainTextEdit_commitMessage->clear();
-    ui->plainTextEdit_commitMessage->setEnabled(false);
-    ui->pushButton_commit->setEnabled(false);
+	ui->plainTextEdit_commitMessage->setEnabled(true);
+	ui->pushButton_commit->setEnabled(true);
 
     on_repositoryDetail_currentChanged(ui->repositoryDetail->currentIndex());
+}
+
+void QGitRepository::repositoryError(QString qgit_function, QString git_function, int code)
+{
+	QMessageBox::warning(this, tr("Error"), tr("Error in:\nqt function (%1)\ngit function (%2)\nError code: %3").arg(qgit_function).arg(git_function).arg(code));
+
+	ui->plainTextEdit_commitMessage->setEnabled(true);
+	ui->pushButton_commit->setEnabled(true);
 }
 
 void QGitRepository::on_repositoryDetail_currentChanged(int index)

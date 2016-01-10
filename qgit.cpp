@@ -56,7 +56,7 @@ exit1:
 
 int QGit::createLocalRepository(const QDir &path)
 {
-    git_repository *repo = NULL;
+    git_repository *repo = nullptr;
     int err = 0;
 
     git_libgit2_init();
@@ -299,7 +299,6 @@ void QGit::repositoryUnstageFiles(QDir path, QStringList items)
     QList<QByteArray> tmpStrList;
     git_repository *repo = nullptr;
     git_strarray paths = {nullptr, 0};
-    git_object *target = nullptr;
     int result = 0;
 
     if (items.count() == 0)
@@ -325,25 +324,14 @@ void QGit::repositoryUnstageFiles(QDir path, QStringList items)
         paths.strings[c] = (char *)tmpStrList.at(c).data();
     }
 
-    result = git_revparse_single(&target, repo, "HEAD");
-    if (result)
-    {
-        emit error(__FUNCTION__, "git_revparse_single", result);
-        goto exit1;
-    }
-
-    result = git_reset_default(repo, target, &paths);
+    result = git_reset_default(repo, nullptr, &paths);
     if (result)
     {
         emit error(__FUNCTION__, "git_reset_default", result);
-        goto exit2;
+        goto exit1;
     }
 
     emit repositoryUnstageFilesReply(path);
-
-exit2:
-    git_object_free(target);
-    target = nullptr;
 
 exit1:
     free(paths.strings);
