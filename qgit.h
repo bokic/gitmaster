@@ -17,6 +17,7 @@ public:
 
     static QString getBranchNameFromPath(const QString &path);
     static int createLocalRepository(const QDir &path);
+    static bool isGitRepository(const QDir &path);
 
 public slots:
     void repositoryStatus(QDir path);

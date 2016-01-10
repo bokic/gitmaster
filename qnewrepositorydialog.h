@@ -25,13 +25,13 @@ public:
     QString createNewRepositoryBookmarkText() const;
 
 private slots:
-    void updateOkButton();
+    void updateWidgets();
     void on_toolButtonCloneRepositoryBrowse_clicked();
     void on_toolButtonAddWorkingCopyBrowse_clicked();
     void on_toolButtonCreateNewRepositoryBrowse_clicked();
-    void on_checkBoxCloneRepositoryBookmark_clicked(bool checked);
-    void on_checkBoxAddWorkingCopyBookmark_clicked(bool checked);
-    void on_checkBoxCreateNewRepositoryBookmark_clicked(bool checked);
+    void on_checkBoxCloneRepositoryBookmark_stateChanged(int state);
+    void on_checkBoxAddWorkingCopyBookmark_stateChanged(int state);
+    void on_checkBoxCreateNewRepositoryBookmark_stateChanged(int state);
 
 private:
     Ui::QNewRepositoryDialog *ui;

@@ -1,4 +1,5 @@
 #include "qnewrepositorydialog.h"
+#include "qgitmastermainwindow.h"
 #include "ui_qnewrepositorydialog.h"
 #include <QFileDialog>
 #include <QPushButton>
@@ -9,13 +10,13 @@ QNewRepositoryDialog::QNewRepositoryDialog(QWidget *parent)
 {
     ui->setupUi(this);
 
-    connect(ui->lineEditCloneRepositorySourceURL, SIGNAL(textChanged(QString)), SLOT(updateOkButton()));
-    connect(ui->lineEditCloneRepositoryDestinationPath, SIGNAL(textChanged(QString)), SLOT(updateOkButton()));
-    connect(ui->lineEditCloneRepositoryBookmark, SIGNAL(textChanged(QString)), SLOT(updateOkButton()));
-    connect(ui->lineEditAddWorkingCopyPath, SIGNAL(textChanged(QString)), SLOT(updateOkButton()));
-    connect(ui->lineEditAddWorkingCopyBookmark, SIGNAL(textChanged(QString)), SLOT(updateOkButton()));
-    connect(ui->lineEditCreateNewRepositoryPath, SIGNAL(textChanged(QString)), SLOT(updateOkButton()));
-    connect(ui->lineEditCreateNewRepositoryBookmark, SIGNAL(textChanged(QString)), SLOT(updateOkButton()));
+    connect(ui->lineEditCloneRepositorySourceURL, SIGNAL(textChanged(QString)), SLOT(updateWidgets()));
+    connect(ui->lineEditCloneRepositoryDestinationPath, SIGNAL(textChanged(QString)), SLOT(updateWidgets()));
+    connect(ui->lineEditCloneRepositoryBookmark, SIGNAL(textChanged(QString)), SLOT(updateWidgets()));
+    connect(ui->lineEditAddWorkingCopyPath, SIGNAL(textChanged(QString)), SLOT(updateWidgets()));
+    connect(ui->lineEditAddWorkingCopyBookmark, SIGNAL(textChanged(QString)), SLOT(updateWidgets()));
+    connect(ui->lineEditCreateNewRepositoryPath, SIGNAL(textChanged(QString)), SLOT(updateWidgets()));
+    connect(ui->lineEditCreateNewRepositoryBookmark, SIGNAL(textChanged(QString)), SLOT(updateWidgets()));
 
     ui->lineEditCloneRepositoryBookmark->setEnabled(false);
     ui->lineEditAddWorkingCopyBookmark->setEnabled(false);
@@ -84,9 +85,10 @@ QString QNewRepositoryDialog::createNewRepositoryBookmarkText() const
     return QString();
 }
 
-void QNewRepositoryDialog::updateOkButton()
+void QNewRepositoryDialog::updateWidgets()
 {
     bool enable = false;
+    QDir dir;
 
     switch(ui->tabWidget->currentIndex())
     {
@@ -101,6 +103,50 @@ void QNewRepositoryDialog::updateOkButton()
         {
             enable = true;
         }
+
+        dir = QDir(ui->lineEditCloneRepositoryDestinationPath->text());
+
+        if ((dir.exists())&&(dir.entryInfoList().count() > 2))
+        {
+            ui->lineEditCloneRepositoryDestinationPath->setStyleSheet("background: red");
+            ui->lineEditCloneRepositoryDestinationPath->setToolTip(tr("Path exist and not empty."));
+            enable = false;
+        }
+        else
+        {
+            ui->lineEditCloneRepositoryDestinationPath->setStyleSheet("");
+            ui->lineEditCloneRepositoryDestinationPath->setToolTip("");
+        }
+
+        if (ui->checkBoxCloneRepositoryBookmark->isChecked())
+        {
+            QString repositoryName = ui->lineEditCloneRepositoryBookmark->text();
+            if (repositoryName.isEmpty())
+            {
+                ui->lineEditCloneRepositoryBookmark->setStyleSheet("background: red");
+                ui->lineEditCloneRepositoryBookmark->setToolTip(tr("Bookmark name is empty."));
+                enable = false;
+            }
+            else
+            {
+                QGitMasterMainWindow *mainWindow = static_cast<QGitMasterMainWindow *>(parent());
+
+                if (mainWindow)
+                {
+                    if (mainWindow->hasRepositoryWithName(repositoryName))
+                    {
+                        ui->lineEditCloneRepositoryBookmark->setStyleSheet("background: red");
+                        ui->lineEditCloneRepositoryBookmark->setToolTip(tr("Bookmark name already exist. Please choose another name."));
+                        enable = false;
+                    }
+                    else
+                    {
+                        ui->lineEditCloneRepositoryBookmark->setStyleSheet("");
+                        ui->lineEditCloneRepositoryBookmark->setToolTip("");
+                    }
+                }
+            }
+        }
         break;
     case QAddWorkingCopy:
         if (
@@ -110,6 +156,56 @@ void QNewRepositoryDialog::updateOkButton()
             )
         {
             enable = true;
+        }
+
+        dir = QDir(ui->lineEditAddWorkingCopyPath->text());
+
+        if (!dir.exists())
+        {
+            ui->lineEditAddWorkingCopyPath->setStyleSheet("background: red");
+            ui->lineEditAddWorkingCopyPath->setToolTip(tr("Path doesn't exist."));
+            enable = false;
+        }
+        else if (QGit::isGitRepository(dir) == false)
+        {
+            ui->lineEditAddWorkingCopyPath->setStyleSheet("background: red");
+            ui->lineEditAddWorkingCopyPath->setToolTip(tr("Dir is not valid git repository."));
+            enable = false;
+        }
+        else
+        {
+            ui->lineEditAddWorkingCopyPath->setStyleSheet("");
+            ui->lineEditAddWorkingCopyPath->setToolTip("");
+        }
+
+        if (ui->checkBoxAddWorkingCopyBookmark->isChecked())
+        {
+            QString repositoryName = ui->lineEditAddWorkingCopyBookmark->text();
+            if (repositoryName.isEmpty())
+            {
+                ui->lineEditAddWorkingCopyBookmark->setStyleSheet("background: red");
+                ui->lineEditAddWorkingCopyBookmark->setToolTip(tr("Bookmark name is empty."));
+                enable = false;
+            }
+            else
+            {
+                QGitMasterMainWindow *mainWindow = static_cast<QGitMasterMainWindow *>(parent());
+
+                if (mainWindow)
+                {
+                    if (mainWindow->hasRepositoryWithName(repositoryName))
+                    {
+                        ui->lineEditAddWorkingCopyBookmark->setStyleSheet("background: red");
+                        ui->lineEditAddWorkingCopyBookmark->setToolTip(tr("Bookmark name already exist. Please choose another name."));
+                        enable = false;
+                    }
+                    else
+                    {
+                        ui->lineEditAddWorkingCopyBookmark->setStyleSheet("");
+                        ui->lineEditAddWorkingCopyBookmark->setToolTip("");
+                    }
+                }
+            }
         }
         break;
     case QCreateNewRepository:
@@ -121,6 +217,57 @@ void QNewRepositoryDialog::updateOkButton()
         {
             enable = true;
         }
+
+        dir = QDir(ui->lineEditCreateNewRepositoryPath->text());
+
+        if (!dir.exists())
+        {
+            ui->lineEditCreateNewRepositoryPath->setStyleSheet("background: red");
+            ui->lineEditCreateNewRepositoryPath->setToolTip(tr("Path doesn't exist."));
+            enable = false;
+        }
+        else if (dir.entryInfoList().count() > 2)
+        {
+            ui->lineEditCreateNewRepositoryPath->setStyleSheet("background: red");
+            ui->lineEditCreateNewRepositoryPath->setToolTip(tr("Dir is not empty."));
+            enable = false;
+        }
+        else
+        {
+            ui->lineEditCreateNewRepositoryPath->setStyleSheet("");
+            ui->lineEditCreateNewRepositoryPath->setToolTip("");
+        }
+
+        if (ui->checkBoxCreateNewRepositoryBookmark->isChecked())
+        {
+            QString repositoryName = ui->lineEditCreateNewRepositoryBookmark->text();
+            if (repositoryName.isEmpty())
+            {
+                ui->lineEditCreateNewRepositoryBookmark->setStyleSheet("background: red");
+                ui->lineEditCreateNewRepositoryBookmark->setToolTip(tr("Bookmark name is empty."));
+                enable = false;
+            }
+            else
+            {
+                QGitMasterMainWindow *mainWindow = static_cast<QGitMasterMainWindow *>(parent());
+
+                if (mainWindow)
+                {
+                    if (mainWindow->hasRepositoryWithName(repositoryName))
+                    {
+                        ui->lineEditCreateNewRepositoryBookmark->setStyleSheet("background: red");
+                        ui->lineEditCreateNewRepositoryBookmark->setToolTip(tr("Bookmark name already exist. Please choose another name."));
+                        enable = false;
+                    }
+                    else
+                    {
+                        ui->lineEditCreateNewRepositoryBookmark->setStyleSheet("");
+                        ui->lineEditCreateNewRepositoryBookmark->setToolTip("");
+                    }
+                }
+            }
+        }
+
         break;
     }
 
@@ -129,45 +276,68 @@ void QNewRepositoryDialog::updateOkButton()
 
 void QNewRepositoryDialog::on_toolButtonCloneRepositoryBrowse_clicked()
 {
-    QString dir = QFileDialog::getExistingDirectory(this);
+    QString dirStr = QFileDialog::getExistingDirectory(this);
 
-    updateOkButton();
+    updateWidgets();
 
-    if (!dir.isEmpty())
+    if (!dirStr.isEmpty())
     {
-        ui->lineEditCloneRepositoryDestinationPath->setText(QDir::toNativeSeparators(dir));
+        QDir dir(dirStr);
+
+        ui->lineEditCloneRepositoryDestinationPath->setText(QDir::toNativeSeparators(dirStr));
+
+        ui->lineEditCloneRepositoryBookmark->setText(dir.dirName());
+        ui->checkBoxCloneRepositoryBookmark->setChecked(true);
     }
 }
 
 void QNewRepositoryDialog::on_toolButtonAddWorkingCopyBrowse_clicked()
 {
-    QString dir = QFileDialog::getExistingDirectory(this);
+    QString dirStr = QFileDialog::getExistingDirectory(this);
 
-    updateOkButton();
+    updateWidgets();
 
-    if (!dir.isEmpty())
+    if (!dirStr.isEmpty())
     {
-        ui->lineEditAddWorkingCopyPath->setText(QDir::toNativeSeparators(dir));
+        QDir dir(dirStr);
+
+        ui->lineEditAddWorkingCopyPath->setText(QDir::toNativeSeparators(dirStr));
+
+        if (dir.exists())
+        {
+            ui->lineEditAddWorkingCopyBookmark->setText(dir.dirName());
+            ui->checkBoxAddWorkingCopyBookmark->setChecked(true);
+        }
     }
 }
 
 void QNewRepositoryDialog::on_toolButtonCreateNewRepositoryBrowse_clicked()
 {
-    QString dir = QFileDialog::getExistingDirectory(this);
+    QString dirStr = QFileDialog::getExistingDirectory(this);
 
-    updateOkButton();
+    updateWidgets();
 
-    if (!dir.isEmpty())
+    if (!dirStr.isEmpty())
     {
-        ui->lineEditCreateNewRepositoryPath->setText(QDir::toNativeSeparators(dir));
+        QDir dir(dirStr);
+
+        ui->lineEditCreateNewRepositoryPath->setText(QDir::toNativeSeparators(dirStr));
+
+        if (dir.exists())
+        {
+            ui->lineEditCreateNewRepositoryBookmark->setText(dir.dirName());
+            ui->checkBoxCreateNewRepositoryBookmark->setChecked(true);
+        }
     }
 }
 
-void QNewRepositoryDialog::on_checkBoxCloneRepositoryBookmark_clicked(bool checked)
+void QNewRepositoryDialog::on_checkBoxCloneRepositoryBookmark_stateChanged(int state)
 {
+    bool checked = (state == Qt::Checked);
+
     ui->lineEditCloneRepositoryBookmark->setEnabled(checked);
 
-    updateOkButton();
+    updateWidgets();
 
     if (checked)
     {
@@ -175,11 +345,13 @@ void QNewRepositoryDialog::on_checkBoxCloneRepositoryBookmark_clicked(bool check
     }
 }
 
-void QNewRepositoryDialog::on_checkBoxAddWorkingCopyBookmark_clicked(bool checked)
+void QNewRepositoryDialog::on_checkBoxAddWorkingCopyBookmark_stateChanged(int state)
 {
+    bool checked = (state == Qt::Checked);
+
     ui->lineEditAddWorkingCopyBookmark->setEnabled(checked);
 
-    updateOkButton();
+    updateWidgets();
 
     if (checked)
     {
@@ -187,11 +359,13 @@ void QNewRepositoryDialog::on_checkBoxAddWorkingCopyBookmark_clicked(bool checke
     }
 }
 
-void QNewRepositoryDialog::on_checkBoxCreateNewRepositoryBookmark_clicked(bool checked)
+void QNewRepositoryDialog::on_checkBoxCreateNewRepositoryBookmark_stateChanged(int state)
 {
+    bool checked = (state == Qt::Checked);
+
     ui->lineEditCreateNewRepositoryBookmark->setEnabled(checked);
 
-    updateOkButton();
+    updateWidgets();
 
     if (checked)
     {

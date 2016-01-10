@@ -74,6 +74,31 @@ int QGit::createLocalRepository(const QDir &path)
     return err;
 }
 
+bool QGit::isGitRepository(const QDir &path)
+{
+    git_repository *repo = NULL;
+    bool ret = false;
+    int err = 0;
+
+    git_libgit2_init();
+
+    err = git_repository_open(&repo, path.absolutePath().toUtf8().constData());
+    if (err == 0)
+    {
+        ret = true;
+    }
+
+    if (repo)
+    {
+        git_repository_free(repo);
+        repo = nullptr;
+    }
+
+    git_libgit2_shutdown();
+
+    return ret;
+}
+
 void QGit::repositoryStatus(QDir path)
 {
     git_repository *repo = nullptr;
