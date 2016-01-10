@@ -29,26 +29,31 @@ QString QGit::getBranchNameFromPath(const QString &path)
     result = git_repository_open(&repo, path.toUtf8().constData());
     if (result)
     {
-        goto exit1;
+        goto cleanup;
     }
 
     result = git_repository_head(&ref, repo);
     if (result)
     {
-        goto exit2;
+        goto cleanup;
     }
 
     git_branch_name(&branch, ref);
     ret = branch;
 
-    git_reference_free(ref);
-    ref = nullptr;
+cleanup:
+    if (ref)
+    {
+        git_reference_free(ref);
+        ref = nullptr;
+    }
 
-exit2:
-    git_repository_free(repo);
-    repo = nullptr;
+    if (repo)
+    {
+        git_repository_free(repo);
+        repo = nullptr;
+    }
 
-exit1:
     git_libgit2_shutdown();
 
     return ret;
@@ -118,7 +123,7 @@ void QGit::repositoryStatus(QDir path)
     if (result)
     {
         emit error(__FUNCTION__, "git_status_list_new", result);
-        goto exit1;
+        goto cleanup;
     }
 
     while(const git_status_entry *item = git_status_byindex(list, index))
@@ -130,12 +135,18 @@ void QGit::repositoryStatus(QDir path)
 
     emit repositoryStatusReply(path, items);
 
-    git_status_list_free(list);
-    list = nullptr;
+cleanup:
+    if (list)
+    {
+        git_status_list_free(list);
+        list = nullptr;
+    }
 
-exit1:
-    git_repository_free(repo);
-    repo = nullptr;
+    if (repo)
+    {
+        git_repository_free(repo);
+        repo = nullptr;
+    }
 }
 
 void QGit::repositoryBranches(QDir path)
@@ -159,7 +170,7 @@ void QGit::repositoryBranches(QDir path)
     if (result)
     {
         emit error(__FUNCTION__, "git_branch_iterator_new", result);
-        goto exit1;
+        goto cleanup;
     }
 
     while(git_branch_next(&ref, &type, it) == 0)
@@ -176,13 +187,18 @@ void QGit::repositoryBranches(QDir path)
 
     emit repositoryBranchesReply(branches);
 
-    git_branch_iterator_free(it);
-    it = nullptr;
+cleanup:
+    if (it)
+    {
+        git_branch_iterator_free(it);
+        it = nullptr;
+    }
 
-exit1:
-
-    git_repository_free(repo);
-    repo = nullptr;
+    if (repo)
+    {
+        git_repository_free(repo);
+        repo = nullptr;
+    }
 }
 
 void QGit::repositoryChangedFiles(QDir path)
@@ -204,7 +220,7 @@ void QGit::repositoryChangedFiles(QDir path)
     if (result)
     {
         emit error(__FUNCTION__, "git_status_list_new", result);
-        goto exit1;
+        goto cleanup;
     }
 
     while(const git_status_entry *item = git_status_byindex(list, index))
@@ -223,6 +239,7 @@ void QGit::repositoryChangedFiles(QDir path)
             else
             {
                 emit error(__FUNCTION__, "unknown scenario", result);
+                goto cleanup;
             }
         }
 
@@ -231,12 +248,18 @@ void QGit::repositoryChangedFiles(QDir path)
 
     emit repositoryChangedFilesReply(path, items);
 
-    git_status_list_free(list);
-    list = nullptr;
+cleanup:
+    if (list)
+    {
+        git_status_list_free(list);
+        list = nullptr;
+    }
 
-exit1:
-    git_repository_free(repo);
-    repo = nullptr;
+    if (repo)
+    {
+        git_repository_free(repo);
+        repo = nullptr;
+    }
 }
 
 void QGit::repositoryStageFiles(QDir path, QStringList items)
@@ -263,7 +286,7 @@ void QGit::repositoryStageFiles(QDir path, QStringList items)
     if (result)
     {
         emit error(__FUNCTION__, "git_repository_index", result);
-        goto exit1;
+        goto cleanup;
     }
 
     for(QString item: items)
@@ -272,7 +295,7 @@ void QGit::repositoryStageFiles(QDir path, QStringList items)
         if (result)
         {
             emit error(__FUNCTION__, "git_index_add_bypath", result);
-            goto exit1;
+            goto cleanup;
         }
     }
 
@@ -280,18 +303,23 @@ void QGit::repositoryStageFiles(QDir path, QStringList items)
     if (result)
     {
         emit error(__FUNCTION__, "git_index_write", result);
-        goto exit2;
+        goto cleanup;
     }
 
     emit repositoryStageFilesReply(path);
 
-exit2:
-    git_index_free(index);
-    index = nullptr;
+cleanup:
+    if (index)
+    {
+        git_index_free(index);
+        index = nullptr;
+    }
 
-exit1:
-    git_repository_free(repo);
-    repo = nullptr;
+    if (repo)
+    {
+        git_repository_free(repo);
+        repo = nullptr;
+    }
 }
 
 void QGit::repositoryUnstageFiles(QDir path, QStringList items)
@@ -328,18 +356,24 @@ void QGit::repositoryUnstageFiles(QDir path, QStringList items)
     if (result)
     {
         emit error(__FUNCTION__, "git_reset_default", result);
-        goto exit1;
+        goto cleanup;
     }
 
     emit repositoryUnstageFilesReply(path);
 
-exit1:
-    free(paths.strings);
-    paths.strings = nullptr;
+cleanup:
+    if (paths.strings)
+    {
+        free(paths.strings);
+        paths.strings = nullptr;
+    }
     paths.count = 0;
 
-    git_repository_free(repo);
-    repo = nullptr;
+    if (repo)
+    {
+        git_repository_free(repo);
+        repo = nullptr;
+    }
 }
 
 void QGit::repositoryCommit(QDir path, QString message)
@@ -370,19 +404,33 @@ void QGit::repositoryCommit(QDir path, QString message)
     if (result)
     {
         emit error(__FUNCTION__, "git_signature_default", result);
-        goto exit1;
+        goto cleanup;
     }
 
     result = git_repository_index(&index, repo);
+    if (result)
+    {
+        emit error(__FUNCTION__, "git_repository_index", result);
+        goto cleanup;
+    }
+
     result = git_index_write_tree(&tree_id, index);
+    if (result)
+    {
+        emit error(__FUNCTION__, "git_index_write_tree", result);
+        goto cleanup;
+    }
+
     result = git_tree_lookup(&tree, repo, &tree_id);
+    if (result)
+    {
+        emit error(__FUNCTION__, "git_tree_lookup", result);
+        goto cleanup;
+    }
 
     unborn = git_repository_head_unborn(repo);
     if (unborn)
     {
-        git_index_free(index);
-        index = nullptr;
-
         result = git_commit_create_v(
           &new_commit_id,
           repo,
@@ -397,7 +445,18 @@ void QGit::repositoryCommit(QDir path, QString message)
     else
     {
         result = git_reference_name_to_id(&parent_id, repo, "HEAD");
+        if (result)
+        {
+            emit error(__FUNCTION__, "git_reference_name_to_id", result);
+            goto cleanup;
+        }
+
         result = git_commit_lookup(&parent, repo, &parent_id);
+        if (result)
+        {
+            emit error(__FUNCTION__, "git_commit_lookup", result);
+            goto cleanup;
+        }
 
         result = git_commit_create_v(
           &new_commit_id,
@@ -421,20 +480,37 @@ void QGit::repositoryCommit(QDir path, QString message)
         emit error(__FUNCTION__, "git_commit_create", result);
     }
 
-    git_commit_free(parent);
-    parent = nullptr;
+cleanup:
+    if (parent)
+    {
+        git_commit_free(parent);
+        parent = nullptr;
+    }
 
-exit3:
-    git_tree_free(tree);
-    tree = nullptr;
 
-exit2:
-    git_signature_free(me);
-    me = nullptr;
+    if (index)
+    {
+        git_index_free(index);
+        index = nullptr;
+    }
 
-exit1:
-    git_repository_free(repo);
-    repo = nullptr;
+    if (tree)
+    {
+        git_tree_free(tree);
+        tree = nullptr;
+    }
+
+    if (me)
+    {
+        git_signature_free(me);
+        me = nullptr;
+    }
+
+    if (repo)
+    {
+        git_repository_free(repo);
+        repo = nullptr;
+    }
 }
 
 void QGit::repositoryClone(QDir path, QUrl url)
@@ -448,7 +524,7 @@ void QGit::repositoryClone(QDir path, QUrl url)
     {
         emit error(__FUNCTION__, "git_clone_init_options", result);
 
-        goto exit;
+        goto cleanup;
     }
 
     opts.checkout_opts.progress_payload = this;
@@ -476,7 +552,7 @@ void QGit::repositoryClone(QDir path, QUrl url)
         emit repositoryCloneReply(path);
     }
 
-exit:
+cleanup:
     if (repo)
     {
         git_repository_free(repo);
