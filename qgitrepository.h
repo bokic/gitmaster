@@ -1,6 +1,7 @@
 #ifndef QGITREPOSITORY_H
 #define QGITREPOSITORY_H
 
+#include <QNetworkAccessManager>
 #include <QListWidgetItem>
 #include <QWidget>
 #include "qgit.h"
@@ -25,6 +26,7 @@ signals:
     void repositoryCommit(QDir path, QString message);
 
 private slots:
+    void gravatarImageDownloadFinished();
     void repositoryBranchesReply(QList<QGitBranch> branches);
     void repositoryChangedFilesReply(QDir path, QMap<QString, git_status_t> files);
     void repositoryStageFilesReply(QDir path);
@@ -40,6 +42,7 @@ private slots:
 
 private:
     Ui::QGitRepository *ui;
+    QNetworkAccessManager m_networkManager;
     QString m_path;
     QGit *m_git;
 };

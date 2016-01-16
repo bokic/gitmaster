@@ -1,6 +1,9 @@
 #include "qgitrepository.h"
 #include "ui_qgitrepository.h"
+#include <QCryptographicHash>
 #include <QTreeWidgetItem>
+#include <QNetworkRequest>
+#include <QNetworkReply>
 #include <QMessageBox>
 #include <QDebug>
 #include <QList>
@@ -18,6 +21,17 @@ QGitRepository::QGitRepository(const QString &path, QWidget *parent)
 
     if (QGit::gitRepositoryDefaultSignature(m_path, name, email))
     {
+        QByteArray hash;
+        QNetworkReply *reply = nullptr;
+
+        hash = QCryptographicHash::hash(email.trimmed().toLatin1(), QCryptographicHash::Md5).toHex();
+
+        QString url = QString("http://www.gravatar.com/avatar/%1?s=48").arg(QString::fromLatin1(hash));
+
+        reply = m_networkManager.get(QNetworkRequest(QUrl(url)));
+
+        connect(reply, SIGNAL(finished()), this, SLOT(gravatarImageDownloadFinished()));
+
         ui->label_signatureEmail->setText(tr("%1 <%2>").arg(name).arg(email));
     }
 
@@ -46,6 +60,21 @@ QGitRepository::QGitRepository(const QString &path, QWidget *parent)
 QGitRepository::~QGitRepository()
 {
     delete ui;
+}
+
+void QGitRepository::gravatarImageDownloadFinished()
+{
+    QNetworkReply *reply = (QNetworkReply *)sender();
+
+    QByteArray data = reply->readAll();
+
+    QPixmap pixmap;
+
+    pixmap.loadFromData(data);
+
+    ui->label_signatureGravatarImage->setPixmap(pixmap);
+
+    reply->deleteLater();
 }
 
 void QGitRepository::repositoryBranchesReply(QList<QGitBranch> branches)

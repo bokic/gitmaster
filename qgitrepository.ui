@@ -142,7 +142,7 @@
               <item>
                <layout class="QVBoxLayout" name="verticalLayout_5">
                 <item>
-                 <widget class="QLabel" name="label_2">
+                 <widget class="QLabel" name="label_signatureGravatarImage">
                   <property name="sizePolicy">
                    <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
                     <horstretch>0</horstretch>
@@ -151,18 +151,15 @@
                   </property>
                   <property name="minimumSize">
                    <size>
-                    <width>32</width>
-                    <height>32</height>
+                    <width>48</width>
+                    <height>48</height>
                    </size>
                   </property>
                   <property name="maximumSize">
                    <size>
-                    <width>32</width>
-                    <height>32</height>
+                    <width>48</width>
+                    <height>48</height>
                    </size>
-                  </property>
-                  <property name="text">
-                   <string>[img]</string>
                   </property>
                  </widget>
                 </item>
