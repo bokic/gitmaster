@@ -517,6 +517,7 @@ void QGit::repositoryClone(QDir path, QUrl url)
 {
     git_repository *repo = nullptr;
     git_clone_options opts;
+    git_remote_callbacks callbacks = GIT_REMOTE_CALLBACKS_INIT;
     int result = 0;
 
     result = git_clone_init_options(&opts, GIT_CLONE_OPTIONS_VERSION);
@@ -526,6 +527,18 @@ void QGit::repositoryClone(QDir path, QUrl url)
 
         goto cleanup;
     }
+
+    callbacks.payload = this;
+    callbacks.transfer_progress = [](const git_transfer_progress *stats, void *payload) -> int {
+
+        QGit *_this = (QGit *)payload;
+
+        emit _this->repositoryCloneTransferReply(stats->total_objects, stats->indexed_objects, stats->received_objects, stats->local_objects, stats->total_deltas, stats->indexed_deltas, stats->received_bytes);
+
+        return 0;
+    };
+
+    opts.remote_callbacks = callbacks;
 
     opts.checkout_opts.progress_payload = this;
     opts.checkout_opts.progress_cb = [](

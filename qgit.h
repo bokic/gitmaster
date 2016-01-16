@@ -37,7 +37,8 @@ signals:
     void repositoryUnstageFilesReply(QDir path);
     void repositoryCommitReply(QDir path, QString commit_id);
     void repositoryCloneReply(QDir path);
-    void repositoryCloneProgressReply(QDir path, int completed, int total);
+    void repositoryCloneProgressReply(QDir path, int completed_steps, int total_steps);
+    void repositoryCloneTransferReply(unsigned int total_objects, unsigned int indexed_objects, unsigned int received_objects, unsigned int local_objects, unsigned int total_deltas, unsigned int indexed_deltas, size_t received_bytes);
     void error(QString qgit_function, QString git_function, int code);
 };
 
