@@ -104,6 +104,46 @@ bool QGit::isGitRepository(const QDir &path)
     return ret;
 }
 
+bool QGit::gitRepositoryDefaultSignature(const QDir &path, QString &name, QString &email)
+{
+    git_repository *repo = nullptr;
+    git_signature *me = nullptr;
+    int result = 0;
+    bool ret = false;
+
+    result = git_repository_open(&repo, path.absolutePath().toUtf8().constData());
+    if (result)
+    {
+        goto cleanup;
+    }
+
+    result = git_signature_default(&me, repo);
+    if (result)
+    {
+        goto cleanup;
+    }
+
+    name = me->name;
+    email = me->email;
+
+    ret = true;
+
+cleanup:
+    if (me)
+    {
+        git_signature_free(me);
+        me = nullptr;
+    }
+
+    if (repo)
+    {
+        git_repository_free(repo);
+        repo = nullptr;
+    }
+
+    return ret;
+}
+
 void QGit::repositoryStatus(QDir path)
 {
     git_repository *repo = nullptr;

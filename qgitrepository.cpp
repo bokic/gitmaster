@@ -11,7 +11,15 @@ QGitRepository::QGitRepository(const QString &path, QWidget *parent)
     , m_path(path)
     , m_git(new QGit(this))
 {
+    QString name;
+    QString email;
+
     ui->setupUi(this);
+
+    if (QGit::gitRepositoryDefaultSignature(m_path, name, email))
+    {
+        ui->label_signatureEmail->setText(tr("%1 <%2>").arg(name).arg(email));
+    }
 
     connect(this, SIGNAL(repositoryBranches(QDir)), m_git, SLOT(repositoryBranches(QDir)), Qt::QueuedConnection);
     connect(m_git, SIGNAL(repositoryBranchesReply(QList<QGitBranch>)), this, SLOT(repositoryBranchesReply(QList<QGitBranch>)), Qt::QueuedConnection);
