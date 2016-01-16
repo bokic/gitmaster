@@ -1,6 +1,7 @@
 #include "qgitmastermainwindow.h"
 #include "ui_qgitmastermainwindow.h"
 #include "qgitrepotreeitemdelegate.h"
+#include "qgitclonerepositorydialog.h"
 #include "qnewrepositorydialog.h"
 #include "qgitrepository.h"
 
@@ -129,17 +130,40 @@ bool QGitMasterMainWindow::hasRepositoryWithName(const QString &name)
 void QGitMasterMainWindow::on_actionCloneNew_triggered()
 {
     QNewRepositoryDialog dlg(this);
+    QString bookmarkStr;
 
     if (dlg.exec() == QDialog::Accepted)
     {
-        QString bookmarkStr;
+        int currentTab = dlg.tabCurrentIndex();
 
-        switch(dlg.tabCurrentIndex())
+        if ( currentTab == QNewRepositoryDialog::QCloneRepository )
         {
-        case QNewRepositoryDialog::QCloneRepository:
-            Q_UNIMPLEMENTED();
-            break;
-        case QNewRepositoryDialog::QAddWorkingCopy:
+            QString path;
+            QString url;
+            int res = 0;
+
+            bookmarkStr = dlg.cloneRepositoryBookmarkText();
+            path = dlg.cloneRepositoryDestinationPath();
+            url = dlg.cloneRepositorySourceURL();
+
+            QGitCloneRepositoryDialog cloneDlg(url, path, this);
+
+            res = cloneDlg.exec();
+
+            if (res == QDialog::Accepted)
+            {
+                QTreeWidgetItem *item = new QTreeWidgetItem();
+
+                item->setData(0, Qt::DisplayRole, bookmarkStr);
+                item->setData(0, QGitRepoTreeItemDelegate::QItemPath, path);
+
+                ui->treeWidget->addTopLevelItem(item);
+
+                writeSettings();
+            }
+        }
+        else if ( currentTab == QNewRepositoryDialog::QAddWorkingCopy )
+        {
             bookmarkStr = dlg.addWorkingCopyBookmarkText();
 
             if(!bookmarkStr.isEmpty())
@@ -153,8 +177,9 @@ void QGitMasterMainWindow::on_actionCloneNew_triggered()
 
                 writeSettings();
             }
-            break;
-        case QNewRepositoryDialog::QCreateNewRepository:
+        }
+        else if ( currentTab == QNewRepositoryDialog::QCreateNewRepository )
+        {
             QGit::createLocalRepository(QDir(dlg.createNewRepositoryPath()));
 
             bookmarkStr = dlg.createNewRepositoryBookmarkText();
@@ -170,7 +195,6 @@ void QGitMasterMainWindow::on_actionCloneNew_triggered()
 
                 writeSettings();
             }
-            break;
         }
     }
 }

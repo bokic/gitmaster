@@ -18,9 +18,9 @@ TEMPLATE = app
 
 win32:INCLUDEPATH += include
 
-SOURCES += main.cpp qgitmastermainwindow.cpp qgitrepository.cpp qnewrepositorydialog.cpp qgit.cpp qgitrepotreeitemdelegate.cpp qgitrepotreewidget.cpp
-HEADERS +=          qgitmastermainwindow.h   qgitrepository.h   qnewrepositorydialog.h   qgit.h   qgitrepotreeitemdelegate.h   qgitrepotreewidget.h   structs.h
-FORMS   +=          qgitmastermainwindow.ui  qgitrepository.ui  qnewrepositorydialog.ui
+SOURCES += main.cpp qgitmastermainwindow.cpp qgitrepository.cpp qnewrepositorydialog.cpp qgitclonerepositorydialog.cpp qgit.cpp qgitrepotreeitemdelegate.cpp qgitrepotreewidget.cpp
+HEADERS +=          qgitmastermainwindow.h   qgitrepository.h   qnewrepositorydialog.h   qgitclonerepositorydialog.h   qgit.h   qgitrepotreeitemdelegate.h   qgitrepotreewidget.h   structs.h
+FORMS   +=          qgitmastermainwindow.ui  qgitrepository.ui  qnewrepositorydialog.ui  qgitclonerepositorydialog.ui
 
 RESOURCES += resource.qrc
 
