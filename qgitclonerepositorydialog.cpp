@@ -16,7 +16,7 @@ QGitCloneRepositoryDialog::QGitCloneRepositoryDialog(const QString &url, const Q
     m_git->moveToThread(&m_thread);
 
     connect(this, SIGNAL(repositoryClone(QDir,QUrl)), m_git, SLOT(repositoryClone(QDir,QUrl)));
-    connect(m_git, SIGNAL(repositoryCloneReply(QDir)), this, SLOT(repositoryCloneReply(QDir)));
+    connect(m_git, SIGNAL(repositoryCloneReply(QDir,int)), this, SLOT(repositoryCloneReply(QDir,int)));
     connect(m_git, SIGNAL(repositoryCloneTransferReply(uint,uint,uint,uint,uint,uint,size_t)), this, SLOT(repositoryCloneTransferReply(uint,uint,uint,uint,uint,uint,size_t)));
     connect(m_git, SIGNAL(repositoryCloneProgressReply(QDir,int,int)), this, SLOT(repositoryCloneProgressReply(QDir,int,int)));
 
@@ -39,26 +39,29 @@ void QGitCloneRepositoryDialog::on_pushButton_close_clicked()
 {
     if (ui->pushButton_close->text() == tr("&Close"))
     {
-        if (m_aborted)
-        {
-            reject();
-        }
-        else
-        {
-            accept();
-        }
+        accept();
     }
     else
     {
         ui->pushButton_close->setText(tr("&Aborting"));
         ui->pushButton_close->setEnabled(false);
+
+        m_git->abort();
         m_aborted = true;
     }
 }
 
-void QGitCloneRepositoryDialog::repositoryCloneReply(QDir path)
+void QGitCloneRepositoryDialog::repositoryCloneReply(QDir path, int error)
 {
     Q_UNUSED(path);
+    Q_UNUSED(error);
+
+    if (m_aborted)
+    {
+       reject();
+
+       return;
+    }
 
     ui->pushButton_close->setText(tr("&Close"));
     ui->pushButton_close->setEnabled(true);

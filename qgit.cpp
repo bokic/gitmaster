@@ -7,6 +7,7 @@
 
 QGit::QGit(QObject *parent)
     : QObject(parent)
+    , m_abort(0)
 {
     git_libgit2_init();
 }
@@ -14,6 +15,11 @@ QGit::QGit(QObject *parent)
 QGit::~QGit()
 {
     git_libgit2_shutdown();
+}
+
+void QGit::abort()
+{
+    m_abort = 1;
 }
 
 QString QGit::getBranchNameFromPath(const QString &path)
@@ -563,8 +569,6 @@ void QGit::repositoryClone(QDir path, QUrl url)
     result = git_clone_init_options(&opts, GIT_CLONE_OPTIONS_VERSION);
     if (result)
     {
-        emit error(__FUNCTION__, "git_clone_init_options", result);
-
         goto cleanup;
     }
 
@@ -575,7 +579,7 @@ void QGit::repositoryClone(QDir path, QUrl url)
 
         emit _this->repositoryCloneTransferReply(stats->total_objects, stats->indexed_objects, stats->received_objects, stats->local_objects, stats->total_deltas, stats->indexed_deltas, stats->received_bytes);
 
-        return 0;
+        return _this->m_abort;
     };
 
     opts.remote_callbacks = callbacks;
@@ -594,18 +598,13 @@ void QGit::repositoryClone(QDir path, QUrl url)
         _this = nullptr;
     };
 
+    m_abort = 0;
+
     result = git_clone(&repo, url.toString().toUtf8().constData(), path.absolutePath().toUtf8().constData(), &opts);
 
-    if (result)
-    {
-        emit error(__FUNCTION__, "git_clone", result);
-    }
-    else
-    {
-        emit repositoryCloneReply(path);
-    }
-
 cleanup:
+    emit repositoryCloneReply(path, result);
+
     if (repo)
     {
         git_repository_free(repo);

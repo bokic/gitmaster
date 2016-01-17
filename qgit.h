@@ -16,6 +16,7 @@ public:
     explicit QGit(QObject *parent = 0);
     virtual ~QGit();
 
+    void abort();
     static QString getBranchNameFromPath(const QString &path);
     static int createLocalRepository(const QDir &path);
     static bool isGitRepository(const QDir &path);
@@ -37,10 +38,13 @@ signals:
     void repositoryStageFilesReply(QDir path);
     void repositoryUnstageFilesReply(QDir path);
     void repositoryCommitReply(QDir path, QString commit_id);
-    void repositoryCloneReply(QDir path);
+    void repositoryCloneReply(QDir path, int error);
     void repositoryCloneProgressReply(QDir path, int completed_steps, int total_steps);
     void repositoryCloneTransferReply(unsigned int total_objects, unsigned int indexed_objects, unsigned int received_objects, unsigned int local_objects, unsigned int total_deltas, unsigned int indexed_deltas, size_t received_bytes);
     void error(QString qgit_function, QString git_function, int code);
+
+private:
+    volatile int m_abort;
 };
 
 #endif // QGIT_H
