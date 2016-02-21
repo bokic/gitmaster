@@ -611,3 +611,132 @@ cleanup:
         repo = nullptr;
     }
 }
+
+void QGit::repositoryPull(QDir path)
+{
+    git_repository *repo = nullptr;
+    git_remote *remote = nullptr;
+    int result = 0;
+
+    result = git_repository_open(&repo, path.absolutePath().toUtf8().constData());
+    if (result)
+    {
+        emit error(__FUNCTION__, "git_repository_open", result);
+        return;
+    }
+
+    result = git_remote_lookup(&remote, repo, "origin");
+    if (result)
+    {
+        emit error(__FUNCTION__, "git_remote_lookup", result);
+        goto cleanup;
+    }
+
+    result = git_remote_fetch(remote, nullptr, nullptr, "pull");
+    if (result)
+    {
+        emit error(__FUNCTION__, "git_remote_fetch", result);
+        goto cleanup;
+    }
+
+    emit repositoryPull(path);
+
+cleanup:
+    if (remote)
+    {
+        git_remote_free(remote);
+        remote = nullptr;
+    }
+
+    if (repo)
+    {
+        git_repository_free(repo);
+        repo = nullptr;
+    }
+}
+
+void QGit::repositoryFetch(QDir path)
+{
+    git_repository *repo = nullptr;
+    git_remote *remote = nullptr;
+    int result = 0;
+
+    result = git_repository_open(&repo, path.absolutePath().toUtf8().constData());
+    if (result)
+    {
+        emit error(__FUNCTION__, "git_repository_open", result);
+        return;
+    }
+
+    result = git_remote_lookup(&remote, repo, "origin");
+    if (result)
+    {
+        emit error(__FUNCTION__, "git_remote_lookup", result);
+        goto cleanup;
+    }
+
+    result = git_remote_fetch(remote, nullptr, nullptr, "fetch");
+    if (result)
+    {
+        emit error(__FUNCTION__, "git_remote_fetch", result);
+        goto cleanup;
+    }
+
+    emit repositoryFetch(path);
+
+cleanup:
+    if (remote)
+    {
+        git_remote_free(remote);
+        remote = nullptr;
+    }
+
+    if (repo)
+    {
+        git_repository_free(repo);
+        repo = nullptr;
+    }
+}
+
+void QGit::repositoryPush(QDir path)
+{
+    git_repository *repo = nullptr;
+    git_remote *remote = nullptr;
+    int result = 0;
+
+    result = git_repository_open(&repo, path.absolutePath().toUtf8().constData());
+    if (result)
+    {
+        emit error(__FUNCTION__, "git_repository_open", result);
+        return;
+    }
+
+    result = git_remote_lookup(&remote, repo, "origin");
+    if (result)
+    {
+        emit error(__FUNCTION__, "git_remote_lookup", result);
+        goto cleanup;
+    }
+
+    result = git_remote_push(remote, nullptr, nullptr, nullptr, "push");
+    if (result)
+    {
+        emit error(__FUNCTION__, "git_remote_fetch", result);
+        goto cleanup;
+    }
+
+    emit repositoryPush(path);
+
+cleanup:
+    if (remote)
+    {
+        git_remote_free(remote);
+        remote = nullptr;
+    }
+
+    if (repo)
+    {
+        git_repository_free(repo);
+        repo = nullptr;
+    }
+}

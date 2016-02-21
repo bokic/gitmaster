@@ -30,6 +30,9 @@ public slots:
     void repositoryUnstageFiles(QDir path, QStringList items);
     void repositoryCommit(QDir path, QString message);
     void repositoryClone(QDir path, QUrl url);
+    void repositoryPull(QDir path);
+    void repositoryFetch(QDir path);
+    void repositoryPush(QDir path);
 
 signals:
     void repositoryStatusReply(QDir path, QMap<git_status_t, int> items);
@@ -41,6 +44,9 @@ signals:
     void repositoryCloneReply(QDir path, int error);
     void repositoryCloneProgressReply(QDir path, int completed_steps, int total_steps);
     void repositoryCloneTransferReply(unsigned int total_objects, unsigned int indexed_objects, unsigned int received_objects, unsigned int local_objects, unsigned int total_deltas, unsigned int indexed_deltas, size_t received_bytes);
+    void repositoryPullReply(QDir path);
+    void repositoryFetchReply(QDir path);
+    void repositoryPushReply(QDir path);
     void error(QString qgit_function, QString git_function, int code);
 
 private:
