@@ -166,7 +166,6 @@ void QGitRepository::repositoryChangedFilesReply(QDir path, QMap<QString, git_st
     for(auto file: files.keys())
     {
         const git_status_t status = files.value(file);
-        int tmp_status = GIT_STATUS_CURRENT;
 
 #if ((LIBGIT2_VER_MAJOR > 0)||(LIBGIT2_VER_MINOR >= 23))
         if (status & GIT_STATUS_CONFLICTED)
@@ -175,7 +174,7 @@ void QGitRepository::repositoryChangedFilesReply(QDir path, QMap<QString, git_st
         }
 #endif
 
-        tmp_status = status & (GIT_STATUS_INDEX_NEW | GIT_STATUS_INDEX_MODIFIED | GIT_STATUS_INDEX_DELETED | GIT_STATUS_INDEX_RENAMED | GIT_STATUS_INDEX_TYPECHANGE);
+        int tmp_status = status & (GIT_STATUS_INDEX_NEW | GIT_STATUS_INDEX_MODIFIED | GIT_STATUS_INDEX_DELETED | GIT_STATUS_INDEX_RENAMED | GIT_STATUS_INDEX_TYPECHANGE);
         if (tmp_status)
         {
             QListWidgetItem *item = new QListWidgetItem(file);
