@@ -575,7 +575,7 @@ void QGit::repositoryClone(QDir path, QUrl url)
     callbacks.payload = this;
     callbacks.transfer_progress = [](const git_transfer_progress *stats, void *payload) -> int {
 
-        QGit *_this = (QGit *)payload;
+        QGit *_this =  static_cast<QGit *>(payload);
 
         emit _this->repositoryCloneTransferReply(stats->total_objects, stats->indexed_objects, stats->received_objects, stats->local_objects, stats->total_deltas, stats->indexed_deltas, stats->received_bytes);
 
@@ -591,7 +591,7 @@ void QGit::repositoryClone(QDir path, QUrl url)
             size_t total_steps,
             void *payload)
     {
-        QGit *_this = (QGit *)payload;
+        QGit *_this = static_cast<QGit *>(payload);
 
         emit _this->repositoryCloneProgressReply(QString::fromUtf8(path), completed_steps, total_steps);
 
