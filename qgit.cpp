@@ -372,6 +372,8 @@ void QGit::repositoryUnstageFiles(QDir path, QStringList items)
 {
     QList<QByteArray> tmpStrList;
     git_repository *repo = nullptr;
+    git_reference *head = nullptr;
+    git_object *head_commit = nullptr;
     git_strarray paths = {nullptr, 0};
     int result = 0;
 
@@ -398,7 +400,21 @@ void QGit::repositoryUnstageFiles(QDir path, QStringList items)
         paths.strings[c] = (char *)tmpStrList.at(c).data();
     }
 
-    result = git_reset_default(repo, nullptr, &paths);
+    result = git_repository_head(&head, repo);
+    if (result)
+    {
+        emit error(__FUNCTION__, "git_repository_head", result);
+        goto cleanup;
+    }
+
+    result = git_reference_peel(&head_commit, head, GIT_OBJ_COMMIT);
+    if (result)
+    {
+        emit error(__FUNCTION__, "git_reference_peel", result);
+        goto cleanup;
+    }
+
+    result = git_reset_default(repo, head_commit, &paths);
     if (result)
     {
         emit error(__FUNCTION__, "git_reset_default", result);
@@ -414,6 +430,18 @@ cleanup:
         paths.strings = nullptr;
     }
     paths.count = 0;
+
+    if (head_commit)
+    {
+        git_object_free(head_commit);
+        head_commit = nullptr;
+    }
+
+    if (head)
+    {
+        git_reference_free(head);
+        head = nullptr;
+    }
 
     if (repo)
     {
