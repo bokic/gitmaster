@@ -591,7 +591,10 @@ void QGit::repositoryClone(QDir path, QUrl url)
 {
     git_repository *repo = nullptr;
     git_clone_options opts;
+#if LIBGIT2_SOVERSION > 22
+#else
     git_remote_callbacks callbacks = GIT_REMOTE_CALLBACKS_INIT;
+#endif
     int result = 0;
 
     result = git_clone_init_options(&opts, GIT_CLONE_OPTIONS_VERSION);
@@ -600,6 +603,17 @@ void QGit::repositoryClone(QDir path, QUrl url)
         goto cleanup;
     }
 
+#if LIBGIT2_SOVERSION > 22
+    opts.fetch_opts.callbacks.payload = this;
+    opts.fetch_opts.callbacks.transfer_progress = [](const git_transfer_progress *stats, void *payload) -> int {
+
+        QGit *_this =  static_cast<QGit *>(payload);
+
+        emit _this->repositoryCloneTransferReply(stats->total_objects, stats->indexed_objects, stats->received_objects, stats->local_objects, stats->total_deltas, stats->indexed_deltas, stats->received_bytes);
+
+        return _this->m_abort;
+    };
+#else
     callbacks.payload = this;
     callbacks.transfer_progress = [](const git_transfer_progress *stats, void *payload) -> int {
 
@@ -611,7 +625,7 @@ void QGit::repositoryClone(QDir path, QUrl url)
     };
 
     opts.remote_callbacks = callbacks;
-
+#endif
     opts.checkout_opts.progress_payload = this;
     opts.checkout_opts.progress_cb = [](
             const char *path,
@@ -746,7 +760,11 @@ void QGit::repositoryPush(QDir path)
         goto cleanup;
     }
 
+#if LIBGIT2_SOVERSION > 22
+    result = git_remote_push(remote, nullptr, nullptr);
+#else
     result = git_remote_push(remote, nullptr, nullptr, nullptr, "push");
+#endif
     if (result)
     {
         emit error(__FUNCTION__, "git_remote_fetch", result);
