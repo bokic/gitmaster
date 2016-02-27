@@ -26,7 +26,7 @@ QGitRepository::QGitRepository(const QString &path, QWidget *parent)
 
         hash = QCryptographicHash::hash(email.trimmed().toLatin1(), QCryptographicHash::Md5).toHex();
 
-        QString url = QString("http://www.gravatar.com/avatar/%1?s=48").arg(QString::fromLatin1(hash));
+        QString url = QString("http://www.gravatar.com/avatar/%1?s=32").arg(QString::fromLatin1(hash));
 
         reply = m_networkManager.get(QNetworkRequest(QUrl(url)));
 
@@ -34,6 +34,14 @@ QGitRepository::QGitRepository(const QString &path, QWidget *parent)
 
         ui->label_signatureEmail->setText(tr("%1 <%2>").arg(name).arg(email));
     }
+
+    ui->label_signatureEmail->setVisible(false);
+    ui->toolButton->setVisible(false);
+    ui->comboBox_4->setVisible(false);
+    ui->checkBox_3->setVisible(false);
+    ui->pushButton_commit->setVisible(false);
+    ui->pushButton_2->setVisible(false);
+    ui->plainTextEdit_commitMessage->setPlaceholderText(tr("Commit message"));
 
     connect(this, SIGNAL(repositoryBranches(QDir)), m_git, SLOT(repositoryBranches(QDir)), Qt::QueuedConnection);
     connect(m_git, SIGNAL(repositoryBranchesReply(QList<QGitBranch>)), this, SLOT(repositoryBranchesReply(QList<QGitBranch>)), Qt::QueuedConnection);
