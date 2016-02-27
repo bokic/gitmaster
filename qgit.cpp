@@ -247,6 +247,42 @@ cleanup:
     }
 }
 
+void QGit::repositoryStashes(QDir path)
+{
+    git_repository *repo = nullptr;
+    QStringList stashes;
+    int result = 0;
+
+    result = git_repository_open(&repo, path.absolutePath().toUtf8().constData());
+    if (result)
+    {
+        emit error(__FUNCTION__, "git_repository_open", result);
+        return;
+    }
+
+    result = git_stash_foreach(repo, [](size_t index, const char* message, const git_oid *stash_id, void *payload) -> int {
+
+            Q_UNUSED(index);
+            Q_UNUSED(stash_id);
+
+            QStringList *list = static_cast<QStringList *>(payload);
+
+            list->append(message);
+
+            return 0;
+        }, &stashes);
+
+//cleanup:
+
+    emit repositoryStashesReply(stashes);
+
+    if (repo)
+    {
+        git_repository_free(repo);
+        repo = nullptr;
+    }
+}
+
 void QGit::repositoryChangedFiles(QDir path)
 {
     git_repository *repo = nullptr;

@@ -4,6 +4,7 @@
 #include "git2.h"
 #include "structs.h"
 
+#include <QStringList>
 #include <QObject>
 #include <QMap>
 #include <QDir>
@@ -25,6 +26,7 @@ public:
 public slots:
     void repositoryStatus(QDir path);
     void repositoryBranches(QDir path);
+    void repositoryStashes(QDir path);
     void repositoryChangedFiles(QDir path);
     void repositoryStageFiles(QDir path, QStringList items);
     void repositoryUnstageFiles(QDir path, QStringList items);
@@ -37,6 +39,7 @@ public slots:
 signals:
     void repositoryStatusReply(QDir path, QMap<git_status_t, int> items);
     void repositoryBranchesReply(QList<QGitBranch> branches);
+    void repositoryStashesReply(QStringList stashes);
     void repositoryChangedFilesReply(QDir path, QMap<QString,git_status_t> files);
     void repositoryStageFilesReply(QDir path);
     void repositoryUnstageFilesReply(QDir path);

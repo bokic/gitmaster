@@ -46,6 +46,9 @@ QGitRepository::QGitRepository(const QString &path, QWidget *parent)
     connect(this, SIGNAL(repositoryBranches(QDir)), m_git, SLOT(repositoryBranches(QDir)), Qt::QueuedConnection);
     connect(m_git, SIGNAL(repositoryBranchesReply(QList<QGitBranch>)), this, SLOT(repositoryBranchesReply(QList<QGitBranch>)), Qt::QueuedConnection);
 
+    connect(this, SIGNAL(repositoryStashes(QDir)), m_git, SLOT(repositoryStashes(QDir)), Qt::QueuedConnection);
+    connect(m_git, SIGNAL(repositoryStashesReply(QStringList)), this, SLOT(repositoryStashesReply(QStringList)), Qt::QueuedConnection);
+
     connect(this, SIGNAL(repositoryChangedFiles(QDir)), m_git, SLOT(repositoryChangedFiles(QDir)), Qt::QueuedConnection);
     connect(m_git, SIGNAL(repositoryChangedFilesReply(QDir,QMap<QString,git_status_t>)), this, SLOT(repositoryChangedFilesReply(QDir,QMap<QString,git_status_t>)), Qt::QueuedConnection);
 
@@ -63,6 +66,7 @@ QGitRepository::QGitRepository(const QString &path, QWidget *parent)
     on_repositoryDetail_currentChanged(ui->repositoryDetail->currentIndex());
 
     emit repositoryBranches(QDir(m_path));
+    emit repositoryStashes(QDir(m_path));
 }
 
 QGitRepository::~QGitRepository()
@@ -162,6 +166,23 @@ void QGitRepository::repositoryBranchesReply(QList<QGitBranch> branches)
     ui->branchesTreeView->addTopLevelItems(items);
 
     ui->branchesTreeView->expandAll();
+}
+
+void QGitRepository::repositoryStashesReply(QStringList stashes)
+{
+    if (!stashes.isEmpty())
+    {
+        QTreeWidgetItem *item = new QTreeWidgetItem(QStringList() << tr("stashes"));
+
+        for(auto stash: stashes)
+        {
+            item->addChild(new QTreeWidgetItem(QStringList() << stash));
+        }
+
+        ui->branchesTreeView->addTopLevelItem(item);
+
+        ui->branchesTreeView->expandAll();
+    }
 }
 
 void QGitRepository::repositoryChangedFilesReply(QDir path, QMap<QString, git_status_t> files)
