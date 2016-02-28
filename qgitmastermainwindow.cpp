@@ -160,6 +160,8 @@ void QGitMasterMainWindow::on_actionCloneNew_triggered()
                 ui->treeWidget->addTopLevelItem(item);
 
                 writeSettings();
+
+                ui->treeWidget->refreshItems();
             }
         }
         else if ( currentTab == QNewRepositoryDialog::QAddWorkingCopy )
@@ -176,6 +178,8 @@ void QGitMasterMainWindow::on_actionCloneNew_triggered()
                 ui->treeWidget->addTopLevelItem(item);
 
                 writeSettings();
+
+                ui->treeWidget->refreshItems();
             }
         }
         else if ( currentTab == QNewRepositoryDialog::QCreateNewRepository )
@@ -194,6 +198,8 @@ void QGitMasterMainWindow::on_actionCloneNew_triggered()
                 ui->treeWidget->addTopLevelItem(item);
 
                 writeSettings();
+
+                ui->treeWidget->refreshItems();
             }
         }
     }
