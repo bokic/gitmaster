@@ -271,11 +271,15 @@ void QGit::repositoryStashes(QDir path)
 
             return 0;
         }, &stashes);
-
-//cleanup:
+    if (result)
+    {
+        emit error(__FUNCTION__, "git_stash_foreach", result);
+        goto cleanup;
+    }
 
     emit repositoryStashesReply(stashes);
 
+cleanup:
     if (repo)
     {
         git_repository_free(repo);
