@@ -1,5 +1,4 @@
-#ifndef QGITREPOTREEWIDGET_H
-#define QGITREPOTREEWIDGET_H
+#pragma once
 
 #include <QTreeWidget>
 #include <QThread>
@@ -29,5 +28,3 @@ signals:
 private slots:
     void repositoryStatusReply(QDir path, QMap<git_status_t, int> items);
 };
-
-#endif // QGITREPOTREEWIDGET_H

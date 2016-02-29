@@ -1,5 +1,4 @@
-#ifndef QGITMASTERMAINWINDOW_H
-#define QGITMASTERMAINWINDOW_H
+#pragma once
 
 #include <QMainWindow>
 #include <QTreeWidgetItem>
@@ -38,5 +37,3 @@ private:
     Ui::QGitMasterMainWindow *ui;
     QGit m_git;
 };
-
-#endif // QGITMASTERMAINWINDOW_H

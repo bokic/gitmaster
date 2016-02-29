@@ -1,5 +1,4 @@
-#ifndef QGITREPOSITORY_H
-#define QGITREPOSITORY_H
+#pragma once
 
 #include <QNetworkAccessManager>
 #include <QListWidgetItem>
@@ -48,5 +47,3 @@ private:
     QString m_path;
     QGit *m_git;
 };
-
-#endif // QGITREPOSITORY_H

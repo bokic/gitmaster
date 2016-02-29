@@ -1,5 +1,4 @@
-#ifndef STRUCTS_H
-#define STRUCTS_H
+#pragma once
 
 #include "git2.h"
 
@@ -14,6 +13,3 @@ struct QGitBranch {
     git_branch_t type;
 
 };
-
-#endif // STRUCTS_H
-

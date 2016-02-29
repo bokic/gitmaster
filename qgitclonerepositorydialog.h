@@ -1,5 +1,4 @@
-#ifndef QGITCLONEREPOSITORYDIALOG_H
-#define QGITCLONEREPOSITORYDIALOG_H
+#pragma once
 
 #include "qgit.h"
 
@@ -36,5 +35,3 @@ private:
 signals:
     void repositoryClone(QDir path, QUrl url);
 };
-
-#endif // QGITCLONEREPOSITORYDIALOG_H

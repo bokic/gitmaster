@@ -1,5 +1,4 @@
-#ifndef QGIT_H
-#define QGIT_H
+#pragma once
 
 #include "git2.h"
 #include "structs.h"
@@ -55,5 +54,3 @@ signals:
 private:
     volatile int m_abort;
 };
-
-#endif // QGIT_H

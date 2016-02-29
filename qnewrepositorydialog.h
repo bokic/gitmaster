@@ -1,5 +1,4 @@
-#ifndef QNEWREPOSITORYDIALOG_H
-#define QNEWREPOSITORYDIALOG_H
+#pragma once
 
 #include <QDialog>
 
@@ -36,5 +35,3 @@ private slots:
 private:
     Ui::QNewRepositoryDialog *ui;
 };
-
-#endif // QNEWREPOSITORYDIALOG_H

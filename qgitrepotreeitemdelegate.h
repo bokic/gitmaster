@@ -1,5 +1,4 @@
-#ifndef QGITREPOTREEITEMDELEGATE_H
-#define QGITREPOTREEITEMDELEGATE_H
+#pragma once
 
 #include <QAbstractItemDelegate>
 #include <QImage>
@@ -30,5 +29,3 @@ private:
     QImage m_fileStatusRemovedImage;
     QImage m_currentBranchImage;
 };
-
-#endif // QGITREPOTREEITEMDELEGATE_H
