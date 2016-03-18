@@ -156,28 +156,69 @@
      <x>0</x>
      <y>0</y>
      <width>971</width>
-     <height>25</height>
+     <height>21</height>
     </rect>
    </property>
    <widget class="QMenu" name="menu_File">
     <property name="title">
      <string>&amp;File</string>
     </property>
+    <addaction name="actionCloneNew"/>
+    <addaction name="actionOpen"/>
+    <addaction name="separator"/>
+    <addaction name="actionOpen_Bookmarked"/>
+    <addaction name="separator"/>
+    <addaction name="actionExit"/>
    </widget>
    <widget class="QMenu" name="menu_Edit">
     <property name="title">
      <string>&amp;Edit</string>
     </property>
+    <addaction name="actionUndo"/>
+    <addaction name="actionRedo"/>
+    <addaction name="separator"/>
+    <addaction name="actionCut"/>
+    <addaction name="actionCopy"/>
+    <addaction name="actionPaste"/>
+    <addaction name="actionSelect_All"/>
    </widget>
    <widget class="QMenu" name="menu_View">
     <property name="title">
      <string>&amp;View</string>
     </property>
+    <addaction name="actionShow_Hide_Bookmarks"/>
+    <addaction name="actionShow_Hosted_Repositories"/>
+    <addaction name="actionRefresh"/>
+    <addaction name="separator"/>
+    <addaction name="actionClose_Tab"/>
+    <addaction name="actionNext_Tab"/>
+    <addaction name="actionPrevious_Tab"/>
+    <addaction name="separator"/>
+    <addaction name="actionFile_Status_View"/>
+    <addaction name="actionLog_View"/>
+    <addaction name="actionSearch_View"/>
+    <addaction name="separator"/>
+    <addaction name="actionFull_Screen"/>
    </widget>
    <widget class="QMenu" name="menu_Repository">
     <property name="title">
      <string>&amp;Repository</string>
     </property>
+    <addaction name="actionSettingsRepository"/>
+    <addaction name="separator"/>
+    <addaction name="actionCommit"/>
+    <addaction name="actionDiscard"/>
+    <addaction name="actionStash"/>
+    <addaction name="separator"/>
+    <addaction name="actionPush"/>
+    <addaction name="actionPull"/>
+    <addaction name="actionFetch"/>
+    <addaction name="separator"/>
+    <addaction name="actionCheckout"/>
+    <addaction name="separator"/>
+    <addaction name="actionBranch"/>
+    <addaction name="actionMerge"/>
+    <addaction name="actionTag"/>
    </widget>
    <widget class="QMenu" name="menu_Actions">
     <property name="title">
@@ -193,6 +234,7 @@
     <property name="title">
      <string>&amp;Help</string>
     </property>
+    <addaction name="action_About"/>
    </widget>
    <addaction name="menu_File"/>
    <addaction name="menu_Edit"/>
@@ -251,6 +293,9 @@
    </property>
    <property name="text">
     <string>Clone / New</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+N</string>
    </property>
   </action>
   <action name="actionCommit">
@@ -354,6 +399,111 @@
   <action name="actionSettingsRepository">
    <property name="text">
     <string>Repository Settings</string>
+   </property>
+  </action>
+  <action name="actionOpen">
+   <property name="text">
+    <string>Open...</string>
+   </property>
+  </action>
+  <action name="actionOpen_Bookmarked">
+   <property name="text">
+    <string>Bookmark Open Repositories</string>
+   </property>
+  </action>
+  <action name="actionExit">
+   <property name="text">
+    <string>Exit</string>
+   </property>
+  </action>
+  <action name="actionUndo">
+   <property name="text">
+    <string>Undo</string>
+   </property>
+  </action>
+  <action name="actionRedo">
+   <property name="text">
+    <string>Redo</string>
+   </property>
+  </action>
+  <action name="actionCut">
+   <property name="text">
+    <string>Cut</string>
+   </property>
+  </action>
+  <action name="actionCopy">
+   <property name="text">
+    <string>Copy</string>
+   </property>
+  </action>
+  <action name="actionPaste">
+   <property name="text">
+    <string>Paste</string>
+   </property>
+  </action>
+  <action name="actionSelect_All">
+   <property name="text">
+    <string>Select All</string>
+   </property>
+  </action>
+  <action name="actionShow_Hide_Bookmarks">
+   <property name="text">
+    <string>Show/Hide Bookmarks</string>
+   </property>
+  </action>
+  <action name="actionShow_Hosted_Repositories">
+   <property name="text">
+    <string>Show Hosted Repositories</string>
+   </property>
+  </action>
+  <action name="actionRefresh">
+   <property name="text">
+    <string>Refresh</string>
+   </property>
+  </action>
+  <action name="actionClose_Tab">
+   <property name="text">
+    <string>Close Tab</string>
+   </property>
+  </action>
+  <action name="actionNext_Tab">
+   <property name="text">
+    <string>Next Tab</string>
+   </property>
+  </action>
+  <action name="actionPrevious_Tab">
+   <property name="text">
+    <string>Previous Tab</string>
+   </property>
+  </action>
+  <action name="actionFile_Status_View">
+   <property name="text">
+    <string>File Status View</string>
+   </property>
+  </action>
+  <action name="actionLog_View">
+   <property name="text">
+    <string>Log View</string>
+   </property>
+  </action>
+  <action name="actionSearch_View">
+   <property name="text">
+    <string>Search View</string>
+   </property>
+  </action>
+  <action name="actionFull_Screen">
+   <property name="text">
+    <string>Fullscreen</string>
+   </property>
+  </action>
+  <action name="actionRefresh_Repository_Status">
+   <property name="text">
+    <string>Refresh Repository Status</string>
+   </property>
+  </action>
+  <action name="action_About">
+   <property name="text">
+    <string>&amp;About</string>
    </property>
   </action>
  </widget>
