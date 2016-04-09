@@ -2,6 +2,7 @@
 
 #include "git2.h"
 
+#include <QDateTime>
 #include <QString>
 
 
@@ -12,4 +13,19 @@ struct QGitBranch {
     QString name;
     git_branch_t type;
 
+};
+
+struct QGitSignature {
+    QString name;
+    QString email;
+    QDateTime when;
+};
+
+struct QGitCommit {
+    QString id;
+    QList<QString> parents;
+    QDateTime time;
+    QGitSignature author;
+    QGitSignature commiter;
+    QString message;
 };
