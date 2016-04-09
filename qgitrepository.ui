@@ -179,10 +179,29 @@
                     <height>32</height>
                    </size>
                   </property>
+                  <property name="maximumSize">
+                   <size>
+                    <width>32</width>
+                    <height>32</height>
+                   </size>
+                  </property>
                   <property name="alignment">
                    <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
                   </property>
                  </widget>
+                </item>
+                <item>
+                 <spacer name="verticalSpacer">
+                  <property name="orientation">
+                   <enum>Qt::Vertical</enum>
+                  </property>
+                  <property name="sizeHint" stdset="0">
+                   <size>
+                    <width>20</width>
+                    <height>40</height>
+                   </size>
+                  </property>
+                 </spacer>
                 </item>
                </layout>
               </item>
@@ -222,12 +241,6 @@
                     <horstretch>0</horstretch>
                     <verstretch>0</verstretch>
                    </sizepolicy>
-                  </property>
-                  <property name="minimumSize">
-                   <size>
-                    <width>0</width>
-                    <height>125</height>
-                   </size>
                   </property>
                  </widget>
                 </item>
@@ -283,6 +296,55 @@
        <attribute name="title">
         <string>Log / History</string>
        </attribute>
+       <layout class="QVBoxLayout" name="verticalLayout_8">
+        <item>
+         <widget class="QSplitter" name="splitter_7">
+          <property name="orientation">
+           <enum>Qt::Vertical</enum>
+          </property>
+          <widget class="QTableWidget" name="tableWidget">
+           <column>
+            <property name="text">
+             <string>Graph</string>
+            </property>
+           </column>
+           <column>
+            <property name="text">
+             <string>Description</string>
+            </property>
+           </column>
+           <column>
+            <property name="text">
+             <string>Date</string>
+            </property>
+           </column>
+           <column>
+            <property name="text">
+             <string>Author</string>
+            </property>
+           </column>
+           <column>
+            <property name="text">
+             <string>Commit</string>
+            </property>
+           </column>
+          </widget>
+          <widget class="QSplitter" name="splitter_6">
+           <property name="orientation">
+            <enum>Qt::Horizontal</enum>
+           </property>
+           <widget class="QSplitter" name="splitter_5">
+            <property name="orientation">
+             <enum>Qt::Vertical</enum>
+            </property>
+            <widget class="QTextBrowser" name="textBrowser"/>
+            <widget class="QTableWidget" name="tableWidget_2"/>
+           </widget>
+           <widget class="QWidget" name="widget_2" native="true"/>
+          </widget>
+         </widget>
+        </item>
+       </layout>
       </widget>
       <widget class="QWidget" name="tabSearch">
        <attribute name="title">

@@ -24,6 +24,7 @@ signals:
     void repositoryStageFiles(QDir path, QStringList items);
     void repositoryUnstageFiles(QDir path, QStringList items);
     void repositoryCommit(QDir path, QString message);
+    void repositoryGetCommits(QDir path, QString object, int length);
 
 private slots:
     void gravatarImageDownloadFinished();
@@ -33,6 +34,7 @@ private slots:
     void repositoryStageFilesReply(QDir path);
     void repositoryUnstageFilesReply(QDir path);
     void repositoryCommitReply(QDir path, QString commit_id);
+    void repositoryGetCommitsReply(QDir path, QList<QGitCommit> commits);
 	void repositoryError(QString qgit_function, QString git_function, int code);
     void on_repositoryDetail_currentChanged(int index);
     void on_checkBox_StagedFiles_clicked();

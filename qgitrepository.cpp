@@ -32,12 +32,15 @@ QGitRepository::QGitRepository(const QString &path, QWidget *parent)
 
         hash = QCryptographicHash::hash(email.trimmed().toLatin1(), QCryptographicHash::Md5).toHex();
 
-        QString url = QString("http://www.gravatar.com/avatar/%1?s=32").arg(QString::fromLatin1(hash));
-
-        reply = m_networkManager.get(QNetworkRequest(QUrl(url)));
+        QString urlStr = QString("http://www.gravatar.com/avatar/%1?s=32").arg(QString::fromLatin1(hash));
+        auto url = QUrl(urlStr);
+        auto req = QNetworkRequest(url);
+        reply = m_networkManager.get(req);
 
         connect(reply, SIGNAL(finished()), this, SLOT(gravatarImageDownloadFinished()));
+        reply = nullptr;
 
+        ui->label_signatureGravatarImage->setToolTip(tr("%1 <%2>").arg(name).arg(email));
         ui->label_signatureEmail->setText(tr("%1 <%2>").arg(name).arg(email));
     }
 
@@ -67,12 +70,17 @@ QGitRepository::QGitRepository(const QString &path, QWidget *parent)
     connect(this, SIGNAL(repositoryCommit(QDir,QString)), m_git, SLOT(repositoryCommit(QDir,QString)), Qt::QueuedConnection);
     connect(m_git, SIGNAL(repositoryCommitReply(QDir,QString)), this, SLOT(repositoryCommitReply(QDir,QString)), Qt::QueuedConnection);
 
+    connect(this, SIGNAL(repositoryGetCommits(QDir,QString,int)), m_git, SLOT(repositoryGetCommits(QDir, QString,int)));
+    connect(m_git, SIGNAL(repositoryGetCommitsReply(QDir,QList<QGitCommit>)), this, SLOT(repositoryGetCommitsReply(QDir,QList<QGitCommit>)));
+
 	connect(m_git, SIGNAL(error(QString,QString,int)), this, SLOT(repositoryError(QString,QString,int)), Qt::QueuedConnection);
 
     on_repositoryDetail_currentChanged(ui->repositoryDetail->currentIndex());
 
     emit repositoryBranches(QDir(m_path));
     emit repositoryStashes(QDir(m_path));
+
+    emit repositoryGetCommits(QDir(m_path), "", 100);
 }
 
 QGitRepository::~QGitRepository()
@@ -289,6 +297,11 @@ void QGitRepository::repositoryCommitReply(QDir path, QString commit_id)
 	ui->pushButton_commit->setEnabled(true);
 
     on_repositoryDetail_currentChanged(ui->repositoryDetail->currentIndex());
+}
+
+void QGitRepository::repositoryGetCommitsReply(QDir path, QList<QGitCommit> commits)
+{
+
 }
 
 void QGitRepository::repositoryError(QString qgit_function, QString git_function, int code)
