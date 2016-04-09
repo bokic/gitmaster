@@ -301,7 +301,17 @@ void QGitRepository::repositoryCommitReply(QDir path, QString commit_id)
 
 void QGitRepository::repositoryGetCommitsReply(QDir path, QList<QGitCommit> commits)
 {
+    foreach(auto commit, commits)
+    {
+        int row = ui->tableWidget->rowCount();
 
+        ui->tableWidget->insertRow(row);
+
+        ui->tableWidget->setItem(row, 1, new QTableWidgetItem(commit.message.split('\n').first()));
+        ui->tableWidget->setItem(row, 2, new QTableWidgetItem(commit.time.toString()));
+        ui->tableWidget->setItem(row, 3, new QTableWidgetItem(QString("%1 <%2>").arg(commit.author.name, commit.author.email)));
+        ui->tableWidget->setItem(row, 4, new QTableWidgetItem(commit.id.left(7)));
+    }
 }
 
 void QGitRepository::repositoryError(QString qgit_function, QString git_function, int code)
