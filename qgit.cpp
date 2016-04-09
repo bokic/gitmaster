@@ -810,7 +810,7 @@ void QGit::repositoryPush(QDir path)
         goto cleanup;
     }
 
-    emit repositoryPush(path);
+    emit repositoryPushReply(path);
 
 cleanup:
     if (remote)
