@@ -19,6 +19,12 @@ QGitRepository::QGitRepository(const QString &path, QWidget *parent)
 
     ui->setupUi(this);
 
+    ui->splitter->setStretchFactor(0, 0);
+    ui->splitter->setStretchFactor(1, 1);
+
+    ui->splitter_3->setStretchFactor(0, 0);
+    ui->splitter_3->setStretchFactor(1, 1);
+
     if (QGit::gitRepositoryDefaultSignature(m_path, name, email))
     {
         QByteArray hash;

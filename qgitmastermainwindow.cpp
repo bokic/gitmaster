@@ -35,6 +35,9 @@ QGitMasterMainWindow::QGitMasterMainWindow(QWidget *parent)
 
     ui->treeWidget->setItemDelegate(treeDelegate);
 
+    ui->splitter->setStretchFactor(0, 0);
+    ui->splitter->setStretchFactor(0, 1);
+
     readSettings();
 }
 
