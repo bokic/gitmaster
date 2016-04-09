@@ -4,7 +4,10 @@
 #include "structs.h"
 
 #include <QStringList>
+#include <QDateTime>
 #include <QObject>
+#include <QString>
+#include <QList>
 #include <QMap>
 #include <QDir>
 #include <QUrl>
@@ -34,6 +37,7 @@ public slots:
     void repositoryPull(QDir path);
     void repositoryFetch(QDir path);
     void repositoryPush(QDir path);
+    void repositoryGetCommits(QDir path, QString object, int length);
 
 signals:
     void repositoryStatusReply(QDir path, QMap<git_status_t, int> items);
@@ -49,6 +53,7 @@ signals:
     void repositoryPullReply(QDir path);
     void repositoryFetchReply(QDir path);
     void repositoryPushReply(QDir path);
+    void repositoryGetCommitsReply(QDir path, QList<QGitCommit> commits);
     void error(QString qgit_function, QString git_function, int code);
 
 private:

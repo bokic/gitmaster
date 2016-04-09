@@ -825,3 +825,85 @@ cleanup:
         repo = nullptr;
     }
 }
+
+void QGit::repositoryGetCommits(QDir path, QString object, int length)
+{
+    QList<QGitCommit> commits;
+    git_repository *repo = nullptr;
+    git_revwalk *walker = nullptr;
+    int result = 0;
+
+    result = git_repository_open(&repo, path.absolutePath().toUtf8().constData());
+    if (result)
+    {
+        emit error(__FUNCTION__, "git_repository_open", result);
+        return;
+    }
+
+    result = git_revwalk_new(&walker, repo);
+    result = git_revwalk_push_range(walker, "HEAD~20..HEAD");
+
+    git_oid oid;
+    while (!git_revwalk_next(&oid, walker)) {
+
+        QGitCommit item;
+        git_commit *commit = nullptr;
+        int parents = 0;
+
+        result = git_commit_lookup(&commit, repo, &oid);
+        item.id = QString::fromUtf8(git_oid_tostr_s(&oid));
+
+        parents = git_commit_parentcount(commit);
+        for (int index = 0; index < parents; index++)
+        {
+            git_commit *parent = nullptr;
+            QString parentStr;
+
+            git_commit_parent(&parent, commit, index);
+
+            result = git_commit_lookup(&parent, repo, &oid);
+            parentStr = QString::fromUtf8(git_oid_tostr_s(&oid));
+
+            item.parents.append(parentStr);
+
+            git_commit_free(parent);
+            parent = nullptr;
+        }
+
+        auto time = git_commit_time(commit);
+        auto timeOffset = git_commit_time_offset(commit);
+        item.time = QDateTime::fromMSecsSinceEpoch(time * 1000);
+        item.time.setOffsetFromUtc(timeOffset * 60);
+
+        item.author.name = QString::fromUtf8(git_commit_author(commit)->name);
+        item.author.email = QString::fromUtf8(git_commit_author(commit)->email);
+        item.author.when = QDateTime::fromMSecsSinceEpoch(git_commit_author(commit)->when.time * 1000);
+        item.author.when.setOffsetFromUtc(git_commit_author(commit)->when.offset * 60);
+
+        item.commiter.name = QString::fromUtf8(git_commit_committer(commit)->name);
+        item.commiter.email = QString::fromUtf8(git_commit_committer(commit)->email);
+        item.commiter.when = QDateTime::fromMSecsSinceEpoch(git_commit_committer(commit)->when.time * 1000);
+        item.commiter.when.setOffsetFromUtc(git_commit_committer(commit)->when.offset * 60);
+
+        item.message = QString::fromUtf8(git_commit_message(commit));
+
+        commits.push_back(item);
+
+        git_commit_free(commit);
+        commit = nullptr;
+    }
+
+    emit repositoryGetCommitsReply(path, commits);
+cleanup:
+    if (walker)
+    {
+        git_revwalk_free(walker);
+        walker = nullptr;
+    }
+
+    if (repo)
+    {
+        git_repository_free(repo);
+        repo = nullptr;
+    }
+}
