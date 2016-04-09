@@ -52,5 +52,5 @@ signals:
     void error(QString qgit_function, QString git_function, int code);
 
 private:
-    volatile int m_abort;
+    volatile int m_abort = 0;
 };

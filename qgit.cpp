@@ -7,7 +7,6 @@
 
 QGit::QGit(QObject *parent)
     : QObject(parent)
-    , m_abort(0)
 {
     git_libgit2_init();
 }
