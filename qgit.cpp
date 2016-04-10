@@ -829,6 +829,7 @@ cleanup:
 void QGit::repositoryGetCommits(QDir path, QString object, int length)
 {
     QList<QGitCommit> commits;
+    QByteArray revision_range;
     git_repository *repo = nullptr;
     git_revwalk *walker = nullptr;
     int result = 0;
@@ -841,7 +842,17 @@ void QGit::repositoryGetCommits(QDir path, QString object, int length)
     }
 
     result = git_revwalk_new(&walker, repo);
-    result = git_revwalk_push_range(walker, "HEAD~20..HEAD");
+
+    if (object.isEmpty())
+    {
+        revision_range = QByteArray("HEAD~<<>>..HEAD").replace("<<>>", QByteArray::number(length));
+    }
+    else
+    {
+        revision_range = QByteArray("{{}}~<<>>..{{}}").replace("{{}}", object.toLatin1()).replace("<<>>", QByteArray::number(length));
+    }
+
+    result = git_revwalk_push_range(walker, revision_range.constData());
 
     git_oid oid;
     while (!git_revwalk_next(&oid, walker)) {
