@@ -12,5 +12,6 @@
         <file>images/checkout.svg</file>
         <file>images/commit.svg</file>
         <file>images/discard.svg</file>
+        <file>images/stash.svg</file>
     </qresource>
 </RCC>

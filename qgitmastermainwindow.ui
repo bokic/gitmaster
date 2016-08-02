@@ -326,6 +326,10 @@
    </property>
   </action>
   <action name="actionStash">
+   <property name="icon">
+    <iconset resource="resource.qrc">
+     <normaloff>:/images/stash.svg</normaloff>:/images/stash.svg</iconset>
+   </property>
    <property name="text">
     <string>Stash</string>
    </property>
