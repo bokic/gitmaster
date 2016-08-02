@@ -13,5 +13,8 @@
         <file>images/commit.svg</file>
         <file>images/discard.svg</file>
         <file>images/stash.svg</file>
+        <file>images/file_add.svg</file>
+        <file>images/file_remove.svg</file>
+        <file>images/file_add_remove.svg</file>
     </qresource>
 </RCC>

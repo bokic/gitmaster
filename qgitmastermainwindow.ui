@@ -335,16 +335,28 @@
    </property>
   </action>
   <action name="actionAdd">
+   <property name="icon">
+    <iconset resource="resource.qrc">
+     <normaloff>:/images/file_add.svg</normaloff>:/images/file_add.svg</iconset>
+   </property>
    <property name="text">
     <string>Add</string>
    </property>
   </action>
   <action name="actionRemove">
+   <property name="icon">
+    <iconset resource="resource.qrc">
+     <normaloff>:/images/file_remove.svg</normaloff>:/images/file_remove.svg</iconset>
+   </property>
    <property name="text">
     <string>Remove</string>
    </property>
   </action>
   <action name="actionAdd_Remove">
+   <property name="icon">
+    <iconset resource="resource.qrc">
+     <normaloff>:/images/file_add_remove.svg</normaloff>:/images/file_add_remove.svg</iconset>
+   </property>
    <property name="text">
     <string>Add/Remove</string>
    </property>
