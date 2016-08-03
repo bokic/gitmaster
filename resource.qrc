@@ -16,5 +16,8 @@
         <file>images/file_add.svg</file>
         <file>images/file_remove.svg</file>
         <file>images/file_add_remove.svg</file>
+        <file>images/pull.svg</file>
+        <file>images/push.svg</file>
+        <file>images/fetch.svg</file>
     </qresource>
 </RCC>

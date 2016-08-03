@@ -362,16 +362,28 @@
    </property>
   </action>
   <action name="actionFetch">
+   <property name="icon">
+    <iconset resource="resource.qrc">
+     <normaloff>:/images/fetch.svg</normaloff>:/images/fetch.svg</iconset>
+   </property>
    <property name="text">
     <string>Fetch</string>
    </property>
   </action>
   <action name="actionPull">
+   <property name="icon">
+    <iconset resource="resource.qrc">
+     <normaloff>:/images/pull.svg</normaloff>:/images/pull.svg</iconset>
+   </property>
    <property name="text">
     <string>Pull</string>
    </property>
   </action>
   <action name="actionPush">
+   <property name="icon">
+    <iconset resource="resource.qrc">
+     <normaloff>:/images/push.svg</normaloff>:/images/push.svg</iconset>
+   </property>
    <property name="text">
     <string>Push</string>
    </property>
