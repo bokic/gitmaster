@@ -816,6 +816,10 @@ void QGit::commit(QString message)
               message.toUtf8().constData(),  /* message */
               tree,                          /* root tree */
               0);                            /* parent count */
+            if (res)
+            {
+                throw QGitError("git_commit_create_v", res);
+            }
         }
         else
         {
@@ -842,6 +846,10 @@ void QGit::commit(QString message)
               tree,                          /* root tree */
               1,                             /* parent count */
               parent);                       /* parent */
+            if (res)
+            {
+                throw QGitError("git_commit_create_v", res);
+            }
         }
 
     } catch(QGitError ex) {
