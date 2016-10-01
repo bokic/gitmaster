@@ -1116,12 +1116,12 @@ void QGit::push()
 void QGit::listCommits(QString object, int length)
 {
     QList<QGitCommit> commits;
-    QByteArray revision_range;
     git_repository *repo = nullptr;
     git_revwalk *walker = nullptr;
     git_commit *parent = nullptr;
     git_commit *commit = nullptr;
     git_diff *diff = nullptr;
+    git_oid oid;
     int count = 0;
     int res = 0;
 
@@ -1151,15 +1151,25 @@ void QGit::listCommits(QString object, int length)
         }
         else
         {
-            revision_range = QByteArray("{{}}~<<>>..{{}}").replace("{{}}", object.toLatin1()).replace("<<>>", QByteArray::number(length));
-            res = git_revwalk_push_range(walker, revision_range.constData());
+            res = git_oid_fromstr(&oid, object.toLatin1().constData());
             if (res)
             {
-                throw QGitError("git_revwalk_push_range", res);
+                throw QGitError("git_oid_fromstr", res);
             }
+
+            res = git_revwalk_push(walker, &oid);
+            if (res)
+            {
+                throw QGitError("git_revwalk_push", res);
+            }
+
+            memset(&oid, 0, sizeof(oid));
+
+            git_revwalk_next(&oid, walker);
+
+            memset(&oid, 0, sizeof(oid));
         }
 
-        git_oid oid;
         while ((!git_revwalk_next(&oid, walker))&&(count < length)) {
 
             QGitCommit item;
