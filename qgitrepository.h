@@ -35,7 +35,9 @@ private slots:
     void repositoryUnstageFilesReply(QGitError error);
     void repositoryCommitReply(QString commit_id, QGitError error);
     void repositoryGetCommitsReply(QList<QGitCommit> commits, QGitError error);
+    void historyTableSliderMoved(int pos);
     void on_repositoryDetail_currentChanged(int index);
+    void on_tableWidget_currentCellChanged(int currentRow, int currentColumn, int previousRow, int previousColumn);
     void on_checkBox_StagedFiles_clicked();
     void on_checkBox_UnstagedFiles_clicked();
     void on_listWidget_staged_itemChanged(QListWidgetItem *item);
@@ -43,8 +45,10 @@ private slots:
     void on_pushButton_commit_clicked();
 
 private:
+    void fetchCommits();
     Ui::QGitRepository *ui;
     QNetworkAccessManager m_networkManager;
     QString m_path;
+    bool m_allCommitsLoaded;
     QGit *m_git;
 };

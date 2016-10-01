@@ -5,13 +5,18 @@
 #include <QNetworkRequest>
 #include <QNetworkReply>
 #include <QMessageBox>
+#include <QScrollBar>
 #include <QDebug>
 #include <QList>
+
+#define COMMIT_COUNT_TO_LOAD 100
+
 
 QGitRepository::QGitRepository(const QString &path, QWidget *parent)
     : QWidget(parent)
     , ui(new Ui::QGitRepository)
     , m_path(path)
+    , m_allCommitsLoaded(false)
     , m_git(new QGit(this))
 {
     QString name;
@@ -73,12 +78,16 @@ QGitRepository::QGitRepository(const QString &path, QWidget *parent)
     connect(this, SIGNAL(repositoryGetCommits(QString,int)), m_git, SLOT(listCommits(QString,int)));
     connect(m_git, SIGNAL(listCommitsReply(QList<QGitCommit>,QGitError)), this, SLOT(repositoryGetCommitsReply(QList<QGitCommit>,QGitError)));
 
+    connect(ui->tableWidget->verticalScrollBar(), SIGNAL(sliderMoved(int)), this, SLOT(historyTableSliderMoved(int)));
+
+
     on_repositoryDetail_currentChanged(ui->repositoryDetail->currentIndex());
 
     m_git->setPath(QDir(m_path));
     emit repositoryBranches();
     emit repositoryStashes();
-    emit repositoryGetCommits("", 100);
+
+    fetchCommits();
 }
 
 QGitRepository::~QGitRepository()
@@ -311,10 +320,22 @@ void QGitRepository::repositoryGetCommitsReply(QList<QGitCommit> commits, QGitEr
 
         ui->tableWidget->insertRow(row);
 
-        ui->tableWidget->setItem(row, 1, new QTableWidgetItem(commit.message().split('\n').first()));
-        ui->tableWidget->setItem(row, 2, new QTableWidgetItem(commit.time().toString()));
-        ui->tableWidget->setItem(row, 3, new QTableWidgetItem(QString("%1 <%2>").arg(commit.author().name(), commit.author().email())));
-        ui->tableWidget->setItem(row, 4, new QTableWidgetItem(commit.id().left(7)));
+        QTableWidgetItem *item = nullptr;
+
+        item = new QTableWidgetItem(commit.message().split('\n').first());
+        ui->tableWidget->setItem(row, 1, item);
+        item = new QTableWidgetItem(commit.time().toString());
+        ui->tableWidget->setItem(row, 2, item);
+        item = new QTableWidgetItem(QString("%1 <%2>").arg(commit.author().name(), commit.author().email()));
+        ui->tableWidget->setItem(row, 3, item);
+        item = new QTableWidgetItem(commit.id().left(7));
+        item->setData(Qt::UserRole, commit.id());
+        ui->tableWidget->setItem(row, 4, item);
+    }
+
+    if (commits.count() < COMMIT_COUNT_TO_LOAD)
+    {
+        m_allCommitsLoaded = true;
     }
 }
 
@@ -408,4 +429,52 @@ void QGitRepository::on_pushButton_commit_clicked()
     ui->pushButton_commit->setEnabled(false);
 
     emit repositoryCommit(ui->plainTextEdit_commitMessage->toPlainText());
+}
+
+void QGitRepository::historyTableSliderMoved(int pos)
+{
+    if (pos == ui->tableWidget->verticalScrollBar()->maximum())
+    {
+        int rows = ui->tableWidget->rowCount();
+
+        if (rows > 0)
+        {
+            fetchCommits();
+        }
+    }
+}
+
+void QGitRepository::on_tableWidget_currentCellChanged(int currentRow, int currentColumn, int previousRow, int previousColumn)
+{
+    Q_UNUSED(currentColumn);
+    Q_UNUSED(previousRow);
+    Q_UNUSED(previousColumn);
+
+    int rows = ui->tableWidget->rowCount();
+
+    if (currentRow == rows - 1)
+    {
+        fetchCommits();
+    }
+}
+
+void QGitRepository::fetchCommits()
+{
+    if (!m_allCommitsLoaded)
+    {
+        int rows = ui->tableWidget->rowCount();
+
+        if (rows > 0)
+        {
+            QString last_commit_hash = ui->tableWidget->item(rows - 1, 4)->data(Qt::UserRole).toString();
+
+            qDebug() << last_commit_hash;
+
+            emit repositoryGetCommits(last_commit_hash, COMMIT_COUNT_TO_LOAD);
+        }
+        else
+        {
+            emit repositoryGetCommits("", COMMIT_COUNT_TO_LOAD);
+        }
+    }
 }
