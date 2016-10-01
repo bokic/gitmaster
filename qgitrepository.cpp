@@ -468,8 +468,6 @@ void QGitRepository::fetchCommits()
         {
             QString last_commit_hash = ui->tableWidget->item(rows - 1, 4)->data(Qt::UserRole).toString();
 
-            qDebug() << last_commit_hash;
-
             emit repositoryGetCommits(last_commit_hash, COMMIT_COUNT_TO_LOAD);
         }
         else
