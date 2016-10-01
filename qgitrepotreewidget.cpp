@@ -5,11 +5,12 @@ QGitRepoTreeWidget::QGitRepoTreeWidget(QWidget *parent)
     : QTreeWidget(parent)
     , m_thread(this)
     , m_git(new QGit())
+    , m_refreshIndex(0)
 {
     m_git->moveToThread(&m_thread);
 
-    connect(this, SIGNAL(repositoryStatus(QDir)), m_git, SLOT(repositoryStatus(QDir)), Qt::QueuedConnection);
-    connect(m_git, SIGNAL(repositoryStatusReply(QDir,QMap<git_status_t,int>)), this, SLOT(repositoryStatusReply(QDir,QMap<git_status_t,int>)), Qt::QueuedConnection);
+    connect(this, SIGNAL(repositoryStatus()), m_git, SLOT(status()), Qt::QueuedConnection);
+    connect(m_git, SIGNAL(statusReply(QMap<git_status_t,int>,QGitError)), this, SLOT(repositoryStatusReply(QMap<git_status_t,int>,QGitError)), Qt::QueuedConnection);
 
     m_thread.start();
 }
@@ -24,23 +25,24 @@ QGitRepoTreeWidget::~QGitRepoTreeWidget()
 
 void QGitRepoTreeWidget::refreshItems()
 {
-    for(int index = 0; index < topLevelItemCount(); index++)
-    {
-        QTreeWidgetItem *item = topLevelItem(index);
+    m_refreshIndex = 0;
 
-        emit repositoryStatus(QDir(item->data(0, QGitRepoTreeItemDelegate::QItemPath).toString()));
-    }
+    refreshItem();
 }
 
-void QGitRepoTreeWidget::repositoryStatusReply(QDir path, QMap<git_status_t, int> items)
+void QGitRepoTreeWidget::repositoryStatusReply(QMap<git_status_t,int> items, QGitError error)
 {
+    Q_UNUSED(error);
+
     for(int index = 0; index < topLevelItemCount(); index++)
     {
         QTreeWidgetItem *item = topLevelItem(index);
 
         QString item_path = item->data(0, QGitRepoTreeItemDelegate::QItemPath).toString();
 
-        if (item_path == QDir::toNativeSeparators(path.absolutePath()))
+        auto tmp = QDir::toNativeSeparators(m_git->path().absolutePath());
+
+        if (item_path == QDir::toNativeSeparators(m_git->path().absolutePath()))
         {
             item->setData(0, QGitRepoTreeItemDelegate::QItemModifiedFiles, QVariant(0));
             item->setData(0, QGitRepoTreeItemDelegate::QItemDeletedFiles, QVariant(0));
@@ -72,4 +74,24 @@ void QGitRepoTreeWidget::repositoryStatusReply(QDir path, QMap<git_status_t, int
             break;
         }
     }
+
+    refreshItem();
+}
+
+void QGitRepoTreeWidget::refreshItem()
+{
+    if (m_refreshIndex >= topLevelItemCount())
+    {
+        m_refreshIndex = 0;
+
+        return;
+    }
+
+    QTreeWidgetItem *item = topLevelItem(m_refreshIndex++);
+
+    QDir dir = QDir(item->data(0, QGitRepoTreeItemDelegate::QItemPath).toString());
+
+    m_git->setPath(dir);
+
+    emit repositoryStatus();
 }

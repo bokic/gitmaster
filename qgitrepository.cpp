@@ -52,35 +52,33 @@ QGitRepository::QGitRepository(const QString &path, QWidget *parent)
     ui->pushButton_2->setVisible(false);
     ui->plainTextEdit_commitMessage->setPlaceholderText(tr("Commit message"));
 
-    connect(this, SIGNAL(repositoryBranches(QDir)), m_git, SLOT(repositoryBranches(QDir)), Qt::QueuedConnection);
-    connect(m_git, SIGNAL(repositoryBranchesReply(QList<QGitBranch>)), this, SLOT(repositoryBranchesReply(QList<QGitBranch>)), Qt::QueuedConnection);
+    connect(this, SIGNAL(repositoryBranches()), m_git, SLOT(listBranches()), Qt::QueuedConnection);
+    connect(m_git, SIGNAL(listBranchesReply(QList<QGitBranch>, QGitError)), this, SLOT(repositoryBranchesReply(QList<QGitBranch>, QGitError)), Qt::QueuedConnection);
 
-    connect(this, SIGNAL(repositoryStashes(QDir)), m_git, SLOT(repositoryStashes(QDir)), Qt::QueuedConnection);
-    connect(m_git, SIGNAL(repositoryStashesReply(QStringList)), this, SLOT(repositoryStashesReply(QStringList)), Qt::QueuedConnection);
+    connect(this, SIGNAL(repositoryStashes()), m_git, SLOT(listStashes()), Qt::QueuedConnection);
+    connect(m_git, SIGNAL(listStashesReply(QStringList,QGitError)), this, SLOT(repositoryStashesReply(QStringList,QGitError)), Qt::QueuedConnection);
 
-    connect(this, SIGNAL(repositoryChangedFiles(QDir)), m_git, SLOT(repositoryChangedFiles(QDir)), Qt::QueuedConnection);
-    connect(m_git, SIGNAL(repositoryChangedFilesReply(QDir,QMap<QString,git_status_t>)), this, SLOT(repositoryChangedFilesReply(QDir,QMap<QString,git_status_t>)), Qt::QueuedConnection);
+    connect(this, SIGNAL(repositoryChangedFiles()), m_git, SLOT(listChangedFiles()), Qt::QueuedConnection);
+    connect(m_git, SIGNAL(listChangedFilesReply(QMap<QString,git_status_t>,QGitError)), this, SLOT(repositoryChangedFilesReply(QMap<QString,git_status_t>,QGitError)), Qt::QueuedConnection);
 
-    connect(this, SIGNAL(repositoryStageFiles(QDir,QStringList)), m_git, SLOT(repositoryStageFiles(QDir,QStringList)), Qt::QueuedConnection);
-    connect(m_git, SIGNAL(repositoryStageFilesReply(QDir)), this, SLOT(repositoryStageFilesReply(QDir)), Qt::QueuedConnection);
+    connect(this, SIGNAL(repositoryStageFiles(QStringList)), m_git, SLOT(stageFiles(QStringList)), Qt::QueuedConnection);
+    connect(m_git, SIGNAL(stageFilesReply(QGitError)), this, SLOT(repositoryStageFilesReply(QGitError)), Qt::QueuedConnection);
 
-    connect(this, SIGNAL(repositoryUnstageFiles(QDir,QStringList)), m_git, SLOT(repositoryUnstageFiles(QDir,QStringList)), Qt::QueuedConnection);
-    connect(m_git, SIGNAL(repositoryUnstageFilesReply(QDir)), this, SLOT(repositoryUnstageFilesReply(QDir)), Qt::QueuedConnection);
+    connect(this, SIGNAL(repositoryUnstageFiles(QStringList)), m_git, SLOT(unstageFiles(QStringList)), Qt::QueuedConnection);
+    connect(m_git, SIGNAL(unstageFilesReply(QGitError)), this, SLOT(repositoryUnstageFilesReply(QGitError)), Qt::QueuedConnection);
 
-    connect(this, SIGNAL(repositoryCommit(QDir,QString)), m_git, SLOT(repositoryCommit(QDir,QString)), Qt::QueuedConnection);
-    connect(m_git, SIGNAL(repositoryCommitReply(QDir,QString)), this, SLOT(repositoryCommitReply(QDir,QString)), Qt::QueuedConnection);
+    connect(this, SIGNAL(repositoryCommit(QString)), m_git, SLOT(commit(QString)), Qt::QueuedConnection);
+    connect(m_git, SIGNAL(commitReply(QString,QGitError)), this, SLOT(repositoryCommitReply(QString,QGitError)), Qt::QueuedConnection);
 
-    connect(this, SIGNAL(repositoryGetCommits(QDir,QString,int)), m_git, SLOT(repositoryGetCommits(QDir, QString,int)));
-    connect(m_git, SIGNAL(repositoryGetCommitsReply(QDir,QList<QGitCommit>)), this, SLOT(repositoryGetCommitsReply(QDir,QList<QGitCommit>)));
-
-	connect(m_git, SIGNAL(error(QString,QString,int)), this, SLOT(repositoryError(QString,QString,int)), Qt::QueuedConnection);
+    connect(this, SIGNAL(repositoryGetCommits(QString,int)), m_git, SLOT(listCommits(QString,int)));
+    connect(m_git, SIGNAL(listCommitsReply(QList<QGitCommit>,QGitError)), this, SLOT(repositoryGetCommitsReply(QList<QGitCommit>,QGitError)));
 
     on_repositoryDetail_currentChanged(ui->repositoryDetail->currentIndex());
 
-    emit repositoryBranches(QDir(m_path));
-    emit repositoryStashes(QDir(m_path));
-
-    emit repositoryGetCommits(QDir(m_path), "", 100);
+    m_git->setPath(QDir(m_path));
+    emit repositoryBranches();
+    emit repositoryStashes();
+    emit repositoryGetCommits("", 100);
 }
 
 QGitRepository::~QGitRepository()
@@ -103,8 +101,10 @@ void QGitRepository::gravatarImageDownloadFinished()
     reply->deleteLater();
 }
 
-void QGitRepository::repositoryBranchesReply(QList<QGitBranch> branches)
+void QGitRepository::repositoryBranchesReply(QList<QGitBranch> branches, QGitError error)
 {
+    Q_UNUSED(error);
+
     QList<QTreeWidgetItem *> items;
     QTreeWidgetItem *item_file_status = new QTreeWidgetItem(QStringList() << tr("File Status"));
     QTreeWidgetItem *item_branches = new QTreeWidgetItem(QStringList() << tr("Branches"));
@@ -117,11 +117,11 @@ void QGitRepository::repositoryBranchesReply(QList<QGitBranch> branches)
 
     for(auto branch: branches)
     {
-        QStringList items = branch.name.split('/');
+        QStringList items = branch.name().split('/');
         QTreeWidgetItem *branch_item = nullptr;
         QString originStr, branchStr;
 
-        switch(branch.type)
+        switch(branch.type())
         {
         case GIT_BRANCH_LOCAL:
             if (items.count() == 3)
@@ -182,8 +182,10 @@ void QGitRepository::repositoryBranchesReply(QList<QGitBranch> branches)
     ui->branchesTreeView->expandAll();
 }
 
-void QGitRepository::repositoryStashesReply(QStringList stashes)
+void QGitRepository::repositoryStashesReply(QStringList stashes, QGitError error)
 {
+    Q_UNUSED(error);
+
     if (!stashes.isEmpty())
     {
         QTreeWidgetItem *item = new QTreeWidgetItem(QStringList() << tr("stashes"));
@@ -199,9 +201,9 @@ void QGitRepository::repositoryStashesReply(QStringList stashes)
     }
 }
 
-void QGitRepository::repositoryChangedFilesReply(QDir path, QMap<QString, git_status_t> files)
+void QGitRepository::repositoryChangedFilesReply(QMap<QString, git_status_t> files, QGitError error)
 {
-    Q_UNUSED(path);
+    Q_UNUSED(error);
 
     ui->listWidget_staged->clear();
     ui->listWidget_unstaged->clear();
@@ -273,24 +275,24 @@ void QGitRepository::repositoryChangedFilesReply(QDir path, QMap<QString, git_st
     }
 }
 
-void QGitRepository::repositoryStageFilesReply(QDir path)
+void QGitRepository::repositoryStageFilesReply(QGitError error)
 {
-    Q_UNUSED(path);
+    Q_UNUSED(error);
 
-    emit repositoryChangedFiles(m_path);
+    emit repositoryChangedFiles();
 }
 
-void QGitRepository::repositoryUnstageFilesReply(QDir path)
+void QGitRepository::repositoryUnstageFilesReply(QGitError error)
 {
-    Q_UNUSED(path);
+    Q_UNUSED(error);
 
-    emit repositoryChangedFiles(m_path);
+    emit repositoryChangedFiles();
 }
 
-void QGitRepository::repositoryCommitReply(QDir path, QString commit_id)
+void QGitRepository::repositoryCommitReply(QString commit_id, QGitError error)
 {
-    Q_UNUSED(path);
     Q_UNUSED(commit_id);
+    Q_UNUSED(error);
 
     ui->plainTextEdit_commitMessage->clear();
 	ui->plainTextEdit_commitMessage->setEnabled(true);
@@ -299,34 +301,28 @@ void QGitRepository::repositoryCommitReply(QDir path, QString commit_id)
     on_repositoryDetail_currentChanged(ui->repositoryDetail->currentIndex());
 }
 
-void QGitRepository::repositoryGetCommitsReply(QDir path, QList<QGitCommit> commits)
+void QGitRepository::repositoryGetCommitsReply(QList<QGitCommit> commits, QGitError error)
 {
+    Q_UNUSED(error);
+
     foreach(auto commit, commits)
     {
         int row = ui->tableWidget->rowCount();
 
         ui->tableWidget->insertRow(row);
 
-        ui->tableWidget->setItem(row, 1, new QTableWidgetItem(commit.message.split('\n').first()));
-        ui->tableWidget->setItem(row, 2, new QTableWidgetItem(commit.time.toString()));
-        ui->tableWidget->setItem(row, 3, new QTableWidgetItem(QString("%1 <%2>").arg(commit.author.name, commit.author.email)));
-        ui->tableWidget->setItem(row, 4, new QTableWidgetItem(commit.id.left(7)));
+        ui->tableWidget->setItem(row, 1, new QTableWidgetItem(commit.message().split('\n').first()));
+        ui->tableWidget->setItem(row, 2, new QTableWidgetItem(commit.time().toString()));
+        ui->tableWidget->setItem(row, 3, new QTableWidgetItem(QString("%1 <%2>").arg(commit.author().name(), commit.author().email())));
+        ui->tableWidget->setItem(row, 4, new QTableWidgetItem(commit.id().left(7)));
     }
-}
-
-void QGitRepository::repositoryError(QString qgit_function, QString git_function, int code)
-{
-	QMessageBox::warning(this, tr("Error"), tr("Error in:\nqt function (%1)\ngit function (%2)\nError code: %3").arg(qgit_function).arg(git_function).arg(code));
-
-	ui->plainTextEdit_commitMessage->setEnabled(true);
-	ui->pushButton_commit->setEnabled(true);
 }
 
 void QGitRepository::on_repositoryDetail_currentChanged(int index)
 {
     switch(index) {
     case 0:
-        emit repositoryChangedFiles(m_path);
+        emit repositoryChangedFiles();
         break;
     case 1:
         Q_UNIMPLEMENTED();
@@ -355,7 +351,7 @@ void QGitRepository::on_checkBox_StagedFiles_clicked()
 
     if (items.count() > 0)
     {
-        emit repositoryUnstageFiles(m_path, items);
+        emit repositoryUnstageFiles(items);
     }
 }
 
@@ -374,7 +370,7 @@ void QGitRepository::on_checkBox_UnstagedFiles_clicked()
 
     if (items.count() > 0)
     {
-        emit repositoryStageFiles(m_path, items);
+        emit repositoryStageFiles(items);
     }
 }
 
@@ -386,7 +382,7 @@ void QGitRepository::on_listWidget_staged_itemChanged(QListWidgetItem *item)
 
         items.append(item->text());
 
-        emit repositoryUnstageFiles(m_path, items);
+        emit repositoryUnstageFiles(items);
 
         delete ui->listWidget_staged->takeItem(ui->listWidget_staged->row(item));
     }
@@ -400,7 +396,7 @@ void QGitRepository::on_listWidget_unstaged_itemChanged(QListWidgetItem *item)
 
         items.append(item->text());
 
-        emit repositoryStageFiles(m_path, items);
+        emit repositoryStageFiles(items);
 
         delete ui->listWidget_unstaged->takeItem(ui->listWidget_unstaged->row(item));
     }
@@ -411,5 +407,5 @@ void QGitRepository::on_pushButton_commit_clicked()
     ui->plainTextEdit_commitMessage->setEnabled(false);
     ui->pushButton_commit->setEnabled(false);
 
-    emit repositoryCommit(m_path, ui->plainTextEdit_commitMessage->toPlainText());
+    emit repositoryCommit(ui->plainTextEdit_commitMessage->toPlainText());
 }

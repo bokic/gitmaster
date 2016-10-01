@@ -16,10 +16,12 @@ CONFIG(release, debug|release)::TARGET = gitmaster
 DESTDIR    = $$PWD/bin
 TEMPLATE = app
 
+include(qgit/qgit.pri)
+
 win32:INCLUDEPATH += include
 
-SOURCES += main.cpp qgitmastermainwindow.cpp qgitrepository.cpp qnewrepositorydialog.cpp qgitclonerepositorydialog.cpp qgit.cpp qgitrepotreeitemdelegate.cpp qgitrepotreewidget.cpp qgitdiffviewer.cpp
-HEADERS +=          qgitmastermainwindow.h   qgitrepository.h   qnewrepositorydialog.h   qgitclonerepositorydialog.h   qgit.h   qgitrepotreeitemdelegate.h   qgitrepotreewidget.h   qgitdiffviewer.h   structs.h
+SOURCES += main.cpp qgitmastermainwindow.cpp qgitrepository.cpp qnewrepositorydialog.cpp qgitclonerepositorydialog.cpp qgitrepotreeitemdelegate.cpp qgitrepotreewidget.cpp qgitdiffviewer.cpp
+HEADERS +=          qgitmastermainwindow.h   qgitrepository.h   qnewrepositorydialog.h   qgitclonerepositorydialog.h   qgitrepotreeitemdelegate.h   qgitrepotreewidget.h   qgitdiffviewer.h
 FORMS   +=          qgitmastermainwindow.ui  qgitrepository.ui  qnewrepositorydialog.ui  qgitclonerepositorydialog.ui
 
 RESOURCES += resource.qrc

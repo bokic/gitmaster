@@ -6,7 +6,7 @@ QGitCloneRepositoryDialog::QGitCloneRepositoryDialog(const QString &url, const Q
     , ui(new Ui::QGitCloneRepositoryDialog)
     , m_url(url)
     , m_path(path)
-    , m_git(new QGit()) // TODO: This line crashes the app. Check why.
+    , m_git(new QGit())
     , m_aborted(false)
 {
     ui->setupUi(this);

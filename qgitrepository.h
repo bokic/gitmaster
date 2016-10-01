@@ -18,24 +18,23 @@ public:
     ~QGitRepository();
 
 signals:
-    void repositoryBranches(QDir path);
-    void repositoryStashes(QDir path);
-    void repositoryChangedFiles(QDir path);
-    void repositoryStageFiles(QDir path, QStringList items);
-    void repositoryUnstageFiles(QDir path, QStringList items);
-    void repositoryCommit(QDir path, QString message);
-    void repositoryGetCommits(QDir path, QString object, int length);
+    void repositoryBranches();
+    void repositoryStashes();
+    void repositoryChangedFiles();
+    void repositoryStageFiles(QStringList items);
+    void repositoryUnstageFiles(QStringList items);
+    void repositoryCommit(QString message);
+    void repositoryGetCommits(QString object, int length);
 
 private slots:
     void gravatarImageDownloadFinished();
-    void repositoryBranchesReply(QList<QGitBranch> branches);
-    void repositoryStashesReply(QStringList stashes);
-    void repositoryChangedFilesReply(QDir path, QMap<QString, git_status_t> files);
-    void repositoryStageFilesReply(QDir path);
-    void repositoryUnstageFilesReply(QDir path);
-    void repositoryCommitReply(QDir path, QString commit_id);
-    void repositoryGetCommitsReply(QDir path, QList<QGitCommit> commits);
-	void repositoryError(QString qgit_function, QString git_function, int code);
+    void repositoryBranchesReply(QList<QGitBranch> branches, QGitError error);
+    void repositoryStashesReply(QStringList stashes, QGitError error);
+    void repositoryChangedFilesReply(QMap<QString, git_status_t> files, QGitError error);
+    void repositoryStageFilesReply(QGitError error);
+    void repositoryUnstageFilesReply(QGitError error);
+    void repositoryCommitReply(QString commit_id, QGitError error);
+    void repositoryGetCommitsReply(QList<QGitCommit> commits, QGitError error);
     void on_repositoryDetail_currentChanged(int index);
     void on_checkBox_StagedFiles_clicked();
     void on_checkBox_UnstagedFiles_clicked();

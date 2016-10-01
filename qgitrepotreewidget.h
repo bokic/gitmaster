@@ -19,12 +19,14 @@ signals:
 public slots:
 
 private:
+    void refreshItem();
     QThread m_thread;
     QGit *m_git;
+    int m_refreshIndex;
 
 signals:
-    void repositoryStatus(QDir path);
+    void repositoryStatus();
 
 private slots:
-    void repositoryStatusReply(QDir path, QMap<git_status_t, int> items);
+    void repositoryStatusReply(QMap<git_status_t, int> items, QGitError error);
 };

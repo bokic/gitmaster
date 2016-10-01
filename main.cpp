@@ -1,5 +1,4 @@
 #include "qgitmastermainwindow.h"
-#include "structs.h"
 #include <QApplication>
 #include <QList>
 #include <QMap>
@@ -19,6 +18,7 @@ void registerTypes()
     qRegisterMetaType<QMap<QString,git_status_t>>("QMap<QString,git_status_t>");
     qRegisterMetaType<QList<QGitBranch>>("QList<QGitBranch>");
     qRegisterMetaType<QList<QGitCommit>>("QList<QGitCommit>");
+    qRegisterMetaType<QList<QGitCommit>>("QGitError");
 }
 
 int main(int argc, char *argv[])
