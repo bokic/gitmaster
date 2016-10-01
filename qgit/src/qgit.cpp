@@ -302,7 +302,7 @@ void QGit::currentBranch()
 
         name = branch;
 
-    } catch(QGitError ex) {
+    } catch(const QGitError &ex) {
         error = ex;
     }
 
@@ -336,7 +336,7 @@ void QGit::init()
             throw QGitError("git_repository_init", res);
         }
 
-    } catch(QGitError ex) {
+    } catch(const QGitError & ex) {
         error = ex;
     }
 
@@ -377,7 +377,7 @@ void QGit::signature()
         name = QString::fromUtf8(me->name);
         email = QString::fromUtf8(me->email);
 
-    } catch(QGitError ex) {
+    } catch(const QGitError & ex) {
         error = ex;
     }
 
@@ -427,7 +427,7 @@ void QGit::status()
             index++;
         }
 
-    } catch(QGitError ex) {
+    } catch(const QGitError & ex) {
         error = ex;
     }
 
@@ -483,7 +483,7 @@ void QGit::listBranches()
             ref = nullptr;
         }
 
-    } catch(QGitError ex) {
+    } catch(const QGitError &ex) {
         error = ex;
     }
 
@@ -534,7 +534,7 @@ void QGit::listStashes()
             throw QGitError("git_stash_foreach", res);
         }
 
-    } catch(QGitError ex) {
+    } catch(const QGitError &ex) {
         error = ex;
     }
 
@@ -592,7 +592,7 @@ void QGit::listChangedFiles()
 
             index++;
         }
-    } catch(QGitError ex) {
+    } catch(const QGitError &ex) {
         error = ex;
     }
 
@@ -654,7 +654,7 @@ void QGit::stageFiles(QStringList items)
             throw QGitError("git_index_write", res);
         }
 
-    } catch(QGitError ex) {
+    } catch(const QGitError &ex) {
         error = ex;
     }
 
@@ -724,7 +724,7 @@ void QGit::unstageFiles(QStringList items)
             throw QGitError("git_reset_default", res);
         }
 
-    } catch(QGitError ex) {
+    } catch(const QGitError &ex) {
         error = ex;
     }
 
@@ -852,7 +852,7 @@ void QGit::commit(QString message)
             }
         }
 
-    } catch(QGitError ex) {
+    } catch(const QGitError &ex) {
         error = ex;
     }
 
@@ -955,7 +955,7 @@ void QGit::clone(QUrl url)
             throw QGitError("git_clone", res);
         }
 
-    } catch(QGitError ex) {
+    } catch(const QGitError &ex) {
         error = ex;
     }
 
@@ -996,7 +996,7 @@ void QGit::pull()
             throw QGitError("git_remote_fetch", res);
         }
 
-    } catch(QGitError ex) {
+    } catch(const QGitError &ex) {
         error = ex;
     }
 
@@ -1043,7 +1043,7 @@ void QGit::fetch()
             throw QGitError("git_remote_fetch", res);
         }
 
-    } catch(QGitError ex) {
+    } catch(const QGitError &ex) {
         error = ex;
     }
 
@@ -1094,7 +1094,7 @@ void QGit::push()
             throw QGitError("git_remote_fetch", res);
         }
 
-    } catch(QGitError ex) {
+    } catch(const QGitError &ex) {
         error = ex;
     }
 
@@ -1236,7 +1236,7 @@ void QGit::listCommits(QString object, int length)
             count++;
         }
 
-    } catch(QGitError ex) {
+    } catch(const QGitError &ex) {
         error = ex;
     }
 
