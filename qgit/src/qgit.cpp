@@ -502,6 +502,53 @@ void QGit::listBranches()
     }
 }
 
+void QGit::listTags()
+{
+    QList<QString> tags;
+    git_repository *repo = nullptr;
+    git_strarray tag_names = {nullptr, 0};
+    int res = 0;
+
+    QGitError error;
+
+    try {
+
+        res = git_repository_open(&repo, m_path.absolutePath().toUtf8().constData());
+        if (res)
+        {
+            throw QGitError("git_repository_open", res);
+        }
+
+        res = git_tag_list(&tag_names, repo);
+        if (res)
+        {
+            throw QGitError("git_tag_list", res);
+        }
+
+        for(size_t c = 0; c < tag_names.count; c++)
+        {
+            tags.append(QString::fromUtf8(tag_names.strings[c]));
+        }
+
+    } catch(const QGitError &ex) {
+        error = ex;
+    }
+
+    emit listTagsReply(tags, error);
+
+    if ((tag_names.count > 0)||(tag_names.strings))
+    {
+        git_strarray_free(&tag_names);
+        tag_names.count = 0;
+        tag_names.strings = nullptr;
+    }
+
+    if (repo)
+    {
+        git_repository_free(repo);
+        repo = nullptr;
+    }}
+
 void QGit::listStashes()
 {
     git_repository *repo = nullptr;

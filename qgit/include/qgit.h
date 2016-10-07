@@ -39,6 +39,7 @@ public slots:
     void currentBranch();
     void status();
     void listBranches();
+    void listTags();
     void listStashes();
     void listChangedFiles();
     void stageFiles(QStringList items);
@@ -56,6 +57,7 @@ signals:
     void currentBranchReply(QString name, QGitError error);
     void statusReply(QMap<git_status_t, int> items, QGitError error);
     void listBranchesReply(QList<QGitBranch> branches, QGitError error);
+    void listTagsReply(QStringList tags, QGitError error);
     void listStashesReply(QStringList stashes, QGitError error);
     void listChangedFilesReply(QMap<QString,git_status_t> files, QGitError error);
     void stageFilesReply(QGitError error);
