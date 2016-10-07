@@ -221,7 +221,7 @@ void QGitRepository::repositoryStashesReply(QStringList stashes, QGitError error
 
     if (!stashes.isEmpty())
     {
-        QTreeWidgetItem *item = new QTreeWidgetItem(QStringList() << tr("stashes"));
+        QTreeWidgetItem *item = new QTreeWidgetItem(QStringList() << tr("Stashes"));
 
         for(auto stash: stashes)
         {
