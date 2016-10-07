@@ -115,29 +115,49 @@ void QGitRepository::repositoryBranchesReply(QList<QGitBranch> branches, QGitErr
     Q_UNUSED(error);
 
     QList<QTreeWidgetItem *> items;
-    QTreeWidgetItem *item_file_status = new QTreeWidgetItem(QStringList() << tr("File Status"));
-    QTreeWidgetItem *item_branches = new QTreeWidgetItem(QStringList() << tr("Branches"));
-    QTreeWidgetItem *item_tags = new QTreeWidgetItem(QStringList() << tr("Tags"));
-    QTreeWidgetItem *item_remotes = new QTreeWidgetItem(QStringList() << tr("Remotes"));
+    QTreeWidgetItem *itemFileStatus = new QTreeWidgetItem(QStringList() << tr("File Status"));
+    QTreeWidgetItem *itemLocalBranches = new QTreeWidgetItem(QStringList() << tr("Branches"));
+    QTreeWidgetItem *itemTags = new QTreeWidgetItem(QStringList() << tr("Tags"));
+    QTreeWidgetItem *itemRemoteBranches = new QTreeWidgetItem(QStringList() << tr("Remotes"));
 
     ui->branchesTreeView->clear();
 
-    item_file_status->addChild(new QTreeWidgetItem(QStringList() << tr("Working Copy")));
+    itemFileStatus->addChild(new QTreeWidgetItem(QStringList() << tr("Working Copy")));
 
     for(auto branch: branches)
     {
         QStringList items = branch.name().split('/');
-        QTreeWidgetItem *branch_item = nullptr;
-        QString originStr, branchStr;
 
         switch(branch.type())
         {
         case GIT_BRANCH_LOCAL:
-            if (items.count() == 3)
+            if (items.count() >= 3)
             {
-                branchStr = items.at(2);
-                branch_item = new QTreeWidgetItem(QStringList() << branchStr);
-                item_branches->addChild(branch_item);
+                QTreeWidgetItem *item = itemLocalBranches;
+
+                for(int depth = 2; depth < items.count(); depth++)
+                {
+                    const QString name = items.at(depth);
+                    bool found = false;
+
+                    for(int c = 0; c < item->childCount(); c++)
+                    {
+                        if (item->child(c)->text(0) == name)
+                        {
+                            item = item->child(c);
+                            found = true;
+
+                            break;
+                        }
+                    }
+
+                    if (!found)
+                    {
+                        QTreeWidgetItem *child = new QTreeWidgetItem(QStringList() << name);
+                        item->addChild(child);
+                        item = child;
+                    }
+                }
             }
             else
             {
@@ -145,29 +165,33 @@ void QGitRepository::repositoryBranchesReply(QList<QGitBranch> branches, QGitErr
             }
             break;
         case GIT_BRANCH_REMOTE:
-            if (items.count() == 4)
+            if (items.count() >= 4)
             {
-                originStr = items.at(2);
-                branchStr = items.at(3);
+                QTreeWidgetItem *item = itemRemoteBranches;
 
-                for(int c = 0; c < item_remotes->childCount(); c++)
+                for(int depth = 2; depth < items.count(); depth++)
                 {
-                    if (item_remotes->child(c)->text(0) == originStr)
-                    {
-                        branch_item = item_remotes->child(c);
+                    const QString name = items.at(depth);
+                    bool found = false;
 
-                        break;
+                    for(int c = 0; c < item->childCount(); c++)
+                    {
+                        if (item->child(c)->text(0) == name)
+                        {
+                            item = item->child(c);
+                            found = true;
+
+                            break;
+                        }
+                    }
+
+                    if (!found)
+                    {
+                        QTreeWidgetItem *child = new QTreeWidgetItem(QStringList() << name);
+                        item->addChild(child);
+                        item = child;
                     }
                 }
-
-                if (branch_item == nullptr)
-                {
-                    branch_item = new QTreeWidgetItem(QStringList() << originStr);
-                }
-
-                branch_item->addChild(new QTreeWidgetItem(QStringList() << branchStr));
-
-                item_remotes->addChild(branch_item);
             }
             else
             {
@@ -181,10 +205,10 @@ void QGitRepository::repositoryBranchesReply(QList<QGitBranch> branches, QGitErr
         }
     }
 
-    items.append(item_file_status);
-    items.append(item_branches);
-    items.append(item_tags); // TODO: Implement git tags.
-    items.append(item_remotes);
+    items.append(itemFileStatus);
+    items.append(itemLocalBranches);
+    items.append(itemTags); // TODO: Implement git tags.
+    items.append(itemRemoteBranches);
 
     ui->branchesTreeView->addTopLevelItems(items);
 
