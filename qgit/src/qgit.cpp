@@ -401,7 +401,7 @@ void QGit::status()
     git_repository *repo = nullptr;
     git_status_list *list = nullptr;
     QMap<git_status_t, int> items;
-    int index = 0;
+    size_t index = 0;
     int res = 0;
 
     QGitError error;
@@ -600,7 +600,7 @@ void QGit::listChangedFiles()
     git_status_list *list = nullptr;
     QMap<QString,git_status_t> items;
     int res = 0;
-    int index = 0;
+    size_t index = 0;
 
     QGitError error;
 
@@ -744,13 +744,13 @@ void QGit::unstageFiles(QStringList items)
             throw QGitError("git_repository_open", res);
         }
 
-        paths.count = items.count();
-        paths.strings = (char **)malloc(sizeof(char *) * items.count());
+        paths.count = static_cast<size_t>(items.count());
+        paths.strings = static_cast<char **>(malloc(sizeof(char *) * static_cast<size_t>(items.count())));
 
         for(int c = 0; c < items.count(); c++)
         {
             tmpStrList.append(items.at(c).toUtf8());
-            paths.strings[c] = (char *)tmpStrList.at(c).data();
+            paths.strings[c] = const_cast<char *>(tmpStrList.at(c).data());
         }
 
         res = git_repository_head(&head, repo);
@@ -810,9 +810,9 @@ void QGit::commit(QString message)
     git_commit *parent = nullptr;
     git_index *index = nullptr;
     git_tree *tree = nullptr;
-    git_oid new_commit_id = { 0 };
-    git_oid parent_id = { 0 };
-    git_oid tree_id = { 0 };
+    git_oid new_commit_id = { {0} };
+    git_oid parent_id = { {0} };
+    git_oid tree_id = { {0} };
     int unborn = 0;
     int res = 0;
 
@@ -903,7 +903,7 @@ void QGit::commit(QString message)
         error = ex;
     }
 
-    emit commitReply(QString::fromUtf8((const char *)new_commit_id.id), error);
+    emit commitReply(QString::fromUtf8(reinterpret_cast<const char *>(new_commit_id.id)), error);
 
     if (parent)
     {
@@ -1220,7 +1220,7 @@ void QGit::listCommits(QString object, int length)
         while ((!git_revwalk_next(&oid, walker))&&(count < length)) {
 
             QGitCommit item;
-            int parents = 0;
+            unsigned int parents = 0;
 
             QString commit_id;
             QList<QString> commit_parents;
@@ -1238,7 +1238,7 @@ void QGit::listCommits(QString object, int length)
             commit_id = QString::fromUtf8(git_oid_tostr_s(&oid));
 
             parents = git_commit_parentcount(commit);
-            for (int index = 0; index < parents; index++)
+            for (unsigned int index = 0; index < parents; index++)
             {
                 git_commit *parent = nullptr;
                 QString parentStr;

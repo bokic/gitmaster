@@ -97,7 +97,7 @@ QGitRepository::~QGitRepository()
 
 void QGitRepository::gravatarImageDownloadFinished()
 {
-    QNetworkReply *reply = (QNetworkReply *)sender();
+    QNetworkReply *reply = static_cast<QNetworkReply *>(sender());
 
     QByteArray data = reply->readAll();
 

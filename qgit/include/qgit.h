@@ -64,7 +64,7 @@ signals:
     void unstageFilesReply(QGitError error);
     void commitReply(QString commit_id, QGitError error);
     void cloneReply(QGitError error);
-    void cloneProgressReply(QString path, int completed_steps, int total_steps);
+    void cloneProgressReply(QString path, size_t completed_steps, size_t total_steps);
     void cloneTransferReply(unsigned int total_objects, unsigned int indexed_objects, unsigned int received_objects, unsigned int local_objects, unsigned int total_deltas, unsigned int indexed_deltas, size_t received_bytes);
     void pullReply(QGitError error);
     void fetchReply(QGitError error);
@@ -72,8 +72,6 @@ signals:
     void listCommitsReply(QList<QGitCommit> commits, QGitError error);
 
 private:
-    //QList<QGitDiffFile> commitDiff(const QString &hash);
-
     QReadWriteLock m_pathLock;
     QDir m_path;
 

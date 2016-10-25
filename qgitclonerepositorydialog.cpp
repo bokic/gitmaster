@@ -18,7 +18,7 @@ QGitCloneRepositoryDialog::QGitCloneRepositoryDialog(const QString &url, const Q
     connect(this, SIGNAL(repositoryClone(QDir,QUrl)), m_git, SLOT(repositoryClone(QDir,QUrl)));
     connect(m_git, SIGNAL(repositoryCloneReply(QDir,int)), this, SLOT(repositoryCloneReply(QDir,int)));
     connect(m_git, SIGNAL(repositoryCloneTransferReply(uint,uint,uint,uint,uint,uint,size_t)), this, SLOT(repositoryCloneTransferReply(uint,uint,uint,uint,uint,uint,size_t)));
-    connect(m_git, SIGNAL(repositoryCloneProgressReply(QDir,int,int)), this, SLOT(repositoryCloneProgressReply(QDir,int,int)));
+    connect(m_git, SIGNAL(repositoryCloneProgressReply(QDir,size_t,size_t)), this, SLOT(repositoryCloneProgressReply(QDir,size_t,size_t)));
 
     m_thread.start();
 
@@ -73,26 +73,26 @@ void QGitCloneRepositoryDialog::repositoryCloneTransferReply(unsigned int total_
 
     if (total_objects > 0)
     {
-        ui->progressBar_recievingObjects->setMaximum(total_objects);
-        ui->progressBar_recievingObjects->setValue(received_objects);
+        ui->progressBar_recievingObjects->setMaximum(static_cast<int>(total_objects));
+        ui->progressBar_recievingObjects->setValue(static_cast<int>(received_objects));
 
-        ui->progressBar_recievingIndexes->setMaximum(total_objects);
-        ui->progressBar_recievingIndexes->setValue(indexed_objects);
+        ui->progressBar_recievingIndexes->setMaximum(static_cast<int>(total_objects));
+        ui->progressBar_recievingIndexes->setValue(static_cast<int>(indexed_objects));
     }
 
     if (total_deltas > 0)
     {
-        ui->progressBar_indexingDeltas->setMaximum(total_deltas);
-        ui->progressBar_indexingDeltas->setValue(indexed_deltas);
+        ui->progressBar_indexingDeltas->setMaximum(static_cast<int>(total_deltas));
+        ui->progressBar_indexingDeltas->setValue(static_cast<int>(indexed_deltas));
     }
 
     ui->label_status->setText(tr("Recieved %1 bytes.").arg(received_bytes));
 }
 
-void QGitCloneRepositoryDialog::repositoryCloneProgressReply(QDir path, int completed_steps, int total_steps)
+void QGitCloneRepositoryDialog::repositoryCloneProgressReply(QDir path, size_t completed_steps, size_t total_steps)
 {
     Q_UNUSED(path);
 
-    ui->progressBar_creatingFiles->setMaximum(total_steps);
-    ui->progressBar_creatingFiles->setValue(completed_steps);
+    ui->progressBar_creatingFiles->setMaximum(static_cast<int>(total_steps));
+    ui->progressBar_creatingFiles->setValue(static_cast<int>(completed_steps));
 }
