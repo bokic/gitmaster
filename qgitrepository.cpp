@@ -78,6 +78,9 @@ QGitRepository::QGitRepository(const QString &path, QWidget *parent)
     connect(this, SIGNAL(repositoryGetCommits(QString,int)), m_git, SLOT(listCommits(QString,int)));
     connect(m_git, SIGNAL(listCommitsReply(QList<QGitCommit>,QGitError)), this, SLOT(repositoryGetCommitsReply(QList<QGitCommit>,QGitError)));
 
+    connect(this, SIGNAL(repositoryGetCommitDiff(QString)), m_git, SLOT(commitDiff(QString)));
+    connect(m_git, SIGNAL(commitDiffReply(QGitError)), this, SLOT(repositoryGetCommitDiffReply(QGitError)));
+
     connect(ui->tableWidget->verticalScrollBar(), SIGNAL(sliderMoved(int)), this, SLOT(historyTableSliderMoved(int)));
 
 
@@ -88,6 +91,8 @@ QGitRepository::QGitRepository(const QString &path, QWidget *parent)
     emit repositoryStashes();
 
     fetchCommits();
+
+    emit repositoryGetCommitDiff("");
 }
 
 QGitRepository::~QGitRepository()
@@ -361,6 +366,11 @@ void QGitRepository::repositoryGetCommitsReply(QList<QGitCommit> commits, QGitEr
     {
         m_allCommitsLoaded = true;
     }
+}
+
+void QGitRepository::repositoryGetCommitDiffReply(QGitError error)
+{
+    Q_UNUSED(error);
 }
 
 void QGitRepository::on_repositoryDetail_currentChanged(int index)

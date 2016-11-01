@@ -1,25 +1,26 @@
 #pragma once
 
-#include "qgitdifffile.h"
+#include "qgitcommitdiffparent.h"
 
 #include <QString>
 #include <QList>
 
+// TODO: Rework this class so it can support more than one parent.
+
+class QGitCommitDiffParent;
 
 class QGitCommitDiff
 {
 public:
     QGitCommitDiff();
-    QGitCommitDiff(QString parentHash, QList<QGitDiffFile> files);
     QGitCommitDiff(const QGitCommitDiff &other);
 
     QGitCommitDiff &operator=(QGitCommitDiff &&other);
     QGitCommitDiff &operator=(const QGitCommitDiff &other);
 
-    QString parentHash() const;
-    QList<QGitDiffFile> files() const;
+    void addParent(const QGitCommitDiffParent &parent);
+    QList<QGitCommitDiffParent> parents() const;
 
 private:
-    QString m_parentHash;
-    QList<QGitDiffFile> m_files;
+    QList<QGitCommitDiffParent> m_parents;
 };

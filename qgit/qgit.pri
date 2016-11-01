@@ -10,7 +10,8 @@ SOURCES += \
     $$PWD/src/qgitdiffhunk.cpp \
     $$PWD/src/qgitdiffline.cpp \
     $$PWD/src/qgiterror.cpp \
-    $$PWD/src/qgitsignature.cpp
+    $$PWD/src/qgitsignature.cpp \
+    $$PWD/src/qgitcommitdiffparent.cpp
 
 HEADERS += \
     $$PWD/include/qgit.h \
@@ -22,4 +23,5 @@ HEADERS += \
     $$PWD/include/qgitdiffhunk.h \
     $$PWD/include/qgitdiffline.h \
     $$PWD/include/qgiterror.h \
-    $$PWD/include/qgitsignature.h
+    $$PWD/include/qgitsignature.h \
+    $$PWD/include/qgitcommitdiffparent.h

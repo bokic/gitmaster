@@ -5,40 +5,26 @@ QGitCommitDiff::QGitCommitDiff()
 
 }
 
-QGitCommitDiff::QGitCommitDiff(QString parentHash, QList<QGitDiffFile> files)
-    : m_parentHash(parentHash)
-    , m_files(files)
-{
-}
-
 QGitCommitDiff::QGitCommitDiff(const QGitCommitDiff &other)
-    : m_parentHash(other.m_parentHash)
-    , m_files(other.m_files)
+    : m_parents(other.m_parents)
 {
 }
 
 QGitCommitDiff &QGitCommitDiff::operator=(QGitCommitDiff &&other)
 {
-    qSwap(m_parentHash, other.m_parentHash);
-    qSwap(m_files, other.m_files);
+    qSwap(m_parents, other.m_parents);
 
     return *this;
 }
 
 QGitCommitDiff &QGitCommitDiff::operator=(const QGitCommitDiff &other)
 {
-    m_parentHash = other.m_parentHash;
-    m_files = other.m_files;
+    m_parents = other.m_parents;
 
     return *this;
 }
 
-QString QGitCommitDiff::parentHash() const
+QList<QGitCommitDiffParent> QGitCommitDiff::parents() const
 {
-    return m_parentHash;
-}
-
-QList<QGitDiffFile> QGitCommitDiff::files() const
-{
-    return m_files;
+    return m_parents;
 }

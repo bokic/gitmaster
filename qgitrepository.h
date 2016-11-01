@@ -25,6 +25,7 @@ signals:
     void repositoryUnstageFiles(QStringList items);
     void repositoryCommit(QString message);
     void repositoryGetCommits(QString object, int length);
+    void repositoryGetCommitDiff(QString commitId);
 
 private slots:
     void gravatarImageDownloadFinished();
@@ -35,6 +36,7 @@ private slots:
     void repositoryUnstageFilesReply(QGitError error);
     void repositoryCommitReply(QString commit_id, QGitError error);
     void repositoryGetCommitsReply(QList<QGitCommit> commits, QGitError error);
+    void repositoryGetCommitDiffReply(QGitError error);
     void historyTableSliderMoved(int pos);
     void on_repositoryDetail_currentChanged(int index);
     void on_tableWidget_currentCellChanged(int currentRow, int currentColumn, int previousRow, int previousColumn);

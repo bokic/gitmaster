@@ -1,5 +1,7 @@
 #include "qgit.h"
 #include "qgitdifffile.h"
+#include "qgitdiffhunk.h"
+#include "qgitdiffline.h"
 #include "qgiterror.h"
 #include "git2.h"
 
@@ -118,7 +120,7 @@ int QGit::createLocalRepository(const QDir &path)
 
 bool QGit::isGitRepository(const QDir &path)
 {
-    git_repository *repo = NULL;
+    git_repository *repo = nullptr;
     bool ret = false;
     int err = 0;
 
@@ -209,7 +211,7 @@ bool QGit::gitRepositoryDefaultSignature(const QDir &path, QString &name, QStrin
     res = git_commit_tree(&commit_tree, commit);
     res = git_commit_tree(&parent_tree, parent);
 
-    res = git_diff_tree_to_tree(&diff, repo, commit_tree, parent_tree, NULL);
+    res = git_diff_tree_to_tree(&diff, repo, commit_tree, parent_tree, nullptr);
 
     res = git_diff_foreach(diff,
                               [](const git_diff_delta *delta, float progress, void *payload) -> int {
@@ -656,6 +658,124 @@ void QGit::listChangedFiles()
         git_repository_free(repo);
         repo = nullptr;
     }
+}
+
+void QGit::commitDiff(QString commitId)
+{
+    git_tree *commit_tree = nullptr;
+    git_tree *parent_tree = nullptr;
+    git_repository *repo = nullptr;
+    git_commit *parent = nullptr;
+    git_commit *commit = nullptr;
+    git_object *obj = nullptr;
+    git_diff *diff = nullptr;
+    QList<QGitDiffFile> list;
+    unsigned int parents;
+    int res = 0;
+
+    QGitError error;
+
+    try {
+
+        res = git_repository_open(&repo, m_path.absolutePath().toUtf8().constData());
+        if (res)
+        {
+            throw QGitError("git_repository_open", res);
+        }
+
+        if (commitId.isEmpty())
+        {
+            commitId = QStringLiteral("HEAD");
+        }
+
+        // TODO: get parents.
+        res = git_revparse_single(&obj, repo, commitId.toLatin1());
+
+        res = git_commit_lookup(&commit, repo, git_object_id(obj));
+
+        res = git_commit_tree(&commit_tree, commit);
+
+        parents = git_commit_parentcount(commit);
+
+        // TODO: get diff for each parent.
+        for (unsigned int c = 0; c < parents; c++)
+        {
+            res = git_commit_parent(&parent, commit, c);
+
+            res = git_commit_tree(&parent_tree, parent);
+
+
+            res = git_diff_tree_to_tree(&diff, repo, commit_tree, parent_tree, nullptr);
+            if (res)
+            {
+                throw QGitError("git_diff_tree_to_tree", res);
+            }
+
+            res = git_diff_foreach(diff,
+                                      [](const git_diff_delta *delta, float progress, void *payload) -> int {
+                                            QList<QGitDiffFile> *dest = static_cast<QList<QGitDiffFile> *>(payload);
+
+                                            // TODO: Implement here!
+                                            //if (!dest->hasFile(QString::fromUtf8(delta->new_file.path))) {
+                                                QGitDiffFile newDiff;
+
+                                                uint32_t newDiff_flags = delta->flags;
+                                                uint16_t newDiff_nfiles = delta->nfiles;
+                                                uint16_t newDiff_simularity = delta->similarity;
+                                                git_delta_t newDiff_status = delta->status;
+
+                                                QString new_file_path = QString::fromUtf8(delta->new_file.path);
+                                                QByteArray new_file_id = QByteArray((const char *)delta->new_file.id.id, sizeof(delta->new_file.id.id));
+                                                uint16_t new_file_mode = delta->new_file.mode;
+                                                uint32_t new_file_flags = delta->new_file.flags;
+                                                git_off_t new_file_size = delta->new_file.size;
+                                                QGitDiffFileItem newDiff_new_file = QGitDiffFileItem(new_file_path, new_file_id, new_file_mode, new_file_flags, new_file_size);
+
+
+                                                QString old_file_path = QString::fromUtf8(delta->old_file.path);
+                                                QByteArray old_file_id = QByteArray((const char *)delta->old_file.id.id, sizeof(delta->old_file.id.id));
+                                                uint16_t old_file_mode = delta->old_file.mode;
+                                                uint32_t old_file_flags = delta->old_file.flags;
+                                                git_off_t old_file_size = delta->old_file.size;
+                                                QGitDiffFileItem newDiff_old_file = QGitDiffFileItem(old_file_path, old_file_id, old_file_mode, old_file_flags, old_file_size);
+
+                                                QList<QGitDiffHunk> newDiff_hunks;
+
+                                                dest->append(QGitDiffFile(newDiff_new_file, newDiff_old_file, newDiff_flags, newDiff_nfiles, newDiff_simularity, newDiff_status, newDiff_hunks));
+                                            //}
+
+                                            return 0;
+                                        },
+                                      [](const git_diff_delta *delta, const git_diff_binary *binary, void *payload) -> int {
+                                            QList<QGitDiffFile> *dest = static_cast<QList<QGitDiffFile> *>(payload);
+
+                                            // TODO: Implement hunks.
+
+                                            return 0;
+                                        },
+                                      nullptr,
+                                      [](const git_diff_delta *delta, const git_diff_hunk *hunk, const git_diff_line *line, void *payload) -> int {
+                                            QList<QGitDiffFile> *dest = static_cast<QList<QGitDiffFile> *>(payload);
+
+                                            //QGitDiffFile destFile = QGitDiffFile(newDiff_new_file, newDiff_old_file, newDiff_flags, newDiff_nfiles, newDiff_simularity, newDiff_status, newDiff_hunks);
+                                            //QGitDiffHunk destHunk = QGitDiffHunk(QString::fromUtf8(hunk->header, hunk->header_len), hunk->new_lines, hunk->new_start, hunk->old_lines, hunk->old_start);
+                                            //QGitDiffLine destLine = QGitDiffLine(QString::fromUtf8(line->content, line->content_len), line->content_offset, line->new_lineno, line->num_lines, line->old_lineno, line->origin);
+
+                                            //dest->addLine(delta, newLine);
+
+                                            return 0;
+                                        },
+                                      &list);
+        }
+
+    } catch(const QGitError &ex) {
+        error = ex;
+    }
+
+    emit commitDiffReply(error);
+
+    // TODO: free
+
 }
 
 void QGit::stageFiles(QStringList items)

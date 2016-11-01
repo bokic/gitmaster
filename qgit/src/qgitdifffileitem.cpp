@@ -5,7 +5,7 @@ QGitDiffFileItem::QGitDiffFileItem()
 {
 }
 
-QGitDiffFileItem::QGitDiffFileItem(const QString &path, const QByteArray &id, quint16 mode, qint32 flags, qint64 size)
+QGitDiffFileItem::QGitDiffFileItem(const QString &path, const QByteArray &id, quint16 mode, quint32 flags, qint64 size)
     : m_path(path)
     , m_id(id)
     , m_mode(mode)
@@ -60,7 +60,7 @@ quint16 QGitDiffFileItem::mode() const
     return m_mode;
 }
 
-qint32 QGitDiffFileItem::flags() const
+quint32 QGitDiffFileItem::flags() const
 {
     return m_flags;
 }
