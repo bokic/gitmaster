@@ -62,7 +62,7 @@ void QGitRepoTreeItemDelegate::paint(QPainter *painter, const QStyleOptionViewIt
         painter->setPen(QPen(QPalette().color(QPalette::Disabled, QPalette::Text)));
         painter->drawText(x, y + 17, text);
 
-        x += fm.width(text) + 6;
+        //x += fm.width(text) + 6;
     }
 
     const QVariant &modifiedFiles = index.data(QItemModifiedFiles);
