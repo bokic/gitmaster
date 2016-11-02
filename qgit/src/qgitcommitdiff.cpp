@@ -2,7 +2,6 @@
 
 QGitCommitDiff::QGitCommitDiff()
 {
-
 }
 
 QGitCommitDiff::QGitCommitDiff(const QGitCommitDiff &other)
@@ -22,6 +21,11 @@ QGitCommitDiff &QGitCommitDiff::operator=(const QGitCommitDiff &other)
     m_parents = other.m_parents;
 
     return *this;
+}
+
+void QGitCommitDiff::addParent(const QGitCommitDiffParent &parent)
+{
+    m_parents.append(parent);
 }
 
 QList<QGitCommitDiffParent> QGitCommitDiff::parents() const

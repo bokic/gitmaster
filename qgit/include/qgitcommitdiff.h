@@ -5,9 +5,6 @@
 #include <QString>
 #include <QList>
 
-// TODO: Rework this class so it can support more than one parent.
-
-class QGitCommitDiffParent;
 
 class QGitCommitDiff
 {

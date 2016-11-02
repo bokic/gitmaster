@@ -1,6 +1,7 @@
 #pragma once
 
-#include "git2.h"
+//#include "git2.h"
+#include "qgitcommitdiff.h"
 #include "qgitdifffile.h"
 #include "qgitcommit.h"
 #include "qgitbranch.h"
@@ -61,7 +62,7 @@ signals:
     void listTagsReply(QStringList tags, QGitError error);
     void listStashesReply(QStringList stashes, QGitError error);
     void listChangedFilesReply(QMap<QString,git_status_t> files, QGitError error);
-    void commitDiffReply(QGitError error);
+    void commitDiffReply(QGitCommitDiff diff, QGitError error);
     void stageFilesReply(QGitError error);
     void unstageFilesReply(QGitError error);
     void commitReply(QString commit_id, QGitError error);

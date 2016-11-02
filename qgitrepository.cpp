@@ -1,6 +1,7 @@
 #include "qgitrepository.h"
 #include "ui_qgitrepository.h"
 #include <QCryptographicHash>
+#include <QTableWidgetItem>
 #include <QTreeWidgetItem>
 #include <QNetworkRequest>
 #include <QNetworkReply>
@@ -79,7 +80,7 @@ QGitRepository::QGitRepository(const QString &path, QWidget *parent)
     connect(m_git, SIGNAL(listCommitsReply(QList<QGitCommit>,QGitError)), this, SLOT(repositoryGetCommitsReply(QList<QGitCommit>,QGitError)));
 
     connect(this, SIGNAL(repositoryGetCommitDiff(QString)), m_git, SLOT(commitDiff(QString)));
-    connect(m_git, SIGNAL(commitDiffReply(QGitError)), this, SLOT(repositoryGetCommitDiffReply(QGitError)));
+    connect(m_git, SIGNAL(commitDiffReply(QGitCommitDiff, QGitError)), this, SLOT(repositoryGetCommitDiffReply(QGitCommitDiff, QGitError)));
 
     connect(ui->tableWidget->verticalScrollBar(), SIGNAL(sliderMoved(int)), this, SLOT(historyTableSliderMoved(int)));
 
@@ -368,7 +369,7 @@ void QGitRepository::repositoryGetCommitsReply(QList<QGitCommit> commits, QGitEr
     }
 }
 
-void QGitRepository::repositoryGetCommitDiffReply(QGitError error)
+void QGitRepository::repositoryGetCommitDiffReply(QGitCommitDiff diff, QGitError error)
 {
     Q_UNUSED(error);
 }
