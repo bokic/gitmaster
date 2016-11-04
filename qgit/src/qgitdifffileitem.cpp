@@ -1,4 +1,7 @@
 #include "qgitdifffileitem.h"
+#include <git2.h>
+
+#include <QByteArray>
 
 
 QGitDiffFileItem::QGitDiffFileItem()
@@ -68,4 +71,20 @@ quint32 QGitDiffFileItem::flags() const
 qint64 QGitDiffFileItem::size() const
 {
     return m_size;
+}
+
+bool operator==(const QGitDiffFileItem &l, const git_diff_file &r)
+{
+    if (
+            (l.path() == QString::fromUtf8(r.path))&&
+            (l.id() == QByteArray((char *)r.id.id, sizeof(r.id)))&&
+            (l.mode() == r.mode)&&
+            (l.flags() == r.flags)&&
+            (l.size() == r.size)
+       )
+    {
+        return true;
+    }
+
+    return false;
 }

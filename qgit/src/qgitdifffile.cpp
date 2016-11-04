@@ -57,6 +57,24 @@ QGitDiffFile &QGitDiffFile::operator=(const QGitDiffFile &other)
     return *this;
 }
 
+bool QGitDiffFile::operator==(const git_diff_delta *other)
+{
+    if (
+            (other)&&
+            (m_flags == other->flags)&&
+            (m_new_file == other->new_file)&&
+            (m_nfiles == other->nfiles)&&
+            (m_old_file == other->old_file)&&
+            (m_simularity == other->similarity)&&
+            (m_status == other->status)
+       )
+    {
+        return true;
+    }
+
+    return false;
+}
+
 QGitDiffFileItem QGitDiffFile::new_file() const
 {
     return m_new_file;
@@ -90,4 +108,9 @@ int QGitDiffFile::status() const
 QList<QGitDiffHunk> QGitDiffFile::hunks() const
 {
     return m_hunks;
+}
+
+void QGitDiffFile::addHunk(const QGitDiffHunk &hunk)
+{
+    m_hunks.append(hunk);
 }

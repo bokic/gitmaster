@@ -1047,8 +1047,7 @@ void QGit::clone(QUrl url)
 {
     git_repository *repo = nullptr;
     git_clone_options opts;
-#if LIBGIT2_SOVERSION > 22
-#else
+#if LIBGIT2_SOVERSION <= 22
     git_remote_callbacks callbacks = GIT_REMOTE_CALLBACKS_INIT;
 #endif
     int res = 0;

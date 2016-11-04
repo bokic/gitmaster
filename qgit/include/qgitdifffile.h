@@ -2,12 +2,15 @@
 
 #include "qgitdifffileitem.h"
 #include "qgitdiffhunk.h"
+#include <git2.h>
 
 #include <QList>
 
 
 class QGitDiffFile
 {
+     friend class QGitCommitDiffParent;
+
 public:
     QGitDiffFile();
     QGitDiffFile(const QGitDiffFileItem &new_file, const QGitDiffFileItem &old_file, uint32_t flags, int nfiles, int simularity, int status, const QList<QGitDiffHunk> &hunks);
@@ -15,6 +18,7 @@ public:
 
     QGitDiffFile &operator=(QGitDiffFile &&other);
     QGitDiffFile &operator=(const QGitDiffFile &other);
+    bool operator==(const git_diff_delta *other);
 
     QGitDiffFileItem new_file() const;
     QGitDiffFileItem old_file() const;
@@ -23,6 +27,8 @@ public:
     int simularity() const;
     int status() const;
     QList<QGitDiffHunk> hunks() const;
+
+    void addHunk(const QGitDiffHunk &hunk);
 
 private:
     QGitDiffFileItem m_new_file;

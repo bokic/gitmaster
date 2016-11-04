@@ -1,10 +1,24 @@
 #include "qgitdiffhunk.h"
+#include <git2.h>
 
 #include <QString>
 #include <QList>
 
 
 QGitDiffHunk::QGitDiffHunk()
+    : m_new_lines(-1)
+    , m_new_start(-1)
+    , m_old_lines(-1)
+    , m_old_start(-1)
+{
+}
+
+QGitDiffHunk::QGitDiffHunk(const git_diff_hunk *hunk)
+    : m_header(QString::fromUtf8(hunk->header, static_cast<int>(hunk->header_len)))
+    , m_new_lines(hunk->new_lines)
+    , m_new_start(hunk->new_start)
+    , m_old_lines(hunk->old_lines)
+    , m_old_start(hunk->old_start)
 {
 }
 
@@ -80,4 +94,26 @@ int QGitDiffHunk::old_start() const
 QList<QGitDiffLine> QGitDiffHunk::lines() const
 {
     return m_lines;
+}
+
+void QGitDiffHunk::addLine(const QGitDiffLine &line)
+{
+    m_lines.append(line);
+}
+
+bool operator==(const QGitDiffHunk &l, const git_diff_hunk &r)
+{
+
+    if (
+            (l.header() == QString::fromUtf8(r.header, static_cast<int>(r.header_len)))&&
+            (l.new_lines() == r.new_lines)&&
+            (l.new_start() == r.new_start)&&
+            (l.old_lines() == r.old_lines)&&
+            (l.old_start() == r.old_start)
+       )
+    {
+        return true;
+    }
+
+    return false;
 }

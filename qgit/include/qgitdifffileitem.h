@@ -2,6 +2,7 @@
 
 #include <QByteArray>
 #include <QString>
+#include <git2.h>
 
 
 class QGitDiffFileItem
@@ -27,3 +28,5 @@ private:
     quint32 m_flags = 0;
     qint64 m_size = 0;
 };
+
+bool operator==(const QGitDiffFileItem &l, const git_diff_file &r);

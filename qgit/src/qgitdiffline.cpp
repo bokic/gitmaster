@@ -5,13 +5,23 @@ QGitDiffLine::QGitDiffLine()
 {
 }
 
-QGitDiffLine::QGitDiffLine(const QString &content, int offset, int new_lineno, int num_lines, int old_lineno, char origin)
+QGitDiffLine::QGitDiffLine(const QByteArray &content, git_off_t offset, int new_lineno, int num_lines, int old_lineno, char origin)
     : m_content(content)
     , m_offset(offset)
     , m_new_lineno(new_lineno)
     , m_num_lines(num_lines)
     , m_old_lineno(old_lineno)
     , m_origin(origin)
+{
+}
+
+QGitDiffLine::QGitDiffLine(const git_diff_line *line)
+    : m_content(QByteArray(line->content, line->content_len))
+    , m_offset(line->content_offset)
+    , m_new_lineno(line->new_lineno)
+    , m_num_lines(line->num_lines)
+    , m_old_lineno(line->old_lineno)
+    , m_origin(line->origin)
 {
 }
 
@@ -49,12 +59,12 @@ QGitDiffLine &QGitDiffLine::operator=(const QGitDiffLine &other)
     return *this;
 }
 
-QString QGitDiffLine::content() const
+QByteArray QGitDiffLine::content() const
 {
     return m_content;
 }
 
-int QGitDiffLine::offset() const
+git_off_t QGitDiffLine::offset() const
 {
     return m_offset;
 }

@@ -41,17 +41,8 @@ QList<QGitDiffFile> QGitCommitDiffParent::files() const
 
 void QGitCommitDiffParent::addFile(const git_diff_delta *delta)
 {
-    /*if (!hasFile(file.new_file().path()))
+    if (!hasFile(delta))
     {
-        m_files.append(file);
-    }
-    else
-    {
-        qDebug() << "File already added!";
-    }*/
-
-    /*if (!dest->hasFile(QString::fromUtf8(delta->new_file.path))) {
-
         uint32_t newDiff_flags = delta->flags;
         uint16_t newDiff_nfiles = delta->nfiles;
         uint16_t newDiff_simularity = delta->similarity;
@@ -74,33 +65,70 @@ void QGitCommitDiffParent::addFile(const git_diff_delta *delta)
 
         QList<QGitDiffHunk> newDiff_hunks;
 
-        dest->addFile(QGitDiffFile(newDiff_new_file, newDiff_old_file, newDiff_flags, newDiff_nfiles, newDiff_simularity, newDiff_status, newDiff_hunks));
+        m_files.append(QGitDiffFile(newDiff_new_file, newDiff_old_file, newDiff_flags, newDiff_nfiles, newDiff_simularity, newDiff_status, newDiff_hunks));
     }
     else
     {
         qDebug() << "File already exists(git_diff_foreach)!";
-    }*/
+    }
 }
 
 void QGitCommitDiffParent::addBinary(const git_diff_delta *delta, const git_diff_binary *binary)
 {
-    // TODO: implement QGitCommitDiffParent::addBinary()
+    /*for(QGitDiffFile &file: m_files)
+    {
+        if (file == delta)
+        {
+            QGitDiffBinary item(binary);
 
-    Q_UNIMPLEMENTED();
+            file.addBinary(item);
+        }
+    }*/
 }
 
 void QGitCommitDiffParent::addHunk(const git_diff_delta *delta, const git_diff_hunk *hunk)
 {
-    // TODO: implement QGitCommitDiffParent::addHulk()
+    for(QGitDiffFile &file: m_files)
+    {
+        if (file == delta)
+        {
+            QGitDiffHunk item(hunk);
 
-    Q_UNIMPLEMENTED();
+            file.addHunk(item);
+        }
+    }
 }
 
 void QGitCommitDiffParent::addLine(const git_diff_delta *delta, const git_diff_hunk *hunk, const git_diff_line *line)
 {
-    // TODO: Implement void QGitCommitDiffParent::addHunk()
+    for(QGitDiffFile &file: m_files)
+    {
+        if (file == delta)
+        {
+            for(QGitDiffHunk &item: file.m_hunks)
+            {
+                if (item == *hunk)
+                {
+                    QGitDiffLine _line(line);
 
-    Q_UNIMPLEMENTED();
+                    item.addLine(_line);
+                }
+            }
+        }
+    }
+}
+
+bool QGitCommitDiffParent::hasFile(const git_diff_delta *delta)
+{
+    for(auto item: m_files)
+    {
+        if (item == delta)
+        {
+            return true;
+        }
+    }
+
+    return false;
 }
 
 bool QGitCommitDiffParent::hasFile(const QString &file)
