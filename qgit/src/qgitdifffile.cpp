@@ -110,7 +110,17 @@ QList<QGitDiffHunk> QGitDiffFile::hunks() const
     return m_hunks;
 }
 
+QList<QGitDiffBinary> QGitDiffFile::binaries() const
+{
+    return m_binary;
+}
+
 void QGitDiffFile::addHunk(const QGitDiffHunk &hunk)
 {
     m_hunks.append(hunk);
+}
+
+void QGitDiffFile::addBinary(const QGitDiffBinary &binary)
+{
+    m_binary.append(binary);
 }

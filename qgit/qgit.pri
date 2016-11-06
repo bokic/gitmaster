@@ -11,7 +11,9 @@ SOURCES += \
     $$PWD/src/qgitdiffline.cpp \
     $$PWD/src/qgiterror.cpp \
     $$PWD/src/qgitsignature.cpp \
-    $$PWD/src/qgitcommitdiffparent.cpp
+    $$PWD/src/qgitcommitdiffparent.cpp \
+    $$PWD/src/qgitdiffbinary.cpp \
+    $$PWD/src/qgitdiffbinaryfile.cpp
 
 HEADERS += \
     $$PWD/include/qgit.h \
@@ -24,4 +26,6 @@ HEADERS += \
     $$PWD/include/qgitdiffline.h \
     $$PWD/include/qgiterror.h \
     $$PWD/include/qgitsignature.h \
-    $$PWD/include/qgitcommitdiffparent.h
+    $$PWD/include/qgitcommitdiffparent.h \
+    $$PWD/include/qgitdiffbinary.h \
+    $$PWD/include/qgitdiffbinaryfile.h

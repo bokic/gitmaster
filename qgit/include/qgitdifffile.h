@@ -1,6 +1,7 @@
 #pragma once
 
 #include "qgitdifffileitem.h"
+#include "qgitdiffbinary.h"
 #include "qgitdiffhunk.h"
 #include <git2.h>
 
@@ -27,8 +28,10 @@ public:
     int simularity() const;
     int status() const;
     QList<QGitDiffHunk> hunks() const;
+    QList<QGitDiffBinary> binaries() const;
 
     void addHunk(const QGitDiffHunk &hunk);
+    void addBinary(const QGitDiffBinary &binary);
 
 private:
     QGitDiffFileItem m_new_file;
@@ -38,4 +41,5 @@ private:
     int m_simularity = 0;
     int m_status = 0;
     QList<QGitDiffHunk> m_hunks;
+    QList<QGitDiffBinary> m_binary;
 };
