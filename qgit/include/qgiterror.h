@@ -1,5 +1,4 @@
-#ifndef QGITERROR_H
-#define QGITERROR_H
+#pragma once
 
 #include <QString>
 
@@ -22,5 +21,3 @@ private:
     QString m_functionName;
     int m_errorCode = 0;
 };
-
-#endif // QGITERROR_H

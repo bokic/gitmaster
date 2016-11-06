@@ -1,7 +1,7 @@
-#ifndef QGITDIFFVIEWER_H
-#define QGITDIFFVIEWER_H
+#pragma once
 
 #include <QWidget>
+
 
 class QGitDiffViewer : public QWidget
 {
@@ -13,5 +13,3 @@ signals:
 
 public slots:
 };
-
-#endif // QGITDIFFVIEWER_H
