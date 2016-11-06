@@ -21,8 +21,6 @@ QGitMasterMainWindow::QGitMasterMainWindow(QWidget *parent)
     spacer->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     ui->mainToolBar->insertWidget(ui->actionSettings, spacer);
 
-    ui->splitter->setSizes(QList<int>() << 1000 << 4000);
-
     QGitRepoTreeItemDelegate *treeDelegate = new QGitRepoTreeItemDelegate(this);
 
     treeDelegate->setImages(
@@ -34,9 +32,6 @@ QGitMasterMainWindow::QGitMasterMainWindow(QWidget *parent)
                 QImage(":/images/branch_icon"));
 
     ui->treeWidget->setItemDelegate(treeDelegate);
-
-    ui->splitter->setStretchFactor(0, 0);
-    ui->splitter->setStretchFactor(0, 1);
 
     readSettings();
 }
