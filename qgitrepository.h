@@ -47,9 +47,13 @@ private slots:
     void on_listWidget_staged_itemChanged(QListWidgetItem *item);
     void on_listWidget_unstaged_itemChanged(QListWidgetItem *item);
     void on_pushButton_commit_clicked();
+    void on_pushButton_commitCancel_clicked();
+    void on_plainTextEdit_commitMessage_focus();
+
 
 private:
     void fetchCommits();
+    void activateCommitOperation(bool activate);
     Ui::QGitRepository *ui;
     QNetworkAccessManager m_networkManager;
     QString m_path;

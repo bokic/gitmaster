@@ -25,10 +25,7 @@ QGitRepository::QGitRepository(const QString &path, QWidget *parent)
 
     ui->setupUi(this);
 
-    ui->splitter->setStretchFactor(0, 0);
-    ui->splitter->setStretchFactor(1, 1);
-
-    ui->splitter_3->setStretchFactor(0, 0);
+    ui->splitter_3->setStretchFactor(0, 1);
     ui->splitter_3->setStretchFactor(1, 1);
 
     if (QGit::gitRepositoryDefaultSignature(m_path, name, email))
@@ -38,7 +35,7 @@ QGitRepository::QGitRepository(const QString &path, QWidget *parent)
 
         hash = QCryptographicHash::hash(email.trimmed().toLatin1(), QCryptographicHash::Md5).toHex();
 
-        QString urlStr = QString("http://www.gravatar.com/avatar/%1?s=32").arg(QString::fromLatin1(hash));
+        QString urlStr = QString("http://www.gravatar.com/avatar/%1?s=24").arg(QString::fromLatin1(hash));
         auto url = QUrl(urlStr);
         auto req = QNetworkRequest(url);
         reply = m_networkManager.get(req);
@@ -50,13 +47,14 @@ QGitRepository::QGitRepository(const QString &path, QWidget *parent)
         ui->label_signatureEmail->setText(tr("%1 <%2>").arg(name).arg(email));
     }
 
-    ui->label_signatureEmail->setVisible(false);
-    ui->toolButton->setVisible(false);
-    ui->comboBox_4->setVisible(false);
-    ui->checkBox_3->setVisible(false);
-    ui->pushButton_commit->setVisible(false);
-    ui->pushButton_2->setVisible(false);
-    ui->plainTextEdit_commitMessage->setPlaceholderText(tr("Commit message"));
+    //ui->label_signatureEmail->setVisible(false);
+    //ui->toolButton->setVisible(false);
+    //ui->comboBox_4->setVisible(false);
+    //ui->checkBox_3->setVisible(false);
+    //ui->pushButton_commit->setVisible(false);
+    //ui->pushButton_2->setVisible(false);
+
+    activateCommitOperation(false);
 
     connect(this, SIGNAL(repositoryBranches()), m_git, SLOT(listBranches()), Qt::QueuedConnection);
     connect(m_git, SIGNAL(listBranchesReply(QList<QGitBranch>, QGitError)), this, SLOT(repositoryBranchesReply(QList<QGitBranch>, QGitError)), Qt::QueuedConnection);
@@ -466,6 +464,11 @@ void QGitRepository::on_pushButton_commit_clicked()
     emit repositoryCommit(ui->plainTextEdit_commitMessage->toPlainText());
 }
 
+void QGitRepository::on_pushButton_commitCancel_clicked()
+{
+    activateCommitOperation(false);
+}
+
 void QGitRepository::historyTableSliderMoved(int pos)
 {
     if (pos == ui->tableWidget->verticalScrollBar()->maximum())
@@ -493,6 +496,11 @@ void QGitRepository::on_tableWidget_currentCellChanged(int currentRow, int curre
     }
 }
 
+void QGitRepository::on_plainTextEdit_commitMessage_focus()
+{
+    activateCommitOperation(true);
+}
+
 void QGitRepository::fetchCommits()
 {
     if (!m_allCommitsLoaded)
@@ -509,5 +517,22 @@ void QGitRepository::fetchCommits()
         {
             emit repositoryGetCommits("", COMMIT_COUNT_TO_LOAD);
         }
+    }
+}
+
+void QGitRepository::activateCommitOperation(bool activate)
+{
+    if (activate)
+    {
+        ui->horizontalWidgetLayout_1->show();
+        ui->horizontalWidgetLayout_2->show();
+        ui->plainTextEdit_commitMessage->setPlaceholderText("");
+    }
+    else
+    {
+        ui->horizontalWidgetLayout_1->hide();
+        ui->horizontalWidgetLayout_2->hide();
+        ui->plainTextEdit_commitMessage->setPlainText("");
+        ui->plainTextEdit_commitMessage->setPlaceholderText(tr("Commit message"));
     }
 }

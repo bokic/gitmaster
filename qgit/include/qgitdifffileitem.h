@@ -9,7 +9,7 @@ class QGitDiffFileItem
 {
 public:
     QGitDiffFileItem();
-    QGitDiffFileItem(const QString &path, const QByteArray &id, quint16 mode, quint32 flags, qint64 size);
+    QGitDiffFileItem(const git_diff_file &file);
     QGitDiffFileItem(const QGitDiffFileItem &other);
 
     QGitDiffFileItem &operator=(QGitDiffFileItem &&other);

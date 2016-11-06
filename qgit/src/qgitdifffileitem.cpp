@@ -8,12 +8,12 @@ QGitDiffFileItem::QGitDiffFileItem()
 {
 }
 
-QGitDiffFileItem::QGitDiffFileItem(const QString &path, const QByteArray &id, quint16 mode, quint32 flags, qint64 size)
-    : m_path(path)
-    , m_id(id)
-    , m_mode(mode)
-    , m_flags(flags)
-    , m_size(size)
+QGitDiffFileItem::QGitDiffFileItem(const git_diff_file &file)
+    : m_path(file.path)
+    , m_id(reinterpret_cast<const char *>(file.id.id), sizeof(file.id.id))
+    , m_mode(file.mode)
+    , m_flags(file.flags)
+    , m_size(file.size)
 {
 }
 

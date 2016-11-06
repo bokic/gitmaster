@@ -9,14 +9,13 @@ QGitDiffFile::QGitDiffFile()
 {
 }
 
-QGitDiffFile::QGitDiffFile(const QGitDiffFileItem &new_file, const QGitDiffFileItem &old_file, uint32_t flags, int nfiles, int simularity, int status, const QList<QGitDiffHunk> &hunks)
-    : m_new_file(new_file)
-    , m_old_file(old_file)
-    , m_flags(flags)
-    , m_nfiles(nfiles)
-    , m_simularity(simularity)
-    , m_status(status)
-    , m_hunks(hunks)
+QGitDiffFile::QGitDiffFile(const git_diff_delta *file)
+    : m_new_file(file->new_file)
+    , m_old_file(file->old_file)
+    , m_flags(file->flags)
+    , m_nfiles(file->nfiles)
+    , m_simularity(file->similarity)
+    , m_status(file->status)
 {
 }
 

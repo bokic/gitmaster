@@ -14,7 +14,7 @@ class QGitDiffFile
 
 public:
     QGitDiffFile();
-    QGitDiffFile(const QGitDiffFileItem &new_file, const QGitDiffFileItem &old_file, uint32_t flags, int nfiles, int simularity, int status, const QList<QGitDiffHunk> &hunks);
+    QGitDiffFile(const git_diff_delta *file);
     QGitDiffFile(const QGitDiffFile &other);
 
     QGitDiffFile &operator=(QGitDiffFile &&other);

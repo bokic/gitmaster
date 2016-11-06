@@ -8,6 +8,7 @@
 #include <QString>
 #include <QList>
 
+
 class QGitCommitDiffParent
 {
 public:
@@ -25,10 +26,9 @@ public:
     void addHunk(const git_diff_delta *delta, const git_diff_hunk *hunk);
     void addLine(const git_diff_delta *delta, const git_diff_hunk *hunk, const git_diff_line *line);
 
-    bool hasFile(const git_diff_delta *delta);
-    bool hasFile(const QString &file);
-
 private:
+    bool hasFile(const git_diff_delta *delta);
+
     QByteArray m_commitHash;
     QList<QGitDiffFile> m_files;
 };

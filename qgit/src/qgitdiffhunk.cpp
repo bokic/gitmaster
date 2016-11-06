@@ -22,16 +22,6 @@ QGitDiffHunk::QGitDiffHunk(const git_diff_hunk *hunk)
 {
 }
 
-QGitDiffHunk::QGitDiffHunk(const QString &header, int new_lines, int new_start, int old_lines, int old_start, const QList<QGitDiffLine> &lines)
-    : m_header(header)
-    , m_new_lines(new_lines)
-    , m_new_start(new_start)
-    , m_old_lines(old_lines)
-    , m_old_start(old_start)
-    , m_lines(lines)
-{
-}
-
 QGitDiffHunk::QGitDiffHunk(const QGitDiffHunk &other)
     : m_header(other.m_header)
     , m_new_lines(other.m_new_lines)

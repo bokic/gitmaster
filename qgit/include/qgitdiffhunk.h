@@ -12,7 +12,6 @@ class QGitDiffHunk
 public:
     QGitDiffHunk();
     QGitDiffHunk(const git_diff_hunk *hunk);
-    QGitDiffHunk(const QString &header, int new_lines, int new_start, int old_lines, int old_start, const QList<QGitDiffLine> &lines = QList<QGitDiffLine>());
     QGitDiffHunk(const QGitDiffHunk &other);
 
     QGitDiffHunk &operator=(QGitDiffHunk &&other);
