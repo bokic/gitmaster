@@ -18,8 +18,8 @@ void registerTypes()
     qRegisterMetaType<QMap<QString,git_status_t>>("QMap<QString,git_status_t>");
     qRegisterMetaType<QList<QGitBranch>>("QList<QGitBranch>");
     qRegisterMetaType<QList<QGitCommit>>("QList<QGitCommit>");
-    qRegisterMetaType<QList<QGitCommit>>("QGitError");
     qRegisterMetaType<QGitCommitDiff>("QGitCommitDiff");
+    qRegisterMetaType<QGitError>("QGitError");
 }
 
 int main(int argc, char *argv[])
