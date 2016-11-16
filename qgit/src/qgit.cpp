@@ -800,7 +800,7 @@ void QGit::commitDiff(QString commitId)
         error = ex;
     }
 
-    emit commitDiffReply(commitDiff, error);
+    emit commitDiffReply(commitId, commitDiff, error);
 
     if (diff)
     {

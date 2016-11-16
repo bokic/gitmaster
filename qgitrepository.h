@@ -38,7 +38,7 @@ private slots:
     void repositoryUnstageFilesReply(QGitError error);
     void repositoryCommitReply(QString commit_id, QGitError error);
     void repositoryGetCommitsReply(QList<QGitCommit> commits, QGitError error);
-    void repositoryGetCommitDiffReply(QGitCommitDiff diff, QGitError error);
+    void repositoryGetCommitDiffReply(QString commitId, QGitCommitDiff diff, QGitError error);
     void historyTableSliderMoved(int pos);
     void on_repositoryDetail_currentChanged(int index);
     void on_logHistory_commits_currentCellChanged(int currentRow, int currentColumn, int previousRow, int previousColumn);

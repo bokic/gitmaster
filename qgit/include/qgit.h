@@ -62,7 +62,7 @@ signals:
     void listTagsReply(QStringList tags, QGitError error);
     void listStashesReply(QStringList stashes, QGitError error);
     void listChangedFilesReply(QMap<QString,git_status_t> files, QGitError error);
-    void commitDiffReply(QGitCommitDiff diff, QGitError error);
+    void commitDiffReply(QString commit_id, QGitCommitDiff diff, QGitError error);
     void stageFilesReply(QGitError error);
     void unstageFilesReply(QGitError error);
     void commitReply(QString commit_id, QGitError error);

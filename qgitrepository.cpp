@@ -78,7 +78,7 @@ QGitRepository::QGitRepository(const QString &path, QWidget *parent)
     connect(m_git, SIGNAL(listCommitsReply(QList<QGitCommit>,QGitError)), this, SLOT(repositoryGetCommitsReply(QList<QGitCommit>,QGitError)));
 
     connect(this, SIGNAL(repositoryGetCommitDiff(QString)), m_git, SLOT(commitDiff(QString)));
-    connect(m_git, SIGNAL(commitDiffReply(QGitCommitDiff, QGitError)), this, SLOT(repositoryGetCommitDiffReply(QGitCommitDiff, QGitError)));
+    connect(m_git, SIGNAL(commitDiffReply(QString, QGitCommitDiff, QGitError)), this, SLOT(repositoryGetCommitDiffReply(QString, QGitCommitDiff, QGitError)));
 
     connect(ui->logHistory_commits->verticalScrollBar(), SIGNAL(sliderMoved(int)), this, SLOT(historyTableSliderMoved(int)));
 
@@ -367,7 +367,7 @@ void QGitRepository::repositoryGetCommitsReply(QList<QGitCommit> commits, QGitEr
     }
 }
 
-void QGitRepository::repositoryGetCommitDiffReply(QGitCommitDiff diff, QGitError error)
+void QGitRepository::repositoryGetCommitDiffReply(QString commitId, QGitCommitDiff diff, QGitError error)
 {
     Q_UNUSED(error);
 }
