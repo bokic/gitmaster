@@ -39,8 +39,7 @@ public slots:
     void signature();
     void currentBranch();
     void status();
-    void listBranches();
-    void listTags();
+    void listBranchesAndTags();
     void listStashes();
     void listChangedFiles();
     void commitDiff(QString commitId);
@@ -58,8 +57,7 @@ signals:
     void signatureReply(QString name, QString email, QGitError error);
     void currentBranchReply(QString name, QGitError error);
     void statusReply(QMap<git_status_t, int> items, QGitError error);
-    void listBranchesReply(QList<QGitBranch> branches, QGitError error);
-    void listTagsReply(QStringList tags, QGitError error);
+    void listBranchesAndTagsReply(QList<QGitBranch> branches, QList<QString> tags, QGitError error);
     void listStashesReply(QStringList stashes, QGitError error);
     void listChangedFilesReply(QMap<QString,git_status_t> files, QGitError error);
     void commitDiffReply(QString commit_id, QGitCommitDiff diff, QGitError error);

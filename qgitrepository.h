@@ -31,7 +31,7 @@ signals:
 
 private slots:
     void gravatarImageDownloadFinished();
-    void repositoryBranchesReply(QList<QGitBranch> branches, QGitError error);
+    void repositoryBranchesAndTagsReply(QList<QGitBranch> branches, QList<QString> tags, QGitError error);
     void repositoryStashesReply(QStringList stashes, QGitError error);
     void repositoryChangedFilesReply(QMap<QString, git_status_t> files, QGitError error);
     void repositoryStageFilesReply(QGitError error);

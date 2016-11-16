@@ -56,8 +56,8 @@ QGitRepository::QGitRepository(const QString &path, QWidget *parent)
 
     activateCommitOperation(false);
 
-    connect(this, SIGNAL(repositoryBranches()), m_git, SLOT(listBranches()), Qt::QueuedConnection);
-    connect(m_git, SIGNAL(listBranchesReply(QList<QGitBranch>, QGitError)), this, SLOT(repositoryBranchesReply(QList<QGitBranch>, QGitError)), Qt::QueuedConnection);
+    connect(this, SIGNAL(repositoryBranches()), m_git, SLOT(listBranchesAndTags()), Qt::QueuedConnection);
+    connect(m_git, SIGNAL(listBranchesAndTagsReply(QList<QGitBranch>, QList<QString>, QGitError)), this, SLOT(repositoryBranchesAndTagsReply(QList<QGitBranch>, QList<QString>, QGitError)), Qt::QueuedConnection);
 
     connect(this, SIGNAL(repositoryStashes()), m_git, SLOT(listStashes()), Qt::QueuedConnection);
     connect(m_git, SIGNAL(listStashesReply(QStringList,QGitError)), this, SLOT(repositoryStashesReply(QStringList,QGitError)), Qt::QueuedConnection);
@@ -114,7 +114,7 @@ void QGitRepository::gravatarImageDownloadFinished()
     reply->deleteLater();
 }
 
-void QGitRepository::repositoryBranchesReply(QList<QGitBranch> branches, QGitError error)
+void QGitRepository::repositoryBranchesAndTagsReply(QList<QGitBranch> branches, QList<QString> tags, QGitError error)
 {
     Q_UNUSED(error);
 
@@ -124,18 +124,15 @@ void QGitRepository::repositoryBranchesReply(QList<QGitBranch> branches, QGitErr
     QTreeWidgetItem *itemTags = new QTreeWidgetItem(QStringList() << tr("Tags"));
     QTreeWidgetItem *itemRemoteBranches = new QTreeWidgetItem(QStringList() << tr("Remotes"));
 
-    ui->branchesTreeView->clear();
-
     itemFileStatus->addChild(new QTreeWidgetItem(QStringList() << tr("Working Copy")));
 
     for(auto branch: branches)
     {
         QStringList items = branch.name().split('/');
 
-        switch(branch.type())
+        if (branch.type() & GIT_BRANCH_LOCAL)
         {
-        case GIT_BRANCH_LOCAL:
-            if (items.count() >= 3)
+            if ((items.count() >= 3)&&(items[0] == QStringLiteral("refs"))&&(items[1] == QStringLiteral("heads")))
             {
                 QTreeWidgetItem *item = itemLocalBranches;
 
@@ -167,9 +164,10 @@ void QGitRepository::repositoryBranchesReply(QList<QGitBranch> branches, QGitErr
             {
                 qDebug() << "Invalid local branch item.";
             }
-            break;
-        case GIT_BRANCH_REMOTE:
-            if (items.count() >= 4)
+        }
+        if (branch.type() & GIT_BRANCH_REMOTE)
+        {
+            if ((items.count() >= 4)&&(items[0] == QStringLiteral("refs"))&&(items[1] == QStringLiteral("remotes")))
             {
                 QTreeWidgetItem *item = itemRemoteBranches;
 
@@ -201,21 +199,23 @@ void QGitRepository::repositoryBranchesReply(QList<QGitBranch> branches, QGitErr
             {
                 qDebug() << "Invalid remote branch item";
             }
-            break;
-        case GIT_BRANCH_ALL:
-            // TODO: Implement QGitRepository::repositoryBranchesReply - GIT_BRANCH_ALL
-            qDebug() << "Unimplemented(GIT_BRANCH_ALL)";
-            break;
         }
+    }
+
+    for(auto tag: tags)
+    {
+        QTreeWidgetItem *child = new QTreeWidgetItem(QStringList() << tag);
+
+        itemTags->addChild(child);
     }
 
     items.append(itemFileStatus);
     items.append(itemLocalBranches);
-    items.append(itemTags); // TODO: Implement git tags.
+    items.append(itemTags);
     items.append(itemRemoteBranches);
 
+    ui->branchesTreeView->clear();
     ui->branchesTreeView->addTopLevelItems(items);
-
     ui->branchesTreeView->expandAll();
 }
 
