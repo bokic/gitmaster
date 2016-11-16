@@ -333,11 +333,11 @@
        </attribute>
        <layout class="QVBoxLayout" name="verticalLayout_8">
         <item>
-         <widget class="QSplitter" name="splitter_7">
+         <widget class="QSplitter" name="logHistory_splitter_1">
           <property name="orientation">
            <enum>Qt::Vertical</enum>
           </property>
-          <widget class="QTableWidget" name="tableWidget">
+          <widget class="QTableWidget" name="logHistory_commits">
            <property name="editTriggers">
             <set>QAbstractItemView::NoEditTriggers</set>
            </property>
@@ -397,18 +397,18 @@
             </property>
            </column>
           </widget>
-          <widget class="QSplitter" name="splitter_6">
+          <widget class="QSplitter" name="logHistory_splitter_2">
            <property name="orientation">
             <enum>Qt::Horizontal</enum>
            </property>
-           <widget class="QSplitter" name="splitter_5">
+           <widget class="QSplitter" name="logHistory_splitter_3">
             <property name="orientation">
              <enum>Qt::Vertical</enum>
             </property>
-            <widget class="QTextBrowser" name="textBrowser"/>
-            <widget class="QTableWidget" name="tableWidget_2"/>
+            <widget class="QTextBrowser" name="logHistory_info"/>
+            <widget class="QTableWidget" name="logHistory_files"/>
            </widget>
-           <widget class="QWidget" name="widget_2" native="true"/>
+           <widget class="QGitDiffWidget" name="logHistory_diff" native="true"/>
           </widget>
          </widget>
         </item>

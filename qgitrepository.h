@@ -41,7 +41,7 @@ private slots:
     void repositoryGetCommitDiffReply(QGitCommitDiff diff, QGitError error);
     void historyTableSliderMoved(int pos);
     void on_repositoryDetail_currentChanged(int index);
-    void on_tableWidget_currentCellChanged(int currentRow, int currentColumn, int previousRow, int previousColumn);
+    void on_logHistory_commits_currentCellChanged(int currentRow, int currentColumn, int previousRow, int previousColumn);
     void on_checkBox_StagedFiles_clicked();
     void on_checkBox_UnstagedFiles_clicked();
     void on_listWidget_staged_itemChanged(QListWidgetItem *item);

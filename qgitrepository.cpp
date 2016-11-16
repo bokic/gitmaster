@@ -80,7 +80,7 @@ QGitRepository::QGitRepository(const QString &path, QWidget *parent)
     connect(this, SIGNAL(repositoryGetCommitDiff(QString)), m_git, SLOT(commitDiff(QString)));
     connect(m_git, SIGNAL(commitDiffReply(QGitCommitDiff, QGitError)), this, SLOT(repositoryGetCommitDiffReply(QGitCommitDiff, QGitError)));
 
-    connect(ui->tableWidget->verticalScrollBar(), SIGNAL(sliderMoved(int)), this, SLOT(historyTableSliderMoved(int)));
+    connect(ui->logHistory_commits->verticalScrollBar(), SIGNAL(sliderMoved(int)), this, SLOT(historyTableSliderMoved(int)));
 
 
     on_repositoryDetail_currentChanged(ui->repositoryDetail->currentIndex());
@@ -344,21 +344,21 @@ void QGitRepository::repositoryGetCommitsReply(QList<QGitCommit> commits, QGitEr
 
     foreach(auto commit, commits)
     {
-        int row = ui->tableWidget->rowCount();
+        int row = ui->logHistory_commits->rowCount();
 
-        ui->tableWidget->insertRow(row);
+        ui->logHistory_commits->insertRow(row);
 
         QTableWidgetItem *item = nullptr;
 
         item = new QTableWidgetItem(commit.message().split('\n').first());
-        ui->tableWidget->setItem(row, 1, item);
+        ui->logHistory_commits->setItem(row, 1, item);
         item = new QTableWidgetItem(commit.time().toString());
-        ui->tableWidget->setItem(row, 2, item);
+        ui->logHistory_commits->setItem(row, 2, item);
         item = new QTableWidgetItem(QString("%1 <%2>").arg(commit.author().name(), commit.author().email()));
-        ui->tableWidget->setItem(row, 3, item);
+        ui->logHistory_commits->setItem(row, 3, item);
         item = new QTableWidgetItem(commit.id().left(7));
         item->setData(Qt::UserRole, commit.id());
-        ui->tableWidget->setItem(row, 4, item);
+        ui->logHistory_commits->setItem(row, 4, item);
     }
 
     if (commits.count() < COMMIT_COUNT_TO_LOAD)
@@ -471,9 +471,9 @@ void QGitRepository::on_pushButton_commitCancel_clicked()
 
 void QGitRepository::historyTableSliderMoved(int pos)
 {
-    if (pos == ui->tableWidget->verticalScrollBar()->maximum())
+    if (pos == ui->logHistory_commits->verticalScrollBar()->maximum())
     {
-        int rows = ui->tableWidget->rowCount();
+        int rows = ui->logHistory_commits->rowCount();
 
         if (rows > 0)
         {
@@ -482,13 +482,13 @@ void QGitRepository::historyTableSliderMoved(int pos)
     }
 }
 
-void QGitRepository::on_tableWidget_currentCellChanged(int currentRow, int currentColumn, int previousRow, int previousColumn)
+void QGitRepository::on_logHistory_commits_currentCellChanged(int currentRow, int currentColumn, int previousRow, int previousColumn)
 {
     Q_UNUSED(currentColumn);
     Q_UNUSED(previousRow);
     Q_UNUSED(previousColumn);
 
-    int rows = ui->tableWidget->rowCount();
+    int rows = ui->logHistory_commits->rowCount();
 
     if (currentRow == rows - 1)
     {
@@ -505,11 +505,11 @@ void QGitRepository::fetchCommits()
 {
     if (!m_allCommitsLoaded)
     {
-        int rows = ui->tableWidget->rowCount();
+        int rows = ui->logHistory_commits->rowCount();
 
         if (rows > 0)
         {
-            QString last_commit_hash = ui->tableWidget->item(rows - 1, 4)->data(Qt::UserRole).toString();
+            QString last_commit_hash = ui->logHistory_commits->item(rows - 1, 4)->data(Qt::UserRole).toString();
 
             emit repositoryGetCommits(last_commit_hash, COMMIT_COUNT_TO_LOAD);
         }
