@@ -493,6 +493,12 @@ void QGit::listBranches()
 
     emit listBranchesReply(branches, error);
 
+    if(ref)
+    {
+        git_reference_free(ref);
+        ref = nullptr;
+    }
+
     if (it)
     {
         git_branch_iterator_free(it);
@@ -692,10 +698,22 @@ void QGit::commitDiff(QString commitId)
 
         // TODO: get parents.
         res = git_revparse_single(&obj, repo, commitId.toLatin1());
+        if (res)
+        {
+            throw QGitError("git_revparse_single", res);
+        }
 
         res = git_commit_lookup(&commit, repo, git_object_id(obj));
+        if (res)
+        {
+            throw QGitError("git_commit_lookup", res);
+        }
 
         res = git_commit_tree(&commit_tree, commit);
+        if (res)
+        {
+            throw QGitError("git_commit_tree", res);
+        }
 
         parents = git_commit_parentcount(commit);
 
@@ -703,6 +721,10 @@ void QGit::commitDiff(QString commitId)
         for (unsigned int c = 0; c < parents; c++)
         {
             res = git_commit_parent(&parent, commit, c);
+            if (res)
+            {
+                throw QGitError("git_commit_parent", res);
+            }
 
             char commit_id[41] = {0, };
             const git_oid *oid = git_commit_id(parent);
@@ -710,7 +732,10 @@ void QGit::commitDiff(QString commitId)
             QGitCommitDiffParent item(commit_id);
 
             res = git_commit_tree(&parent_tree, parent);
-
+            if (res)
+            {
+                throw QGitError("git_commit_tree", res);
+            }
 
             res = git_diff_tree_to_tree(&diff, repo, commit_tree, parent_tree, nullptr);
             if (res)
@@ -750,6 +775,23 @@ void QGit::commitDiff(QString commitId)
                                             return 0;
                                         },
                                       &item);
+            if (res)
+            {
+                throw QGitError("git_diff_foreach", res);
+            }
+
+
+            git_diff_free(diff);
+            diff = nullptr;
+
+            git_tree_free(parent_tree);
+            parent_tree = nullptr;
+
+            git_tree_free(commit_tree);
+            commit_tree = nullptr;
+
+            git_commit_free(parent);
+            parent = nullptr;
 
             commitDiff.addParent(item);
         }
@@ -760,8 +802,47 @@ void QGit::commitDiff(QString commitId)
 
     emit commitDiffReply(commitDiff, error);
 
-    // TODO: free
+    if (diff)
+    {
+        git_diff_free(diff);
+        diff = nullptr;
+    }
 
+    if (parent_tree)
+    {
+        git_tree_free(parent_tree);
+        parent_tree = nullptr;
+    }
+
+    if (parent)
+    {
+        git_commit_free(parent);
+        parent = nullptr;
+    }
+
+    if (commit_tree)
+    {
+        git_tree_free(commit_tree);
+        commit_tree = nullptr;
+    }
+
+    if(commit)
+    {
+        git_commit_free(commit);
+        commit = nullptr;
+    }
+
+    if(obj)
+    {
+        git_object_free(obj);
+        obj = nullptr;
+    }
+
+    if (repo)
+    {
+        git_repository_free(repo);
+        repo = nullptr;
+    }
 }
 
 void QGit::stageFiles(QStringList items)
