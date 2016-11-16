@@ -1,5 +1,4 @@
-#ifndef DGITDIFFWIDGET_H
-#define DGITDIFFWIDGET_H
+#pragma once
 
 #include <QWidget>
 
@@ -14,4 +13,3 @@ signals:
 public slots:
 };
 
-#endif // DGITDIFFWIDGET_H
