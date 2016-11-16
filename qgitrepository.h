@@ -58,5 +58,8 @@ private:
     QNetworkAccessManager m_networkManager;
     QString m_path;
     bool m_allCommitsLoaded;
+    QGitCommitDiff m_stagedDiff;
+    QGitCommitDiff m_unstagedDiff;
+    QGitCommitDiff m_commitDiff;
     QGit *m_git;
 };

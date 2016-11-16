@@ -184,6 +184,9 @@
              <verstretch>0</verstretch>
             </sizepolicy>
            </property>
+           <property name="readonly" stdset="0">
+            <bool>false</bool>
+           </property>
           </widget>
          </widget>
         </item>
@@ -408,7 +411,11 @@
             <widget class="QTextBrowser" name="logHistory_info"/>
             <widget class="QTableWidget" name="logHistory_files"/>
            </widget>
-           <widget class="QGitDiffWidget" name="logHistory_diff" native="true"/>
+           <widget class="QGitDiffWidget" name="logHistory_diff" native="true">
+            <property name="readonly" stdset="0">
+             <bool>true</bool>
+            </property>
+           </widget>
           </widget>
          </widget>
         </item>

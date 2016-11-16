@@ -369,7 +369,29 @@ void QGitRepository::repositoryGetCommitsReply(QList<QGitCommit> commits, QGitEr
 
 void QGitRepository::repositoryGetCommitDiffReply(QString commitId, QGitCommitDiff diff, QGitError error)
 {
-    Q_UNUSED(error);
+    if (error.errorCode())
+    {
+        return;
+    }
+
+    if (commitId == "HEAD")
+    {
+        // do nothing
+    }
+    if (commitId == "staged")
+    {
+        m_stagedDiff = diff;
+    }
+    else if (commitId == "unstaged")
+    {
+        m_unstagedDiff = diff;
+    }
+    else
+    {
+        m_commitDiff = diff;
+
+        ui->logHistory_diff->setGitDiff(m_commitDiff);
+    }
 }
 
 void QGitRepository::on_repositoryDetail_currentChanged(int index)
@@ -488,7 +510,17 @@ void QGitRepository::on_logHistory_commits_currentCellChanged(int currentRow, in
     Q_UNUSED(previousRow);
     Q_UNUSED(previousColumn);
 
-    int rows = ui->logHistory_commits->rowCount();
+    QString commit_id;
+    int rows = 0;
+
+    commit_id = ui->logHistory_commits->item(currentRow, 4)->data(Qt::UserRole).toString();
+
+    if (!commit_id.isEmpty())
+    {
+        emit repositoryGetCommitDiff(commit_id);
+    }
+
+    rows = ui->logHistory_commits->rowCount();
 
     if (currentRow == rows - 1)
     {
