@@ -76,13 +76,13 @@ QString QGit::getBranchNameFromPath(const QString &path)
     result = git_repository_head(&ref, repo);
     if (result)
     {
-    goto cleanup;
+        goto cleanup;
     }
 
     git_branch_name(&branch, ref);
     ret = branch;
 
-    cleanup:
+cleanup:
     if (ref)
     {
         git_reference_free(ref);
@@ -169,7 +169,7 @@ bool QGit::gitRepositoryDefaultSignature(const QDir &path, QString &name, QStrin
 
     ret = true;
 
-    cleanup:
+cleanup:
     if (me)
     {
         git_signature_free(me);
