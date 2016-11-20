@@ -18,12 +18,14 @@ QGitRepository::QGitRepository(const QString &path, QWidget *parent)
     , ui(new Ui::QGitRepository)
     , m_path(path)
     , m_allCommitsLoaded(false)
-    , m_git(new QGit(this))
+    , m_git(new QGit())
 {
     QString name;
     QString email;
 
     ui->setupUi(this);
+
+    m_git->moveToThread(&m_thread);
 
     ui->splitter_3->setStretchFactor(0, 1);
     ui->splitter_3->setStretchFactor(1, 1);
@@ -82,6 +84,7 @@ QGitRepository::QGitRepository(const QString &path, QWidget *parent)
 
     connect(ui->logHistory_commits->verticalScrollBar(), SIGNAL(sliderMoved(int)), this, SLOT(historyTableSliderMoved(int)));
 
+    m_thread.start();
 
     on_repositoryDetail_currentChanged(ui->repositoryDetail->currentIndex());
 
@@ -94,6 +97,11 @@ QGitRepository::QGitRepository(const QString &path, QWidget *parent)
 
 QGitRepository::~QGitRepository()
 {
+    m_thread.quit();
+    m_thread.wait();
+
+    delete m_git; m_git = nullptr;
+
     delete ui;
 }
 

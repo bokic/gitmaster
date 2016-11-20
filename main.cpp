@@ -1,4 +1,10 @@
 #include "qgitmastermainwindow.h"
+#include "qgitcommitdiff.h"
+#include "qgitbranch.h"
+#include "qgitcommit.h"
+#include "qgiterror.h"
+#include "git2.h"
+
 #include <QApplication>
 #include <QList>
 #include <QMap>

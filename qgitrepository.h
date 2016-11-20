@@ -2,6 +2,7 @@
 
 #include <QNetworkAccessManager>
 #include <QListWidgetItem>
+#include <QThread>
 #include <QWidget>
 
 #include "qgit.h"
@@ -61,5 +62,6 @@ private:
     QGitCommitDiff m_stagedDiff;
     QGitCommitDiff m_unstagedDiff;
     QGitCommitDiff m_commitDiff;
+    QThread m_thread;
     QGit *m_git;
 };
