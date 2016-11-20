@@ -3,7 +3,6 @@
 #include <QMainWindow>
 #include <QTreeWidgetItem>
 #include <QEvent>
-#include "qgit.h"
 
 namespace Ui {
 class QGitMasterMainWindow;
@@ -35,5 +34,4 @@ private:
     void readSettings();
 
     Ui::QGitMasterMainWindow *ui;
-    QGit m_git;
 };
