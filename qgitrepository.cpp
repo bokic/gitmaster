@@ -90,8 +90,6 @@ QGitRepository::QGitRepository(const QString &path, QWidget *parent)
     emit repositoryStashes();
 
     fetchCommits();
-
-    emit repositoryGetCommitDiff("");
 }
 
 QGitRepository::~QGitRepository()
