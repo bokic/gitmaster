@@ -663,9 +663,6 @@ void QGit::commitDiff(QString commitId)
             git_tree_free(parent_tree);
             parent_tree = nullptr;
 
-            git_tree_free(commit_tree);
-            commit_tree = nullptr;
-
             git_commit_free(parent);
             parent = nullptr;
 
