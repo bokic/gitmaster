@@ -418,6 +418,12 @@ void QGit::listBranchesAndTags()
 
     emit listBranchesAndTagsReply(branches, tags, error);
 
+    if (tag_names.strings)
+    {
+        git_strarray_free(&tag_names);
+        tag_names = {nullptr, 0};
+    }
+
     if(ref)
     {
         git_reference_free(ref);
