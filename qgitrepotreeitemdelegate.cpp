@@ -141,13 +141,17 @@ void QGitRepoTreeItemDelegate::paint(QPainter *painter, const QStyleOptionViewIt
 
 QSize QGitRepoTreeItemDelegate::sizeHint(const QStyleOptionViewItem &option, const QModelIndex &index) const
 {
-    int y = 0;
+    //int y = 0;
 
+    Q_UNUSED(option);
     Q_UNUSED(index);
 
-    y = (option.fontMetrics.height() * 2) + 4;
+    //QFontMetrics f1(m_normalFont);
+    //QFontMetrics f2(m_boldFont);
 
-    return QSize(200, y);
+    //y = (option.fontMetrics.height() * 2) + 4;
+
+    return QSize(200, 44);
 }
 
 void QGitRepoTreeItemDelegate::setImages(const QImage &branch_logo, const QImage &file_ok, const QImage &file_new, const QImage &file_modified, const QImage &file_removed, const QImage &current_branch)
