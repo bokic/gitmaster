@@ -141,12 +141,13 @@ void QGitRepoTreeItemDelegate::paint(QPainter *painter, const QStyleOptionViewIt
 
 QSize QGitRepoTreeItemDelegate::sizeHint(const QStyleOptionViewItem &option, const QModelIndex &index) const
 {
-    Q_UNUSED(option);
+    int y = 0;
+
     Q_UNUSED(index);
 
-    // TODO: Calculate width.
+    y = (option.fontMetrics.height() * 2) + 4;
 
-    return QSize(200, 44);
+    return QSize(200, y);
 }
 
 void QGitRepoTreeItemDelegate::setImages(const QImage &branch_logo, const QImage &file_ok, const QImage &file_new, const QImage &file_modified, const QImage &file_removed, const QImage &current_branch)
