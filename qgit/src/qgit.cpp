@@ -1288,7 +1288,7 @@ void QGit::listCommits(QString object, int length)
             unsigned int parents = 0;
 
             QString commit_id;
-            QList<QString> commit_parents;
+            QList<QGitCommitDiffParent> commit_parents;
             QDateTime commit_time;
             QGitSignature commit_author;
             QGitSignature commit_commiter;
@@ -1306,7 +1306,7 @@ void QGit::listCommits(QString object, int length)
             for (unsigned int index = 0; index < parents; index++)
             {
                 git_commit *parent = nullptr;
-                QString parentStr;
+                QByteArray parentStr;
 
                 res = git_commit_parent(&parent, commit, index);
                 if (res)
@@ -1315,9 +1315,9 @@ void QGit::listCommits(QString object, int length)
                 }
 
                 const git_oid *parent_iod =  git_commit_id(parent);
-                parentStr = QString::fromUtf8(git_oid_tostr_s(parent_iod));
+                parentStr = QByteArray(git_oid_tostr_s(parent_iod));
 
-                commit_parents.append(parentStr);
+                commit_parents.append(QGitCommitDiffParent(parentStr));
 
                 git_commit_free(parent);
                 parent = nullptr;
@@ -1342,7 +1342,7 @@ void QGit::listCommits(QString object, int length)
 
             commit_message = QString::fromUtf8(git_commit_message(commit));
 
-            item = QGitCommit(QList<QGitDiffFile>(), commit_id, commit_parents, commit_time, commit_author, commit_commiter, commit_message);
+            item = QGitCommit(commit_id, commit_parents, commit_time, commit_author, commit_commiter, commit_message);
 
             commits.push_back(item);
 
