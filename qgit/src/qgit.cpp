@@ -1038,7 +1038,7 @@ void QGit::clone(QUrl url)
 
             QGit *_this =  static_cast<QGit *>(payload);
 
-            emit _this->repositoryCloneTransferReply(stats->total_objects, stats->indexed_objects, stats->received_objects, stats->local_objects, stats->total_deltas, stats->indexed_deltas, stats->received_bytes);
+			emit _this->cloneTransferReply(stats->total_objects, stats->indexed_objects, stats->received_objects, stats->local_objects, stats->total_deltas, stats->indexed_deltas, stats->received_bytes);
 
             return _this->m_abort;
         };

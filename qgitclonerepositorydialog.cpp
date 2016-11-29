@@ -15,14 +15,16 @@ QGitCloneRepositoryDialog::QGitCloneRepositoryDialog(const QString &url, const Q
 
     m_git->moveToThread(&m_thread);
 
-    connect(this, SIGNAL(repositoryClone(QDir,QUrl)), m_git, SLOT(repositoryClone(QDir,QUrl)));
-    connect(m_git, SIGNAL(repositoryCloneReply(QDir,int)), this, SLOT(repositoryCloneReply(QDir,int)));
-    connect(m_git, SIGNAL(repositoryCloneTransferReply(uint,uint,uint,uint,uint,uint,size_t)), this, SLOT(repositoryCloneTransferReply(uint,uint,uint,uint,uint,uint,size_t)));
-    connect(m_git, SIGNAL(repositoryCloneProgressReply(QDir,size_t,size_t)), this, SLOT(repositoryCloneProgressReply(QDir,size_t,size_t)));
+	connect(this, SIGNAL(clone(QUrl)), m_git, SLOT(clone(QUrl)));
+	connect(m_git, SIGNAL(cloneReply(QGitError)), this, SLOT(cloneReply(QGitError)));
+	connect(m_git, SIGNAL(cloneTransferReply(uint,uint,uint,uint,uint,uint,size_t)), this, SLOT(cloneTransferReply(uint,uint,uint,uint,uint,uint,size_t)));
+	connect(m_git, SIGNAL(cloneProgressReply(QString,size_t,size_t)), this, SLOT(cloneProgressReply(QString,size_t,size_t)));
+
+	m_git->setPath(m_path);
 
     m_thread.start();
 
-    emit repositoryClone(m_path, m_url);
+	emit clone(m_url);
 }
 
 QGitCloneRepositoryDialog::~QGitCloneRepositoryDialog()
@@ -51,9 +53,8 @@ void QGitCloneRepositoryDialog::on_pushButton_close_clicked()
     }
 }
 
-void QGitCloneRepositoryDialog::repositoryCloneReply(QDir path, int error)
+void QGitCloneRepositoryDialog::cloneReply(QGitError error)
 {
-    Q_UNUSED(path);
     Q_UNUSED(error);
 
     if (m_aborted)
@@ -67,7 +68,7 @@ void QGitCloneRepositoryDialog::repositoryCloneReply(QDir path, int error)
     ui->pushButton_close->setEnabled(true);
 }
 
-void QGitCloneRepositoryDialog::repositoryCloneTransferReply(unsigned int total_objects, unsigned int indexed_objects, unsigned int received_objects, unsigned int local_objects, unsigned int total_deltas, unsigned int indexed_deltas, size_t received_bytes)
+void QGitCloneRepositoryDialog::cloneTransferReply(unsigned int total_objects, unsigned int indexed_objects, unsigned int received_objects, unsigned int local_objects, unsigned int total_deltas, unsigned int indexed_deltas, size_t received_bytes)
 {
     Q_UNUSED(local_objects);
 
@@ -89,7 +90,7 @@ void QGitCloneRepositoryDialog::repositoryCloneTransferReply(unsigned int total_
     ui->label_status->setText(tr("Recieved %1 bytes.").arg(received_bytes));
 }
 
-void QGitCloneRepositoryDialog::repositoryCloneProgressReply(QDir path, size_t completed_steps, size_t total_steps)
+void QGitCloneRepositoryDialog::cloneProgressReply(QString path, size_t completed_steps, size_t total_steps)
 {
     Q_UNUSED(path);
 
