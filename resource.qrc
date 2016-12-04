@@ -19,5 +19,6 @@
         <file>images/pull.svg</file>
         <file>images/push.svg</file>
         <file>images/fetch.svg</file>
+        <file>images/file_unknown.svg</file>
     </qresource>
 </RCC>

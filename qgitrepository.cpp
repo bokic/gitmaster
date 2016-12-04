@@ -282,7 +282,7 @@ void QGitRepository::repositoryChangedFilesReply(QMap<QString, git_status_t> fil
                 item->setIcon(QIcon(":/images/file_removed.svg"));
                 break;
             default:
-                // TODO: Add some "unknown" image.
+                item->setIcon(QIcon(":/images/file_unknown.svg"));
                 break;
             }
 
@@ -309,7 +309,7 @@ void QGitRepository::repositoryChangedFilesReply(QMap<QString, git_status_t> fil
                 item->setIcon(QIcon(":/images/file_removed.svg"));
                 break;
             default:
-                // TODO: Add some "unknown" image.
+                item->setIcon(QIcon(":/images/file_unknown.svg"));
                 break;
             }
 
