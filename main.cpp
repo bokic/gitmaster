@@ -1,5 +1,4 @@
 #include "qgitmastermainwindow.h"
-#include "qgitcommitdiff.h"
 #include "qgitbranch.h"
 #include "qgitcommit.h"
 #include "qgiterror.h"
@@ -24,7 +23,6 @@ void registerTypes()
     qRegisterMetaType<QMap<QString,git_status_t>>("QMap<QString,git_status_t>");
     qRegisterMetaType<QList<QGitBranch>>("QList<QGitBranch>");
     qRegisterMetaType<QList<QGitCommit>>("QList<QGitCommit>");
-    qRegisterMetaType<QGitCommitDiff>("QGitCommitDiff");
     qRegisterMetaType<QList<QString>>("QList<QString>");
     qRegisterMetaType<QGitError>("QGitError");
 }

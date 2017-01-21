@@ -80,7 +80,7 @@ QGitRepository::QGitRepository(const QString &path, QWidget *parent)
     connect(m_git, SIGNAL(listCommitsReply(QList<QGitCommit>,QGitError)), this, SLOT(repositoryGetCommitsReply(QList<QGitCommit>,QGitError)));
 
     connect(this, SIGNAL(repositoryGetCommitDiff(QString)), m_git, SLOT(commitDiff(QString)));
-    connect(m_git, SIGNAL(commitDiffReply(QString, QGitCommitDiff, QGitError)), this, SLOT(repositoryGetCommitDiffReply(QString, QGitCommitDiff, QGitError)));
+    connect(m_git, SIGNAL(commitDiffReply(QString, QGitCommit, QGitError)), this, SLOT(repositoryGetCommitDiffReply(QString, QGitCommit, QGitError)));
 
     connect(ui->logHistory_commits->verticalScrollBar(), SIGNAL(sliderMoved(int)), this, SLOT(historyTableSliderMoved(int)));
 
@@ -357,6 +357,7 @@ void QGitRepository::repositoryGetCommitsReply(QList<QGitCommit> commits, QGitEr
         QTableWidgetItem *item = nullptr;
 
         item = new QTableWidgetItem(commit.message().split('\n').first());
+        item->setData(Qt::UserRole, commit.message());
         ui->logHistory_commits->setItem(row, 1, item);
         item = new QTableWidgetItem(commit.time().toString());
         ui->logHistory_commits->setItem(row, 2, item);
@@ -373,7 +374,7 @@ void QGitRepository::repositoryGetCommitsReply(QList<QGitCommit> commits, QGitEr
     }
 }
 
-void QGitRepository::repositoryGetCommitDiffReply(QString commitId, QGitCommitDiff diff, QGitError error)
+void QGitRepository::repositoryGetCommitDiffReply(QString commitId, QGitCommit diff, QGitError error)
 {
     if (error.errorCode())
     {
@@ -396,7 +397,13 @@ void QGitRepository::repositoryGetCommitDiffReply(QString commitId, QGitCommitDi
     {
         m_commitDiff = diff;
 
-        ui->logHistory_diff->setGitDiff(m_commitDiff);
+        //ui->logHistory_diff->setGitDiff(m_commitDiff); //TODO: Fixme
+
+        int currentRow = ui->logHistory_commits->currentRow();
+
+        const QString commit_id = ui->logHistory_commits->item(currentRow, 4)->data(Qt::UserRole).toString();
+
+        ui->logHistory_info->setText("<b>Commit:</b> " + commit_id);
     }
 }
 

@@ -1,5 +1,4 @@
 #include "qgit.h"
-#include "qgitcommitdiff.h"
 #include "qgitdifffile.h"
 #include "qgitdiffhunk.h"
 #include "qgitdiffline.h"
@@ -561,8 +560,9 @@ void QGit::commitDiff(QString commitId)
     git_commit *commit = nullptr;
     git_object *obj = nullptr;
     git_diff *diff = nullptr;
-    QGitCommitDiff commitDiff;
-    unsigned int parents;
+    QList<QGitCommitDiffParent> parents;
+    QGitCommit commitDiff;
+    unsigned int parentCount;
     int res = 0;
 
     QGitError error;
@@ -598,9 +598,9 @@ void QGit::commitDiff(QString commitId)
             throw QGitError("git_commit_tree", res);
         }
 
-        parents = git_commit_parentcount(commit);
+        parentCount = git_commit_parentcount(commit);
 
-        for (unsigned int c = 0; c < parents; c++)
+        for (unsigned int c = 0; c < parentCount; c++)
         {
             res = git_commit_parent(&parent, commit, c);
             if (res)
@@ -662,7 +662,6 @@ void QGit::commitDiff(QString commitId)
                 throw QGitError("git_diff_foreach", res);
             }
 
-
             git_diff_free(diff);
             diff = nullptr;
 
@@ -672,7 +671,7 @@ void QGit::commitDiff(QString commitId)
             git_commit_free(parent);
             parent = nullptr;
 
-            commitDiff.addParent(item);
+            parents.append(item);
         }
 
     } catch(const QGitError &ex) {

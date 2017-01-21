@@ -7,7 +7,7 @@ QGitDiffWidget::QGitDiffWidget(QWidget *parent)
 
 }
 
-void QGitDiffWidget::setGitDiff(const QGitCommitDiff &diff)
+void QGitDiffWidget::setGitDiff(const QGitCommitDiffParent &diff)
 {
     m_diff = diff;
 

@@ -6,7 +6,7 @@
 #include <QWidget>
 
 #include "qgit.h"
-#include "qgitcommitdiff.h"
+#include "qgitcommit.h"
 
 namespace Ui {
 class QGitRepository;
@@ -39,7 +39,7 @@ private slots:
     void repositoryUnstageFilesReply(QGitError error);
     void repositoryCommitReply(QString commit_id, QGitError error);
     void repositoryGetCommitsReply(QList<QGitCommit> commits, QGitError error);
-    void repositoryGetCommitDiffReply(QString commitId, QGitCommitDiff diff, QGitError error);
+    void repositoryGetCommitDiffReply(QString commitId, QGitCommit diff, QGitError error);
     void historyTableSliderMoved(int pos);
     void on_repositoryDetail_currentChanged(int index);
     void on_logHistory_commits_currentCellChanged(int currentRow, int currentColumn, int previousRow, int previousColumn);
@@ -59,9 +59,9 @@ private:
     QNetworkAccessManager m_networkManager;
     QString m_path;
     bool m_allCommitsLoaded;
-    QGitCommitDiff m_stagedDiff;
-    QGitCommitDiff m_unstagedDiff;
-    QGitCommitDiff m_commitDiff;
+    QGitCommit m_stagedDiff;
+    QGitCommit m_unstagedDiff;
+    QGitCommit m_commitDiff;
     QThread m_thread;
     QGit *m_git;
 };

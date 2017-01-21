@@ -12,7 +12,7 @@ class QGitDiffWidget : public QWidget
 public:
     explicit QGitDiffWidget(QWidget *parent = 0);
 
-    void setGitDiff(const QGitCommitDiff &diff);
+    void setGitDiff(const QGitCommitDiffParent &diff);
     void setReadonly(bool readonly = true);
     bool readonly() const;
 
@@ -21,6 +21,6 @@ signals:
 public slots:
 
 private:
-    QGitCommitDiff m_diff;
+    QGitCommitDiffParent m_diff;
     bool m_readonly;
 };
