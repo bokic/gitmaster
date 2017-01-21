@@ -12,6 +12,7 @@
 class QGitCommitDiffParent
 {
 public:
+    QGitCommitDiffParent();
     QGitCommitDiffParent(QByteArray commitHash);
     QGitCommitDiffParent(const QGitCommitDiffParent &other);
 

@@ -2,6 +2,10 @@
 #include "qgitdiffbinary.h"
 
 
+QGitCommitDiffParent::QGitCommitDiffParent()
+{
+}
+
 QGitCommitDiffParent::QGitCommitDiffParent(QByteArray commitHash)
     : m_commitHash(commitHash)
 {
