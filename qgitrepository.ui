@@ -340,7 +340,7 @@
           <property name="orientation">
            <enum>Qt::Vertical</enum>
           </property>
-          <widget class="QTableWidget" name="logHistory_commits">
+          <widget class="QLogHistoryTableWidget" name="logHistory_commits">
            <property name="editTriggers">
             <set>QAbstractItemView::NoEditTriggers</set>
            </property>
@@ -442,6 +442,11 @@
    <class>QAdvPlainTextEdit</class>
    <extends>QPlainTextEdit</extends>
    <header>qadvplaintextedit.h</header>
+  </customwidget>
+  <customwidget>
+   <class>QLogHistoryTableWidget</class>
+   <extends>QTableWidget</extends>
+   <header>qloghistorytablewidget.h</header>
   </customwidget>
  </customwidgets>
  <resources/>

@@ -1,3 +1,6 @@
+#include "qgitmastermainwindow.h"
+#include "ui_qgitmastermainwindow.h"
+#include "qloghistoryitemdelegate.h"
 #include "qgitrepository.h"
 #include "ui_qgitrepository.h"
 #include <QCryptographicHash>
@@ -7,6 +10,7 @@
 #include <QNetworkReply>
 #include <QMessageBox>
 #include <QScrollBar>
+#include <QWindow>
 #include <QDebug>
 #include <QList>
 
@@ -24,6 +28,9 @@ QGitRepository::QGitRepository(const QString &path, QWidget *parent)
     QString email;
 
     ui->setupUi(this);
+
+    ui->logHistory_commits->setItemDelegate(new QLogHistoryItemDelegate());
+
 
     m_git->moveToThread(&m_thread);
 
@@ -350,28 +357,15 @@ void QGitRepository::repositoryGetCommitsReply(QList<QGitCommit> commits, QGitEr
 
     foreach(auto commit, commits)
     {
-        int row = ui->logHistory_commits->rowCount();
-
-        ui->logHistory_commits->insertRow(row);
-
-        QTableWidgetItem *item = nullptr;
-
-        item = new QTableWidgetItem(commit.message().split('\n').first());
-        item->setData(Qt::UserRole, commit.message());
-        ui->logHistory_commits->setItem(row, 1, item);
-        item = new QTableWidgetItem(commit.time().toString());
-        ui->logHistory_commits->setItem(row, 2, item);
-        item = new QTableWidgetItem(QString("%1 <%2>").arg(commit.author().name(), commit.author().email()));
-        ui->logHistory_commits->setItem(row, 3, item);
-        item = new QTableWidgetItem(commit.id().left(7));
-        item->setData(Qt::UserRole, commit.id());
-        ui->logHistory_commits->setItem(row, 4, item);
+        ui->logHistory_commits->addCommit(commit);
     }
 
     if (commits.count() < COMMIT_COUNT_TO_LOAD)
     {
         m_allCommitsLoaded = true;
     }
+
+    QGitMasterMainWindow::instance()->updateStatusBarText("");
 }
 
 void QGitRepository::repositoryGetCommitDiffReply(QString commitId, QGitCommit diff, QGitError error)
@@ -562,6 +556,8 @@ void QGitRepository::fetchCommits()
         {
             emit repositoryGetCommits("", COMMIT_COUNT_TO_LOAD);
         }
+
+        QGitMasterMainWindow::instance()->updateStatusBarText(tr("Fetching commits..."));
     }
 }
 

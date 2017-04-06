@@ -40,6 +40,19 @@ QGitMasterMainWindow::~QGitMasterMainWindow()
     delete ui;
 }
 
+QGitMasterMainWindow *QGitMasterMainWindow::instance()
+{
+    foreach(const auto widget, QApplication::topLevelWidgets())
+    {
+        if (dynamic_cast<QGitMasterMainWindow *>(widget))
+        {
+            return dynamic_cast<QGitMasterMainWindow *>(widget);
+        }
+    }
+
+    return nullptr;
+}
+
 bool QGitMasterMainWindow::event(QEvent *event)
 {
     if (event->type() == QEvent::WindowActivate)
@@ -122,6 +135,14 @@ bool QGitMasterMainWindow::hasRepositoryWithName(const QString &name)
     }
 
     return false;
+}
+
+void QGitMasterMainWindow::updateStatusBarText(const QString &text)
+{
+    if (!text.isEmpty())
+        ui->statusBar->showMessage(text);
+    else
+        ui->statusBar->clearMessage();
 }
 
 void QGitMasterMainWindow::on_actionCloneNew_triggered()

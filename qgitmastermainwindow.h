@@ -16,8 +16,11 @@ public:
     explicit QGitMasterMainWindow(QWidget *parent = 0);
     ~QGitMasterMainWindow();
 
+    static QGitMasterMainWindow *instance();
+
     void writeSettings();
     bool hasRepositoryWithName(const QString &name);
+    void updateStatusBarText(const QString &text);
 
 protected:
     bool event(QEvent *event) override;
