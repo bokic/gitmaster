@@ -52,8 +52,8 @@ QGitRepository::QGitRepository(const QString &path, QWidget *parent)
         connect(reply, SIGNAL(finished()), this, SLOT(gravatarImageDownloadFinished()));
         reply = nullptr;
 
-        ui->label_signatureGravatarImage->setToolTip(tr("%1 <%2>").arg(name).arg(email));
-        ui->label_signatureEmail->setText(tr("%1 <%2>").arg(name).arg(email));
+        ui->label_signatureGravatarImage->setToolTip(tr("%1 <%2>").arg(name, email));
+        ui->label_signatureEmail->setText(tr("%1 <%2>").arg(name, email));
     }
 
     //ui->label_signatureEmail->setVisible(false);

@@ -11,7 +11,7 @@ QGitCloneRepositoryDialog::QGitCloneRepositoryDialog(const QString &url, const Q
 {
     ui->setupUi(this);
 
-    ui->label->setText(tr("Cloning <a href=\"%1\">%1</a> into <b>%2</b>").arg(url).arg(path));
+    ui->label->setText(tr("Cloning <a href=\"%1\">%1</a> into <b>%2</b>").arg(url, path));
 
     m_git->moveToThread(&m_thread);
 
