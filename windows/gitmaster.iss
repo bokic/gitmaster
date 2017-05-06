@@ -1,18 +1,20 @@
+#define AppVer GetFileVersion('..\bin\gitmaster.exe')
+
 [Setup]
 AppName=GitMaster
-AppVerName=GitMaster version 0.1
+AppVerName=GitMaster version {#AppVer}
 AppPublisher=Boris Barbulovski
 AppPublisherURL=https://github.com/bokic/gitmaster
-AppVersion=0.1
+AppVersion={#AppVer}
 DefaultDirName={pf}\GitMaster
 DefaultGroupName=GitMaster
 UninstallDisplayIcon={app}\GitMaster.exe
 Compression=lzma
 SolidCompression=yes
-OutputBaseFilename=gitmaster_0.1
+OutputBaseFilename=gitmaster_{#AppVer}
 OutputDir=.
-VersionInfoVersion=0.1
-VersionInfoDescription=Git GUI client(Qt 5.8)
+VersionInfoVersion={#AppVer}
+VersionInfoDescription={#ReadIni(SourcePath + "installer.ini", "installer", "description")}
 
 
 [Dirs]
