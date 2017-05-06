@@ -25,6 +25,7 @@ HEADERS +=          qgitmastermainwindow.h   qgitrepository.h   qnewrepositorydi
 FORMS   +=          qgitmastermainwindow.ui  qgitrepository.ui  qnewrepositorydialog.ui  qgitclonerepositorydialog.ui
 
 RESOURCES += resource.qrc
+win32:RC_FILE = resource.rc
 
 win32:LIBS += -L$$_PRO_FILE_PWD_/bin
 
