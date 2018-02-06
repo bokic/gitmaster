@@ -1198,7 +1198,7 @@ void QGit::push()
 #if LIBGIT2_SOVERSION > 22
         res = git_remote_push(remote, nullptr, nullptr);
 #else
-        result = git_remote_push(remote, nullptr, nullptr, nullptr, "push");
+        res = git_remote_push(remote, nullptr, nullptr, nullptr, "push");
 #endif
         if (res)
         {
