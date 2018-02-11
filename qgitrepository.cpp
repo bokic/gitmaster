@@ -65,6 +65,8 @@ QGitRepository::QGitRepository(const QString &path, QWidget *parent)
 
     activateCommitOperation(false);
 
+    connect(this, SIGNAL(localStash(QString)), m_git, SLOT(stashSave(QString)), Qt::QueuedConnection);
+    connect(m_git, SIGNAL(stashSaveReply(QGitError)), this, SLOT(localStashSaveReply(QGitError)), Qt::QueuedConnection);
     connect(this, SIGNAL(repositoryBranches()), m_git, SLOT(listBranchesAndTags()), Qt::QueuedConnection);
     connect(m_git, SIGNAL(listBranchesAndTagsReply(QList<QGitBranch>, QList<QString>, QGitError)), this, SLOT(repositoryBranchesAndTagsReply(QList<QGitBranch>, QList<QString>, QGitError)), Qt::QueuedConnection);
 
@@ -112,6 +114,11 @@ QGitRepository::~QGitRepository()
     delete ui;
 }
 
+void QGitRepository::stash(const QString &name)
+{
+    m_git->stashSave(name);
+}
+
 void QGitRepository::gravatarImageDownloadFinished()
 {
     QNetworkReply *reply = static_cast<QNetworkReply *>(sender());
@@ -125,6 +132,15 @@ void QGitRepository::gravatarImageDownloadFinished()
     ui->label_signatureGravatarImage->setPixmap(pixmap);
 
     reply->deleteLater();
+}
+
+void QGitRepository::localStashSaveReply(QGitError error)
+{
+    if (error.errorCode()) {
+
+    } else {
+        emit repositoryStashes();
+    }
 }
 
 void QGitRepository::repositoryBranchesAndTagsReply(QList<QGitBranch> branches, QList<QString> tags, QGitError error)

@@ -32,6 +32,7 @@ private slots:
     void on_actionSettingsRepository_triggered();
     void on_treeWidget_itemDoubleClicked(QTreeWidgetItem *item, int column);
     void on_tabWidget_tabCloseRequested(int index);
+    void on_actionStash_triggered();
 
 private:
     void readSettings();

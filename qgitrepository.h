@@ -19,8 +19,10 @@ class QGitRepository : public QWidget
 public:
     explicit QGitRepository(const QString &path, QWidget *parent);
     ~QGitRepository();
+    void stash(const QString &name);
 
 signals:
+    void localStash(QString name);
     void repositoryBranches();
     void repositoryStashes();
     void repositoryChangedFiles();
@@ -32,6 +34,7 @@ signals:
 
 private slots:
     void gravatarImageDownloadFinished();
+    void localStashSaveReply(QGitError error);
     void repositoryBranchesAndTagsReply(QList<QGitBranch> branches, QList<QString> tags, QGitError error);
     void repositoryStashesReply(QStringList stashes, QGitError error);
     void repositoryChangedFilesReply(QMap<QString, git_status_t> files, QGitError error);

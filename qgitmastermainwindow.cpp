@@ -6,6 +6,7 @@
 #include "qgitrepository.h"
 
 #include <QTreeWidgetItem>
+#include <QInputDialog>
 #include <QMessageBox>
 #include <QSettings>
 
@@ -275,4 +276,16 @@ void QGitMasterMainWindow::on_treeWidget_itemDoubleClicked(QTreeWidgetItem *item
 void QGitMasterMainWindow::on_tabWidget_tabCloseRequested(int index)
 {
     ui->tabWidget->removeTab(index);
+}
+
+void QGitMasterMainWindow::on_actionStash_triggered()
+{
+    QGitRepository *widget = dynamic_cast<QGitRepository *>(ui->tabWidget->currentWidget());
+    if (widget) {
+        QString stashName = QInputDialog::getText(this, tr("Question?"), tr("Stash name:"));
+
+        if(!stashName.isEmpty()) {
+            widget->stash(stashName);
+        }
+    }
 }
