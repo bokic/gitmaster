@@ -549,7 +549,7 @@ void QGit::listStashes()
 
                 QStringList *list = static_cast<QStringList *>(payload);
 
-                list->append(message);
+                list->append(QString::fromUtf8(message));
 
                 return 0;
             }, &stashes);
