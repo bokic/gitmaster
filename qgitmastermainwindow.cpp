@@ -93,7 +93,7 @@ void QGitMasterMainWindow::writeSettings()
     QSettings settings;
 
     // Delete out of range settings.
-    for (int c = ui->treeWidget->topLevelItemCount(); ; c++)
+    for(int c = ui->treeWidget->topLevelItemCount(); ; c++)
     {
         const QString keyName = QString("%1\\name").arg(c);
         const QString keyPath = QString("%1\\path").arg(c);

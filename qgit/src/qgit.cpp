@@ -684,7 +684,7 @@ void QGit::commitDiff(QString commitId)
 
         parentCount = git_commit_parentcount(commit);
 
-        for (unsigned int c = 0; c < parentCount; c++)
+        for(unsigned int c = 0; c < parentCount; c++)
         {
             res = git_commit_parent(&parent, commit, c);
             if (res)
@@ -835,7 +835,7 @@ void QGit::stageFiles(QStringList items)
             throw QGitError("git_repository_index", res);
         }
 
-        for(QString item: items)
+        for(auto item: items)
         {
             res = git_index_add_bypath(index, item.toUtf8().constData());
             if (res)
@@ -1386,7 +1386,7 @@ void QGit::listCommits(QString object, int length)
             commit_id = QString::fromUtf8(git_oid_tostr_s(&oid));
 
             parents = git_commit_parentcount(commit);
-            for (unsigned int index = 0; index < parents; index++)
+            for(unsigned int index = 0; index < parents; index++)
             {
                 git_commit *parent = nullptr;
                 QByteArray parentStr;
