@@ -36,6 +36,7 @@ QGitRepository::QGitRepository(const QString &path, QWidget *parent)
 
     ui->splitter_3->setStretchFactor(0, 1);
     ui->splitter_3->setStretchFactor(1, 1);
+    ui->splitter_3->setSizes(QList<int>() << 100000 << 100000);
 
     if (QGit::gitRepositoryDefaultSignature(m_path, name, email))
     {
