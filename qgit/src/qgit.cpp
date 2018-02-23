@@ -8,6 +8,7 @@
 #include <QWriteLocker>
 #include <QReadLocker>
 #include <QString>
+#include <QVector>
 #include <QDebug>
 #include <QDir>
 
@@ -871,7 +872,7 @@ void QGit::stageFiles(QStringList items)
 
 void QGit::unstageFiles(QStringList items)
 {
-    QList<QByteArray> tmpStrList;
+    QVector<QByteArray> tmpStrList;
     git_repository *repo = nullptr;
     git_reference *head = nullptr;
     git_object *head_commit = nullptr;
@@ -895,6 +896,8 @@ void QGit::unstageFiles(QStringList items)
 
         paths.count = static_cast<size_t>(items.count());
         paths.strings = static_cast<char **>(malloc(sizeof(char *) * static_cast<size_t>(items.count())));
+
+        tmpStrList.reserve(items.count());
 
         for(int c = 0; c < items.count(); c++)
         {
