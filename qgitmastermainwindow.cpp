@@ -43,7 +43,7 @@ QGitMasterMainWindow::~QGitMasterMainWindow()
 
 QGitMasterMainWindow *QGitMasterMainWindow::instance()
 {
-    foreach(const auto widget, QApplication::topLevelWidgets())
+    for(auto widget: QApplication::topLevelWidgets())
     {
         if (dynamic_cast<QGitMasterMainWindow *>(widget))
         {

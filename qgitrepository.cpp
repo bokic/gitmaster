@@ -378,7 +378,7 @@ void QGitRepository::repositoryGetCommitsReply(QList<QGitCommit> commits, QGitEr
 {
     Q_UNUSED(error);
 
-    foreach(auto commit, commits)
+    for(auto commit: commits)
     {
         ui->logHistory_commits->addCommit(commit);
     }
