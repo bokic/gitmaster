@@ -269,10 +269,17 @@ void QGitRepository::repositoryStashesReply(QStringList stashes, QGitError error
 
 void QGitRepository::repositoryChangedFilesReply(QMap<QString, git_status_t> files, QGitError error)
 {
+    int tmp_status = 0;
+
     Q_UNUSED(error);
 
     ui->listWidget_staged->clear();
     ui->listWidget_unstaged->clear();
+
+    QIcon icon_file_new = QIcon(":/images/file_new.svg");
+    QIcon icon_file_modified = QIcon(":/images/file_modified.svg");
+    QIcon icon_file_removed = QIcon(":/images/file_removed.svg");
+    QIcon icon_file_unknown = QIcon(":/images/file_unknown.svg");
 
     for(auto file: files.keys())
     {
@@ -285,7 +292,7 @@ void QGitRepository::repositoryChangedFilesReply(QMap<QString, git_status_t> fil
         }
 #endif
 
-        int tmp_status = status & (GIT_STATUS_INDEX_NEW | GIT_STATUS_INDEX_MODIFIED | GIT_STATUS_INDEX_DELETED | GIT_STATUS_INDEX_RENAMED | GIT_STATUS_INDEX_TYPECHANGE);
+        tmp_status = status & (GIT_STATUS_INDEX_NEW | GIT_STATUS_INDEX_MODIFIED | GIT_STATUS_INDEX_DELETED | GIT_STATUS_INDEX_RENAMED | GIT_STATUS_INDEX_TYPECHANGE);
         if (tmp_status)
         {
             QListWidgetItem *item = new QListWidgetItem(file);
@@ -296,16 +303,16 @@ void QGitRepository::repositoryChangedFilesReply(QMap<QString, git_status_t> fil
             switch(tmp_status)
             {
             case GIT_STATUS_INDEX_NEW:
-                item->setIcon(QIcon(":/images/file_new.svg"));
+                item->setIcon(icon_file_new);
                 break;
             case GIT_STATUS_INDEX_MODIFIED:
-                item->setIcon(QIcon(":/images/file_modified.svg"));
+                item->setIcon(icon_file_modified);
                 break;
             case GIT_STATUS_INDEX_DELETED:
-                item->setIcon(QIcon(":/images/file_removed.svg"));
+                item->setIcon(icon_file_removed);
                 break;
             default:
-                item->setIcon(QIcon(":/images/file_unknown.svg"));
+                item->setIcon(icon_file_unknown);
                 break;
             }
 
@@ -323,16 +330,16 @@ void QGitRepository::repositoryChangedFilesReply(QMap<QString, git_status_t> fil
             switch(tmp_status)
             {
             case GIT_STATUS_WT_NEW:
-                item->setIcon(QIcon(":/images/file_new.svg"));
+                item->setIcon(icon_file_new);
                 break;
             case GIT_STATUS_WT_MODIFIED:
-                item->setIcon(QIcon(":/images/file_modified.svg"));
+                item->setIcon(icon_file_modified);
                 break;
             case GIT_STATUS_WT_DELETED:
-                item->setIcon(QIcon(":/images/file_removed.svg"));
+                item->setIcon(icon_file_removed);
                 break;
             default:
-                item->setIcon(QIcon(":/images/file_unknown.svg"));
+                item->setIcon(icon_file_unknown);
                 break;
             }
 
