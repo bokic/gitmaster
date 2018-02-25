@@ -420,8 +420,11 @@ void QGitRepository::repositoryGetCommitDiffReply(QString commitId, QGitCommit d
         int currentRow = ui->logHistory_commits->currentRow();
 
         const QString commit_id = ui->logHistory_commits->item(currentRow, 4)->data(Qt::UserRole).toString();
+        const QString email = ui->logHistory_commits->item(currentRow, 3)->data(Qt::UserRole + 1).toString();
 
-        ui->logHistory_info->setText("<b>Commit:</b> " + commit_id);
+        QString tt = "<div><img src=\"https://www.gravatar.com/avatar/" + QCryptographicHash::hash(email.trimmed().toLatin1(), QCryptographicHash::Md5).toHex() + "\" width=\"32\" height=\"32\" style=\"float: right\" /></div><b>Commit:</b> " + commit_id;
+
+        ui->logHistory_info->setHtml("<div><img src=\"https://www.gravatar.com/avatar/" + QCryptographicHash::hash(email.trimmed().toLatin1(), QCryptographicHash::Md5).toHex() + "?s=32\" width=\"32\" height=\"32\" style=\"float: right\" /></div><b>Commit:</b> " + commit_id);
     }
 }
 

@@ -68,6 +68,8 @@ void QLogHistoryTableWidget::addCommit(const QGitCommit &commit)
 
     item = new QTableWidgetItem(QString("%1 <%2>").arg(commit.author().name(), commit.author().email()));
     if (row % 2) item->setData(Qt::BackgroundRole, QBrush(palette().window()));
+    item->setData(Qt::UserRole, commit.author().name());
+    item->setData(Qt::UserRole + 1, commit.author().email());
     setItem(row, 3, item);
 
     item = new QTableWidgetItem(commit.id().left(7));
