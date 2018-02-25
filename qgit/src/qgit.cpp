@@ -1283,7 +1283,7 @@ void QGit::push()
 #endif
         if (res)
         {
-            throw QGitError("git_remote_fetch", res);
+            throw QGitError("git_remote_push", res);
         }
 
     } catch(const QGitError &ex) {
