@@ -31,12 +31,15 @@ QGitRepository::QGitRepository(const QString &path, QWidget *parent)
 
     ui->logHistory_commits->setItemDelegate(new QLogHistoryItemDelegate());
 
-
     m_git->moveToThread(&m_thread);
 
     ui->splitter_3->setStretchFactor(0, 1);
     ui->splitter_3->setStretchFactor(1, 1);
     ui->splitter_3->setSizes(QList<int>() << 100000 << 100000);
+
+    ui->logHistory_splitter_2->setStretchFactor(0, 1);
+    ui->logHistory_splitter_2->setStretchFactor(1, 1);
+    ui->logHistory_splitter_2->setSizes(QList<int>() << 100000 << 100000);
 
     if (QGit::gitRepositoryDefaultSignature(m_path, name, email))
     {
