@@ -1,4 +1,6 @@
 #include "qgitdiffwidget.h"
+#include <QPainter>
+
 
 QGitDiffWidget::QGitDiffWidget(QWidget *parent)
     : QWidget(parent)
@@ -29,4 +31,11 @@ void QGitDiffWidget::setReadonly(bool readonly)
 bool QGitDiffWidget::readonly() const
 {
     return m_readonly;
+}
+
+void QGitDiffWidget::paintEvent(QPaintEvent *event)
+{
+    Q_UNUSED(event);
+
+    QPainter painter(this);
 }

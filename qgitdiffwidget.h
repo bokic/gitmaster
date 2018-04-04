@@ -20,6 +20,9 @@ signals:
 
 public slots:
 
+protected:
+    virtual void paintEvent(QPaintEvent *event) override;
+
 private:
     QGitCommitDiffParent m_diff;
     bool m_readonly;
