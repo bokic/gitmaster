@@ -646,6 +646,9 @@ void QGit::commitDiff(QString commitId)
     git_object *obj = nullptr;
     git_diff *diff = nullptr;
     QList<QGitCommitDiffParent> parents;
+    QGitSignature commitAuthor, commitCommiter;
+    QDateTime commitTime;
+    QString commitMessage;
     QGitCommit commitDiff;
     unsigned int parentCount;
     int res = 0;
@@ -682,6 +685,16 @@ void QGit::commitDiff(QString commitId)
         {
             throw QGitError("git_commit_tree", res);
         }
+
+        commitAuthor = QGitSignature(QString::fromUtf8(git_commit_author(commit)->name), QString::fromUtf8(git_commit_author(commit)->email), QDateTime::fromMSecsSinceEpoch(git_commit_author(commit)->when.time * 1000));
+        commitCommiter = QGitSignature(QString::fromUtf8(git_commit_committer(commit)->name), QString::fromUtf8(git_commit_committer(commit)->email), QDateTime::fromMSecsSinceEpoch(git_commit_committer(commit)->when.time * 1000));
+
+        auto time = git_commit_time(commit);
+        auto timeOffset = git_commit_time_offset(commit);
+        commitTime = QDateTime::fromMSecsSinceEpoch(time * 1000);
+        commitTime.setOffsetFromUtc(timeOffset * 60);
+
+        commitMessage = QString::fromUtf8(git_commit_message(commit));
 
         parentCount = git_commit_parentcount(commit);
 
@@ -762,6 +775,8 @@ void QGit::commitDiff(QString commitId)
     } catch(const QGitError &ex) {
         error = ex;
     }
+
+    commitDiff = QGitCommit(commitId, parents, commitTime, commitAuthor, commitCommiter, commitMessage);
 
     emit commitDiffReply(commitId, commitDiff, error);
 
