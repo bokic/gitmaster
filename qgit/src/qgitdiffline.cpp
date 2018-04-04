@@ -16,7 +16,7 @@ QGitDiffLine::QGitDiffLine(const QByteArray &content, git_off_t offset, int new_
 }
 
 QGitDiffLine::QGitDiffLine(const git_diff_line *line)
-    : m_content(QByteArray(line->content, line->content_len))
+    : m_content(QByteArray(line->content, static_cast<int>(line->content_len)))
     , m_offset(line->content_offset)
     , m_new_lineno(line->new_lineno)
     , m_num_lines(line->num_lines)
