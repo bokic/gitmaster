@@ -7,7 +7,7 @@ class QGitDiffViewer : public QWidget
 {
     Q_OBJECT
 public:
-    explicit QGitDiffViewer(QWidget *parent = 0);
+    explicit QGitDiffViewer(QWidget *parent = nullptr);
 
 signals:
 

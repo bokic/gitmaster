@@ -21,8 +21,8 @@ class QGit : public QObject
 {
     Q_OBJECT
 public:
-    explicit QGit(const QDir &path, QObject *parent = 0);
-    explicit QGit(QObject *parent = 0);
+    explicit QGit(const QDir &path, QObject *parent = nullptr);
+    explicit QGit(QObject *parent = nullptr);
     virtual ~QGit();
 
     bool setPath(const QDir &path);

@@ -9,7 +9,7 @@ class QGitRepoTreeItemDelegate : public QAbstractItemDelegate
     Q_OBJECT
 public:
     enum QDelegateItems{QItemPath = Qt::UserRole + 1, QItemModifiedFiles, QItemDeletedFiles, QItemNewFiles, QItemUnversionedFiles, QItemBranchName};
-    explicit QGitRepoTreeItemDelegate(QObject *parent = 0);
+    explicit QGitRepoTreeItemDelegate(QObject *parent = nullptr);
 
     virtual void paint(QPainter *painter, const QStyleOptionViewItem &option, const QModelIndex &index) const override;
     virtual QSize sizeHint(const QStyleOptionViewItem &option, const QModelIndex &index) const override;

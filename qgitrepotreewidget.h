@@ -9,7 +9,7 @@ class QGitRepoTreeWidget : public QTreeWidget
 {
     Q_OBJECT
 public:
-    explicit QGitRepoTreeWidget(QWidget *parent = 0);
+    explicit QGitRepoTreeWidget(QWidget *parent = nullptr);
     ~QGitRepoTreeWidget();
 
     void refreshItems();

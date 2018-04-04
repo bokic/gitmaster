@@ -13,7 +13,7 @@ class QGitMasterMainWindow : public QMainWindow
     Q_OBJECT
 
 public:
-    explicit QGitMasterMainWindow(QWidget *parent = 0);
+    explicit QGitMasterMainWindow(QWidget *parent = nullptr);
     ~QGitMasterMainWindow();
 
     static QGitMasterMainWindow *instance();

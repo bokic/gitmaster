@@ -12,7 +12,7 @@ class QNewRepositoryDialog : public QDialog
 
 public:
     enum {QCloneRepository, QAddWorkingCopy, QCreateNewRepository};
-    explicit QNewRepositoryDialog(QWidget *parent = 0);
+    explicit QNewRepositoryDialog(QWidget *parent = nullptr);
     ~QNewRepositoryDialog();
     int tabCurrentIndex() const;
     QString cloneRepositorySourceURL() const;

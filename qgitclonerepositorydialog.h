@@ -15,7 +15,7 @@ class QGitCloneRepositoryDialog : public QDialog
     Q_OBJECT
 
 public:
-    explicit QGitCloneRepositoryDialog(const QString &url, const QString &path, QWidget *parent = 0);
+    explicit QGitCloneRepositoryDialog(const QString &url, const QString &path, QWidget *parent = nullptr);
     ~QGitCloneRepositoryDialog();
 
 private slots:
