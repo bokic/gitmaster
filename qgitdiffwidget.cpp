@@ -11,6 +11,8 @@ void QGitDiffWidget::setGitDiff(const QGitCommitDiffParent &diff)
 {
     m_diff = diff;
 
+    //  TODO: Remeasure!
+
     update();
 }
 

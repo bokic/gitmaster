@@ -418,7 +418,7 @@ void QGitRepository::repositoryGetCommitDiffReply(QString commitId, QGitCommit d
     {
         m_commitDiff = diff;
 
-        //ui->logHistory_diff->setGitDiff(m_commitDiff); //TODO: Fixme
+        ui->logHistory_diff->setGitDiff(m_commitDiff.parents().at(0)); //TODO: Implement diffs for more than one parent.
 
         int currentRow = ui->logHistory_commits->currentRow();
 
