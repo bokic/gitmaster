@@ -698,26 +698,11 @@ void QGit::commitDiff(QString commitId)
 
         parentCount = git_commit_parentcount(commit);
 
-        for(unsigned int c = 0; c < parentCount; c++)
+        if (parentCount == 0)
         {
-            res = git_commit_parent(&parent, commit, c);
-            if (res)
-            {
-                throw QGitError("git_commit_parent", res);
-            }
+            QGitCommitDiffParent item;
 
-            char commit_id[41] = {0, };
-            const git_oid *oid = git_commit_id(parent);
-            git_oid_tostr(commit_id, 41, oid);
-            QGitCommitDiffParent item(commit_id);
-
-            res = git_commit_tree(&parent_tree, parent);
-            if (res)
-            {
-                throw QGitError("git_commit_tree", res);
-            }
-
-            res = git_diff_tree_to_tree(&diff, repo, commit_tree, parent_tree, nullptr);
+            res = git_diff_tree_to_tree(&diff, repo, nullptr, commit_tree, nullptr);
             if (res)
             {
                 throw QGitError("git_diff_tree_to_tree", res);
@@ -763,15 +748,84 @@ void QGit::commitDiff(QString commitId)
             git_diff_free(diff);
             diff = nullptr;
 
-            git_tree_free(parent_tree);
-            parent_tree = nullptr;
-
-            git_commit_free(parent);
-            parent = nullptr;
-
             parents.append(item);
         }
+        else
+        {
+            for(unsigned int c = 0; c < parentCount; c++)
+            {
+                res = git_commit_parent(&parent, commit, c);
+                if (res)
+                {
+                    throw QGitError("git_commit_parent", res);
+                }
 
+                char commit_id[41] = {0, };
+                const git_oid *oid = git_commit_id(parent);
+                git_oid_tostr(commit_id, 41, oid);
+                QGitCommitDiffParent item(commit_id);
+
+                res = git_commit_tree(&parent_tree, parent);
+                if (res)
+                {
+                    throw QGitError("git_commit_tree", res);
+                }
+
+                res = git_diff_tree_to_tree(&diff, repo, commit_tree, parent_tree, nullptr);
+                if (res)
+                {
+                    throw QGitError("git_diff_tree_to_tree", res);
+                }
+
+                res = git_diff_foreach(diff,
+                                          [](const git_diff_delta *delta, float progress, void *payload) -> int {
+
+                                                Q_UNUSED(progress);
+
+                                                QGitCommitDiffParent *dest = static_cast<QGitCommitDiffParent *>(payload);
+
+                                                dest->addFile(delta);
+
+                                                return 0;
+                                            },
+                                          [](const git_diff_delta *delta, const git_diff_binary *binary, void *payload) -> int {
+                                                QGitCommitDiffParent *dest = static_cast<QGitCommitDiffParent *>(payload);
+
+                                                dest->addBinary(delta, binary);
+
+                                                return 0;
+                                            },
+                                          [](const git_diff_delta *delta, const git_diff_hunk *hunk, void *payload) -> int {
+                                                QGitCommitDiffParent *dest = static_cast<QGitCommitDiffParent *>(payload);
+
+                                                dest->addHunk(delta, hunk);
+                                                return 0;
+                                            },
+                                          [](const git_diff_delta *delta, const git_diff_hunk *hunk, const git_diff_line *line, void *payload) -> int {
+                                                QGitCommitDiffParent *dest = static_cast<QGitCommitDiffParent *>(payload);
+
+                                                dest->addLine(delta, hunk, line);
+
+                                                return 0;
+                                            },
+                                          &item);
+                if (res)
+                {
+                    throw QGitError("git_diff_foreach", res);
+                }
+
+                git_diff_free(diff);
+                diff = nullptr;
+
+                git_tree_free(parent_tree);
+                parent_tree = nullptr;
+
+                git_commit_free(parent);
+                parent = nullptr;
+
+                parents.append(item);
+            }
+        }
     } catch(const QGitError &ex) {
         error = ex;
     }
