@@ -425,9 +425,26 @@ void QGitRepository::repositoryGetCommitDiffReply(QString commitId, QGitCommit d
         const QString commit_id = ui->logHistory_commits->item(currentRow, 4)->data(Qt::UserRole).toString();
         const QString email = ui->logHistory_commits->item(currentRow, 3)->data(Qt::UserRole + 1).toString();
 
-        QString tt = "<div><img src=\"https://www.gravatar.com/avatar/" + QCryptographicHash::hash(email.trimmed().toLatin1(), QCryptographicHash::Md5).toHex() + "\" width=\"32\" height=\"32\" style=\"float: right\" /></div><b>Commit:</b> " + commit_id;
+        QString html;
+        QStringList parentsHtml;
+        QStringList labelsHtml;
 
-        ui->logHistory_info->setHtml("<div><img src=\"https://www.gravatar.com/avatar/" + QCryptographicHash::hash(email.trimmed().toLatin1(), QCryptographicHash::Md5).toHex() + "?s=32\" width=\"32\" height=\"32\" style=\"float: right\" /></div><b>Commit:</b> " + commit_id);
+        for (int i = 0; i < m_commitDiff.parents().count(); i++)
+        {
+            parentsHtml << "<a href = \"" + m_commitDiff.parents().at(i).commitHash() + "\">" + m_commitDiff.parents().at(i).commitHash().left(10) + "</a>";
+        }
+
+        html += "<div>";
+        html +=   "<img src=\"https://www.gravatar.com/avatar/" + QCryptographicHash::hash(email.trimmed().toLatin1(), QCryptographicHash::Md5).toHex() + "?s=32\" width=\"32\" height=\"32\" style=\"float: right\" />";
+        html += "</div>";
+        html += "<b>Commit:</b> " + commit_id + "<br />";
+        html += "<b>Parents:</b> " + parentsHtml.join(", ") + "<br />";
+        html += "<b>Date:</b> " + m_commitDiff.time().toString() + "<br />";
+        html += "<b>Labels:</b> " + labelsHtml.join(", ") + "<br />";
+        html += "<br />";
+        html += m_commitDiff.message();
+
+        ui->logHistory_info->setHtml(html);
     }
 }
 
