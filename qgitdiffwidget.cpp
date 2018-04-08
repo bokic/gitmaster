@@ -13,7 +13,7 @@ void QGitDiffWidget::setGitDiff(const QGitCommitDiffParent &diff)
 {
     m_diff = diff;
 
-    //  TODO: Remeasure!
+    remeasureItems();
 
     update();
 }
@@ -35,7 +35,45 @@ bool QGitDiffWidget::readonly() const
 
 void QGitDiffWidget::paintEvent(QPaintEvent *event)
 {
-    Q_UNUSED(event);
-
     QPainter painter(this);
+
+    for(int c = 0; c < m_fileRects.count(); c++)
+    {
+        QRect rect = m_fileRects.at(c);
+
+        if (!event->region().intersected(QRegion(rect)).isEmpty())
+        {
+            const QGitDiffFile &file = m_diff.files().at(c);
+
+            painter.fillRect(rect, QColor(220,220,220));
+
+            painter.drawText(rect.left() + 10, rect.top() + 20, file.new_file().path());
+        }
+    }
+}
+
+void QGitDiffWidget::remeasureItems()
+{
+    const int MARGIN = 10;
+    int y = 0, h = 0;
+
+    m_fileRects.resize(m_diff.files().count());
+
+    for(int c = 0; c < m_diff.files().count(); c++)
+    {
+        QRect item;
+
+        y += MARGIN;
+
+        item.setTop(y);
+        item.setLeft(MARGIN);
+        item.setWidth(300);
+
+        h = 200;
+        item.setHeight(h);
+
+        y += h;
+
+        m_fileRects[c] = item;
+    }
 }

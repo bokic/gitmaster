@@ -3,6 +3,8 @@
 #include "qgit.h"
 
 #include <QWidget>
+#include <QVector>
+#include <QRect>
 
 
 class QGitDiffWidget : public QWidget
@@ -24,6 +26,8 @@ protected:
     virtual void paintEvent(QPaintEvent *event) override;
 
 private:
+    void remeasureItems();
+    QVector<QRect> m_fileRects;
     QGitCommitDiffParent m_diff;
     bool m_readonly;
 };
