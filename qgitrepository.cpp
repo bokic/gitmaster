@@ -445,6 +445,26 @@ void QGitRepository::repositoryGetCommitDiffReply(QString commitId, QGitCommit d
         html += m_commitDiff.message();
 
         ui->logHistory_info->setHtml(html);
+
+        ui->logHistory_files->clearContents();
+
+        auto files = m_commitDiff.parents().at(0).files(); // TODO: For now from first parent only!
+        ui->logHistory_files->setRowCount(files.count());
+
+        for(int c = 0; c < files.count(); c++)
+        {
+            QString path = files.at(c).new_file().path();
+
+            QString filename = QFileInfo(path).fileName();
+            QString pathname = path.left(path.length() - filename.length());
+            if ((pathname.endsWith('/'))||(pathname.endsWith('\\')))
+            {
+                pathname.resize(pathname.length() - 1);
+            }
+
+            ui->logHistory_files->setItem(c, 0, new QTableWidgetItem(filename));
+            ui->logHistory_files->setItem(c, 1, new QTableWidgetItem(pathname));
+        }
     }
 }
 
