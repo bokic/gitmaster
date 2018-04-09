@@ -5,6 +5,7 @@
 #include <QWidget>
 #include <QVector>
 #include <QRect>
+#include <QList>
 
 
 class QGitDiffWidget : public QWidget
@@ -14,7 +15,7 @@ class QGitDiffWidget : public QWidget
 public:
     explicit QGitDiffWidget(QWidget *parent = nullptr);
 
-    void setGitDiff(const QGitCommitDiffParent &diff);
+    void setGitDiff(const QList<QGitDiffFile> &diff);
     void setReadonly(bool readonly = true);
     bool readonly() const;
 
@@ -27,7 +28,7 @@ protected:
 
 private:
     void remeasureItems();
+    QList<QGitDiffFile> m_diff;
     QVector<QRect> m_fileRects;
-    QGitCommitDiffParent m_diff;
     bool m_readonly;
 };

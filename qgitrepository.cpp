@@ -418,8 +418,6 @@ void QGitRepository::repositoryGetCommitDiffReply(QString commitId, QGitCommit d
     {
         m_commitDiff = diff;
 
-        ui->logHistory_diff->setGitDiff(m_commitDiff.parents().at(0)); //TODO: Implement diffs for more than one parent.
-
         int currentRow = ui->logHistory_commits->currentRow();
 
         const QString commit_id = ui->logHistory_commits->item(currentRow, 4)->data(Qt::UserRole).toString();
@@ -464,6 +462,11 @@ void QGitRepository::repositoryGetCommitDiffReply(QString commitId, QGitCommit d
 
             ui->logHistory_files->setItem(c, 0, new QTableWidgetItem(filename));
             ui->logHistory_files->setItem(c, 1, new QTableWidgetItem(pathname));
+        }
+
+        if (ui->logHistory_files->rowCount() > 0)
+        {
+            ui->logHistory_files->setCurrentCell(0, 0);
         }
     }
 }
@@ -643,4 +646,24 @@ void QGitRepository::activateCommitOperation(bool activate)
         ui->plainTextEdit_commitMessage->setPlainText("");
         ui->plainTextEdit_commitMessage->setPlaceholderText(tr("Commit message"));
     }
+}
+
+void QGitRepository::on_logHistory_files_itemSelectionChanged()
+{
+    QList<QGitDiffFile> diff;
+    QList<int> selectedRows;
+
+    auto selected = ui->logHistory_files->selectedItems();
+
+    for(auto selectedItem: selected) {
+        int row = selectedItem->row();
+
+        if (!selectedRows.contains(row))
+        {
+            diff.append(m_commitDiff.parents().at(0).files().at(row)); // TODO: Implement diffs for more than one parent.
+            selectedRows.append(row);
+        }
+    }
+
+    ui->logHistory_diff->setGitDiff(diff);
 }
