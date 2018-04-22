@@ -771,7 +771,7 @@ void QGit::commitDiff(QString commitId)
                     throw QGitError("git_commit_tree", res);
                 }
 
-                res = git_diff_tree_to_tree(&diff, repo, commit_tree, parent_tree, nullptr);
+                res = git_diff_tree_to_tree(&diff, repo, parent_tree, commit_tree, nullptr);
                 if (res)
                 {
                     throw QGitError("git_diff_tree_to_tree", res);
