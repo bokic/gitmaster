@@ -2,13 +2,13 @@
 
 #include "qgit.h"
 
-#include <QWidget>
+#include <QAbstractScrollArea>
 #include <QVector>
 #include <QRect>
 #include <QList>
 
 
-class QGitDiffWidget : public QWidget
+class QGitDiffWidget : public QAbstractScrollArea
 {
     Q_OBJECT
     Q_PROPERTY( bool readonly READ readonly WRITE setReadonly DESIGNABLE true )
@@ -30,5 +30,7 @@ private:
     void remeasureItems();
     QList<QGitDiffFile> m_diff;
     QVector<QRect> m_fileRects;
-    bool m_readonly;
+    QFont m_font;
+    int m_fontHeight = 0;
+    bool m_readonly = false;
 };
