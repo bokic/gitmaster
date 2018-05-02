@@ -985,6 +985,10 @@ void QGit::unstageFiles(QStringList items)
         if (res == 0)
         {
             res = git_reference_peel(&head_commit, head, GIT_OBJ_COMMIT);
+            if (res)
+            {
+                throw QGitError("git_reference_peel", res);
+            }
         }
 
         res = git_reset_default(repo, head_commit, &paths);
