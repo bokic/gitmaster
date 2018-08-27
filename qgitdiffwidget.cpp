@@ -72,8 +72,6 @@ void QGitDiffWidget::paintEvent(QPaintEvent *event)
 
             for(int h = 0; h < hunks.count(); h++)
             {
-                y += m_fontHeight;
-
                 const auto hunk = hunks.at(h);
                 const auto lines = hunk.lines();
 
@@ -85,29 +83,31 @@ void QGitDiffWidget::paintEvent(QPaintEvent *event)
                     if (line.old_lineno() >= 0) old_lineNo = QString::number(line.old_lineno());
                     if (line.new_lineno() >= 0) new_lineNo = QString::number(line.new_lineno());
 
+                    int yFont = y + m_fontAscent;
+
                     if (line.origin() == '-')
                     {
                         painter.setPen(Qt::NoPen);
                         painter.setBrush(QBrush(QColor(235, 204, 204)));
-                        painter.drawRect(10, y - m_fontHeight + 1, 300, m_fontHeight);
+                        painter.drawRect(10, y, rect.width(), m_fontHeight + 1);
                         painter.setBrush(QBrush(QColor(Qt::darkRed)));
                         painter.setPen(Qt::darkRed);
                     } else if (line.origin() == '+') {
                         painter.setPen(Qt::NoPen);
                         painter.setBrush(QBrush(QColor(204, 230, 194)));
-                        painter.drawRect(10, y - m_fontHeight + 1, 300, m_fontHeight);
+                        painter.drawRect(10, y, rect.width(), m_fontHeight + 1);
                         painter.setPen(Qt::darkGreen);
                     } else {
                         painter.setPen(Qt::SolidLine);
                         painter.setBrush(QBrush(QColor(Qt::black)));
                     }
 
-                    painter.drawText(10, y, old_lineNo);
-                    painter.drawText(40, y, new_lineNo);
+                    painter.drawText(10, yFont, old_lineNo);
+                    painter.drawText(40, yFont, new_lineNo);
 
-                    painter.drawText(70, y, QString(QChar(line.origin())));
+                    painter.drawText(70, yFont, QString(QChar(line.origin())));
 
-                    painter.drawText(100, y, line.content());
+                    painter.drawText(100, yFont, line.content());
 
                     y += m_fontHeight + 1;
                 }
@@ -119,11 +119,30 @@ void QGitDiffWidget::paintEvent(QPaintEvent *event)
 void QGitDiffWidget::remeasureItems()
 {
     const int MARGIN = 10;
-    int y = 0, h = 0;
+    int y = 0, h = 0, lineMax = 0;
 
-    m_fontHeight = QFontMetrics(m_font).height();
+    QFontMetrics fm(m_font);
+
+    m_fontHeight = fm.height();
+    m_fontAscent = fm.ascent();
 
     m_fileRects.resize(m_diff.count());
+
+    for(const QGitDiffFile &diffFile: m_diff)
+    {
+        for(const QGitDiffHunk &diffHunk: diffFile.hunks())
+        {
+            for(const QGitDiffLine &diffLine: diffHunk.lines())
+            {
+                auto line = diffLine.content();
+
+                int currentLine = fm.width(QString::fromUtf8(line));
+
+                if (currentLine > lineMax)
+                    lineMax = currentLine;
+            }
+        }
+    }
 
     for(int c = 0; c < m_diff.count(); c++)
     {
@@ -133,7 +152,7 @@ void QGitDiffWidget::remeasureItems()
 
         item.setTop(y);
         item.setLeft(MARGIN);
-        item.setWidth(300);
+        item.setWidth(100 + lineMax);
 
         h = 200;
         item.setHeight(h);

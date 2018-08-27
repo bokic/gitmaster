@@ -32,5 +32,6 @@ private:
     QVector<QRect> m_fileRects;
     QFont m_font;
     int m_fontHeight = 0;
+    int m_fontAscent = 0;
     bool m_readonly = false;
 };
