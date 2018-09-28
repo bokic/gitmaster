@@ -24,6 +24,7 @@ signals:
 public slots:
 
 protected:
+    void resizeEvent(QResizeEvent *event) override;
     virtual void paintEvent(QPaintEvent *event) override;
 
 private:

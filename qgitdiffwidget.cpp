@@ -1,7 +1,6 @@
 #include "qgitdiffwidget.h"
 #include <QScrollBar>
 #include <QPainter>
-#include <QDebug>
 
 
 QGitDiffWidget::QGitDiffWidget(QWidget *parent)
@@ -17,6 +16,7 @@ QGitDiffWidget::QGitDiffWidget(QWidget *parent)
     verticalScrollBar()->setSingleStep(m_fontHeight);
 
     distance = m_fontHeight * 3;
+
     horizontalScrollBar()->setPageStep(distance);
     verticalScrollBar()->setPageStep(distance);
 }
@@ -27,8 +27,8 @@ void QGitDiffWidget::setGitDiff(const QList<QGitDiffFile> &diff)
 
     remeasureItems();
 
-    verticalScrollBar()->setMinimum(0);   verticalScrollBar()->setMaximum(100);
-    horizontalScrollBar()->setMinimum(0); horizontalScrollBar()->setMaximum(100);
+    resizeEvent(nullptr);
+
     viewport()->update();
 }
 
@@ -45,6 +45,35 @@ void QGitDiffWidget::setReadonly(bool readonly)
 bool QGitDiffWidget::readonly() const
 {
     return m_readonly;
+}
+
+void QGitDiffWidget::resizeEvent(QResizeEvent *event)
+{
+    const int MARGIN = 10;
+
+    Q_UNUSED(event);
+
+    int h = 0, w = 0;
+
+    if (!m_fileRects.isEmpty())
+    {
+        h = m_fileRects.last().bottom() + MARGIN - viewport()->height();
+        w = m_fileRects.last().right() + MARGIN - viewport()->width();
+    }
+
+    if (h > 0) {
+        verticalScrollBar()->setMaximum(h);
+        verticalScrollBar()->setVisible(true);
+    } else {
+        verticalScrollBar()->setVisible(false);
+    }
+
+    if (w > 0) {
+        horizontalScrollBar()->setMaximum(w);
+        horizontalScrollBar()->setVisible(true);
+    } else {
+        horizontalScrollBar()->setVisible(false);
+    }
 }
 
 void QGitDiffWidget::paintEvent(QPaintEvent *event)
@@ -74,6 +103,8 @@ void QGitDiffWidget::paintEvent(QPaintEvent *event)
             {
                 const auto hunk = hunks.at(h);
                 const auto lines = hunk.lines();
+
+                if (h > 0) y += m_fontHeight + 1;
 
                 for(int l = 0; l < lines.count(); l++)
                 {
@@ -154,7 +185,15 @@ void QGitDiffWidget::remeasureItems()
         item.setLeft(MARGIN);
         item.setWidth(100 + lineMax);
 
-        h = 200;
+        h = m_fontHeight * 3;
+
+        for(int hunk = 0; hunk < m_diff.at(c).hunks().count(); hunk++)
+        {
+            h += m_diff.at(c).hunks().at(hunk).lines().count() * m_fontHeight;
+
+            h += m_fontHeight + 1;
+        }
+
         item.setHeight(h);
 
         y += h;
