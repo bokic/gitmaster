@@ -65,6 +65,7 @@ void QGitDiffWidget::resizeEvent(QResizeEvent *event)
         verticalScrollBar()->setMaximum(h);
         verticalScrollBar()->setVisible(true);
     } else {
+        verticalScrollBar()->setMaximum(0);
         verticalScrollBar()->setVisible(false);
     }
 
@@ -72,6 +73,7 @@ void QGitDiffWidget::resizeEvent(QResizeEvent *event)
         horizontalScrollBar()->setMaximum(w);
         horizontalScrollBar()->setVisible(true);
     } else {
+        horizontalScrollBar()->setMaximum(0);
         horizontalScrollBar()->setVisible(false);
     }
 }
@@ -185,13 +187,14 @@ void QGitDiffWidget::remeasureItems()
         item.setLeft(MARGIN);
         item.setWidth(100 + lineMax);
 
-        h = m_fontHeight * 3;
+        h = m_fontHeight * 2;
 
         for(int hunk = 0; hunk < m_diff.at(c).hunks().count(); hunk++)
         {
-            h += m_diff.at(c).hunks().at(hunk).lines().count() * m_fontHeight;
+            if (hunk > 0)
+                h += m_fontHeight + 1;
 
-            h += m_fontHeight + 1;
+            h += m_diff.at(c).hunks().at(hunk).lines().count() * (m_fontHeight + 1);
         }
 
         item.setHeight(h);
