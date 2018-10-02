@@ -4,21 +4,11 @@
 
 
 QGitDiffWidget::QGitDiffWidget(QWidget *parent)
-    : QAbstractScrollArea(parent)
+    : QWidget(parent)
 {
-    int distance = 0;
-
     m_font = font();
 
     remeasureItems();
-
-    horizontalScrollBar()->setSingleStep(m_fontHeight);
-    verticalScrollBar()->setSingleStep(m_fontHeight);
-
-    distance = m_fontHeight * 3;
-
-    horizontalScrollBar()->setPageStep(distance);
-    verticalScrollBar()->setPageStep(distance);
 }
 
 void QGitDiffWidget::setGitDiff(const QList<QGitDiffFile> &diff)
@@ -29,7 +19,7 @@ void QGitDiffWidget::setGitDiff(const QList<QGitDiffFile> &diff)
 
     resizeEvent(nullptr);
 
-    viewport()->update();
+    update();
 }
 
 void QGitDiffWidget::setReadonly(bool readonly)
@@ -38,7 +28,7 @@ void QGitDiffWidget::setReadonly(bool readonly)
     {
         m_readonly = readonly;
 
-        viewport()->update();
+        update();
     }
 }
 
@@ -47,44 +37,11 @@ bool QGitDiffWidget::readonly() const
     return m_readonly;
 }
 
-void QGitDiffWidget::resizeEvent(QResizeEvent *event)
-{
-    const int MARGIN = 10;
-
-    Q_UNUSED(event);
-
-    int h = 0, w = 0;
-
-    if (!m_fileRects.isEmpty())
-    {
-        h = m_fileRects.last().bottom() + MARGIN - viewport()->height();
-        w = m_fileRects.last().right() + MARGIN - viewport()->width();
-    }
-
-    if (h > 0) {
-        verticalScrollBar()->setMaximum(h);
-        verticalScrollBar()->setVisible(true);
-    } else {
-        verticalScrollBar()->setMaximum(0);
-        verticalScrollBar()->setVisible(false);
-    }
-
-    if (w > 0) {
-        horizontalScrollBar()->setMaximum(w);
-        horizontalScrollBar()->setVisible(true);
-    } else {
-        horizontalScrollBar()->setMaximum(0);
-        horizontalScrollBar()->setVisible(false);
-    }
-}
-
 void QGitDiffWidget::paintEvent(QPaintEvent *event)
 {
-    QPainter painter(viewport());
+    QPainter painter(this);
 
     int y = 0;
-
-    painter.translate(-horizontalScrollBar()->value(), -verticalScrollBar()->value());
 
     for(int c = 0; c < m_fileRects.count(); c++)
     {

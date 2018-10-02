@@ -446,10 +446,20 @@
              </column>
             </widget>
            </widget>
-           <widget class="QGitDiffWidget" name="logHistory_diff" native="true">
-            <property name="readonly" stdset="0">
+           <widget class="QScrollArea" name="scrollArea_diff">
+            <property name="widgetResizable">
              <bool>true</bool>
             </property>
+            <widget class="QGitDiffWidget" name="logHistory_diff">
+             <property name="geometry">
+              <rect>
+               <x>0</x>
+               <y>0</y>
+               <width>79</width>
+               <height>435</height>
+              </rect>
+             </property>
+            </widget>
            </widget>
           </widget>
          </widget>

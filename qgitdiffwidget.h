@@ -2,13 +2,13 @@
 
 #include "qgit.h"
 
-#include <QAbstractScrollArea>
+#include <QWidget>
 #include <QVector>
 #include <QRect>
 #include <QList>
 
 
-class QGitDiffWidget : public QAbstractScrollArea
+class QGitDiffWidget : public QWidget
 {
     Q_OBJECT
     Q_PROPERTY( bool readonly READ readonly WRITE setReadonly DESIGNABLE true )
@@ -24,7 +24,6 @@ signals:
 public slots:
 
 protected:
-    void resizeEvent(QResizeEvent *event) override;
     virtual void paintEvent(QPaintEvent *event) override;
 
 private:
