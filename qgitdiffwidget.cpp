@@ -17,8 +17,6 @@ void QGitDiffWidget::setGitDiff(const QList<QGitDiffFile> &diff)
 
     remeasureItems();
 
-    resizeEvent(nullptr);
-
     update();
 }
 
@@ -160,4 +158,6 @@ void QGitDiffWidget::remeasureItems()
 
         m_fileRects[c] = item;
     }
+
+    setMinimumSize(QSize(MARGIN + 100 + lineMax + MARGIN, y + MARGIN));
 }
