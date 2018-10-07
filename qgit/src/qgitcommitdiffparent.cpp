@@ -17,7 +17,7 @@ QGitCommitDiffParent::QGitCommitDiffParent(const QGitCommitDiffParent &other)
 {
 }
 
-QGitCommitDiffParent &QGitCommitDiffParent::operator=(QGitCommitDiffParent &&other)
+QGitCommitDiffParent &QGitCommitDiffParent::operator=(QGitCommitDiffParent &&other) noexcept
 {
     qSwap(m_commitHash, other.m_commitHash);
     qSwap(m_files, other.m_files);

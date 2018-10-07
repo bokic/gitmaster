@@ -16,8 +16,8 @@ public:
     QGitCommitDiffParent(QByteArray commitHash);
     QGitCommitDiffParent(const QGitCommitDiffParent &other);
 
-    QGitCommitDiffParent &operator=(QGitCommitDiffParent &&other);
     QGitCommitDiffParent &operator=(const QGitCommitDiffParent &other);
+    QGitCommitDiffParent &operator=(QGitCommitDiffParent &&other) noexcept;
 
     QByteArray commitHash() const;
     QList<QGitDiffFile> files() const;

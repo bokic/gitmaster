@@ -13,8 +13,8 @@ public:
 
     QGitDiffBinaryFile(const QGitDiffBinaryFile &other);
 
-    QGitDiffBinaryFile &operator=(QGitDiffBinaryFile &&other);
     QGitDiffBinaryFile &operator=(const QGitDiffBinaryFile &other);
+    QGitDiffBinaryFile &operator=(QGitDiffBinaryFile &&other) noexcept;
 
     git_diff_binary_t type() const;
     QByteArray data() const;

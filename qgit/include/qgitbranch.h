@@ -11,8 +11,8 @@ public:
     QGitBranch(const QString &name, git_branch_t type = GIT_BRANCH_ALL);
     QGitBranch(const QGitBranch &other);
 
-    QGitBranch &operator=(QGitBranch &&other);
     QGitBranch &operator=(const QGitBranch &other);
+    QGitBranch &operator=(QGitBranch &&other) noexcept;
 
     QString name() const;
     git_branch_t type() const;

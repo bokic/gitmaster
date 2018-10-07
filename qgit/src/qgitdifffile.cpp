@@ -30,7 +30,7 @@ QGitDiffFile::QGitDiffFile(const QGitDiffFile &other)
 {
 }
 
-QGitDiffFile &QGitDiffFile::operator=(QGitDiffFile &&other)
+QGitDiffFile &QGitDiffFile::operator=(QGitDiffFile &&other) noexcept
 {
     qSwap(m_new_file, other.m_new_file);
     qSwap(m_old_file, other.m_old_file);

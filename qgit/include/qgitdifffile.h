@@ -17,7 +17,7 @@ public:
     QGitDiffFile(const git_diff_delta *file);
     QGitDiffFile(const QGitDiffFile &other);
 
-    QGitDiffFile &operator=(QGitDiffFile &&other);
+    QGitDiffFile &operator=(QGitDiffFile &&other) noexcept;
     QGitDiffFile &operator=(const QGitDiffFile &other);
     bool operator==(const git_diff_delta *other);
 

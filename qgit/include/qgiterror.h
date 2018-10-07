@@ -11,8 +11,8 @@ public:
 
     QGitError(const QGitError &other);
 
-    QGitError &operator=(QGitError &&other);
     QGitError &operator=(const QGitError &other);
+    QGitError &operator=(QGitError &&other) noexcept;
 
     QString functionName() const;
     int errorCode() const;

@@ -16,7 +16,7 @@ QGitError::QGitError(const QGitError &other)
 {
 }
 
-QGitError &QGitError::operator=(QGitError &&other)
+QGitError &QGitError::operator=(QGitError &&other) noexcept
 {
     qSwap(m_functionName, other.m_functionName);
     qSwap(m_errorCode, other.m_errorCode);

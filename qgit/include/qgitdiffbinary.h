@@ -14,8 +14,8 @@ public:
 
     QGitDiffBinary(const QGitDiffBinary &other);
 
-    QGitDiffBinary &operator=(QGitDiffBinary &&other);
     QGitDiffBinary &operator=(const QGitDiffBinary &other);
+    QGitDiffBinary &operator=(QGitDiffBinary &&other) noexcept;
 
     QGitDiffBinaryFile file(QGitDiffBinaryItem item) const;
 

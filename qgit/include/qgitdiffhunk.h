@@ -14,8 +14,8 @@ public:
     QGitDiffHunk(const git_diff_hunk *hunk);
     QGitDiffHunk(const QGitDiffHunk &other);
 
-    QGitDiffHunk &operator=(QGitDiffHunk &&other);
     QGitDiffHunk &operator=(const QGitDiffHunk &other);
+    QGitDiffHunk &operator=(QGitDiffHunk &&other) noexcept;
 
     QString header() const;
     int new_lines() const;

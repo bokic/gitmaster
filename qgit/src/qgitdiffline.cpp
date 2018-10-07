@@ -35,7 +35,7 @@ QGitDiffLine::QGitDiffLine(const QGitDiffLine &other)
 {
 }
 
-QGitDiffLine &QGitDiffLine::operator=(QGitDiffLine &&other)
+QGitDiffLine &QGitDiffLine::operator=(QGitDiffLine &&other) noexcept
 {
     qSwap(m_content, other.m_content);
     qSwap(m_offset, other.m_offset);

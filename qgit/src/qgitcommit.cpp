@@ -25,7 +25,7 @@ QGitCommit::QGitCommit(const QGitCommit &other)
 {
 }
 
-QGitCommit &QGitCommit::operator=(QGitCommit &&other)
+QGitCommit &QGitCommit::operator=(QGitCommit &&other) noexcept
 {
     qSwap(m_id, other.m_id);
     qSwap(m_parents, other.m_parents);

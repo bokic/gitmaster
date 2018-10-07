@@ -19,7 +19,7 @@ QGitSignature::QGitSignature(const QGitSignature &other)
 {
 }
 
-QGitSignature &QGitSignature::operator=(QGitSignature &&other)
+QGitSignature &QGitSignature::operator=(QGitSignature &&other) noexcept
 {
     qSwap(m_name, other.m_name);
     qSwap(m_email, other.m_email);

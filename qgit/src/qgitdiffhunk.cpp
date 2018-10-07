@@ -32,7 +32,7 @@ QGitDiffHunk::QGitDiffHunk(const QGitDiffHunk &other)
 {
 }
 
-QGitDiffHunk &QGitDiffHunk::operator=(QGitDiffHunk &&other)
+QGitDiffHunk &QGitDiffHunk::operator=(QGitDiffHunk &&other) noexcept
 {
     qSwap(m_header, other.m_header);
     qSwap(m_new_lines, other.m_new_lines);

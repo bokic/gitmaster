@@ -12,8 +12,8 @@ public:
     QGitDiffFileItem(const git_diff_file &file);
     QGitDiffFileItem(const QGitDiffFileItem &other);
 
-    QGitDiffFileItem &operator=(QGitDiffFileItem &&other);
     QGitDiffFileItem &operator=(const QGitDiffFileItem &other);
+    QGitDiffFileItem &operator=(QGitDiffFileItem &&other) noexcept;
 
     QString path() const;
     QByteArray id() const;

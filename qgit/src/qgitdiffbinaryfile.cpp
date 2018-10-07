@@ -22,7 +22,7 @@ QGitDiffBinaryFile::QGitDiffBinaryFile(const QGitDiffBinaryFile &other)
 {
 }
 
-QGitDiffBinaryFile &QGitDiffBinaryFile::operator=(QGitDiffBinaryFile &&other)
+QGitDiffBinaryFile &QGitDiffBinaryFile::operator=(QGitDiffBinaryFile &&other) noexcept
 {
     qSwap(m_type, other.m_type);
     qSwap(m_data, other.m_data);

@@ -20,7 +20,7 @@ QGitBranch::QGitBranch(const QGitBranch &other)
 {
 }
 
-QGitBranch &QGitBranch::operator=(QGitBranch &&other)
+QGitBranch &QGitBranch::operator=(QGitBranch &&other) noexcept
 {
     qSwap(m_name, other.m_name);
     qSwap(m_type, other.m_type);

@@ -26,7 +26,7 @@ QGitDiffFileItem::QGitDiffFileItem(const QGitDiffFileItem &other)
 {
 }
 
-QGitDiffFileItem &QGitDiffFileItem::operator=(QGitDiffFileItem &&other)
+QGitDiffFileItem &QGitDiffFileItem::operator=(QGitDiffFileItem &&other) noexcept
 {
     qSwap(m_path, other.m_path);
     qSwap(m_id, other.m_id);
