@@ -167,7 +167,7 @@ void QGitRepository::repositoryBranchesAndTagsReply(QList<QGitBranch> branches, 
 
     itemFileStatus->addChild(new QTreeWidgetItem(QStringList() << tr("Working Copy")));
 
-    for(auto branch: branches)
+    for(const auto &branch: branches)
     {
         QStringList items = branch.name().split('/');
 
@@ -243,7 +243,7 @@ void QGitRepository::repositoryBranchesAndTagsReply(QList<QGitBranch> branches, 
         }
     }
 
-    for(auto tag: tags)
+    for(const auto &tag: tags)
     {
         QTreeWidgetItem *child = new QTreeWidgetItem(QStringList() << tag);
 
@@ -268,7 +268,7 @@ void QGitRepository::repositoryStashesReply(QStringList stashes, QGitError error
     {
         QTreeWidgetItem *item = new QTreeWidgetItem(QStringList() << tr("Stashes"));
 
-        for(auto stash: stashes)
+        for(const auto &stash: stashes)
         {
             item->addChild(new QTreeWidgetItem(QStringList() << stash));
         }
@@ -390,7 +390,7 @@ void QGitRepository::repositoryGetCommitsReply(QList<QGitCommit> commits, QGitEr
 {
     Q_UNUSED(error);
 
-    for(auto commit: commits)
+    for(const auto &commit: commits)
     {
         ui->logHistory_commits->addCommit(commit);
     }
