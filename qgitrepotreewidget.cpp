@@ -40,8 +40,6 @@ void QGitRepoTreeWidget::repositoryStatusReply(QMap<git_status_t,int> items, QGi
 
         QString item_path = item->data(0, QGitRepoTreeItemDelegate::QItemPath).toString();
 
-        auto tmp = QDir::toNativeSeparators(m_git->path().absolutePath());
-
         if (item_path == QDir::toNativeSeparators(m_git->path().absolutePath()))
         {
             item->setData(0, QGitRepoTreeItemDelegate::QItemModifiedFiles, QVariant(0));
