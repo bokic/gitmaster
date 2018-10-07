@@ -6,13 +6,13 @@
 class QGitError
 {
 public:
-    QGitError();
     QGitError(const QString functionName, int errorCode);
+    QGitError() = default;
 
-    QGitError(const QGitError &other);
+    QGitError(const QGitError &other) = default;
 
-    QGitError &operator=(const QGitError &other);
     QGitError &operator=(QGitError &&other) noexcept;
+    QGitError &operator=(const QGitError &other) = default;
 
     QString functionName() const;
     int errorCode() const;

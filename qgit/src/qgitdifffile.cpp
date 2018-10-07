@@ -5,10 +5,6 @@
 #include <QList>
 
 
-QGitDiffFile::QGitDiffFile()
-{
-}
-
 QGitDiffFile::QGitDiffFile(const git_diff_delta *file)
     : m_new_file(file->new_file)
     , m_old_file(file->old_file)

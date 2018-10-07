@@ -7,13 +7,13 @@
 class QGitDiffLine
 {
 public:
-    QGitDiffLine();
+    QGitDiffLine() = default;
     QGitDiffLine(const git_diff_line *line);
     QGitDiffLine(const QByteArray &content, git_off_t offset, int new_lineno, int num_lines, int old_lineno, char origin);
-    QGitDiffLine(const QGitDiffLine &other);
+    QGitDiffLine(const QGitDiffLine &other) = default;
 
-    QGitDiffLine &operator=(const QGitDiffLine &other);
     QGitDiffLine &operator=(QGitDiffLine &&other) noexcept;
+    QGitDiffLine &operator=(const QGitDiffLine &other) = default;
 
     QByteArray content() const;
     git_off_t offset() const;

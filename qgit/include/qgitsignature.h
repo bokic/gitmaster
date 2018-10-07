@@ -6,12 +6,12 @@
 
 class QGitSignature {
 public:
-    QGitSignature();
+    QGitSignature() = default;
     QGitSignature(const QString &name, const QString &email, const QDateTime &when);
-    QGitSignature(const QGitSignature &other);
+    QGitSignature(const QGitSignature &other) = default;
 
-    QGitSignature &operator=(const QGitSignature &other);
     QGitSignature &operator=(QGitSignature &&other) noexcept;
+    QGitSignature &operator=(const QGitSignature &other) = default;
 
 
     QString name() const;

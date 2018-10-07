@@ -13,7 +13,7 @@ class QGitDiffFile
      friend class QGitCommitDiffParent;
 
 public:
-    QGitDiffFile();
+    QGitDiffFile() = default;
     QGitDiffFile(const git_diff_delta *file);
     QGitDiffFile(const QGitDiffFile &other);
 

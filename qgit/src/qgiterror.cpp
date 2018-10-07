@@ -1,8 +1,5 @@
 #include "qgiterror.h"
 
-QGitError::QGitError()
-{
-}
 
 QGitError::QGitError(const QString functionName, int errorCode)
     : m_functionName(functionName)
@@ -10,24 +7,10 @@ QGitError::QGitError(const QString functionName, int errorCode)
 {
 }
 
-QGitError::QGitError(const QGitError &other)
-    : m_functionName(other.m_functionName)
-    , m_errorCode(other.m_errorCode)
-{
-}
-
 QGitError &QGitError::operator=(QGitError &&other) noexcept
 {
     qSwap(m_functionName, other.m_functionName);
     qSwap(m_errorCode, other.m_errorCode);
-
-    return *this;
-}
-
-QGitError &QGitError::operator=(const QGitError &other)
-{
-    m_functionName = other.m_functionName;
-    m_errorCode = other.m_errorCode;
 
     return *this;
 }

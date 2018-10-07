@@ -5,30 +5,12 @@
 #include <QList>
 
 
-QGitDiffHunk::QGitDiffHunk()
-    : m_new_lines(-1)
-    , m_new_start(-1)
-    , m_old_lines(-1)
-    , m_old_start(-1)
-{
-}
-
 QGitDiffHunk::QGitDiffHunk(const git_diff_hunk *hunk)
     : m_header(QString::fromUtf8(hunk->header, static_cast<int>(hunk->header_len)))
     , m_new_lines(hunk->new_lines)
     , m_new_start(hunk->new_start)
     , m_old_lines(hunk->old_lines)
     , m_old_start(hunk->old_start)
-{
-}
-
-QGitDiffHunk::QGitDiffHunk(const QGitDiffHunk &other)
-    : m_header(other.m_header)
-    , m_new_lines(other.m_new_lines)
-    , m_new_start(other.m_new_start)
-    , m_old_lines(other.m_old_lines)
-    , m_old_start(other.m_old_start)
-    , m_lines(other.m_lines)
 {
 }
 
@@ -40,18 +22,6 @@ QGitDiffHunk &QGitDiffHunk::operator=(QGitDiffHunk &&other) noexcept
     qSwap(m_old_lines, other.m_old_lines);
     qSwap(m_old_start, other.m_old_start);
     qSwap(m_lines, other.m_lines);
-
-    return *this;
-}
-
-QGitDiffHunk &QGitDiffHunk::operator=(const QGitDiffHunk &other)
-{
-    m_header = other.m_header;
-    m_new_lines = other.m_new_lines;
-    m_new_start = other.m_new_start;
-    m_old_lines = other.m_old_lines;
-    m_old_start = other.m_old_start;
-    m_lines = other.m_lines;
 
     return *this;
 }

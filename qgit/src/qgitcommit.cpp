@@ -1,10 +1,6 @@
 #include "qgitcommit.h"
 
 
-QGitCommit::QGitCommit()
-{
-}
-
 QGitCommit::QGitCommit(const QString &id, const QList<QGitCommitDiffParent> &parents, const QDateTime &time, const QGitSignature &author, const QGitSignature &commiter, const QString &message)
     : m_id(id)
     , m_parents(parents)
@@ -12,16 +8,6 @@ QGitCommit::QGitCommit(const QString &id, const QList<QGitCommitDiffParent> &par
     , m_author(author)
     , m_commiter(commiter)
     , m_message(message)
-{
-}
-
-QGitCommit::QGitCommit(const QGitCommit &other)
-    : m_id(other.m_id)
-    , m_parents(other.m_parents)
-    , m_time(other.m_time)
-    , m_author(other.m_author)
-    , m_commiter(other.m_commiter)
-    , m_message(other.m_message)
 {
 }
 
@@ -33,18 +19,6 @@ QGitCommit &QGitCommit::operator=(QGitCommit &&other) noexcept
     qSwap(m_author, other.m_author);
     qSwap(m_commiter, other.m_commiter);
     qSwap(m_message, other.m_message);
-
-    return *this;
-}
-
-QGitCommit &QGitCommit::operator=(const QGitCommit &other)
-{
-    m_id = other.m_id;
-    m_parents = other.m_parents;
-    m_time = other.m_time;
-    m_author = other.m_author;
-    m_commiter = other.m_commiter;
-    m_message = other.m_message;
 
     return *this;
 }

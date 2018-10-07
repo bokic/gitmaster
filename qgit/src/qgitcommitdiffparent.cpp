@@ -2,18 +2,8 @@
 #include "qgitdiffbinary.h"
 
 
-QGitCommitDiffParent::QGitCommitDiffParent()
-{
-}
-
 QGitCommitDiffParent::QGitCommitDiffParent(QByteArray commitHash)
     : m_commitHash(commitHash)
-{
-}
-
-QGitCommitDiffParent::QGitCommitDiffParent(const QGitCommitDiffParent &other)
-    : m_commitHash(other.m_commitHash)
-    , m_files(other.m_files)
 {
 }
 
@@ -21,14 +11,6 @@ QGitCommitDiffParent &QGitCommitDiffParent::operator=(QGitCommitDiffParent &&oth
 {
     qSwap(m_commitHash, other.m_commitHash);
     qSwap(m_files, other.m_files);
-
-    return *this;
-}
-
-QGitCommitDiffParent &QGitCommitDiffParent::operator=(const QGitCommitDiffParent &other)
-{
-    m_commitHash = other.m_commitHash;
-    m_files = other.m_files;
 
     return *this;
 }

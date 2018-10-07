@@ -10,12 +10,12 @@
 class QGitDiffHunk
 {
 public:
-    QGitDiffHunk();
+    QGitDiffHunk() = default;
     QGitDiffHunk(const git_diff_hunk *hunk);
-    QGitDiffHunk(const QGitDiffHunk &other);
+    QGitDiffHunk(const QGitDiffHunk &other) = default;
 
-    QGitDiffHunk &operator=(const QGitDiffHunk &other);
     QGitDiffHunk &operator=(QGitDiffHunk &&other) noexcept;
+    QGitDiffHunk &operator=(const QGitDiffHunk &other) = default;
 
     QString header() const;
     int new_lines() const;
@@ -28,10 +28,10 @@ public:
 
 private:
     QString m_header;
-    int m_new_lines = 0;
-    int m_new_start = 0;
-    int m_old_lines = 0;
-    int m_old_start = 0;
+    int m_new_lines = -1;
+    int m_new_start = -1;
+    int m_old_lines = -1;
+    int m_old_start = -1;
     QList<QGitDiffLine> m_lines;
 };
 

@@ -1,10 +1,6 @@
 #include <qgitdiffline.h>
 
 
-QGitDiffLine::QGitDiffLine()
-{
-}
-
 QGitDiffLine::QGitDiffLine(const QByteArray &content, git_off_t offset, int new_lineno, int num_lines, int old_lineno, char origin)
     : m_content(content)
     , m_offset(offset)
@@ -25,16 +21,6 @@ QGitDiffLine::QGitDiffLine(const git_diff_line *line)
 {
 }
 
-QGitDiffLine::QGitDiffLine(const QGitDiffLine &other)
-    : m_content(other.m_content)
-    , m_offset(other.m_offset)
-    , m_new_lineno(other.m_new_lineno)
-    , m_num_lines(other.m_num_lines)
-    , m_old_lineno(other.m_old_lineno)
-    , m_origin(other.m_origin)
-{
-}
-
 QGitDiffLine &QGitDiffLine::operator=(QGitDiffLine &&other) noexcept
 {
     qSwap(m_content, other.m_content);
@@ -43,18 +29,6 @@ QGitDiffLine &QGitDiffLine::operator=(QGitDiffLine &&other) noexcept
     qSwap(m_num_lines, other.m_num_lines);
     qSwap(m_old_lineno, other.m_old_lineno);
     qSwap(m_origin, other.m_origin);
-
-    return *this;
-}
-
-QGitDiffLine &QGitDiffLine::operator=(const QGitDiffLine &other)
-{
-    m_content = other.m_content;
-    m_offset = other.m_offset;
-    m_new_lineno = other.m_new_lineno;
-    m_num_lines = other.m_num_lines;
-    m_old_lineno = other.m_old_lineno;
-    m_origin = other.m_origin;
 
     return *this;
 }

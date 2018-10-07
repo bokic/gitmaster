@@ -9,13 +9,13 @@ class QGitDiffBinary
 public:
     enum QGitDiffBinaryItem {OldFile, NewFile};
 
-    QGitDiffBinary();
+    QGitDiffBinary() = default;
     QGitDiffBinary(const git_diff_binary *binary);
 
-    QGitDiffBinary(const QGitDiffBinary &other);
+    QGitDiffBinary(const QGitDiffBinary &other) = default;
 
-    QGitDiffBinary &operator=(const QGitDiffBinary &other);
     QGitDiffBinary &operator=(QGitDiffBinary &&other) noexcept;
+    QGitDiffBinary &operator=(const QGitDiffBinary &other) = default;
 
     QGitDiffBinaryFile file(QGitDiffBinaryItem item) const;
 
