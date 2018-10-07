@@ -58,7 +58,7 @@ void QGitDiffWidget::paintEvent(QPaintEvent *event)
 
             for(int h = 0; h < hunks.count(); h++)
             {
-                const auto hunk = hunks.at(h);
+                const auto &hunk = hunks.at(h);
                 const auto lines = hunk.lines();
 
                 if (h > 0) y += m_fontHeight + 1;
@@ -66,7 +66,7 @@ void QGitDiffWidget::paintEvent(QPaintEvent *event)
                 for(int l = 0; l < lines.count(); l++)
                 {
                     QString old_lineNo, new_lineNo;
-                    const auto line = lines.at(l);
+                    const auto &line = lines.at(l);
 
                     if (line.old_lineno() >= 0) old_lineNo = QString::number(line.old_lineno());
                     if (line.new_lineno() >= 0) new_lineNo = QString::number(line.new_lineno());
