@@ -546,7 +546,7 @@ void QGit::listStashes()
                 Q_UNUSED(index);
                 Q_UNUSED(stash_id);
 
-                QStringList *list = static_cast<QStringList *>(payload);
+                auto list = static_cast<QStringList *>(payload);
 
                 list->append(QString::fromUtf8(message));
 
@@ -711,27 +711,27 @@ void QGit::commitDiff(QString commitId)
 
                                             Q_UNUSED(progress);
 
-                                            QGitCommitDiffParent *dest = static_cast<QGitCommitDiffParent *>(payload);
+                                            auto dest = static_cast<QGitCommitDiffParent *>(payload);
 
                                             dest->addFile(delta);
 
                                             return 0;
                                         },
                                       [](const git_diff_delta *delta, const git_diff_binary *binary, void *payload) -> int {
-                                            QGitCommitDiffParent *dest = static_cast<QGitCommitDiffParent *>(payload);
+                                            auto dest = static_cast<QGitCommitDiffParent *>(payload);
 
                                             dest->addBinary(delta, binary);
 
                                             return 0;
                                         },
                                       [](const git_diff_delta *delta, const git_diff_hunk *hunk, void *payload) -> int {
-                                            QGitCommitDiffParent *dest = static_cast<QGitCommitDiffParent *>(payload);
+                                            auto dest = static_cast<QGitCommitDiffParent *>(payload);
 
                                             dest->addHunk(delta, hunk);
                                             return 0;
                                         },
                                       [](const git_diff_delta *delta, const git_diff_hunk *hunk, const git_diff_line *line, void *payload) -> int {
-                                            QGitCommitDiffParent *dest = static_cast<QGitCommitDiffParent *>(payload);
+                                            auto dest = static_cast<QGitCommitDiffParent *>(payload);
 
                                             dest->addLine(delta, hunk, line);
 
@@ -780,27 +780,27 @@ void QGit::commitDiff(QString commitId)
 
                                                 Q_UNUSED(progress);
 
-                                                QGitCommitDiffParent *dest = static_cast<QGitCommitDiffParent *>(payload);
+                                                auto dest = static_cast<QGitCommitDiffParent *>(payload);
 
                                                 dest->addFile(delta);
 
                                                 return 0;
                                             },
                                           [](const git_diff_delta *delta, const git_diff_binary *binary, void *payload) -> int {
-                                                QGitCommitDiffParent *dest = static_cast<QGitCommitDiffParent *>(payload);
+                                                auto dest = static_cast<QGitCommitDiffParent *>(payload);
 
                                                 dest->addBinary(delta, binary);
 
                                                 return 0;
                                             },
                                           [](const git_diff_delta *delta, const git_diff_hunk *hunk, void *payload) -> int {
-                                                QGitCommitDiffParent *dest = static_cast<QGitCommitDiffParent *>(payload);
+                                                auto dest = static_cast<QGitCommitDiffParent *>(payload);
 
                                                 dest->addHunk(delta, hunk);
                                                 return 0;
                                             },
                                           [](const git_diff_delta *delta, const git_diff_hunk *hunk, const git_diff_line *line, void *payload) -> int {
-                                                QGitCommitDiffParent *dest = static_cast<QGitCommitDiffParent *>(payload);
+                                                auto dest = static_cast<QGitCommitDiffParent *>(payload);
 
                                                 dest->addLine(delta, hunk, line);
 
@@ -1184,7 +1184,7 @@ void QGit::clone(QUrl url)
         opts.fetch_opts.callbacks.payload = this;
         opts.fetch_opts.callbacks.transfer_progress = [](const git_transfer_progress *stats, void *payload) -> int {
 
-            QGit *_this =  static_cast<QGit *>(payload);
+            auto _this = static_cast<QGit *>(payload);
 
             emit _this->cloneTransferReply(stats->total_objects, stats->indexed_objects, stats->received_objects, stats->local_objects, stats->total_deltas, stats->indexed_deltas, stats->received_bytes);
 
@@ -1210,7 +1210,7 @@ void QGit::clone(QUrl url)
                 size_t total_steps,
                 void *payload)
         {
-            QGit *_this = static_cast<QGit *>(payload);
+            auto _this = static_cast<QGit *>(payload);
 
             emit _this->cloneProgressReply(QString::fromUtf8(path), completed_steps, total_steps);
 

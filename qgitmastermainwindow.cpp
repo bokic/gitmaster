@@ -21,7 +21,7 @@ QGitMasterMainWindow::QGitMasterMainWindow(QWidget *parent)
     spacer->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     ui->mainToolBar->insertWidget(ui->actionSettings, spacer);
 
-    QGitRepoTreeItemDelegate *treeDelegate = new QGitRepoTreeItemDelegate(this);
+    auto treeDelegate = new QGitRepoTreeItemDelegate(this);
 
     treeDelegate->setImages(
                 QImage(":/images/gray_branch"),
@@ -79,7 +79,7 @@ void QGitMasterMainWindow::readSettings()
             break;
         }
 
-        QTreeWidgetItem *item = new QTreeWidgetItem();
+        auto item = new QTreeWidgetItem();
 
         item->setData(0, Qt::DisplayRole, name);
         item->setData(0, QGitRepoTreeItemDelegate::QItemPath, path);
@@ -171,7 +171,7 @@ void QGitMasterMainWindow::on_actionCloneNew_triggered()
 
             if (res == QDialog::Accepted)
             {
-                QTreeWidgetItem *item = new QTreeWidgetItem();
+                auto item = new QTreeWidgetItem();
 
                 item->setData(0, Qt::DisplayRole, bookmarkStr);
                 item->setData(0, QGitRepoTreeItemDelegate::QItemPath, path);
@@ -189,7 +189,7 @@ void QGitMasterMainWindow::on_actionCloneNew_triggered()
 
             if(!bookmarkStr.isEmpty())
             {
-                QTreeWidgetItem *item = new QTreeWidgetItem();
+                auto item = new QTreeWidgetItem();
 
                 item->setData(0, Qt::DisplayRole, bookmarkStr);
                 item->setData(0, QGitRepoTreeItemDelegate::QItemPath, dlg.addWorkingCopyPath());
@@ -209,7 +209,7 @@ void QGitMasterMainWindow::on_actionCloneNew_triggered()
 
             if(!bookmarkStr.isEmpty())
             {
-                QTreeWidgetItem *item = new QTreeWidgetItem();
+                auto item = new QTreeWidgetItem();
 
                 item->setData(0, Qt::DisplayRole, bookmarkStr);
                 item->setData(0, QGitRepoTreeItemDelegate::QItemPath, dlg.createNewRepositoryPath());
@@ -266,7 +266,7 @@ void QGitMasterMainWindow::on_treeWidget_itemDoubleClicked(QTreeWidgetItem *item
         }
     }
 
-    QGitRepository *widget = new QGitRepository(repositoryPath, this);
+    auto widget = new QGitRepository(repositoryPath, this);
 
     ui->tabWidget->addTab(widget, repositoryName);
 
@@ -280,7 +280,7 @@ void QGitMasterMainWindow::on_tabWidget_tabCloseRequested(int index)
 
 void QGitMasterMainWindow::on_actionStash_triggered()
 {
-    QGitRepository *widget = dynamic_cast<QGitRepository *>(ui->tabWidget->currentWidget());
+    auto widget = dynamic_cast<QGitRepository *>(ui->tabWidget->currentWidget());
     if (widget) {
         QString stashName = QInputDialog::getText(this, tr("Question?"), tr("Stash name:"));
 

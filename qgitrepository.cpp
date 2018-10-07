@@ -311,7 +311,7 @@ void QGitRepository::repositoryChangedFilesReply(QMap<QString, git_status_t> fil
         tmp_status = status & (GIT_STATUS_INDEX_NEW | GIT_STATUS_INDEX_MODIFIED | GIT_STATUS_INDEX_DELETED | GIT_STATUS_INDEX_RENAMED | GIT_STATUS_INDEX_TYPECHANGE);
         if (tmp_status)
         {
-            QListWidgetItem *item = new QListWidgetItem(file);
+            auto item = new QListWidgetItem(file);
 
             item->setFlags(item->flags() | Qt::ItemIsUserCheckable);
             item->setCheckState(Qt::Checked);
@@ -338,7 +338,7 @@ void QGitRepository::repositoryChangedFilesReply(QMap<QString, git_status_t> fil
         tmp_status = status & (GIT_STATUS_WT_NEW | GIT_STATUS_WT_MODIFIED | GIT_STATUS_WT_DELETED | GIT_STATUS_WT_RENAMED | GIT_STATUS_WT_TYPECHANGE | GIT_STATUS_WT_UNREADABLE);
         if (tmp_status)
         {
-            QListWidgetItem *item = new QListWidgetItem(file);
+            auto item = new QListWidgetItem(file);
 
             item->setFlags(item->flags() | Qt::ItemIsUserCheckable);
             item->setCheckState(Qt::Unchecked);

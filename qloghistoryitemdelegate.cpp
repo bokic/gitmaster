@@ -17,7 +17,7 @@ void QLogHistoryItemDelegate::paint(QPainter *painter, const QStyleOptionViewIte
 
     if (index.column() == 0)
     {
-        QList<QVariant> data = index.data(Qt::UserRole).toList();
+        auto data = index.data(Qt::UserRole).toList();
 
         if (data.count() > 0)
         {
