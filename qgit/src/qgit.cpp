@@ -15,7 +15,6 @@
 
 QGit::QGit(const QDir &path, QObject *parent)
     : QObject(parent)
-    , m_pathLock()
     , m_path(path)
 {
     git_libgit2_init();
@@ -23,7 +22,6 @@ QGit::QGit(const QDir &path, QObject *parent)
 
 QGit::QGit(QObject *parent)
     : QObject(parent)
-    , m_pathLock()
 {
     git_libgit2_init();
 }
