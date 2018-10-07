@@ -38,5 +38,5 @@ int main(int argc, char *argv[])
     QGitMasterMainWindow w;
     w.show();
 
-    return a.exec();
+    return QApplication::exec();
 }
