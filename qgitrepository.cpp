@@ -400,7 +400,7 @@ void QGitRepository::repositoryGetCommitsReply(QList<QGitCommit> commits, QGitEr
         m_allCommitsLoaded = true;
     }
 
-    QGitMasterMainWindow::instance()->updateStatusBarText("");
+    QGitMasterMainWindow::instance()->updateStatusBarText(QStringLiteral(""));
 }
 
 void QGitRepository::repositoryGetCommitDiffReply(QString commitId, QGitCommit diff, QGitError error)
@@ -437,17 +437,17 @@ void QGitRepository::repositoryGetCommitDiffReply(QString commitId, QGitCommit d
 
         for (int i = 0; i < m_commitDiff.parents().count(); i++)
         {
-            parentsHtml << "<a href = \"" + m_commitDiff.parents().at(i).commitHash() + "\">" + m_commitDiff.parents().at(i).commitHash().left(10) + "</a>";
+            parentsHtml << QStringLiteral("<a href = \"") + m_commitDiff.parents().at(i).commitHash() + QStringLiteral("\">") + m_commitDiff.parents().at(i).commitHash().left(10) + QStringLiteral("</a>");
         }
 
-        html += "<div>";
-        html +=   "<img src=\"https://www.gravatar.com/avatar/" + QCryptographicHash::hash(email.trimmed().toLatin1(), QCryptographicHash::Md5).toHex() + "?s=32\" width=\"32\" height=\"32\" style=\"float: right\" />";
-        html += "</div>";
-        html += "<b>Commit:</b> " + commit_id + "<br />";
-        html += "<b>Parents:</b> " + parentsHtml.join(", ") + "<br />";
-        html += "<b>Date:</b> " + m_commitDiff.time().toString() + "<br />";
-        html += "<b>Labels:</b> " + labelsHtml.join(", ") + "<br />";
-        html += "<br />";
+        html += QStringLiteral("<div>");
+        html +=   QStringLiteral("<img src=\"https://www.gravatar.com/avatar/") + QCryptographicHash::hash(email.trimmed().toLatin1(), QCryptographicHash::Md5).toHex() + QStringLiteral("?s=32\" width=\"32\" height=\"32\" style=\"float: right\" />");
+        html += QStringLiteral("</div>");
+        html += QStringLiteral("<b>Commit:</b> ") + commit_id + QStringLiteral("<br />");
+        html += QStringLiteral("<b>Parents:</b> ") + parentsHtml.join(", ") + QStringLiteral("<br />");
+        html += QStringLiteral("<b>Date:</b> ") + m_commitDiff.time().toString() + QStringLiteral("<br />");
+        html += QStringLiteral("<b>Labels:</b> ") + labelsHtml.join(", ") + QStringLiteral("<br />");
+        html += QStringLiteral("<br />");
         html += m_commitDiff.message();
 
         ui->logHistory_info->setHtml(html);
