@@ -72,7 +72,7 @@ QGitRepository::QGitRepository(const QString &path, QWidget *parent)
     connect(this, SIGNAL(localStash(QString)), m_git, SLOT(stashSave(QString)), Qt::QueuedConnection);
     connect(m_git, SIGNAL(stashSaveReply(QGitError)), this, SLOT(localStashSaveReply(QGitError)), Qt::QueuedConnection);
     connect(this, SIGNAL(repositoryBranches()), m_git, SLOT(listBranchesAndTags()), Qt::QueuedConnection);
-    connect(m_git, SIGNAL(listBranchesAndTagsReply(QList<QGitBranch>, QList<QString>, QGitError)), this, SLOT(repositoryBranchesAndTagsReply(QList<QGitBranch>, QList<QString>, QGitError)), Qt::QueuedConnection);
+    connect(m_git, SIGNAL(listBranchesAndTagsReply(QList<QGitBranch>,QList<QString>,QGitError)), this, SLOT(repositoryBranchesAndTagsReply(QList<QGitBranch>,QList<QString>,QGitError)), Qt::QueuedConnection);
 
     connect(this, SIGNAL(repositoryStashes()), m_git, SLOT(listStashes()), Qt::QueuedConnection);
     connect(m_git, SIGNAL(listStashesReply(QStringList,QGitError)), this, SLOT(repositoryStashesReply(QStringList,QGitError)), Qt::QueuedConnection);
@@ -93,7 +93,7 @@ QGitRepository::QGitRepository(const QString &path, QWidget *parent)
     connect(m_git, SIGNAL(listCommitsReply(QList<QGitCommit>,QGitError)), this, SLOT(repositoryGetCommitsReply(QList<QGitCommit>,QGitError)));
 
     connect(this, SIGNAL(repositoryGetCommitDiff(QString)), m_git, SLOT(commitDiff(QString)));
-    connect(m_git, SIGNAL(commitDiffReply(QString, QGitCommit, QGitError)), this, SLOT(repositoryGetCommitDiffReply(QString, QGitCommit, QGitError)));
+    connect(m_git, SIGNAL(commitDiffReply(QString,QGitCommit,QGitError)), this, SLOT(repositoryGetCommitDiffReply(QString,QGitCommit,QGitError)));
 
     connect(ui->logHistory_commits->verticalScrollBar(), SIGNAL(sliderMoved(int)), this, SLOT(historyTableSliderMoved(int)));
 
