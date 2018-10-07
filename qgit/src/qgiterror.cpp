@@ -1,7 +1,7 @@
 #include "qgiterror.h"
 
 
-QGitError::QGitError(const QString functionName, int errorCode)
+QGitError::QGitError(const QString &functionName, int errorCode)
     : m_functionName(functionName)
     , m_errorCode(errorCode)
 {
