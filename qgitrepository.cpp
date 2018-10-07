@@ -293,9 +293,13 @@ void QGitRepository::repositoryChangedFilesReply(QMap<QString, git_status_t> fil
     QIcon icon_file_removed = QIcon(":/images/file_removed.svg");
     QIcon icon_file_unknown = QIcon(":/images/file_unknown.svg");
 
-    for(auto file: files.keys())
+    QMapIterator<QString, git_status_t> i(files);
+    while (i.hasNext())
     {
-        const git_status_t status = files.value(file);
+        i.next();
+
+        const QString &file = i.key();
+        const git_status_t status = i.value();
 
 #if ((LIBGIT2_VER_MAJOR > 0)||(LIBGIT2_VER_MINOR >= 23))
         if (status & GIT_STATUS_CONFLICTED)
