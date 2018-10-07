@@ -131,17 +131,19 @@ void QGitRepository::stash(const QString &name)
 
 void QGitRepository::gravatarImageDownloadFinished()
 {
-    QNetworkReply *reply = static_cast<QNetworkReply *>(sender());
+    auto reply = dynamic_cast<QNetworkReply *>(sender());
 
-    QByteArray data = reply->readAll();
+    if (reply) {
+        QByteArray data = reply->readAll();
 
-    QPixmap pixmap;
+        QPixmap pixmap;
 
-    pixmap.loadFromData(data);
+        pixmap.loadFromData(data);
 
-    ui->label_signatureGravatarImage->setPixmap(pixmap);
+        ui->label_signatureGravatarImage->setPixmap(pixmap);
 
-    reply->deleteLater();
+        reply->deleteLater();
+    }
 }
 
 void QGitRepository::localStashSaveReply(QGitError error)

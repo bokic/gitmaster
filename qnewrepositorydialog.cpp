@@ -130,7 +130,7 @@ void QNewRepositoryDialog::updateWidgets()
             }
             else
             {
-                QGitMasterMainWindow *mainWindow = static_cast<QGitMasterMainWindow *>(parent());
+                QGitMasterMainWindow *mainWindow = dynamic_cast<QGitMasterMainWindow *>(parent());
 
                 if (mainWindow)
                 {
@@ -190,7 +190,7 @@ void QNewRepositoryDialog::updateWidgets()
             }
             else
             {
-                QGitMasterMainWindow *mainWindow = static_cast<QGitMasterMainWindow *>(parent());
+                QGitMasterMainWindow *mainWindow = dynamic_cast<QGitMasterMainWindow *>(parent());
 
                 if (mainWindow)
                 {
@@ -250,7 +250,7 @@ void QNewRepositoryDialog::updateWidgets()
             }
             else
             {
-                QGitMasterMainWindow *mainWindow = static_cast<QGitMasterMainWindow *>(parent());
+                QGitMasterMainWindow *mainWindow = dynamic_cast<QGitMasterMainWindow *>(parent());
 
                 if (mainWindow)
                 {
