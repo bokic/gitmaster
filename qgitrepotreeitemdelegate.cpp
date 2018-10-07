@@ -151,7 +151,7 @@ QSize QGitRepoTreeItemDelegate::sizeHint(const QStyleOptionViewItem &option, con
 
     //y = (option.fontMetrics.height() * 2) + 4;
 
-    return QSize(200, 44);
+    return {200, 44};
 }
 
 void QGitRepoTreeItemDelegate::setImages(const QImage &branch_logo, const QImage &file_ok, const QImage &file_new, const QImage &file_modified, const QImage &file_removed, const QImage &current_branch)

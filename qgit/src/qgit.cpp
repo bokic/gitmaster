@@ -33,7 +33,7 @@ QGit::~QGit()
 
 bool QGit::setPath(const QDir &path)
 {
-    if (m_pathLock.tryLockForWrite() == false)
+    if (!m_pathLock.tryLockForWrite())
     {
         return false;
     }

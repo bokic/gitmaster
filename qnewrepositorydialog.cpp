@@ -167,7 +167,7 @@ void QNewRepositoryDialog::updateWidgets()
             ui->lineEditAddWorkingCopyPath->setToolTip(tr("Path doesn't exist."));
             enable = false;
         }
-        else if (QGit::isGitRepository(dir) == false)
+        else if (!QGit::isGitRepository(dir))
         {
             ui->lineEditAddWorkingCopyPath->setStyleSheet("background: red");
             ui->lineEditAddWorkingCopyPath->setToolTip(tr("Dir is not valid git repository."));
