@@ -179,7 +179,7 @@ void QGitRepository::repositoryBranchesAndTagsReply(QList<QGitBranch> branches, 
 
                 for(int depth = 2; depth < items.count(); depth++)
                 {
-                    const QString name = items.at(depth);
+                    const QString &name = items.at(depth);
                     bool found = false;
 
                     for(int c = 0; c < item->childCount(); c++)
@@ -214,7 +214,7 @@ void QGitRepository::repositoryBranchesAndTagsReply(QList<QGitBranch> branches, 
 
                 for(int depth = 2; depth < items.count(); depth++)
                 {
-                    const QString name = items.at(depth);
+                    const QString &name = items.at(depth);
                     bool found = false;
 
                     for(int c = 0; c < item->childCount(); c++)

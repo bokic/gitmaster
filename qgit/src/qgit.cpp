@@ -903,7 +903,7 @@ void QGit::stageFiles(QStringList items)
             throw QGitError("git_repository_index", res);
         }
 
-        for(auto item: items)
+        for(const auto &item: items)
         {
             res = git_index_add_bypath(index, item.toUtf8().constData());
             if (res == GIT_ENOTFOUND) { // FIXME: Properly implement stage add/delete files.
