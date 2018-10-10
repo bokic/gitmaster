@@ -543,8 +543,6 @@ void QGitRepository::on_listWidget_staged_itemChanged(QListWidgetItem *item)
 {
     QStringList selectedItems;
 
-    Q_UNUSED(item);
-
     for(int row = ui->listWidget_staged->count() - 1; row >= 0; row--)
     {
         QListWidgetItem *item = ui->listWidget_staged->item(row);
@@ -557,6 +555,11 @@ void QGitRepository::on_listWidget_staged_itemChanged(QListWidgetItem *item)
         }
     }
 
+    if ((selectedItems.isEmpty())&&(item->checkState() == Qt::Unchecked))
+    {
+        selectedItems.append(item->text());
+    }
+
     if (!selectedItems.isEmpty())
     {
         emit repositoryUnstageFiles(selectedItems);
@@ -566,8 +569,6 @@ void QGitRepository::on_listWidget_staged_itemChanged(QListWidgetItem *item)
 void QGitRepository::on_listWidget_unstaged_itemChanged(QListWidgetItem *item)
 {
     QStringList selectedItems;
-
-    Q_UNUSED(item);
 
     for(int row = ui->listWidget_unstaged->count() - 1; row >= 0; row--)
     {
@@ -579,6 +580,11 @@ void QGitRepository::on_listWidget_unstaged_itemChanged(QListWidgetItem *item)
 
             delete ui->listWidget_unstaged->takeItem(row);
         }
+    }
+
+    if ((selectedItems.isEmpty())&&(item->checkState() == Qt::Checked))
+    {
+        selectedItems.append(item->text());
     }
 
     if (!selectedItems.isEmpty())
