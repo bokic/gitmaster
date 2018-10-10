@@ -146,7 +146,11 @@
               </widget>
              </item>
              <item>
-              <widget class="QListWidget" name="listWidget_staged"/>
+              <widget class="QListWidget" name="listWidget_staged">
+               <property name="selectionMode">
+                <enum>QAbstractItemView::ExtendedSelection</enum>
+               </property>
+              </widget>
              </item>
             </layout>
            </widget>
@@ -172,7 +176,11 @@
               </widget>
              </item>
              <item>
-              <widget class="QListWidget" name="listWidget_unstaged"/>
+              <widget class="QListWidget" name="listWidget_unstaged">
+               <property name="selectionMode">
+                <enum>QAbstractItemView::ExtendedSelection</enum>
+               </property>
+              </widget>
              </item>
             </layout>
            </widget>
