@@ -1,0 +1,8 @@
+[Desktop Entry]
+Name=gitmaster
+Comment=Git repository browser
+Exec=gitmaster
+Terminal=false
+Type=Application
+Icon=gitmaster
+Categories=Development;
