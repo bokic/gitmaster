@@ -185,7 +185,7 @@
             </layout>
            </widget>
           </widget>
-          <widget class="QGitDiffWidget" name="widget" native="true">
+          <widget class="QScrollArea" name="scrollArea_diff_commit">
            <property name="sizePolicy">
             <sizepolicy hsizetype="Fixed" vsizetype="Expanding">
              <horstretch>1</horstretch>
@@ -195,6 +195,25 @@
            <property name="readonly" stdset="0">
             <bool>false</bool>
            </property>
+           <widget class="QGitDiffWidget" name="commit_diff">
+            <property name="geometry">
+             <rect>
+              <x>0</x>
+              <y>0</y>
+              <width>0</width>
+              <height>0</height>
+             </rect>
+            </property>
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Fixed" vsizetype="Expanding">
+              <horstretch>1</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="readonly" stdset="0">
+             <bool>false</bool>
+            </property>
+           </widget>
           </widget>
          </widget>
         </item>
