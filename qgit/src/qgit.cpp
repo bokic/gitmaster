@@ -636,6 +636,7 @@ void QGit::listChangedFiles()
 
 void QGit::commitDiff(QString commitId)
 {
+    const git_diff_delta *delta = nullptr;
     git_tree *commit_tree = nullptr;
     git_tree *parent_tree = nullptr;
     git_repository *repo = nullptr;
@@ -706,41 +707,12 @@ void QGit::commitDiff(QString commitId)
                 throw QGitError("git_diff_tree_to_tree", res);
             }
 
-            res = git_diff_foreach(diff,
-                                      [](const git_diff_delta *delta, float progress, void *payload) -> int {
-
-                                            Q_UNUSED(progress);
-
-                                            auto dest = static_cast<QGitCommitDiffParent *>(payload);
-
-                                            dest->addFile(delta);
-
-                                            return 0;
-                                        },
-                                      [](const git_diff_delta *delta, const git_diff_binary *binary, void *payload) -> int {
-                                            auto dest = static_cast<QGitCommitDiffParent *>(payload);
-
-                                            dest->addBinary(delta, binary);
-
-                                            return 0;
-                                        },
-                                      [](const git_diff_delta *delta, const git_diff_hunk *hunk, void *payload) -> int {
-                                            auto dest = static_cast<QGitCommitDiffParent *>(payload);
-
-                                            dest->addHunk(delta, hunk);
-                                            return 0;
-                                        },
-                                      [](const git_diff_delta *delta, const git_diff_hunk *hunk, const git_diff_line *line, void *payload) -> int {
-                                            auto dest = static_cast<QGitCommitDiffParent *>(payload);
-
-                                            dest->addLine(delta, hunk, line);
-
-                                            return 0;
-                                        },
-                                      &item);
-            if (res)
+            size_t _count = git_diff_num_deltas(diff);
+            for(size_t c = 0; c < _count; c++)
             {
-                throw QGitError("git_diff_foreach", res);
+                delta = git_diff_get_delta(diff, c);
+
+                item.addFile(delta);
             }
 
             git_diff_free(diff);
@@ -775,41 +747,12 @@ void QGit::commitDiff(QString commitId)
                     throw QGitError("git_diff_tree_to_tree", res);
                 }
 
-                res = git_diff_foreach(diff,
-                                          [](const git_diff_delta *delta, float progress, void *payload) -> int {
-
-                                                Q_UNUSED(progress);
-
-                                                auto dest = static_cast<QGitCommitDiffParent *>(payload);
-
-                                                dest->addFile(delta);
-
-                                                return 0;
-                                            },
-                                          [](const git_diff_delta *delta, const git_diff_binary *binary, void *payload) -> int {
-                                                auto dest = static_cast<QGitCommitDiffParent *>(payload);
-
-                                                dest->addBinary(delta, binary);
-
-                                                return 0;
-                                            },
-                                          [](const git_diff_delta *delta, const git_diff_hunk *hunk, void *payload) -> int {
-                                                auto dest = static_cast<QGitCommitDiffParent *>(payload);
-
-                                                dest->addHunk(delta, hunk);
-                                                return 0;
-                                            },
-                                          [](const git_diff_delta *delta, const git_diff_hunk *hunk, const git_diff_line *line, void *payload) -> int {
-                                                auto dest = static_cast<QGitCommitDiffParent *>(payload);
-
-                                                dest->addLine(delta, hunk, line);
-
-                                                return 0;
-                                            },
-                                          &item);
-                if (res)
+                size_t _count = git_diff_num_deltas(diff);
+                for(size_t c = 0; c < _count; c++)
                 {
-                    throw QGitError("git_diff_foreach", res);
+                    delta = git_diff_get_delta(diff, c);
+
+                    item.addFile(delta);
                 }
 
                 git_diff_free(diff);
