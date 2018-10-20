@@ -24,6 +24,22 @@ QGitDiffFileItem &QGitDiffFileItem::operator=(QGitDiffFileItem &&other) noexcept
     return *this;
 }
 
+bool QGitDiffFileItem::operator==(const QGitDiffFileItem &other)
+{
+    if (
+            (m_path == other.m_path)&&
+            (m_id == other.m_id)&&
+            (m_mode == other.m_mode)&&
+            (m_flags == other.m_flags)&&
+            (m_size == other.m_size)
+       )
+    {
+        return true;
+    }
+
+    return false;
+}
+
 QString QGitDiffFileItem::path() const
 {
     return m_path;

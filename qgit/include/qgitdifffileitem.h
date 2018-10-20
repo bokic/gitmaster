@@ -15,6 +15,8 @@ public:
     QGitDiffFileItem &operator=(QGitDiffFileItem &&other) noexcept;
     QGitDiffFileItem &operator=(const QGitDiffFileItem &other) = default;
 
+    bool operator==(const QGitDiffFileItem &other);
+
     QString path() const;
     QByteArray id() const;
     quint16 mode() const;
