@@ -44,6 +44,7 @@ public slots:
     void stashRemove(QString name);
     void listChangedFiles();
     void commitDiff(QString commitId);
+    void commitDiffContent(QString first, QString second, QList<QGitDiffFile> files);
     void stageFiles(QStringList items);
     void unstageFiles(QStringList items);
     void commit(QString message);
@@ -64,6 +65,7 @@ signals:
     void listStashesReply(QStringList stashes, QGitError error);
     void listChangedFilesReply(QMap<QString,git_status_t> files, QGitError error);
     void commitDiffReply(QString commit_id, QGitCommit diff, QGitError error);
+    void commitDiffContentReply(QString first, QString second, QList<QGitDiffFile> files, QGitError error);
     void stageFilesReply(QGitError error);
     void unstageFilesReply(QGitError error);
     void commitReply(QString commit_id, QGitError error);

@@ -11,13 +11,9 @@ QGitDiffWidget::QGitDiffWidget(QWidget *parent)
     remeasureItems();
 }
 
-void QGitDiffWidget::setGitDiff(const QList<QGitDiffFile> &diff)
+void QGitDiffWidget::setGitDiff(const QString &first, const QString &second, const QList<QGitDiffFile> &diff)
 {
-    m_diff = diff;
-
-    remeasureItems();
-
-    update();
+    emit requestGitDiff(first, second, diff);
 }
 
 void QGitDiffWidget::setReadonly(bool readonly)
@@ -33,6 +29,19 @@ void QGitDiffWidget::setReadonly(bool readonly)
 bool QGitDiffWidget::readonly() const
 {
     return m_readonly;
+}
+
+void QGitDiffWidget::responseGitDiff(QString first, QString second, QList<QGitDiffFile> diff, QGitError error)
+{
+    Q_UNUSED(first);
+    Q_UNUSED(second);
+    Q_UNUSED(error);
+
+    m_diff = diff;
+
+    remeasureItems();
+
+    update();
 }
 
 void QGitDiffWidget::paintEvent(QPaintEvent *event)

@@ -15,13 +15,15 @@ class QGitDiffWidget : public QWidget
 public:
     explicit QGitDiffWidget(QWidget *parent = nullptr);
 
-    void setGitDiff(const QList<QGitDiffFile> &diff);
+    void setGitDiff(const QString &first, const QString &second, const QList<QGitDiffFile> &diff);
     void setReadonly(bool readonly = true);
     bool readonly() const;
 
 signals:
+    void requestGitDiff(QString first, QString second, QList<QGitDiffFile> diff);
 
 public slots:
+    void responseGitDiff(QString first, QString second, QList<QGitDiffFile> diff, QGitError error);
 
 protected:
     virtual void paintEvent(QPaintEvent *event) override;

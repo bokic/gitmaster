@@ -21,6 +21,7 @@ void registerTypes()
     qRegisterMetaType<size_t>("size_t");
     qRegisterMetaType<QMap<git_status_t,int>>("QMap<git_status_t,int>");
     qRegisterMetaType<QMap<QString,git_status_t>>("QMap<QString,git_status_t>");
+    qRegisterMetaType<QList<QGitDiffFile>>("QList<QGitDiffFile>");
     qRegisterMetaType<QList<QGitBranch>>("QList<QGitBranch>");
     qRegisterMetaType<QList<QGitCommit>>("QList<QGitCommit>");
     qRegisterMetaType<QList<QString>>("QList<QString>");

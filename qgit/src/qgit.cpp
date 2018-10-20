@@ -818,6 +818,123 @@ void QGit::commitDiff(QString commitId)
     }
 }
 
+void QGit::commitDiffContent(QString first, QString second, QList<QGitDiffFile> files)
+{
+    git_commit *first_commit = nullptr, *second_commit = nullptr;
+    git_object *first_obj = nullptr, *second_obj = nullptr;
+    git_tree *first_tree = nullptr, *second_tree = nullptr;
+    const git_diff_delta *delta = nullptr;
+    git_repository *repo = nullptr;
+    git_patch *patch = nullptr;
+    QList<QGitDiffFile> items;
+    git_diff *diff = nullptr;
+    QGitError error;
+    int res = 0;
+
+    try {
+        res = git_repository_open(&repo, m_path.absolutePath().toUtf8().constData());
+        if (res)
+        {
+            throw QGitError("git_repository_open", res);
+        }
+
+        res = git_revparse_single(&first_obj, repo, first.toLatin1());
+        if (res)
+        {
+            throw QGitError("git_revparse_single(first)", res);
+        }
+
+        res = git_revparse_single(&second_obj, repo, second.toLatin1());
+        if (res)
+        {
+            throw QGitError("git_revparse_single(second)", res);
+        }
+
+        res = git_commit_lookup(&first_commit, repo, git_object_id(first_obj));
+        if (res)
+        {
+            throw QGitError("git_commit_lookup(first)", res);
+        }
+
+        res = git_commit_lookup(&second_commit, repo, git_object_id(second_obj));
+        if (res)
+        {
+            throw QGitError("git_commit_lookup(second)", res);
+        }
+
+        res = git_commit_tree(&first_tree, first_commit);
+        if (res)
+        {
+            throw QGitError("git_commit_tree(first)", res);
+        }
+
+        res = git_commit_tree(&second_tree, second_commit);
+        if (res)
+        {
+            throw QGitError("git_commit_tree(second)", res);
+        }
+
+        res = git_diff_tree_to_tree(&diff, repo, first_tree, second_tree, nullptr);
+        if (res)
+        {
+            throw QGitError("git_diff_tree_to_tree", res);
+        }
+
+        size_t _count = git_diff_num_deltas(diff);
+        for(size_t c = 0; c < _count; c++)
+        {
+            delta = git_diff_get_delta(diff, c);
+
+            QGitDiffFile item(delta);
+
+            if (files.contains(item))
+            {
+                res = git_patch_from_diff(&patch, diff, c);
+                if (res)
+                {
+                    throw QGitError("git_patch_from_diff", res);
+                }
+
+                size_t hunks = git_patch_num_hunks(patch);
+                for(size_t  hunk_cnt = 0; hunk_cnt < hunks; hunk_cnt++) {
+                    const git_diff_hunk *hunk = nullptr;
+                    res = git_patch_get_hunk(&hunk, nullptr, patch, hunk_cnt);
+                    if (res)
+                    {
+                        throw QGitError("git_patch_get_hunk", res);
+                    }
+
+                    QGitDiffHunk hunkObj(hunk);
+
+                    const git_diff_line *line = nullptr;
+
+                    int lines = git_patch_num_lines_in_hunk(patch, hunk_cnt);
+                    if (lines > 0)
+                    {
+                        for(int  line_cnt = 0; line_cnt < lines; line_cnt++) {
+                            res = git_patch_get_line_in_hunk(&line, patch, hunk_cnt, static_cast<size_t>(line_cnt));
+                            if (res)
+                            {
+                                throw QGitError("git_patch_get_line_in_hunk", res);
+                            }
+
+                            hunkObj.addLine(line);
+                        }
+                    }
+
+                    item.addHunk(hunkObj);
+                }
+
+                items.append(item);
+            }
+        }
+    } catch(const QGitError &ex) {
+        error = ex;
+    }
+
+    emit commitDiffContentReply(first, second, items, error);
+}
+
 void QGit::stageFiles(QStringList items)
 {
     git_repository *repo = nullptr;
