@@ -407,7 +407,7 @@ void QGitRepository::repositoryGetCommitsReply(QList<QGitCommit> commits, QGitEr
         m_allCommitsLoaded = true;
     }
 
-    QGitMasterMainWindow::instance()->updateStatusBarText(QStringLiteral(""));
+    QGitMasterMainWindow::instance()->updateStatusBarText(QString());
 }
 
 void QGitRepository::repositoryGetCommitDiffReply(QString commitId, QGitCommit diff, QGitError error)
