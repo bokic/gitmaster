@@ -838,10 +838,25 @@ void QGit::commitDiffContent(QString first, QString second, QList<QGitDiffFile> 
             throw QGitError("git_repository_open", res);
         }
 
-        res = git_revparse_single(&first_obj, repo, first.toLatin1());
-        if (res)
+        if (!first.isEmpty())
         {
-            throw QGitError("git_revparse_single(first)", res);
+            res = git_revparse_single(&first_obj, repo, first.toLatin1());
+            if (res)
+            {
+                throw QGitError("git_revparse_single(first)", res);
+            }
+
+            res = git_commit_lookup(&first_commit, repo, git_object_id(first_obj));
+            if (res)
+            {
+                throw QGitError("git_commit_lookup(first)", res);
+            }
+
+            res = git_commit_tree(&first_tree, first_commit);
+            if (res)
+            {
+                throw QGitError("git_commit_tree(first)", res);
+            }
         }
 
         res = git_revparse_single(&second_obj, repo, second.toLatin1());
@@ -850,22 +865,10 @@ void QGit::commitDiffContent(QString first, QString second, QList<QGitDiffFile> 
             throw QGitError("git_revparse_single(second)", res);
         }
 
-        res = git_commit_lookup(&first_commit, repo, git_object_id(first_obj));
-        if (res)
-        {
-            throw QGitError("git_commit_lookup(first)", res);
-        }
-
         res = git_commit_lookup(&second_commit, repo, git_object_id(second_obj));
         if (res)
         {
             throw QGitError("git_commit_lookup(second)", res);
-        }
-
-        res = git_commit_tree(&first_tree, first_commit);
-        if (res)
-        {
-            throw QGitError("git_commit_tree(first)", res);
         }
 
         res = git_commit_tree(&second_tree, second_commit);
