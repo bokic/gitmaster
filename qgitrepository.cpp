@@ -433,6 +433,11 @@ void QGitRepository::repositoryGetCommitDiffReply(QString commitId, QGitCommit d
     {
         m_commitDiff = diff;
 
+        QIcon icon_file_new = QIcon(":/images/file_new.svg");
+        QIcon icon_file_modified = QIcon(":/images/file_modified.svg");
+        QIcon icon_file_removed = QIcon(":/images/file_removed.svg");
+        QIcon icon_file_unknown = QIcon(":/images/file_unknown.svg");
+
         int currentRow = ui->logHistory_commits->currentRow();
 
         const QString commit_id = ui->logHistory_commits->item(currentRow, 4)->data(Qt::UserRole).toString();
@@ -475,7 +480,37 @@ void QGitRepository::repositoryGetCommitDiffReply(QString commitId, QGitCommit d
                 pathname.resize(pathname.length() - 1);
             }
 
-            ui->logHistory_files->setItem(c, 0, new QTableWidgetItem(filename));
+            QIcon item_icon;
+
+            /*GIT_DELTA_UNMODIFIED = 0,
+            GIT_DELTA_ADDED = 1,
+            GIT_DELTA_DELETED = 2,
+            GIT_DELTA_MODIFIED = 3,
+            GIT_DELTA_RENAMED = 4,
+            GIT_DELTA_COPIED = 5,
+            GIT_DELTA_IGNORED = 6,
+            GIT_DELTA_UNTRACKED = 7,
+            GIT_DELTA_TYPECHANGE = 8,
+            GIT_DELTA_UNREADABLE = 9,
+            GIT_DELTA_CONFLICTED = 10,*/
+
+
+            switch(files.at(c).status()) {
+            case GIT_DELTA_ADDED:
+                item_icon = icon_file_new;
+                break;
+            case GIT_DELTA_DELETED:
+                item_icon = icon_file_removed;
+                break;
+            case GIT_DELTA_MODIFIED:
+                item_icon = icon_file_modified;
+                break;
+            default:
+                item_icon = icon_file_unknown; // TODO: Add icons for other statuses.
+                break;
+            }
+
+            ui->logHistory_files->setItem(c, 0, new QTableWidgetItem(item_icon, filename));
             ui->logHistory_files->setItem(c, 1, new QTableWidgetItem(pathname));
         }
 
