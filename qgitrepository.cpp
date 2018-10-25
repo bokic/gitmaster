@@ -95,7 +95,7 @@ QGitRepository::QGitRepository(const QString &path, QWidget *parent)
     connect(this, SIGNAL(repositoryGetCommitDiff(QString)), m_git, SLOT(commitDiff(QString)));
     connect(m_git, SIGNAL(commitDiffReply(QString,QGitCommit,QGitError)), this, SLOT(repositoryGetCommitDiffReply(QString,QGitCommit,QGitError)));
 
-    connect(ui->logHistory_diff, SIGNAL(requestGitDiff(QString,QString,QList<QGitDiffFile>)), m_git, SLOT(commitDiffContent(QString,QString,QList<QGitDiffFile>)));
+    connect(ui->logHistory_diff, SIGNAL(requestGitDiff(QString,QString,QList<QString>)), m_git, SLOT(commitDiffContent(QString,QString,QList<QString>)));
     connect(m_git, SIGNAL(commitDiffContentReply(QString,QString,QList<QGitDiffFile>,QGitError)), ui->logHistory_diff, SLOT(responseGitDiff(QString,QString,QList<QGitDiffFile>,QGitError)));
 
     connect(ui->logHistory_commits->verticalScrollBar(), SIGNAL(sliderMoved(int)), this, SLOT(historyTableSliderMoved(int)));
@@ -510,8 +510,13 @@ void QGitRepository::repositoryGetCommitDiffReply(QString commitId, QGitCommit d
                 break;
             }
 
-            ui->logHistory_files->setItem(c, 0, new QTableWidgetItem(item_icon, filename));
-            ui->logHistory_files->setItem(c, 1, new QTableWidgetItem(pathname));
+            QTableWidgetItem *item = nullptr;
+            item = new QTableWidgetItem(item_icon, filename);
+            item->setData(Qt::UserRole, path);
+            ui->logHistory_files->setItem(c, 0, item);
+
+            item = new QTableWidgetItem(pathname);
+            ui->logHistory_files->setItem(c, 1, item);
         }
 
         if (ui->logHistory_files->rowCount() > 0)
@@ -726,24 +731,17 @@ void QGitRepository::activateCommitOperation(bool activate)
 
 void QGitRepository::on_logHistory_files_itemSelectionChanged()
 {
-    QList<QGitDiffFile> diff;
-    QList<int> selectedRows;
-
-    int currentRow = ui->logHistory_commits->currentRow();
-    const QString commit_id = ui->logHistory_commits->item(currentRow, 4)->data(Qt::UserRole).toString();
+    QList<QString> files;
 
     auto selected = ui->logHistory_files->selectedItems();
-    int parent = 0;
+    int parent = 0; // TODO: Parent is hardcoded.
 
-    for(auto selectedItem: selected) {
-        int row = selectedItem->row();
-
-        if (!selectedRows.contains(row))
+    for(auto cell: selected) {
+        if (cell->column() == 0)
         {
-            diff.append(m_commitDiff.parents().at(parent).files().at(row)); // TODO: Implement diffs for more than one parent.
-            selectedRows.append(row);
+            files << cell->data(Qt::UserRole).toString();
         }
     }
 
-    ui->logHistory_diff->setGitDiff(m_commitDiff.parents().at(parent).commitHash(), commit_id, diff);
+    ui->logHistory_diff->setGitDiff(m_commitDiff.parents().at(parent).commitHash(), m_commitDiff.id(), files);
 }

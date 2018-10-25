@@ -44,7 +44,7 @@ public slots:
     void stashRemove(QString name);
     void listChangedFiles();
     void commitDiff(QString commitId);
-    void commitDiffContent(QString first, QString second, QList<QGitDiffFile> files);
+    void commitDiffContent(QString first, QString second, QList<QString> files);
     void stageFiles(QStringList items);
     void unstageFiles(QStringList items);
     void commit(QString message);

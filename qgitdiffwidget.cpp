@@ -11,9 +11,9 @@ QGitDiffWidget::QGitDiffWidget(QWidget *parent)
     remeasureItems();
 }
 
-void QGitDiffWidget::setGitDiff(const QString &first, const QString &second, const QList<QGitDiffFile> &diff)
+void QGitDiffWidget::setGitDiff(const QString &first, const QString &second, const QList<QString> &files)
 {
-    emit requestGitDiff(first, second, diff);
+    emit requestGitDiff(first, second, files);
 }
 
 void QGitDiffWidget::setReadonly(bool readonly)

@@ -818,7 +818,7 @@ void QGit::commitDiff(QString commitId)
     }
 }
 
-void QGit::commitDiffContent(QString first, QString second, QList<QGitDiffFile> files)
+void QGit::commitDiffContent(QString first, QString second, QList<QString> files)
 {
     git_commit *first_commit = nullptr, *second_commit = nullptr;
     git_object *first_obj = nullptr, *second_obj = nullptr;
@@ -890,7 +890,7 @@ void QGit::commitDiffContent(QString first, QString second, QList<QGitDiffFile> 
 
             QGitDiffFile item(delta);
 
-            if (files.contains(item))
+            if (files.contains(item.new_file().path()))
             {
                 res = git_patch_from_diff(&patch, diff, c);
                 if (res)
