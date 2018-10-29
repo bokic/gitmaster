@@ -859,28 +859,59 @@ void QGit::commitDiffContent(QString first, QString second, QList<QString> files
             }
         }
 
-        res = git_revparse_single(&second_obj, repo, second.toLatin1());
-        if (res)
+        if (second == "staged")
         {
-            throw QGitError("git_revparse_single(second)", res);
-        }
+            res = git_revparse_single(&first_obj, repo, "HEAD^{tree}");
+            if (res)
+            {
+                throw QGitError("git_revparse_single(staged)", res);
+            }
 
-        res = git_commit_lookup(&second_commit, repo, git_object_id(second_obj));
-        if (res)
-        {
-            throw QGitError("git_commit_lookup(second)", res);
-        }
+            res = git_tree_lookup(&first_tree, repo, git_object_id(first_obj));
+            if (res)
+            {
+                throw QGitError("git_tree_lookup(staged)", res);
+            }
 
-        res = git_commit_tree(&second_tree, second_commit);
-        if (res)
-        {
-            throw QGitError("git_commit_tree(second)", res);
+            res = git_diff_tree_to_index(&diff, repo, first_tree, nullptr, nullptr);
+            if (res)
+            {
+                throw QGitError("git_diff_tree_to_index(staged)", res);
+            }
         }
-
-        res = git_diff_tree_to_tree(&diff, repo, first_tree, second_tree, nullptr);
-        if (res)
+        else if (second == "unstaged")
         {
-            throw QGitError("git_diff_tree_to_tree", res);
+            res = git_diff_index_to_workdir(&diff, repo, nullptr, nullptr);
+            if (res)
+            {
+                throw QGitError("git_diff_index_to_workdir", res);
+            }
+        }
+        else
+        {
+            res = git_revparse_single(&second_obj, repo, second.toLatin1());
+            if (res)
+            {
+                throw QGitError("git_revparse_single(second)", res);
+            }
+
+            res = git_commit_lookup(&second_commit, repo, git_object_id(second_obj));
+            if (res)
+            {
+                throw QGitError("git_commit_lookup(second)", res);
+            }
+
+            res = git_commit_tree(&second_tree, second_commit);
+            if (res)
+            {
+                throw QGitError("git_commit_tree(second)", res);
+            }
+
+            res = git_diff_tree_to_tree(&diff, repo, first_tree, second_tree, nullptr);
+            if (res)
+            {
+                throw QGitError("git_diff_tree_to_tree", res);
+            }
         }
 
         size_t _count = git_diff_num_deltas(diff);
@@ -951,7 +982,6 @@ void QGit::stageFiles(QStringList items)
         if (items.count() == 0)
         {
             throw QGitError();
-
         }
 
         res = git_repository_open(&repo, m_path.absolutePath().toUtf8().constData());
