@@ -95,9 +95,6 @@ QGitRepository::QGitRepository(const QString &path, QWidget *parent)
     connect(this, SIGNAL(repositoryGetCommitDiff(QString)), m_git, SLOT(commitDiff(QString)));
     connect(m_git, SIGNAL(commitDiffReply(QString,QGitCommit,QGitError)), this, SLOT(repositoryGetCommitDiffReply(QString,QGitCommit,QGitError)));
 
-    connect(ui->logHistory_diff, SIGNAL(requestGitDiff(QString,QString,QList<QString>)), m_git, SLOT(commitDiffContent(QString,QString,QList<QString>)));
-    connect(m_git, SIGNAL(commitDiffContentReply(QString,QString,QList<QGitDiffFile>,QGitError)), ui->logHistory_diff, SLOT(responseGitDiff(QString,QString,QList<QGitDiffFile>,QGitError)));
-
     connect(ui->logHistory_commits->verticalScrollBar(), SIGNAL(sliderMoved(int)), this, SLOT(historyTableSliderMoved(int)));
 
     m_thread.start();
@@ -530,10 +527,20 @@ void QGitRepository::on_repositoryDetail_currentChanged(int index)
 {
     switch(index) {
     case 0:
+        disconnect(ui->logHistory_diff, SIGNAL(requestGitDiff(QString,QString,QList<QString>)), m_git, SLOT(commitDiffContent(QString,QString,QList<QString>)));
+        disconnect(m_git, SIGNAL(commitDiffContentReply(QString,QString,QList<QGitDiffFile>,QGitError)), ui->logHistory_diff, SLOT(responseGitDiff(QString,QString,QList<QGitDiffFile>,QGitError)));
+
+        connect(ui->commit_diff, SIGNAL(requestGitDiff(QString,QString,QList<QString>)), m_git, SLOT(commitDiffContent(QString,QString,QList<QString>)));
+        connect(m_git, SIGNAL(commitDiffContentReply(QString,QString,QList<QGitDiffFile>,QGitError)), ui->commit_diff, SLOT(responseGitDiff(QString,QString,QList<QGitDiffFile>,QGitError)));
+
         emit repositoryChangedFiles();
         break;
     case 1:
-        Q_UNIMPLEMENTED();
+        disconnect(ui->commit_diff, SIGNAL(requestGitDiff(QString,QString,QList<QString>)), m_git, SLOT(commitDiffContent(QString,QString,QList<QString>)));
+        disconnect(m_git, SIGNAL(commitDiffContentReply(QString,QString,QList<QGitDiffFile>,QGitError)), ui->commit_diff, SLOT(responseGitDiff(QString,QString,QList<QGitDiffFile>,QGitError)));
+
+        connect(ui->logHistory_diff, SIGNAL(requestGitDiff(QString,QString,QList<QString>)), m_git, SLOT(commitDiffContent(QString,QString,QList<QString>)));
+        connect(m_git, SIGNAL(commitDiffContentReply(QString,QString,QList<QGitDiffFile>,QGitError)), ui->logHistory_diff, SLOT(responseGitDiff(QString,QString,QList<QGitDiffFile>,QGitError)));
         break;
     case 2:
         Q_UNIMPLEMENTED();
@@ -744,4 +751,30 @@ void QGitRepository::on_logHistory_files_itemSelectionChanged()
     }
 
     ui->logHistory_diff->setGitDiff(m_commitDiff.parents().at(parent).commitHash(), m_commitDiff.id(), files);
+}
+
+void QGitRepository::on_listWidget_staged_itemSelectionChanged()
+{
+    QList<QString> files;
+
+    auto selected = ui->listWidget_staged->selectedItems();
+
+    for(auto row: selected) {
+        files << row->text();
+    }
+
+    ui->commit_diff->setGitDiff("", "staged", files);
+}
+
+void QGitRepository::on_listWidget_unstaged_itemSelectionChanged()
+{
+    QList<QString> files;
+
+    auto selected = ui->listWidget_unstaged->selectedItems();
+
+    for(auto row: selected) {
+        files << row->text();
+    }
+
+    ui->commit_diff->setGitDiff("", "unstaged", files);
 }

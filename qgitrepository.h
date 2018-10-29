@@ -54,6 +54,8 @@ private slots:
     void on_pushButton_commitCancel_clicked();
     void on_plainTextEdit_commitMessage_focus();
     void on_logHistory_files_itemSelectionChanged();
+    void on_listWidget_staged_itemSelectionChanged();
+    void on_listWidget_unstaged_itemSelectionChanged();
 
 private:
     void fetchCommits();
