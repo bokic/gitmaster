@@ -881,7 +881,13 @@ void QGit::commitDiffContent(QString first, QString second, QList<QString> files
         }
         else if (second == "unstaged")
         {
-            res = git_diff_index_to_workdir(&diff, repo, nullptr, nullptr);
+            git_diff_options options;
+
+            memset(&options, 0, sizeof(options));
+            options.version = GIT_DIFF_OPTIONS_VERSION;
+            options.flags = GIT_DIFF_INCLUDE_UNTRACKED | GIT_DIFF_SHOW_UNTRACKED_CONTENT;
+
+            res = git_diff_index_to_workdir(&diff, repo, nullptr, &options);
             if (res)
             {
                 throw QGitError("git_diff_index_to_workdir", res);
