@@ -16,6 +16,7 @@ public:
     QGitDiffFileItem &operator=(const QGitDiffFileItem &other) = default;
 
     bool operator==(const QGitDiffFileItem &other);
+    bool operator==(const git_diff_file &other);
 
     QString path() const;
     QByteArray id() const;

@@ -1,5 +1,6 @@
 #include "qgitdifffileitem.h"
 #include <git2.h>
+#include <string.h>
 
 #include <QByteArray>
 
@@ -32,6 +33,22 @@ bool QGitDiffFileItem::operator==(const QGitDiffFileItem &other)
             (m_mode == other.m_mode)&&
             (m_flags == other.m_flags)&&
             (m_size == other.m_size)
+       )
+    {
+        return true;
+    }
+
+    return false;
+}
+
+bool QGitDiffFileItem::operator==(const git_diff_file &other)
+{
+    if (
+            (m_path == other.path)&&
+            (memcmp(m_id.constData(), &other.id, sizeof(other.id)) == 0)&&
+            (m_mode == other.mode)&&
+            (m_flags == other.flags)&&
+            (m_size == other.size)
        )
     {
         return true;
