@@ -757,24 +757,40 @@ void QGitRepository::on_listWidget_staged_itemSelectionChanged()
 {
     QList<QString> files;
 
-    auto selected = ui->listWidget_staged->selectedItems();
+    if (ui->listWidget_staged->isActiveWindow())
+    {
+        auto selected = ui->listWidget_staged->selectedItems();
 
-    for(auto row: selected) {
-        files << row->text();
+        for(auto row: selected) {
+            files << row->text();
+        }
+
+        ui->commit_diff->setGitDiff("", "staged", files);
+
+        for(auto item: ui->listWidget_unstaged->selectedItems())
+        {
+            item->setSelected(false);
+        }
     }
-
-    ui->commit_diff->setGitDiff("", "staged", files);
 }
 
 void QGitRepository::on_listWidget_unstaged_itemSelectionChanged()
 {
     QList<QString> files;
 
-    auto selected = ui->listWidget_unstaged->selectedItems();
+    if (ui->listWidget_unstaged->isActiveWindow())
+    {
+        auto selected = ui->listWidget_unstaged->selectedItems();
 
-    for(auto row: selected) {
-        files << row->text();
+        for(auto row: selected) {
+            files << row->text();
+        }
+
+        ui->commit_diff->setGitDiff("", "unstaged", files);
+
+        for(auto item: ui->listWidget_staged->selectedItems())
+        {
+            item->setSelected(false);
+        }
     }
-
-    ui->commit_diff->setGitDiff("", "unstaged", files);
 }
