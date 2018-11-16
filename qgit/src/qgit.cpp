@@ -861,6 +861,8 @@ void QGit::commitDiffContent(QString first, QString second, QList<QString> files
 
         if (second == "staged")
         {
+            git_diff_options options;
+
             res = git_revparse_single(&first_obj, repo, "HEAD^{tree}");
             if (res)
             {
@@ -873,7 +875,12 @@ void QGit::commitDiffContent(QString first, QString second, QList<QString> files
                 throw QGitError("git_tree_lookup(staged)", res);
             }
 
-            res = git_diff_tree_to_index(&diff, repo, first_tree, nullptr, nullptr);
+            memset(&options, 0, sizeof(options));
+            options.version = GIT_DIFF_OPTIONS_VERSION;
+            options.flags = GIT_DIFF_INCLUDE_UNTRACKED | GIT_DIFF_SHOW_UNTRACKED_CONTENT;
+            options.context_lines = 3;
+
+            res = git_diff_tree_to_index(&diff, repo, first_tree, nullptr, &options);
             if (res)
             {
                 throw QGitError("git_diff_tree_to_index(staged)", res);
@@ -886,6 +893,7 @@ void QGit::commitDiffContent(QString first, QString second, QList<QString> files
             memset(&options, 0, sizeof(options));
             options.version = GIT_DIFF_OPTIONS_VERSION;
             options.flags = GIT_DIFF_INCLUDE_UNTRACKED | GIT_DIFF_SHOW_UNTRACKED_CONTENT;
+            options.context_lines = 3;
 
             res = git_diff_index_to_workdir(&diff, repo, nullptr, &options);
             if (res)
