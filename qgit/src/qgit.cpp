@@ -9,7 +9,6 @@
 #include <QReadLocker>
 #include <QString>
 #include <QVector>
-#include <QDebug>
 #include <QDir>
 
 

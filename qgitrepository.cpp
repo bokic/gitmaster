@@ -11,7 +11,6 @@
 #include <QMessageBox>
 #include <QScrollBar>
 #include <QWindow>
-#include <QDebug>
 #include <QList>
 
 #define COMMIT_COUNT_TO_LOAD 100
@@ -201,10 +200,6 @@ void QGitRepository::repositoryBranchesAndTagsReply(QList<QGitBranch> branches, 
                     }
                 }
             }
-            else
-            {
-                qDebug() << "Invalid local branch item.";
-            }
         }
         if (branch.type() & GIT_BRANCH_REMOTE)
         {
@@ -235,10 +230,6 @@ void QGitRepository::repositoryBranchesAndTagsReply(QList<QGitBranch> branches, 
                         item = child;
                     }
                 }
-            }
-            else
-            {
-                qDebug() << "Invalid remote branch item";
             }
         }
     }
