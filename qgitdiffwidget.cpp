@@ -8,6 +8,8 @@ QGitDiffWidget::QGitDiffWidget(QWidget *parent)
 {
     m_font = font();
 
+    setMouseTracking(true);
+
     remeasureItems();
 }
 
@@ -21,6 +23,8 @@ void QGitDiffWidget::setReadonly(bool readonly)
     if (m_readonly != readonly)
     {
         m_readonly = readonly;
+
+        setMouseTracking(!m_readonly);
 
         update();
     }
@@ -104,12 +108,75 @@ void QGitDiffWidget::paintEvent(QPaintEvent *event)
 
                     painter.drawText(70, yFont, QString(QChar(line.origin())));
 
+                    if ((!m_readonly)&&(c == m_hoverFile)&&(h == m_hoverHunk)&&(m_hoverLine == l))
+                    {
+                        painter.setPen(Qt::SolidLine);
+                        painter.setBrush(Qt::NoBrush);
+                        painter.setPen(Qt::darkRed);
+                        painter.drawRect(70, y, m_fontHeight, m_fontHeight);
+                    }
+
                     painter.drawText(100, yFont, line.content());
 
                     y += m_fontHeight + 1;
                 }
+
+                if ((!m_readonly)&&(c == m_hoverFile)&&(h == m_hoverHunk)&&(m_hoverLine == -1))
+                {
+                    painter.setPen(Qt::SolidLine);
+                    painter.setBrush(Qt::NoBrush);
+                    painter.setPen(Qt::darkRed);
+                    painter.drawRect(10, y, 60, -lines.count()*(m_fontHeight + 1));
+                }
             }
         }
+    }
+}
+
+void QGitDiffWidget::mousePressEvent(QMouseEvent *event)
+{
+    Q_UNUSED(event);
+
+    if ((!m_readonly)&&(m_hoverFile >= 0)&&(m_hoverHunk >= 0)&&(m_hoverLine >= -1))
+    {
+        emit select(m_hoverFile, m_hoverHunk, m_hoverLine);
+    }
+}
+
+void QGitDiffWidget::mouseMoveEvent(QMouseEvent *event)
+{
+    int l_hoverFile = -1;
+    int l_hoverHunk = -1;
+    int l_hoverLine = -1;
+
+    if (m_readonly)
+        return;
+
+    for(const auto &rect : m_fileRects)
+    {
+        if (rect.contains(event->localPos().toPoint()))
+        {
+            l_hoverFile = m_fileRects.indexOf(rect);
+            l_hoverHunk = 0;
+            l_hoverLine = -1;
+
+            break;
+        }
+    }
+
+    if ((m_hoverFile != l_hoverFile)||(m_hoverHunk != l_hoverHunk)||(m_hoverLine != l_hoverLine))
+    {
+        m_hoverFile = l_hoverFile;
+        m_hoverHunk = l_hoverHunk;
+        m_hoverLine = l_hoverLine;
+
+        if (m_hoverHunk >= 0) {
+            setCursor(Qt::PointingHandCursor);
+        } else {
+            setCursor(Qt::ArrowCursor);
+        }
+
+        update();
     }
 }
 

@@ -21,12 +21,15 @@ public:
 
 signals:
     void requestGitDiff(QString first, QString second, QList<QString> files);
+    void select(int file, int hunk, int line);
 
 public slots:
     void responseGitDiff(QString first, QString second, QList<QGitDiffFile> diff, QGitError error);
 
 protected:
     virtual void paintEvent(QPaintEvent *event) override;
+    virtual void mousePressEvent(QMouseEvent *event) override;
+    virtual void mouseMoveEvent(QMouseEvent *event) override;
 
 private:
     void remeasureItems();
@@ -35,5 +38,8 @@ private:
     QFont m_font;
     int m_fontHeight = 0;
     int m_fontAscent = 0;
+    int m_hoverFile = 0;
+    int m_hoverHunk = 0;
+    int m_hoverLine = 0;
     bool m_readonly = false;
 };
