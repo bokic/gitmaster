@@ -1143,6 +1143,9 @@ void QGit::commit(QString message)
     git_oid new_commit_id = { {0} };
     git_oid parent_id = { {0} };
     git_oid tree_id = { {0} };
+    git_object *git_obj = nullptr;
+    git_diff *diff = nullptr;
+    size_t _count = 0;
     int unborn = 0;
     int res = 0;
 
@@ -1155,6 +1158,39 @@ void QGit::commit(QString message)
         {
             throw QGitError("git_repository_open", res);
         }
+
+        /// Check if somthing is staged
+        res = git_revparse_single(&git_obj, repo, "HEAD^{tree}");
+        if (res)
+        {
+            throw QGitError("git_revparse_single(staged)", res);
+        }
+
+        res = git_tree_lookup(&tree, repo, git_object_id(git_obj));
+        if (res)
+        {
+            throw QGitError("git_tree_lookup(staged)", res);
+        }
+
+        res = git_diff_tree_to_index(&diff, repo, tree, nullptr, nullptr);
+        if (res)
+        {
+            throw QGitError("git_diff_tree_to_index(staged)", res);
+        }
+
+        _count = git_diff_num_deltas(diff);
+
+        if (_count == 0)
+        {
+            throw QGitError("Nothing staged.", res);
+        }
+
+        if (tree)
+        {
+            git_tree_free(tree);
+            tree = nullptr;
+        }
+        /// Check end
 
         res = git_signature_default(&me, repo);
         if (res)
@@ -1258,6 +1294,18 @@ void QGit::commit(QString message)
     {
         git_signature_free(me);
         me = nullptr;
+    }
+
+    if (diff)
+    {
+        git_diff_free(diff);
+        diff = nullptr;
+    }
+
+    if (git_obj)
+    {
+        git_object_free(git_obj);
+        git_obj = nullptr;
     }
 
     if (repo)
