@@ -353,6 +353,15 @@ void QGitRepository::repositoryChangedFilesReply(QMap<QString, git_status_t> fil
             ui->listWidget_unstaged->addItem(item);
         }
     }
+
+    if (ui->listWidget_staged->count() > 0)
+    {
+        ui->pushButton_commit->setEnabled(true);
+    }
+    else
+    {
+        ui->pushButton_commit->setEnabled(false);
+    }
 }
 
 void QGitRepository::repositoryStageFilesReply(QGitError error)
