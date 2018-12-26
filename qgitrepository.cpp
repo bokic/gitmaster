@@ -507,8 +507,7 @@ void QGitRepository::repositoryGetCommitDiffReply(QString commitId, QGitCommit d
                 break;
             }
 
-            QTableWidgetItem *item = nullptr;
-            item = new QTableWidgetItem(item_icon, filename);
+            QTableWidgetItem *item = new QTableWidgetItem(item_icon, filename);
             item->setData(Qt::UserRole, path);
             ui->logHistory_files->setItem(c, 0, item);
 

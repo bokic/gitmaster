@@ -1076,6 +1076,10 @@ void QGit::unstageFiles(QStringList items)
 
         paths.count = static_cast<size_t>(items.count());
         paths.strings = static_cast<char **>(malloc(sizeof(char *) * static_cast<size_t>(items.count())));
+        if (paths.strings == nullptr)
+        {
+            throw QGitError("malloc", 0);
+        }
 
         tmpStrList.reserve(items.count());
 
