@@ -53,27 +53,22 @@ void QLogHistoryTableWidget::addCommit(const QGitCommit &commit)
     QTableWidgetItem *item = nullptr;
 
     item = new QTableWidgetItem();
-    if (row % 2) item->setData(Qt::BackgroundRole, QBrush(palette().window()));
     item->setData(Qt::UserRole, data);
     setItem(row, 0, item);
 
     item = new QTableWidgetItem(commit.message().split('\n').first());
-    if (row % 2) item->setData(Qt::BackgroundRole, QBrush(palette().window()));
     item->setData(Qt::UserRole, commit.message());
     setItem(row, 1, item);
 
     item = new QTableWidgetItem(commit.time().toString());
-    if (row % 2) item->setData(Qt::BackgroundRole, QBrush(palette().window()));
     setItem(row, 2, item);
 
     item = new QTableWidgetItem(QString("%1 <%2>").arg(commit.author().name(), commit.author().email()));
-    if (row % 2) item->setData(Qt::BackgroundRole, QBrush(palette().window()));
     item->setData(Qt::UserRole, commit.author().name());
     item->setData(Qt::UserRole + 1, commit.author().email());
     setItem(row, 3, item);
 
     item = new QTableWidgetItem(commit.id().left(7));
-    if (row % 2) item->setData(Qt::BackgroundRole, QBrush(palette().window()));
     item->setData(Qt::UserRole, commit.id());
     setItem(row, 4, item);
 }
