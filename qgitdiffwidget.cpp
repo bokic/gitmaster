@@ -184,6 +184,7 @@ void QGitDiffWidget::remeasureItems()
 {
     const int MARGIN = 10;
     int y = 0, h = 0, lineMax = 0;
+    QSize newSize;
 
     QFontMetrics fm(m_font);
 
@@ -235,5 +236,8 @@ void QGitDiffWidget::remeasureItems()
         m_fileRects[c] = item;
     }
 
-    setMinimumSize(QSize(MARGIN + 100 + lineMax + MARGIN, y + MARGIN));
+    newSize = QSize(MARGIN + 100 + lineMax + (MARGIN * 2), y + (MARGIN * 2));
+
+    setMinimumSize(newSize);
+    setMaximumSize(newSize);
 }
