@@ -55,7 +55,7 @@ void QGitCloneRepositoryDialog::on_pushButton_close_clicked()
 
 void QGitCloneRepositoryDialog::cloneReply(QGitError error)
 {
-    Q_UNUSED(error);
+    Q_UNUSED(error)
 
     if (m_aborted)
     {
@@ -70,7 +70,7 @@ void QGitCloneRepositoryDialog::cloneReply(QGitError error)
 
 void QGitCloneRepositoryDialog::cloneTransferReply(unsigned int total_objects, unsigned int indexed_objects, unsigned int received_objects, unsigned int local_objects, unsigned int total_deltas, unsigned int indexed_deltas, size_t received_bytes)
 {
-    Q_UNUSED(local_objects);
+    Q_UNUSED(local_objects)
 
     if (total_objects > 0)
     {
@@ -92,7 +92,7 @@ void QGitCloneRepositoryDialog::cloneTransferReply(unsigned int total_objects, u
 
 void QGitCloneRepositoryDialog::cloneProgressReply(QString path, size_t completed_steps, size_t total_steps)
 {
-    Q_UNUSED(path);
+    Q_UNUSED(path)
 
     ui->progressBar_creatingFiles->setMaximum(static_cast<int>(total_steps));
     ui->progressBar_creatingFiles->setValue(static_cast<int>(completed_steps));

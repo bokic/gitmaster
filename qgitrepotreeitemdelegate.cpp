@@ -143,8 +143,8 @@ QSize QGitRepoTreeItemDelegate::sizeHint(const QStyleOptionViewItem &option, con
 {
     //int y = 0;
 
-    Q_UNUSED(option);
-    Q_UNUSED(index);
+    Q_UNUSED(option)
+    Q_UNUSED(index)
 
     //QFontMetrics f1(m_normalFont);
     //QFontMetrics f2(m_boldFont);

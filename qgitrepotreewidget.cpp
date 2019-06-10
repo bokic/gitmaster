@@ -32,7 +32,7 @@ void QGitRepoTreeWidget::refreshItems()
 
 void QGitRepoTreeWidget::repositoryStatusReply(QMap<git_status_t,int> items, QGitError error)
 {
-    Q_UNUSED(error);
+    Q_UNUSED(error)
 
     for(int index = 0; index < topLevelItemCount(); index++)
     {

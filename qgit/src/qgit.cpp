@@ -521,7 +521,7 @@ void QGit::stashSave(QString name)
 
 void QGit::stashRemove(QString name)
 {
-    Q_UNUSED(name);
+    Q_UNUSED(name)
 }
 
 void QGit::listStashes()
@@ -542,8 +542,8 @@ void QGit::listStashes()
 
         res = git_stash_foreach(repo, [](size_t index, const char* message, const git_oid *stash_id, void *payload) -> int {
 
-                Q_UNUSED(index);
-                Q_UNUSED(stash_id);
+                Q_UNUSED(index)
+                Q_UNUSED(stash_id)
 
                 auto list = static_cast<QStringList *>(payload);
 

@@ -156,7 +156,7 @@ void QGitRepository::localStashSaveReply(QGitError error)
 
 void QGitRepository::repositoryBranchesAndTagsReply(QList<QGitBranch> branches, QList<QString> tags, QGitError error)
 {
-    Q_UNUSED(error);
+    Q_UNUSED(error)
 
     QList<QTreeWidgetItem *> items;
     QTreeWidgetItem *itemFileStatus = new QTreeWidgetItem(QStringList() << tr("File Status"));
@@ -253,7 +253,7 @@ void QGitRepository::repositoryBranchesAndTagsReply(QList<QGitBranch> branches, 
 
 void QGitRepository::repositoryStashesReply(QStringList stashes, QGitError error)
 {
-    Q_UNUSED(error);
+    Q_UNUSED(error)
 
     if (!stashes.isEmpty())
     {
@@ -274,7 +274,7 @@ void QGitRepository::repositoryChangedFilesReply(QMap<QString, git_status_t> fil
 {
     int tmp_status = 0;
 
-    Q_UNUSED(error);
+    Q_UNUSED(error)
 
     ui->listWidget_staged->clear();
     ui->listWidget_unstaged->clear();
@@ -366,22 +366,22 @@ void QGitRepository::repositoryChangedFilesReply(QMap<QString, git_status_t> fil
 
 void QGitRepository::repositoryStageFilesReply(QGitError error)
 {
-    Q_UNUSED(error);
+    Q_UNUSED(error)
 
     emit repositoryChangedFiles();
 }
 
 void QGitRepository::repositoryUnstageFilesReply(QGitError error)
 {
-    Q_UNUSED(error);
+    Q_UNUSED(error)
 
     emit repositoryChangedFiles();
 }
 
 void QGitRepository::repositoryCommitReply(QString commit_id, QGitError error)
 {
-    Q_UNUSED(commit_id);
-    Q_UNUSED(error);
+    Q_UNUSED(commit_id)
+    Q_UNUSED(error)
 
     ui->plainTextEdit_commitMessage->clear();
 	ui->plainTextEdit_commitMessage->setEnabled(true);
@@ -392,7 +392,7 @@ void QGitRepository::repositoryCommitReply(QString commit_id, QGitError error)
 
 void QGitRepository::repositoryGetCommitsReply(QList<QGitCommit> commits, QGitError error)
 {
-    Q_UNUSED(error);
+    Q_UNUSED(error)
 
     for(const auto &commit: commits)
     {
@@ -670,9 +670,9 @@ void QGitRepository::historyTableSliderMoved(int pos)
 
 void QGitRepository::on_logHistory_commits_currentCellChanged(int currentRow, int currentColumn, int previousRow, int previousColumn)
 {
-    Q_UNUSED(currentColumn);
-    Q_UNUSED(previousRow);
-    Q_UNUSED(previousColumn);
+    Q_UNUSED(currentColumn)
+    Q_UNUSED(previousRow)
+    Q_UNUSED(previousColumn)
 
     QString commit_id;
     int rows = 0;

@@ -37,9 +37,9 @@ bool QGitDiffWidget::readonly() const
 
 void QGitDiffWidget::responseGitDiff(QString first, QString second, QList<QGitDiffFile> diff, QGitError error)
 {
-    Q_UNUSED(first);
-    Q_UNUSED(second);
-    Q_UNUSED(error);
+    Q_UNUSED(first)
+    Q_UNUSED(second)
+    Q_UNUSED(error)
 
     m_diff = diff;
 
@@ -135,7 +135,7 @@ void QGitDiffWidget::paintEvent(QPaintEvent *event)
 
 void QGitDiffWidget::mousePressEvent(QMouseEvent *event)
 {
-    Q_UNUSED(event);
+    Q_UNUSED(event)
 
     if ((!m_readonly)&&(m_hoverFile >= 0)&&(m_hoverHunk >= 0)&&(m_hoverLine >= -1))
     {
