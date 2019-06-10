@@ -66,6 +66,9 @@ QGitRepository::QGitRepository(const QString &path, QWidget *parent)
     //ui->pushButton_commit->setVisible(false);
     //ui->pushButton_2->setVisible(false);
 
+    ui->logHistory_files->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
+    ui->logHistory_commits->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
+
     activateCommitOperation(false);
 
     connect(this, SIGNAL(localStash(QString)), m_git, SLOT(stashSave(QString)), Qt::QueuedConnection);
