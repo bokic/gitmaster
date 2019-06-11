@@ -728,6 +728,7 @@ void QGitRepository::activateCommitOperation(bool activate)
         ui->horizontalWidgetLayout_1->show();
         ui->horizontalWidgetLayout_2->show();
         ui->plainTextEdit_commitMessage->setPlaceholderText("");
+        ui->plainTextEdit_commitMessage->setFixedHeight(26 * 4);
     }
     else
     {
@@ -735,6 +736,9 @@ void QGitRepository::activateCommitOperation(bool activate)
         ui->horizontalWidgetLayout_2->hide();
         ui->plainTextEdit_commitMessage->setPlainText("");
         ui->plainTextEdit_commitMessage->setPlaceholderText(tr("Commit message"));
+        ui->plainTextEdit_commitMessage->setMinimumHeight(0);
+        ui->plainTextEdit_commitMessage->setMaximumHeight(26);
+        ui->label_signatureGravatarImage->setFocus();
     }
 }
 
