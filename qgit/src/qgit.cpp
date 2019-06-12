@@ -973,6 +973,8 @@ void QGit::commitDiffContent(QString first, QString second, QList<QString> files
                 }
 
                 items.append(item);
+
+                git_patch_free(patch);
             }
         }
     } catch(const QGitError &ex) {
@@ -980,6 +982,18 @@ void QGit::commitDiffContent(QString first, QString second, QList<QString> files
     }
 
     emit commitDiffContentReply(first, second, items, error);
+
+    if (diff)
+    {
+        git_diff_free(diff);
+        diff = nullptr;
+    }
+
+    if (repo)
+    {
+        git_repository_free(repo);
+        repo = nullptr;
+    }
 }
 
 void QGit::stageFiles(QStringList items)
