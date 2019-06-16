@@ -8,6 +8,8 @@
 #include <QList>
 
 
+class QGitDiffWidgetPrivate;
+
 class QGitDiffWidget : public QWidget
 {
     Q_OBJECT
@@ -32,9 +34,7 @@ protected:
     virtual void mouseMoveEvent(QMouseEvent *event) override;
 
 private:
-    void remeasureItems();
-    QList<QGitDiffFile> m_diff;
-    QVector<QRect> m_fileRects;
+    QGitDiffWidgetPrivate *m_private = nullptr;
     QFont m_font;
     int m_fontHeight = 0;
     int m_fontAscent = 0;
