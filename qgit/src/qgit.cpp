@@ -1179,15 +1179,13 @@ void QGit::commit(QString message)
 
         /// Check if somthing is staged
         res = git_revparse_single(&git_obj, repo, "HEAD^{tree}");
-        if (res)
+        if (res == 0)
         {
-            throw QGitError("git_revparse_single(staged)", res);
-        }
-
-        res = git_tree_lookup(&tree, repo, git_object_id(git_obj));
-        if (res)
-        {
-            throw QGitError("git_tree_lookup(staged)", res);
+            res = git_tree_lookup(&tree, repo, git_object_id(git_obj));
+            if (res)
+            {
+                throw QGitError("git_tree_lookup(staged)", res);
+            }
         }
 
         res = git_diff_tree_to_index(&diff, repo, tree, nullptr, nullptr);
