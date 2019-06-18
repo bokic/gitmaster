@@ -823,9 +823,11 @@ void QGit::commitDiffContent(QString first, QString second, QList<QString> files
     git_object *first_obj = nullptr, *second_obj = nullptr;
     git_tree *first_tree = nullptr, *second_tree = nullptr;
     const git_diff_delta *delta = nullptr;
+    git_strarray pathspec = {nullptr, 0};
     git_repository *repo = nullptr;
     git_patch *patch = nullptr;
     QList<QGitDiffFile> items;
+    QList<QByteArray> tmp_files;
     git_diff *diff = nullptr;
     QGitError error;
     int res = 0;
@@ -858,6 +860,21 @@ void QGit::commitDiffContent(QString first, QString second, QList<QString> files
             }
         }
 
+        if (!files.isEmpty())
+        {
+            pathspec.count = static_cast<size_t>(files.count());
+            pathspec.strings = reinterpret_cast<char **>(malloc(sizeof(char *) * pathspec.count));
+
+            int c = 0;
+            for(const auto &file: files)
+            {
+                QByteArray ba = file.toUtf8();
+                tmp_files.push_back(ba);
+                pathspec.strings[c] = tmp_files.last().data();
+                c++;
+            }
+        }
+
         if (second == "staged")
         {
             git_diff_options options;
@@ -878,6 +895,7 @@ void QGit::commitDiffContent(QString first, QString second, QList<QString> files
             options.version = GIT_DIFF_OPTIONS_VERSION;
             options.flags = GIT_DIFF_INCLUDE_UNTRACKED | GIT_DIFF_SHOW_UNTRACKED_CONTENT;
             options.context_lines = 3;
+            options.pathspec = pathspec;
 
             res = git_diff_tree_to_index(&diff, repo, first_tree, nullptr, &options);
             if (res)
@@ -893,6 +911,7 @@ void QGit::commitDiffContent(QString first, QString second, QList<QString> files
             options.version = GIT_DIFF_OPTIONS_VERSION;
             options.flags = GIT_DIFF_INCLUDE_UNTRACKED | GIT_DIFF_RECURSE_UNTRACKED_DIRS | GIT_DIFF_SHOW_UNTRACKED_CONTENT;
             options.context_lines = 3;
+            options.pathspec = pathspec;
 
             res = git_diff_index_to_workdir(&diff, repo, nullptr, &options);
             if (res)
@@ -993,6 +1012,12 @@ void QGit::commitDiffContent(QString first, QString second, QList<QString> files
     {
         git_repository_free(repo);
         repo = nullptr;
+    }
+
+    if (pathspec.strings)
+    {
+        free(pathspec.strings);
+        memset(&pathspec, 0, sizeof(pathspec));
     }
 }
 
