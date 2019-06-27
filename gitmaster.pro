@@ -20,8 +20,8 @@ include(qgit/qgit.pri)
 
 win32:INCLUDEPATH += include
 
-SOURCES += main.cpp qgitmastermainwindow.cpp qgitrepository.cpp qnewrepositorydialog.cpp qgitclonerepositorydialog.cpp qgitrepotreeitemdelegate.cpp qgitrepotreewidget.cpp qgitdiffwidget.cpp qadvplaintextedit.cpp qloghistoryitemdelegate.cpp qloghistorytablewidget.cpp
-HEADERS +=          qgitmastermainwindow.h   qgitrepository.h   qnewrepositorydialog.h   qgitclonerepositorydialog.h   qgitrepotreeitemdelegate.h   qgitrepotreewidget.h   qgitdiffwidget.h   qadvplaintextedit.h   qloghistoryitemdelegate.h   qloghistorytablewidget.h
+SOURCES += main.cpp qgitmastermainwindow.cpp qgitrepository.cpp qnewrepositorydialog.cpp qgitclonerepositorydialog.cpp qgitrepotreeitemdelegate.cpp qgitrepotreewidget.cpp qgitdiffwidget.cpp qadvplaintextedit.cpp qloghistoryitemdelegate.cpp qloghistorytablewidget.cpp qexttextbrowser.cpp
+HEADERS +=          qgitmastermainwindow.h   qgitrepository.h   qnewrepositorydialog.h   qgitclonerepositorydialog.h   qgitrepotreeitemdelegate.h   qgitrepotreewidget.h   qgitdiffwidget.h   qadvplaintextedit.h   qloghistoryitemdelegate.h   qloghistorytablewidget.h   qexttextbrowser.h
 FORMS   +=          qgitmastermainwindow.ui  qgitrepository.ui  qnewrepositorydialog.ui  qgitclonerepositorydialog.ui
 
 RESOURCES += resource.qrc

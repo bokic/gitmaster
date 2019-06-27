@@ -444,7 +444,7 @@
             <property name="orientation">
              <enum>Qt::Vertical</enum>
             </property>
-            <widget class="QTextBrowser" name="logHistory_info"/>
+            <widget class="QExtTextBrowser" name="logHistory_info"/>
             <widget class="QTableWidget" name="logHistory_files">
              <property name="editTriggers">
               <set>QAbstractItemView::NoEditTriggers</set>
@@ -537,6 +537,11 @@
    <class>QLogHistoryTableWidget</class>
    <extends>QTableWidget</extends>
    <header>qloghistorytablewidget.h</header>
+  </customwidget>
+  <customwidget>
+   <class>QExtTextBrowser</class>
+   <extends>QTextBrowser</extends>
+   <header>qexttextbrowser.h</header>
   </customwidget>
  </customwidgets>
  <resources/>
