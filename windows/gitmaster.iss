@@ -29,6 +29,10 @@ Source: "C:\Qt\5.13.0\mingw73_32\bin\libwinpthread-1.dll"; DestDir: "{app}";
 Source: "C:\Qt\5.13.0\mingw73_32\bin\libgcc_s_dw2-1.dll"; DestDir: "{app}";
 Source: "C:\Qt\5.13.0\mingw73_32\bin\libstdc++-6.dll"; DestDir: "{app}";
 
+; OpenSSL
+Source: "C:\Qt\Tools\OpenSSL\Win_x86\bin\libcrypto-1_1.dll"; DestDir: "{app}";
+Source: "C:\Qt\Tools\OpenSSL\Win_x86\bin\libssl-1_1.dll"; DestDir: "{app}";
+
 ; Qt library
 Source: "C:\Qt\5.13.0\mingw73_32\bin\Qt5Core.dll"; DestDir: "{app}";
 Source: "C:\Qt\5.13.0\mingw73_32\bin\Qt5Gui.dll"; DestDir: "{app}";
