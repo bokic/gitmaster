@@ -21,4 +21,18 @@
         <file>images/fetch.svg</file>
         <file>images/file_unknown.svg</file>
     </qresource>
+    <qresource prefix="/QCustomComboBox">
+        <file alias="check">images/combobox/check.svg</file>
+    </qresource>
+    <qresource prefix="/QComboBoxGitDiffOptions">
+        <file alias="gear">images/combobox/gear.svg</file>
+    </qresource>
+    <qresource prefix="/QComboBoxGitViewOptions">
+        <file alias="flat_list_multiple_column">images/combobox/flat_list_multiple_column.svg</file>
+        <file alias="flat_list_single_column">images/combobox/flat_list_single_column.svg</file>
+        <file alias="fluid_staging">images/combobox/fluid_staging.svg</file>
+        <file alias="no_staging">images/combobox/no_staging.svg</file>
+        <file alias="split_view_staging">images/combobox/split_view_staging.svg</file>
+        <file alias="tree_view">images/combobox/tree_view.svg</file>
+    </qresource>
 </RCC>

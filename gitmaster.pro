@@ -18,11 +18,15 @@ TEMPLATE = app
 
 include(qgit/qgit.pri)
 
+INCLUDEPATH += combobox
 win32:INCLUDEPATH += include
 
 SOURCES += main.cpp qgitmastermainwindow.cpp qgitrepository.cpp qnewrepositorydialog.cpp qgitclonerepositorydialog.cpp qgitrepotreeitemdelegate.cpp qgitrepotreewidget.cpp qgitdiffwidget.cpp qadvplaintextedit.cpp qloghistoryitemdelegate.cpp qloghistorytablewidget.cpp qexttextbrowser.cpp
 HEADERS +=          qgitmastermainwindow.h   qgitrepository.h   qnewrepositorydialog.h   qgitclonerepositorydialog.h   qgitrepotreeitemdelegate.h   qgitrepotreewidget.h   qgitdiffwidget.h   qadvplaintextedit.h   qloghistoryitemdelegate.h   qloghistorytablewidget.h   qexttextbrowser.h
 FORMS   +=          qgitmastermainwindow.ui  qgitrepository.ui  qnewrepositorydialog.ui  qgitclonerepositorydialog.ui
+
+SOURCES += combobox/qcustomcombobox.cpp combobox/qcomboboxgitdiffoptions.cpp combobox/qcomboboxgitstatusfiles.cpp combobox/qcomboboxgitviewoptions.cpp
+HEADERS += combobox/qcustomcombobox.h   combobox/qcomboboxgitdiffoptions.h   combobox/qcomboboxgitstatusfiles.h   combobox/qcomboboxgitviewoptions.h
 
 RESOURCES += resource.qrc
 win32:RC_FILE = resource.rc
