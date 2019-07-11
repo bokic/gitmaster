@@ -104,19 +104,15 @@ void QCustomComboBox::paintEvent(__attribute__((unused)) QPaintEvent *event)
     {
         opt.currentIcon = m_icon;
         opt.iconSize = QSize(16, 16);
-        opt.editable = true;
+    }
+    else
+    {
+        opt.currentText = m_text;
     }
 
     //opt.frame = true;
     p.drawComplexControl(QStyle::CC_ComboBox, opt);
-
-    if (!paintIcon)
-    {
-        int margin = 4;
-
-        QRect rect = QRect(margin, margin, width() - margin, height() - margin);
-        p.drawText(rect, Qt::AlignLeft | Qt::AlignVCenter, m_text);
-    }
+    p.drawControl(QStyle::CE_ComboBoxLabel, opt);
 }
 
 void QCustomComboBox::mousePressEvent(__attribute__((unused)) QMouseEvent *event)
