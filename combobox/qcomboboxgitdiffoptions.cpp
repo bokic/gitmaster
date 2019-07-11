@@ -1,5 +1,4 @@
 #include "qcomboboxgitdiffoptions.h"
-#include <QDebug>
 
 
 QComboBoxGitDiffOptions::QComboBoxGitDiffOptions(QWidget *parent)

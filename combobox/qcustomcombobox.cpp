@@ -5,8 +5,6 @@
 #include <QHBoxLayout>
 #include <QtMath>
 
-#include <QDebug>
-
 
 QCustomComboBox::QCustomComboBox(QWidget *parent)
     : QWidget(parent)
@@ -104,7 +102,6 @@ void QCustomComboBox::paintEvent(__attribute__((unused)) QPaintEvent *event)
 
     if (paintIcon)
     {
-        qDebug() << "paint icon";
         opt.currentIcon = m_icon;
         opt.iconSize = QSize(16, 16);
         opt.editable = true;
