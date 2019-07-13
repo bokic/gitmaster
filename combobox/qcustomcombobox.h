@@ -1,12 +1,12 @@
 #pragma once
 
-#include <QWidget>
+#include <QComboBox>
 #include <QListWidget>
 #include <QFrame>
 #include <QIcon>
 
 
-class QCustomComboBox: public QWidget
+class QCustomComboBox: public QComboBox
 {
     Q_OBJECT
 public:

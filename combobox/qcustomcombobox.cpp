@@ -7,7 +7,7 @@
 
 
 QCustomComboBox::QCustomComboBox(QWidget *parent)
-    : QWidget(parent)
+    : QComboBox(parent)
     , m_popup(new QFrame(nullptr, Qt::Popup))
 {
     setAttribute(Qt::WA_Hover);
