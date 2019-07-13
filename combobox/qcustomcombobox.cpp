@@ -1,8 +1,11 @@
 #include "qcustomcombobox.h"
 #include <QStylePainter>
+#include <QApplication>
 #include <QStyleOption>
 #include <QFontMetrics>
 #include <QHBoxLayout>
+#include <QMouseEvent>
+#include <QScreen>
 #include <QtMath>
 
 
@@ -115,11 +118,14 @@ void QCustomComboBox::paintEvent(__attribute__((unused)) QPaintEvent *event)
     p.drawControl(QStyle::CE_ComboBoxLabel, opt);
 }
 
-void QCustomComboBox::mousePressEvent(__attribute__((unused)) QMouseEvent *event)
+void QCustomComboBox::mousePressEvent(QMouseEvent *event)
 {
+    QScreen *currentScreen = nullptr;
+    QSize size;
+
     if (m_popup->isHidden())
     {
-        QSize size;
+        currentScreen = QApplication::screenAt(event->globalPos());
 
         m_popup->move(mapToGlobal(QPoint(0, height())));
 
@@ -133,6 +139,16 @@ void QCustomComboBox::mousePressEvent(__attribute__((unused)) QMouseEvent *event
         size.setHeight(size.height() + 1); // TODO: 1px quirk.
 
         m_popup->resize(size);
+        m_popup->update();
+
+        if (m_popup->pos().x() < 0)
+        {
+            m_popup->move(QPoint(0, m_popup->pos().y()));
+        }
+        else if (m_popup->pos().x() + m_popup->width() > currentScreen->size().width())
+        {
+            m_popup->move(QPoint(currentScreen->size().width() - m_popup->width(), m_popup->pos().y()));
+        }
 
         m_popup->show();
     }
