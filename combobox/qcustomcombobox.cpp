@@ -67,7 +67,7 @@ QSize QCustomComboBox::minimumSizeHint() const
         ret.setWidth(qMax(ret.width(), m_icon.availableSizes().first().height()));
     }
 
-    ret += QSize(ret.height() + 4, 4);
+    ret += QSize(ret.height() + 8, 4);
 
     return ret;
 }
