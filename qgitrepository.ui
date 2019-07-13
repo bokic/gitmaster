@@ -83,10 +83,10 @@
            <number>0</number>
           </property>
           <item>
-           <widget class="QComboBoxGitStatusFiles" name="comboBox"/>
+           <widget class="QComboBoxGitStatusFiles" name="comboBox_gitStatusFiles"/>
           </item>
           <item>
-           <widget class="QComboBoxGitViewOptions" name="comboBox_2"/>
+           <widget class="QComboBoxGitViewOptions" name="comboBox_gitVirewOptions"/>
           </item>
           <item>
            <spacer name="horizontalSpacer">
@@ -112,7 +112,7 @@
            </widget>
           </item>
           <item>
-           <widget class="QComboBoxGitDiffOptions" name="comboBox_3"/>
+           <widget class="QComboBoxGitDiffOptions" name="comboBox_gitDiffOptions"/>
           </item>
          </layout>
         </item>
