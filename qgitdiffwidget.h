@@ -38,8 +38,8 @@ private:
     QFont m_font;
     int m_fontHeight = 0;
     int m_fontAscent = 0;
-    int m_hoverFile = 0;
-    int m_hoverHunk = 0;
-    int m_hoverLine = 0;
+    int m_hoverFile = -1;
+    int m_hoverHunk = -1;
+    int m_hoverLine = -1;
     bool m_readonly = false;
 };

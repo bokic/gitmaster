@@ -2,6 +2,7 @@
 #include <QScrollBar>
 #include <QPainter>
 #include <QObject>
+#include <QDebug>
 
 
 class QGitDiffWidgetPrivateLine
@@ -13,7 +14,6 @@ public:
     int num_lines = 0;
     int old_lineno = 0;
     char origin = '\0';
-
     QRect rect;
 };
 
@@ -215,7 +215,9 @@ void QGitDiffWidget::responseGitDiff(QString first, QString second, QList<QGitDi
 void QGitDiffWidget::paintEvent(QPaintEvent *event)
 {
     QPainter painter(this);
+    int fileIndex = 0, hunkIndex = 0, lineIndex = 0;
 
+    fileIndex = 0;
     for(const auto &file: m_private->files)
     {
         if (!event->region().intersected(file.rect).isEmpty())
@@ -224,10 +226,12 @@ void QGitDiffWidget::paintEvent(QPaintEvent *event)
 
             painter.drawText(file.rect.left() + 10, file.rect.top() + 20, file.new_file.path());
 
+            hunkIndex = 0;
             for(const auto &hunk: file.hunks)
             {
                 if (!event->region().intersected(hunk.rect).isEmpty())
                 {
+                    lineIndex = 0;
                     for(const auto &line: hunk.lines)
                     {
                         if (!event->region().intersected(line.rect).isEmpty())
@@ -259,98 +263,48 @@ void QGitDiffWidget::paintEvent(QPaintEvent *event)
                             painter.drawText(40, yFont, new_lineNo);
 
                             painter.drawText(100, yFont, line.content);
+
+                            if ((fileIndex == m_hoverFile)&&(hunkIndex == m_hoverHunk)&&(lineIndex == m_hoverLine))
+                            {
+                                painter.setPen(Qt::SolidLine);
+                                painter.setBrush(QBrush());
+
+                                painter.drawRect(line.rect.adjusted(100, 0, -1, -1));
+                            }
                         }
+
+                        lineIndex++;
+                    }
+
+                    if ((fileIndex == m_hoverFile)&&(hunkIndex == m_hoverHunk)&&(lineIndex == -1))
+                    {
+                        painter.setPen(Qt::SolidLine);
+                        painter.setBrush(QBrush());
+
+                        painter.drawRect(hunk.rect);
+
+                        qDebug() << "hunk";
                     }
                 }
+
+                hunkIndex++;
             }
         }
+
+        fileIndex++;
     }
-
-    /*for(int c = 0; c < m_fileRects.count(); c++)
-    {
-        const QRect &rect = m_fileRects.at(c);
-
-        if (!event->region().intersected(QRegion(rect)).isEmpty())
-        {
-            const auto &file = m_diff.at(c);
-            const auto &hunks = file.hunks();
-
-            painter.fillRect(rect, QColor(220,220,220));
-
-            painter.drawText(rect.left() + 10, rect.top() + 20, file.new_file().path());
-
-            y = rect.top() + (m_fontHeight * 2);
-
-            for(int h = 0; h < hunks.count(); h++)
-            {
-                const auto &hunk = hunks.at(h);
-                const auto lines = hunk.lines();
-
-                if (h > 0) y += m_fontHeight + 1;
-
-                for(int l = 0; l < lines.count(); l++)
-                {
-                    QString old_lineNo, new_lineNo;
-                    const auto &line = lines.at(l);
-
-                    if (line.old_lineno() >= 0) old_lineNo = QString::number(line.old_lineno());
-                    if (line.new_lineno() >= 0) new_lineNo = QString::number(line.new_lineno());
-
-                    int yFont = y + m_fontAscent;
-
-                    if (line.origin() == '-')
-                    {
-                        painter.setPen(Qt::NoPen);
-                        painter.setBrush(QBrush(QColor(235, 204, 204)));
-                        painter.drawRect(10, y, rect.width(), m_fontHeight + 1);
-                        painter.setBrush(QBrush(QColor(Qt::darkRed)));
-                        painter.setPen(Qt::darkRed);
-                    } else if (line.origin() == '+') {
-                        painter.setPen(Qt::NoPen);
-                        painter.setBrush(QBrush(QColor(204, 230, 194)));
-                        painter.drawRect(10, y, rect.width(), m_fontHeight + 1);
-                        painter.setPen(Qt::darkGreen);
-                    } else {
-                        painter.setPen(Qt::SolidLine);
-                        painter.setBrush(QBrush(QColor(Qt::black)));
-                    }
-
-                    painter.drawText(10, yFont, old_lineNo);
-                    painter.drawText(40, yFont, new_lineNo);
-
-                    painter.drawText(70, yFont, QString(QChar(line.origin())));
-
-                    if ((!m_readonly)&&(c == m_hoverFile)&&(h == m_hoverHunk)&&(m_hoverLine == l))
-                    {
-                        painter.setPen(Qt::SolidLine);
-                        painter.setBrush(Qt::NoBrush);
-                        painter.setPen(Qt::darkRed);
-                        painter.drawRect(70, y, m_fontHeight, m_fontHeight);
-                    }
-
-                    painter.drawText(100, yFont, line.content());
-
-                    y += m_fontHeight + 1;
-                }
-
-                if ((!m_readonly)&&(c == m_hoverFile)&&(h == m_hoverHunk)&&(m_hoverLine == -1))
-                {
-                    painter.setPen(Qt::SolidLine);
-                    painter.setBrush(Qt::NoBrush);
-                    painter.setPen(Qt::darkRed);
-                    painter.drawRect(10, y, 60, -lines.count()*(m_fontHeight + 1));
-                }
-            }
-        }
-    }*/
 }
 
 void QGitDiffWidget::mousePressEvent(QMouseEvent *event)
 {
     Q_UNUSED(event)
 
+    qDebug() << "click";
+
     if ((!m_readonly)&&(m_hoverFile >= 0)&&(m_hoverHunk >= 0)&&(m_hoverLine >= -1))
     {
+        qDebug() << "emit select(" << m_hoverFile << "," << m_hoverHunk << "," << m_hoverLine << ")";
+
         emit select(m_hoverFile, m_hoverHunk, m_hoverLine);
     }
 }
@@ -378,17 +332,29 @@ void QGitDiffWidget::mouseMoveEvent(QMouseEvent *event)
                 {
                     l_hoverHunk = hunk_index;
 
-                    int line_index = 0;
-                    for(const auto &line : hunk.lines)
+                    if (event->x() >= 100)
                     {
-                        if (line.rect.contains(event->localPos().toPoint()))
+                        int line_index = 0;
+                        for(const auto &line : hunk.lines)
                         {
-                            l_hoverLine = line_index;
+                            if (line.rect.contains(event->localPos().toPoint()))
+                            {
+                                if ((line.origin == '-')||(line.origin == '+'))
+                                {
+                                    l_hoverLine = line_index;
+                                }
+                                else
+                                {
+                                    l_hoverFile = -1;
+                                    l_hoverHunk = -1;
+                                    l_hoverLine = -1;
+                                }
 
-                            break;
+                                break;
+                            }
+
+                            line_index++;
                         }
-
-                        line_index++;
                     }
 
                     break;
