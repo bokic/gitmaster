@@ -25,7 +25,7 @@ signals:
     void localStash(QString name);
     void repositoryBranches();
     void repositoryStashes();
-    void repositoryChangedFiles();
+    void repositoryChangedFiles(int show, int sort, bool reversed);
     void repositoryStageFiles(QStringList items);
     void repositoryUnstageFiles(QStringList items);
     void repositoryCommit(QString message);
@@ -56,10 +56,12 @@ private slots:
     void on_logHistory_files_itemSelectionChanged();
     void on_listWidget_staged_itemSelectionChanged();
     void on_listWidget_unstaged_itemSelectionChanged();
+    void on_comboBox_gitStatusFiles_itemClicked(QListWidgetItem *item);
 
 private:
     void fetchCommits();
     void activateCommitOperation(bool activate);
+    void fetchRepositoryChangedFiles();
     Ui::QGitRepository *ui;
     QNetworkAccessManager m_networkManager;
     QString m_path;

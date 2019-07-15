@@ -569,11 +569,12 @@ void QGit::listStashes()
     }
 }
 
-void QGit::listChangedFiles()
+void QGit::listChangedFiles(int show, int sort, bool reversed)
 {
     git_repository *repo = nullptr;
     git_status_list *list = nullptr;
     QMap<QString,git_status_t> items;
+    git_status_options opts;
     int res = 0;
     size_t index = 0;
 
@@ -587,7 +588,14 @@ void QGit::listChangedFiles()
             throw QGitError("git_repository_open", res);
         }
 
-        res = git_status_list_new(&list, repo, nullptr);
+        opts.version = GIT_STATUS_OPTIONS_VERSION;
+        opts.show = GIT_STATUS_SHOW_INDEX_AND_WORKDIR;
+        opts.flags = GIT_STATUS_OPT_INCLUDE_UNTRACKED | GIT_STATUS_OPT_INCLUDE_IGNORED | GIT_STATUS_OPT_INCLUDE_UNMODIFIED | GIT_STATUS_OPT_INCLUDE_UNREADABLE;
+        opts.pathspec.count = 0;
+        opts.pathspec.strings = nullptr;
+        opts.baseline = nullptr;
+
+        res = git_status_list_new(&list, repo, &opts);
         if (res)
         {
             throw QGitError("git_status_list_new", res);
@@ -596,24 +604,56 @@ void QGit::listChangedFiles()
         while(const git_status_entry *item = git_status_byindex(list, index))
         {
             git_status_t status = item->status;
-            if ((status != GIT_STATUS_CURRENT)&&(status != GIT_STATUS_IGNORED))
+
+
+            if ((item->index_to_workdir == nullptr)&&(item->head_to_index == nullptr))
             {
-                if (item->index_to_workdir)
-                {
-                    items.insert(QString::fromUtf8(item->index_to_workdir->new_file.path), status);
-                }
-                else if (item->head_to_index)
-                {
-                    items.insert(QString::fromUtf8(item->head_to_index->new_file.path), status);
-                }
-                else
-                {
-                    throw QGitError("unknown scenario", res);
-                }
+                throw QGitError("unknown scenario", res);
+            }
+
+            if (
+                    (item->index_to_workdir)
+                    &&
+                    (
+                        ((show & QGIT_STATUS_NEW)&&(status & GIT_STATUS_WT_NEW))
+                        ||
+                        ((show & QGIT_STATUS_MODIFIED)&&(status & GIT_STATUS_WT_MODIFIED))
+                        ||
+                        ((show & QGIT_STATUS_DELETED)&&(status & GIT_STATUS_WT_DELETED))
+                        ||
+                        ((show & QGIT_STATUS_RENAMED)&&(status & GIT_STATUS_WT_RENAMED))
+                        ||
+                        ((show & QGIT_STATUS_TYPECHANGE)&&(status & GIT_STATUS_WT_TYPECHANGE))
+                        ||
+                        ((show & QGIT_STATUS_IGNORED)&&(status & GIT_STATUS_IGNORED))
+                        ||
+                        ((show & QGIT_STATUS_CONFLICTED)&&(status & GIT_STATUS_CONFLICTED))
+                        ||
+                        ((show & QGIT_STATUS_ALL))
+                    )
+                )
+            {
+                items.insert(QString::fromUtf8(item->index_to_workdir->new_file.path), status);
+            }
+
+            if (item->head_to_index)
+            {
+                items.insert(QString::fromUtf8(item->head_to_index->new_file.path), status);
             }
 
             index++;
         }
+
+        if (sort != QGIT_SORT_UNSORTED)
+        {
+            // ...
+
+            if (reversed)
+            {
+                // ...
+            }
+        }
+
     } catch(const QGitError &ex) {
         error = ex;
     }

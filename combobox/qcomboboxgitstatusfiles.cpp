@@ -1,6 +1,23 @@
 #include "qcomboboxgitstatusfiles.h"
 
 
+#define ITEM_SHOW_ONLY         0
+#define ITEM_PENDING           1
+#define ITEM_CONFLICTS         2
+#define ITEM_UNTRACKED         3
+#define ITEM_IGNORED           4
+#define ITEM_CLEAN             5
+#define ITEM_MODIFIED          6
+#define ITEM_ALL               7
+#define ITEM_SEPARATOR         8
+#define ITEM_SORT_BY           9
+#define ITEM_PATH_APLHA        10
+#define ITEM_PATH_APLHA_REV    11
+#define ITEM_FILE_APLHA        12
+#define ITEM_FILE_APLHA_REV    13
+#define ITEM_FILE_STATUS       14
+#define ITEM_CHECKED_UNCHECHED 15
+
 QComboBoxGitStatusFiles::QComboBoxGitStatusFiles(QWidget *parent)
     : QCustomComboBox(parent)
 {
@@ -143,28 +160,44 @@ void QComboBoxGitStatusFiles::updateText()
     setCurrentText(text);
 }
 
-int QComboBoxGitStatusFiles::showFiles() const
+QComboBoxGitStatusFiles::QComboBoxGitStatusFilesShowFiles QComboBoxGitStatusFiles::showFiles() const
 {
-    const int offset = 1;
-    const int len = 7;
+    if (m_list->item(ITEM_PENDING)->checkState() == Qt::Checked) {
+        return QShowPendingFiles;
+    } else if (m_list->item(ITEM_CONFLICTS)->checkState() == Qt::Checked) {
+        return QShowConflictFiles;
+    } else if (m_list->item(ITEM_UNTRACKED)->checkState() == Qt::Checked) {
+        return QShowUntracked;
+    } else if (m_list->item(ITEM_IGNORED)->checkState() == Qt::Checked) {
+        return QShowIgnored;
+    } else if (m_list->item(ITEM_CLEAN)->checkState() == Qt::Checked) {
+        return QShowClean;
+    } else if (m_list->item(ITEM_MODIFIED)->checkState() == Qt::Checked) {
+        return QShowModified;
+    } else if (m_list->item(ITEM_ALL)->checkState() == Qt::Checked) {
+        return QShowAll;
+    }
 
-    for(int c = offset; c < offset + len; c++)
-        if (m_list->item(c)->checkState() == Qt::Checked)
-            return c - offset;
-
-    return -1;
+    return QShowAll;
 }
 
-int QComboBoxGitStatusFiles::showSortBy() const
+QComboBoxGitStatusFiles::QComboBoxGitStatusFilesOrderFiles QComboBoxGitStatusFiles::showSortBy() const
 {
-    const int offset = 10;
-    const int len = 6;
+    if (m_list->item(ITEM_PATH_APLHA)->checkState() == Qt::Checked) {
+        return QFilePathSortFiles;
+    } else if (m_list->item(ITEM_PATH_APLHA_REV)->checkState() == Qt::Checked) {
+        return QReversedFilePathSortFiles;
+    } else if (m_list->item(ITEM_FILE_APLHA)->checkState() == Qt::Checked) {
+        return QFileNameSortFiles;
+    } else if (m_list->item(ITEM_FILE_APLHA_REV)->checkState() == Qt::Checked) {
+        return QReversedFileNameSortFiles;
+    } else if (m_list->item(ITEM_FILE_STATUS)->checkState() == Qt::Checked) {
+        return QFileStatusSortFiles;
+    } else if (m_list->item(ITEM_CHECKED_UNCHECHED)->checkState() == Qt::Checked) {
+        return QCheckedUncheckedSortFiles;
+    }
 
-    for(int c = offset; c < offset + len; c++)
-        if (m_list->item(c)->checkState() == Qt::Checked)
-            return c - offset;
-
-    return -1;
+    return QUnsortedFiles;
 }
 
 void QComboBoxGitStatusFiles::clicked(__attribute__((unused)) QListWidgetItem *item)

@@ -79,7 +79,7 @@ QGitRepository::QGitRepository(const QString &path, QWidget *parent)
     connect(this, SIGNAL(repositoryStashes()), m_git, SLOT(listStashes()), Qt::QueuedConnection);
     connect(m_git, SIGNAL(listStashesReply(QStringList,QGitError)), this, SLOT(repositoryStashesReply(QStringList,QGitError)), Qt::QueuedConnection);
 
-    connect(this, SIGNAL(repositoryChangedFiles()), m_git, SLOT(listChangedFiles()), Qt::QueuedConnection);
+    connect(this, SIGNAL(repositoryChangedFiles(int,int,bool)), m_git, SLOT(listChangedFiles(int,int,bool)), Qt::QueuedConnection);
     connect(m_git, SIGNAL(listChangedFilesReply(QMap<QString,git_status_t>,QGitError)), this, SLOT(repositoryChangedFilesReply(QMap<QString,git_status_t>,QGitError)), Qt::QueuedConnection);
 
     connect(this, SIGNAL(repositoryStageFiles(QStringList)), m_git, SLOT(stageFiles(QStringList)), Qt::QueuedConnection);
@@ -275,7 +275,7 @@ void QGitRepository::repositoryStashesReply(QStringList stashes, QGitError error
 
 void QGitRepository::repositoryChangedFilesReply(QMap<QString, git_status_t> files, QGitError error)
 {
-    int tmp_status = 0;
+    QListWidgetItem *item = nullptr;
 
     Q_UNUSED(error)
 
@@ -295,22 +295,14 @@ void QGitRepository::repositoryChangedFilesReply(QMap<QString, git_status_t> fil
         const QString &file = i.key();
         const git_status_t status = i.value();
 
-#if ((LIBGIT2_VER_MAJOR > 0)||(LIBGIT2_VER_MINOR >= 23))
-        if (status & GIT_STATUS_CONFLICTED)
+        if (status & (GIT_STATUS_INDEX_NEW | GIT_STATUS_INDEX_MODIFIED | GIT_STATUS_INDEX_DELETED | GIT_STATUS_INDEX_RENAMED | GIT_STATUS_INDEX_TYPECHANGE))
         {
-            continue;
-        }
-#endif
-
-        tmp_status = status & (GIT_STATUS_INDEX_NEW | GIT_STATUS_INDEX_MODIFIED | GIT_STATUS_INDEX_DELETED | GIT_STATUS_INDEX_RENAMED | GIT_STATUS_INDEX_TYPECHANGE);
-        if (tmp_status)
-        {
-            auto item = new QListWidgetItem(file);
+            item = new QListWidgetItem(file);
 
             item->setFlags(item->flags() | Qt::ItemIsUserCheckable);
             item->setCheckState(Qt::Checked);
 
-            switch(tmp_status)
+            switch(status)
             {
             case GIT_STATUS_INDEX_NEW:
                 item->setIcon(icon_file_new);
@@ -329,15 +321,13 @@ void QGitRepository::repositoryChangedFilesReply(QMap<QString, git_status_t> fil
             ui->listWidget_staged->addItem(item);
         }
 
-        tmp_status = status & (GIT_STATUS_WT_NEW | GIT_STATUS_WT_MODIFIED | GIT_STATUS_WT_DELETED | GIT_STATUS_WT_RENAMED | GIT_STATUS_WT_TYPECHANGE | GIT_STATUS_WT_UNREADABLE);
-        if (tmp_status)
+        if ((status == GIT_STATUS_CURRENT)||(status & (GIT_STATUS_WT_NEW | GIT_STATUS_WT_MODIFIED | GIT_STATUS_WT_DELETED | GIT_STATUS_WT_TYPECHANGE | GIT_STATUS_WT_RENAMED | GIT_STATUS_WT_UNREADABLE | GIT_STATUS_IGNORED | GIT_STATUS_CONFLICTED)))
         {
-            auto item = new QListWidgetItem(file);
-
+            item = new QListWidgetItem(file);
             item->setFlags(item->flags() | Qt::ItemIsUserCheckable);
             item->setCheckState(Qt::Unchecked);
 
-            switch(tmp_status)
+            switch(status)
             {
             case GIT_STATUS_WT_NEW:
                 item->setIcon(icon_file_new);
@@ -371,14 +361,14 @@ void QGitRepository::repositoryStageFilesReply(QGitError error)
 {
     Q_UNUSED(error)
 
-    emit repositoryChangedFiles();
+    fetchRepositoryChangedFiles();
 }
 
 void QGitRepository::repositoryUnstageFilesReply(QGitError error)
 {
     Q_UNUSED(error)
 
-    emit repositoryChangedFiles();
+    fetchRepositoryChangedFiles();
 }
 
 void QGitRepository::repositoryCommitReply(QString commit_id, QGitError error)
@@ -535,7 +525,7 @@ void QGitRepository::on_repositoryDetail_currentChanged(int index)
         connect(ui->commit_diff, SIGNAL(requestGitDiff(QString,QString,QList<QString>)), m_git, SLOT(commitDiffContent(QString,QString,QList<QString>)));
         connect(m_git, SIGNAL(commitDiffContentReply(QString,QString,QList<QGitDiffFile>,QGitError)), ui->commit_diff, SLOT(responseGitDiff(QString,QString,QList<QGitDiffFile>,QGitError)));
 
-        emit repositoryChangedFiles();
+        fetchRepositoryChangedFiles();
         break;
     case 1:
         disconnect(ui->commit_diff, SIGNAL(requestGitDiff(QString,QString,QList<QString>)), m_git, SLOT(commitDiffContent(QString,QString,QList<QString>)));
@@ -799,4 +789,70 @@ void QGitRepository::on_listWidget_unstaged_itemSelectionChanged()
             item->setSelected(false);
         }
     }
+}
+
+void QGitRepository::on_comboBox_gitStatusFiles_itemClicked(QListWidgetItem *item)
+{
+    Q_UNUSED(item)
+
+    fetchRepositoryChangedFiles();
+}
+
+/*    enum QGitFileSort {
+        QUnsortedFiles, QFilePathSortFiles, QReversedFilePathSortFiles, QFileNameSortFiles, QReversedFileNameSortFiles, QFileStatusSortFiles, QCheckedUncheckedSortFiles
+    };*/
+
+
+void QGitRepository::fetchRepositoryChangedFiles()
+{
+    int show = 0;
+    int sort = 0;
+    bool reversed = false;
+
+    switch(ui->comboBox_gitStatusFiles->showFiles())
+    {
+    case QComboBoxGitStatusFiles::QShowPendingFiles:
+        show = QGit::QGIT_STATUS_NEW | QGit::QGIT_STATUS_MODIFIED | QGit::QGIT_STATUS_DELETED | QGit::QGIT_STATUS_RENAMED | QGit::QGIT_STATUS_TYPECHANGE;
+        break;
+    case QComboBoxGitStatusFiles::QShowConflictFiles:
+        show = QGit::QGIT_STATUS_CONFLICTED;
+        break;
+    case QComboBoxGitStatusFiles::QShowUntracked:
+        show = QGit::QGIT_STATUS_NEW;
+        break;
+    case QComboBoxGitStatusFiles::QShowIgnored:
+        show = QGit::QGIT_STATUS_IGNORED;
+        break;
+    case QComboBoxGitStatusFiles::QShowClean:
+        show = QGit::QGIT_STATUS_NONE;
+        break;
+    case QComboBoxGitStatusFiles::QShowModified:
+        show = QGit::QGIT_STATUS_MODIFIED | QGit::QGIT_STATUS_DELETED | QGit::QGIT_STATUS_RENAMED | QGit::QGIT_STATUS_TYPECHANGE;
+        break;
+    case QComboBoxGitStatusFiles::QShowAll:
+        show = QGit::QGIT_STATUS_ALL;
+        break;
+    }
+
+    switch (ui->comboBox_gitStatusFiles->showSortBy())
+    {
+    case QComboBoxGitStatusFiles::QUnsortedFiles:
+        break;
+    case QComboBoxGitStatusFiles::QFilePathSortFiles:
+        break;
+    case QComboBoxGitStatusFiles::QReversedFilePathSortFiles:
+        break;
+    case QComboBoxGitStatusFiles::QFileNameSortFiles:
+        break;
+    case QComboBoxGitStatusFiles::QReversedFileNameSortFiles:
+        break;
+    case QComboBoxGitStatusFiles::QFileStatusSortFiles:
+        break;
+    case QComboBoxGitStatusFiles::QCheckedUncheckedSortFiles:
+        break;
+    }
+
+    ui->listWidget_staged->clear();
+    ui->listWidget_unstaged->clear();
+    repositoryChangedFiles(show, sort, reversed);
 }

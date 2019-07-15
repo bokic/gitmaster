@@ -21,6 +21,26 @@ class QGit : public QObject
 {
     Q_OBJECT
 public:
+    enum QGitFileStatus {
+        QGIT_STATUS_NONE       = 0,
+        QGIT_STATUS_NEW        = (1u << 0),
+        QGIT_STATUS_MODIFIED   = (1u << 1),
+        QGIT_STATUS_DELETED    = (1u << 2),
+        QGIT_STATUS_RENAMED    = (1u << 3),
+        QGIT_STATUS_TYPECHANGE = (1u << 4),
+        QGIT_STATUS_IGNORED    = (1u << 5),
+        QGIT_STATUS_CONFLICTED = (1u << 6),
+        QGIT_STATUS_ALL        = -1,
+    };
+    enum QGitFileSort {
+        QGIT_SORT_UNSORTED,
+        QGIT_SORT_FILENAME,
+        QGIT_SORT_FILEPATH,
+        QGIT_SORT_STATUS,
+        QGIT_SORT_CHECKED
+    };
+
+
     explicit QGit(const QDir &path, QObject *parent = nullptr);
     explicit QGit(QObject *parent = nullptr);
     virtual ~QGit();
@@ -42,7 +62,7 @@ public slots:
     void listStashes();
     void stashSave(QString name);
     void stashRemove(QString name);
-    void listChangedFiles();
+    void listChangedFiles(int show, int sort, bool reversed);
     void commitDiff(QString commitId);
     void commitDiffContent(QString first, QString second, QList<QString> files);
     void stageFiles(QStringList items);
