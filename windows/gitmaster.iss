@@ -30,8 +30,8 @@ Source: "{#%QT_PATH}\{#%QT_KIT}\bin\libgcc_s_dw2-1.dll"; DestDir: "{app}";
 Source: "{#%QT_PATH}\{#%QT_KIT}\bin\libstdc++-6.dll"; DestDir: "{app}";
 
 ; OpenSSL
-Source: "C:\Qt\Tools\OpenSSL\{#%OPENSSL_BUILD}\bin\libcrypto-1_1.dll"; DestDir: "{app}";
-Source: "C:\Qt\Tools\OpenSSL\{#%OPENSSL_BUILD}\bin\libssl-1_1.dll"; DestDir: "{app}";
+Source: "{#%OPENSSL_PATH}\bin\libcrypto-1_1.dll"; DestDir: "{app}";
+Source: "{#%OPENSSL_PATH}\bin\libssl-1_1.dll"; DestDir: "{app}";
 
 ; Qt library
 Source: "{#%QT_PATH}\{#%QT_KIT}\bin\Qt5Core.dll"; DestDir: "{app}";
