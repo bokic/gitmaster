@@ -103,25 +103,25 @@ void QComboBoxGitStatusFiles::updateText()
     showFilesIdx = showFiles();
     switch(showFilesIdx)
     {
-    case 0:
+    case QComboBoxGitStatusFiles::QShowPendingFiles:
         show = tr("Pending");
         break;
-    case 1:
+    case QComboBoxGitStatusFiles::QShowConflictFiles:
         show = tr("Conflicts");
         break;
-    case 2:
+    case QComboBoxGitStatusFiles::QShowUntracked:
         show = tr("Untracked");
         break;
-    case 3:
+    case QComboBoxGitStatusFiles::QShowIgnored:
         show = tr("Ignored");
         break;
-    case 4:
+    case QComboBoxGitStatusFiles::QShowClean:
         show = tr("Clean");
         break;
-    case 5:
+    case QComboBoxGitStatusFiles::QShowModified:
         show = tr("Modified");
         break;
-    case 6:
+    case QComboBoxGitStatusFiles::QShowAll:
         show = tr("All");
         break;
     default:
@@ -132,22 +132,22 @@ void QComboBoxGitStatusFiles::updateText()
     sortFilesIdx = showSortBy();
     switch(sortFilesIdx)
     {
-    case 0:
+    case QComboBoxGitStatusFiles::QFilePathSortFiles:
         sort = tr("Path alphabetically");
         break;
-    case 1:
+    case QComboBoxGitStatusFiles::QReversedFilePathSortFiles:
         sort = tr("Path alphabetically (reversed)");
         break;
-    case 2:
+    case QComboBoxGitStatusFiles::QFileNameSortFiles:
         sort = tr("File name alphabetically");
         break;
-    case 3:
+    case QComboBoxGitStatusFiles::QReversedFileNameSortFiles:
         sort = tr("File name alphabetically (reversed)");
         break;
-    case 4:
+    case QComboBoxGitStatusFiles::QFileStatusSortFiles:
         sort = tr("File status");
         break;
-    case 5:
+    case QComboBoxGitStatusFiles::QCheckedUncheckedSortFiles:
         sort = tr("Checked / unchecked");
         break;
     default:
