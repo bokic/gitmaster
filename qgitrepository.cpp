@@ -101,11 +101,11 @@ QGitRepository::QGitRepository(const QString &path, QWidget *parent)
 
     m_thread.start();
 
-    on_repositoryDetail_currentChanged(ui->repositoryDetail->currentIndex());
-
     m_git->setPath(QDir(m_path));
     emit repositoryBranches();
     emit repositoryStashes();
+
+    on_repositoryDetail_currentChanged(ui->repositoryDetail->currentIndex());
 
     fetchCommits();
 }
