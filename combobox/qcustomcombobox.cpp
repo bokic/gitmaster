@@ -15,6 +15,8 @@ QCustomComboBox::QCustomComboBox(QWidget *parent)
 {
     setAttribute(Qt::WA_Hover);
 
+    m_popup->setFrameStyle(QFrame::StyledPanel);
+
     QHBoxLayout *layout = new QHBoxLayout(m_popup);
     layout->setMargin(0);
 
@@ -130,7 +132,7 @@ void QCustomComboBox::mousePressEvent(QMouseEvent *event)
             size.setHeight(size.height() + m_list->visualItemRect(item).height());
         }
 
-        size.setHeight(size.height() + 1); // TODO: 1px quirk.
+        size.setHeight(size.height() + (m_popup->frameWidth() * 2) + 1); // TODO: 1px quirk.
 
         m_popup->resize(size);
         m_popup->update();
