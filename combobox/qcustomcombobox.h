@@ -11,7 +11,6 @@ class QCustomComboBox: public QComboBox
     Q_OBJECT
 public:
     explicit QCustomComboBox(QWidget *parent = nullptr);
-    virtual ~QCustomComboBox() override;
     virtual QSize sizeHint() const override final;
     virtual QSize minimumSizeHint() const override final;
     void setCurrentText(const QString &text);

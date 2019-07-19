@@ -11,7 +11,7 @@
 
 QCustomComboBox::QCustomComboBox(QWidget *parent)
     : QComboBox(parent)
-    , m_popup(new QFrame(nullptr, Qt::Popup))
+    , m_popup(new QFrame(this, Qt::Popup))
 {
     setAttribute(Qt::WA_Hover);
 
@@ -31,12 +31,6 @@ QCustomComboBox::QCustomComboBox(QWidget *parent)
                           "QListWidget::indicator:unchecked{ image: none }");
 
     connect(m_list, &QListWidget::itemClicked, this, &QCustomComboBox::listItemClicked);
-}
-
-QCustomComboBox::~QCustomComboBox()
-{
-    delete m_popup;
-    m_popup = nullptr;
 }
 
 QSize QCustomComboBox::sizeHint() const
