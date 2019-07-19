@@ -281,6 +281,9 @@ void QGitRepository::repositoryChangedFilesReply(QMap<QString, git_status_t> fil
 
     ui->listWidget_staged->clear();
     ui->listWidget_unstaged->clear();
+    ui->listWidget_staged->setEnabled(true);
+    ui->listWidget_unstaged->setEnabled(true);
+
 
     QIcon icon_file_new = QIcon(":/images/file_new.svg");
     QIcon icon_file_modified = QIcon(":/images/file_modified.svg");
@@ -854,5 +857,7 @@ void QGitRepository::fetchRepositoryChangedFiles()
 
     ui->listWidget_staged->clear();
     ui->listWidget_unstaged->clear();
+    ui->listWidget_staged->setEnabled(false);
+    ui->listWidget_unstaged->setEnabled(false);
     repositoryChangedFiles(show, sort, reversed);
 }
