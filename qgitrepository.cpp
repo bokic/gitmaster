@@ -106,8 +106,6 @@ QGitRepository::QGitRepository(const QString &path, QWidget *parent)
     emit repositoryStashes();
 
     on_repositoryDetail_currentChanged(ui->repositoryDetail->currentIndex());
-
-    fetchCommits();
 }
 
 QGitRepository::~QGitRepository()
@@ -124,6 +122,11 @@ QGitRepository::~QGitRepository()
     delete ui;
 
     delete delegate;
+}
+
+void QGitRepository::refreshData()
+{
+    on_repositoryDetail_currentChanged(ui->repositoryDetail->currentIndex());
 }
 
 void QGitRepository::stash(const QString &name)
@@ -536,6 +539,8 @@ void QGitRepository::on_repositoryDetail_currentChanged(int index)
 
         connect(ui->logHistory_diff, SIGNAL(requestGitDiff(QString,QString,QList<QString>)), m_git, SLOT(commitDiffContent(QString,QString,QList<QString>)));
         connect(m_git, SIGNAL(commitDiffContentReply(QString,QString,QList<QGitDiffFile>,QGitError)), ui->logHistory_diff, SLOT(responseGitDiff(QString,QString,QList<QGitDiffFile>,QGitError)));
+
+        fetchCommits();
         break;
     case 2:
         Q_UNIMPLEMENTED();

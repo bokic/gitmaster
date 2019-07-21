@@ -59,6 +59,7 @@ bool QGitMasterMainWindow::event(QEvent *event)
     if (event->type() == QEvent::WindowActivate)
     {
         ui->treeWidget->refreshItems();
+        on_tabWidget_currentChanged(-1);
     }
 
     return QMainWindow::event(event);
@@ -276,6 +277,17 @@ void QGitMasterMainWindow::on_treeWidget_itemDoubleClicked(QTreeWidgetItem *item
 void QGitMasterMainWindow::on_tabWidget_tabCloseRequested(int index)
 {
     ui->tabWidget->removeTab(index);
+}
+
+void QGitMasterMainWindow::on_tabWidget_currentChanged(int index)
+{
+    Q_UNUSED(index)
+
+    auto panel = dynamic_cast<QGitRepository *>(ui->tabWidget->currentWidget());
+    if (panel)
+    {
+        panel->refreshData();
+    }
 }
 
 void QGitMasterMainWindow::on_actionStash_triggered()

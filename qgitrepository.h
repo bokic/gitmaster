@@ -19,6 +19,7 @@ class QGitRepository : public QWidget
 public:
     explicit QGitRepository(const QString &path, QWidget *parent);
     ~QGitRepository();
+    void refreshData();
     void stash(const QString &name);
 
 signals:
