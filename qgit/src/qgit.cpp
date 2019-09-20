@@ -590,10 +590,10 @@ void QGit::listChangedFiles(int show, int sort, bool reversed)
 
         opts.version = GIT_STATUS_OPTIONS_VERSION;
         opts.show = GIT_STATUS_SHOW_INDEX_AND_WORKDIR;
-        opts.flags = GIT_STATUS_OPT_RENAMES_HEAD_TO_INDEX | GIT_STATUS_OPT_RENAMES_INDEX_TO_WORKDIR;
+        opts.flags = GIT_STATUS_OPT_RENAMES_HEAD_TO_INDEX | GIT_STATUS_OPT_RENAMES_INDEX_TO_WORKDIR | GIT_STATUS_OPT_RECURSE_UNTRACKED_DIRS;
 
         if ((show == QGIT_STATUS_NONE)||(show & QGIT_STATUS_NEW))
-            opts.flags |= GIT_STATUS_OPT_INCLUDE_UNTRACKED | GIT_STATUS_OPT_RECURSE_UNTRACKED_DIRS;
+            opts.flags |= GIT_STATUS_OPT_INCLUDE_UNTRACKED;
 
         if ((show == QGIT_STATUS_NONE)||(show & QGIT_STATUS_IGNORED))
             opts.flags |= GIT_STATUS_OPT_INCLUDE_IGNORED;
