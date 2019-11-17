@@ -11,7 +11,7 @@ class QExtTextBrowser : public QTextBrowser
 {
 public:
     explicit QExtTextBrowser(QWidget* parent = nullptr);
-    virtual QVariant loadResource(int type, const QUrl &name) override;
+    QVariant loadResource(int type, const QUrl &name) override;
 
 private:
     QNetworkAccessManager m_nam;

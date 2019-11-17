@@ -11,8 +11,8 @@ class QCustomComboBox: public QComboBox
     Q_OBJECT
 public:
     explicit QCustomComboBox(QWidget *parent = nullptr);
-    virtual QSize sizeHint() const override final;
-    virtual QSize minimumSizeHint() const override final;
+    QSize sizeHint() const override;
+    QSize minimumSizeHint() const override;
     void setCurrentText(const QString &text);
     void setCurrentIcon(const QIcon &icon);
 
@@ -22,8 +22,8 @@ signals:
 public slots:
 
 protected:
-    virtual void paintEvent(QPaintEvent *event) override final;
-    virtual void mousePressEvent(QMouseEvent *event) override final;
+    void paintEvent(QPaintEvent *event) override;
+    void mousePressEvent(QMouseEvent *event) override;
 
 private slots:
     void listItemClicked(QListWidgetItem *item);

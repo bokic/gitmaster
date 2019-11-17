@@ -29,9 +29,9 @@ public slots:
     void responseGitDiff(QString first, QString second, QList<QGitDiffFile> diff, QGitError error);
 
 protected:
-    virtual void paintEvent(QPaintEvent *event) override;
-    virtual void mousePressEvent(QMouseEvent *event) override;
-    virtual void mouseMoveEvent(QMouseEvent *event) override;
+    void paintEvent(QPaintEvent *event) override;
+    void mousePressEvent(QMouseEvent *event) override;
+    void mouseMoveEvent(QMouseEvent *event) override;
 
 private:
     QGitDiffWidgetPrivate *m_private = nullptr;

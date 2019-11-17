@@ -11,5 +11,5 @@ public:
     explicit QComboBoxGitDiffOptions(QWidget *parent = nullptr);
 
 protected:
-    virtual void clicked(QListWidgetItem *item) override;
+    void clicked(QListWidgetItem *item) override;
 };

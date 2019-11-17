@@ -16,5 +16,5 @@ public:
     QComboBoxGitStatusFilesOrderFiles showSortBy() const;
 
 protected:
-    virtual void clicked(QListWidgetItem *item) override;
+    void clicked(QListWidgetItem *item) override;
 };
