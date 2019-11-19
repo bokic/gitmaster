@@ -51,7 +51,7 @@ void QGitRepoTreeItemDelegate::paint(QPainter *painter, const QStyleOptionViewIt
         painter->setFont(m_boldFont);
         painter->drawText(x, y + 17, text);
 
-        x += fmb.width(text) + 6;
+        x += fmb.horizontalAdvance(text) + 6;
     }
 
     text = index.data(QItemPath).toString();
@@ -91,7 +91,7 @@ void QGitRepoTreeItemDelegate::paint(QPainter *painter, const QStyleOptionViewIt
 
             painter->drawText(x, y + fm.height() - fm.descent(), text);
 
-            x += fm.width(text) + 4;
+            x += fm.horizontalAdvance(text) + 4;
         }
 
         if (deletedFiles.toInt() > 0)
@@ -104,7 +104,7 @@ void QGitRepoTreeItemDelegate::paint(QPainter *painter, const QStyleOptionViewIt
 
             painter->drawText(x, y + fm.height() - fm.descent(), text);
 
-            x += fm.width(text) + 4;
+            x += fm.horizontalAdvance(text) + 4;
         }
 
         if (newFiles.toInt() > 0)
@@ -117,7 +117,7 @@ void QGitRepoTreeItemDelegate::paint(QPainter *painter, const QStyleOptionViewIt
 
             painter->drawText(x, y + fm.height() - fm.descent(), text);
 
-            x += fm.width(text) + 4;
+            x += fm.horizontalAdvance(text) + 4;
         }
 
         if ((modifiedFiles.toInt() == 0)&&(deletedFiles.toInt() == 0)&&(newFiles.toInt() == 0)) {

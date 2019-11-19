@@ -123,7 +123,7 @@ void QGitDiffWidget::responseGitDiff(QString first, QString second, QList<QGitDi
             {
                 auto line = diffLine.content();
 
-                int currentLine = fm.width(QString::fromUtf8(line));
+                int currentLine = fm.horizontalAdvance(QString::fromUtf8(line));
 
                 if (currentLine > lineMax)
                     lineMax = currentLine;
