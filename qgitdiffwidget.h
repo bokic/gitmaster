@@ -9,6 +9,7 @@
 
 
 class QGitDiffWidgetPrivate;
+class QGitDiffWidgetPrivateLine;
 
 class QGitDiffWidget : public QWidget
 {
@@ -23,7 +24,7 @@ public:
 
 signals:
     void requestGitDiff(QString first, QString second, QList<QString> files);
-    void select(int file, int hunk, int line);
+    void select(QString file, QVector<QGitDiffWidgetLine> lines);
 
 public slots:
     void responseGitDiff(QString first, QString second, QList<QGitDiffFile> diff, QGitError error);

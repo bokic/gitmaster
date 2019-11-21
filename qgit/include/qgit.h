@@ -16,6 +16,14 @@
 #include <QDir>
 #include <QUrl>
 
+class QGitDiffWidgetLine
+{
+public:
+    QByteArray content;
+    int new_lineno = 0;
+    int old_lineno = 0;
+    char origin = '\0';
+};
 
 class QGit : public QObject
 {
@@ -23,13 +31,13 @@ class QGit : public QObject
 public:
     enum QGitFileStatus {
         QGIT_STATUS_NONE       = 0,
-        QGIT_STATUS_NEW        = (1u << 0),
-        QGIT_STATUS_MODIFIED   = (1u << 1),
-        QGIT_STATUS_DELETED    = (1u << 2),
-        QGIT_STATUS_RENAMED    = (1u << 3),
-        QGIT_STATUS_TYPECHANGE = (1u << 4),
-        QGIT_STATUS_IGNORED    = (1u << 5),
-        QGIT_STATUS_CONFLICTED = (1u << 6),
+        QGIT_STATUS_NEW        = (1U << 0),
+        QGIT_STATUS_MODIFIED   = (1U << 1),
+        QGIT_STATUS_DELETED    = (1U << 2),
+        QGIT_STATUS_RENAMED    = (1U << 3),
+        QGIT_STATUS_TYPECHANGE = (1U << 4),
+        QGIT_STATUS_IGNORED    = (1U << 5),
+        QGIT_STATUS_CONFLICTED = (1U << 6),
         QGIT_STATUS_ALL        = -1,
     };
     enum QGitFileSort {
@@ -43,7 +51,7 @@ public:
 
     explicit QGit(const QDir &path, QObject *parent = nullptr);
     explicit QGit(QObject *parent = nullptr);
-    virtual ~QGit();
+    ~QGit();
 
     bool setPath(const QDir &path);
     QDir path() const;
@@ -67,6 +75,8 @@ public slots:
     void commitDiffContent(QString first, QString second, QList<QString> files);
     void stageFiles(QStringList items);
     void unstageFiles(QStringList items);
+    void stageFileLines(QString filename, QVector<QGitDiffWidgetLine> lines);
+    void unstageFileLines(QString filename, QVector<QGitDiffWidgetLine> lines);
     void commit(QString message);
     void clone(QUrl url);
     void pull();

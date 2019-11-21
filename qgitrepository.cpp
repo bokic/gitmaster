@@ -97,6 +97,11 @@ QGitRepository::QGitRepository(const QString &path, QWidget *parent)
     connect(this, SIGNAL(repositoryGetCommitDiff(QString)), m_git, SLOT(commitDiff(QString)));
     connect(m_git, SIGNAL(commitDiffReply(QString,QGitCommit,QGitError)), this, SLOT(repositoryGetCommitDiffReply(QString,QGitCommit,QGitError)));
 
+    connect(ui->commit_diff, SIGNAL(select(QString,QVector<QGitDiffWidgetLine>)), this, SLOT(selectedLines(QString,QVector<QGitDiffWidgetLine>)));
+
+    connect(this, SIGNAL(stageFileLines(QString,QVector<QGitDiffWidgetLine>)), m_git, SLOT(stageFileLines(QString,QVector<QGitDiffWidgetLine>)));
+    connect(this, SIGNAL(unstageFileLines(QString,QVector<QGitDiffWidgetLine>)), m_git, SLOT(unstageFileLines(QString,QVector<QGitDiffWidgetLine>)));
+
     connect(ui->logHistory_commits->verticalScrollBar(), SIGNAL(sliderMoved(int)), this, SLOT(historyTableSliderMoved(int)));
 
     m_thread.start();
@@ -612,6 +617,8 @@ void QGitRepository::on_listWidget_staged_itemChanged(QListWidgetItem *item)
     {
         emit repositoryUnstageFiles(selectedItems);
     }
+
+    m_stageFiles = true;
 }
 
 void QGitRepository::on_listWidget_unstaged_itemChanged(QListWidgetItem *item)
@@ -639,6 +646,8 @@ void QGitRepository::on_listWidget_unstaged_itemChanged(QListWidgetItem *item)
     {
         emit repositoryStageFiles(selectedItems);
     }
+
+    m_stageFiles = false;
 }
 
 void QGitRepository::on_pushButton_commit_clicked()
@@ -664,6 +673,18 @@ void QGitRepository::historyTableSliderMoved(int pos)
         {
             fetchCommits();
         }
+    }
+}
+
+void QGitRepository::selectedLines(QString filename, QVector<QGitDiffWidgetLine> lines)
+{
+    if (m_stageFiles)
+    {
+        emit stageFileLines(filename, lines);
+    }
+    else
+    {
+        emit unstageFileLines(filename, lines);
     }
 }
 

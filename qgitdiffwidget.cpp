@@ -297,15 +297,43 @@ void QGitDiffWidget::paintEvent(QPaintEvent *event)
 
 void QGitDiffWidget::mousePressEvent(QMouseEvent *event)
 {
-    Q_UNUSED(event)
+    QVector<QGitDiffWidgetLine> lines;
 
-    qDebug() << "click";
+    Q_UNUSED(event)
 
     if ((!m_readonly)&&(m_hoverFile >= 0)&&(m_hoverHunk >= 0)&&(m_hoverLine >= -1))
     {
-        qDebug() << "emit select(" << m_hoverFile << "," << m_hoverHunk << "," << m_hoverLine << ")";
+        auto file = m_private->files.at(m_hoverFile);
 
-        emit select(m_hoverFile, m_hoverHunk, m_hoverLine);
+        if (m_hoverLine < 0)
+        {
+            for(const auto &line: file.hunks.at(m_hoverHunk).lines)
+            {
+                QGitDiffWidgetLine newLine;
+
+                newLine.content = line.content;
+                newLine.new_lineno = line.new_lineno;
+                newLine.old_lineno = line.old_lineno;
+                newLine.origin = line.origin;
+
+                lines.push_back(newLine);
+            }
+        }
+        else
+        {
+            QGitDiffWidgetLine newLine;
+
+            const auto &line = file.hunks.at(m_hoverHunk).lines.at(m_hoverLine);
+
+            newLine.content = line.content;
+            newLine.new_lineno = line.new_lineno;
+            newLine.old_lineno = line.old_lineno;
+            newLine.origin = line.origin;
+
+            lines.push_back(newLine);
+        }
+
+        emit select(file.new_file.path(), lines);
     }
 }
 

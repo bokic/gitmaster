@@ -5,6 +5,7 @@
 #include <QThread>
 #include <QWidget>
 
+#include "qgitdiffwidget.h"
 #include "qgit.h"
 #include "qgitcommit.h"
 
@@ -32,6 +33,8 @@ signals:
     void repositoryCommit(QString message);
     void repositoryGetCommits(QString object, int length);
     void repositoryGetCommitDiff(QString commitId);
+    void stageFileLines(QString filename, QVector<QGitDiffWidgetLine> lines);
+    void unstageFileLines(QString filename, QVector<QGitDiffWidgetLine> lines);
 
 private slots:
     void gravatarImageDownloadFinished();
@@ -45,6 +48,7 @@ private slots:
     void repositoryGetCommitsReply(QList<QGitCommit> commits, QGitError error);
     void repositoryGetCommitDiffReply(QString commitId, QGitCommit diff, QGitError error);
     void historyTableSliderMoved(int pos);
+    void selectedLines(QString filename, QVector<QGitDiffWidgetLine> lines);
     void on_repositoryDetail_currentChanged(int index);
     void on_logHistory_commits_currentCellChanged(int currentRow, int currentColumn, int previousRow, int previousColumn);
     void on_checkBox_StagedFiles_clicked();
@@ -63,7 +67,7 @@ private:
     void fetchCommits();
     void activateCommitOperation(bool activate);
     void fetchRepositoryChangedFiles();
-    Ui::QGitRepository *ui;
+    Ui::QGitRepository *ui = nullptr;
     QNetworkAccessManager m_networkManager;
     QString m_path;
     bool m_allCommitsLoaded;
@@ -71,5 +75,6 @@ private:
     QGitCommit m_unstagedDiff;
     QGitCommit m_commitDiff;
     QThread m_thread;
-    QGit *m_git;
+    bool m_stageFiles = true;
+    QGit *m_git = nullptr;
 };
