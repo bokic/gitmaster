@@ -98,7 +98,8 @@ QComboBoxGitStatusFiles::QComboBoxGitStatusFiles(QWidget *parent)
 void QComboBoxGitStatusFiles::updateText()
 {
     QString text, show, sort;
-    int showFilesIdx, sortFilesIdx;
+    int showFilesIdx;
+    int sortFilesIdx;
 
     showFilesIdx = showFiles();
     switch(showFilesIdx)
@@ -164,17 +165,23 @@ QComboBoxGitStatusFiles::QComboBoxGitStatusFilesShowFiles QComboBoxGitStatusFile
 {
     if (m_list->item(ITEM_PENDING)->checkState() == Qt::Checked) {
         return QShowPendingFiles;
-    } else if (m_list->item(ITEM_CONFLICTS)->checkState() == Qt::Checked) {
+    }
+    if (m_list->item(ITEM_CONFLICTS)->checkState() == Qt::Checked) {
         return QShowConflictFiles;
-    } else if (m_list->item(ITEM_UNTRACKED)->checkState() == Qt::Checked) {
+    }
+    if (m_list->item(ITEM_UNTRACKED)->checkState() == Qt::Checked) {
         return QShowUntracked;
-    } else if (m_list->item(ITEM_IGNORED)->checkState() == Qt::Checked) {
+    }
+    if (m_list->item(ITEM_IGNORED)->checkState() == Qt::Checked) {
         return QShowIgnored;
-    } else if (m_list->item(ITEM_CLEAN)->checkState() == Qt::Checked) {
+    }
+    if (m_list->item(ITEM_CLEAN)->checkState() == Qt::Checked) {
         return QShowClean;
-    } else if (m_list->item(ITEM_MODIFIED)->checkState() == Qt::Checked) {
+    }
+    if (m_list->item(ITEM_MODIFIED)->checkState() == Qt::Checked) {
         return QShowModified;
-    } else if (m_list->item(ITEM_ALL)->checkState() == Qt::Checked) {
+    }
+    if (m_list->item(ITEM_ALL)->checkState() == Qt::Checked) {
         return QShowAll;
     }
 
@@ -185,15 +192,20 @@ QComboBoxGitStatusFiles::QComboBoxGitStatusFilesOrderFiles QComboBoxGitStatusFil
 {
     if (m_list->item(ITEM_PATH_APLHA)->checkState() == Qt::Checked) {
         return QFilePathSortFiles;
-    } else if (m_list->item(ITEM_PATH_APLHA_REV)->checkState() == Qt::Checked) {
+    }
+    if (m_list->item(ITEM_PATH_APLHA_REV)->checkState() == Qt::Checked) {
         return QReversedFilePathSortFiles;
-    } else if (m_list->item(ITEM_FILE_APLHA)->checkState() == Qt::Checked) {
+    }
+    if (m_list->item(ITEM_FILE_APLHA)->checkState() == Qt::Checked) {
         return QFileNameSortFiles;
-    } else if (m_list->item(ITEM_FILE_APLHA_REV)->checkState() == Qt::Checked) {
+    }
+    if (m_list->item(ITEM_FILE_APLHA_REV)->checkState() == Qt::Checked) {
         return QReversedFileNameSortFiles;
-    } else if (m_list->item(ITEM_FILE_STATUS)->checkState() == Qt::Checked) {
+    }
+    if (m_list->item(ITEM_FILE_STATUS)->checkState() == Qt::Checked) {
         return QFileStatusSortFiles;
-    } else if (m_list->item(ITEM_CHECKED_UNCHECHED)->checkState() == Qt::Checked) {
+    }
+    if (m_list->item(ITEM_CHECKED_UNCHECHED)->checkState() == Qt::Checked) {
         return QCheckedUncheckedSortFiles;
     }
 
