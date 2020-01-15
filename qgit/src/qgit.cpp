@@ -11,11 +11,7 @@
 #include <QVector>
 #include <QDir>
 
-#ifdef Q_OS_WIN
-    #define LINE_END "\r\n"
-#else
-    #define LINE_END '\n'
-#endif
+#define LINE_END '\n'
 
 
 QGit::QGit(const QDir &path, QObject *parent)
@@ -1266,6 +1262,9 @@ void QGit::stageFileLines(QString filename, QVector<QGitDiffWidgetLine> lines)
         const char *blob_content = (const char *)git_blob_rawcontent(blob);
         git_off_t blob_size = git_blob_rawsize(blob);
         buffer = QByteArray::fromRawData(blob_content, blob_size);
+#ifdef Q_OS_WIN
+        buffer = buffer.replace("\r\n", "\n");
+#endif
         auto bufferLines = buffer.split(LINE_END);
 
         for(auto line = lines.count() - 1; line >= 0; line--)
