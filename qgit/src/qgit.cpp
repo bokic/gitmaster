@@ -576,7 +576,7 @@ void QGit::listChangedFiles(int show, int sort, bool reversed)
     git_repository *repo = nullptr;
     git_status_list *list = nullptr;
     QMap<QString,git_status_t> items;
-    git_status_options opts = {0, };
+    git_status_options opts = {0, GIT_STATUS_SHOW_INDEX_AND_WORKDIR, 0, {nullptr, 0}, nullptr};
     int res = 0;
     size_t index = 0;
 
@@ -796,9 +796,9 @@ void QGit::commitDiff(QString commitId)
                 }
 
                 size_t _count = git_diff_num_deltas(diff);
-                for(size_t c = 0; c < _count; c++)
+                for(size_t c2 = 0; c2 < _count; c2++)
                 {
-                    delta = git_diff_get_delta(diff, c);
+                    delta = git_diff_get_delta(diff, c2);
 
                     item.addFile(delta);
                 }
@@ -1322,6 +1322,9 @@ void QGit::stageFileLines(QString filename, QVector<QGitDiffWidgetLine> lines)
 
 void QGit::unstageFileLines(QString filename, QVector<QGitDiffWidgetLine> lines)
 {
+    Q_UNUSED(filename);
+    Q_UNUSED(lines);
+
     // TODO: Implement me void QGit::unstageFileLines(QString filename, QVector<QGitDiffWidgetLine> lines)
 }
 
