@@ -1,4 +1,5 @@
 *.pro.user
+*.pro.user.*
 /include
 bin/gitmaster*
 bin/gitmaster_d*
