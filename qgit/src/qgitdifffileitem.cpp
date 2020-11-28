@@ -77,7 +77,7 @@ quint32 QGitDiffFileItem::flags() const
     return m_flags;
 }
 
-qint64 QGitDiffFileItem::size() const
+quint64 QGitDiffFileItem::size() const
 {
     return m_size;
 }
