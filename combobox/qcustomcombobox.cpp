@@ -18,7 +18,7 @@ QCustomComboBox::QCustomComboBox(QWidget *parent)
     m_popup->setFrameStyle(QFrame::StyledPanel);
 
     QHBoxLayout *layout = new QHBoxLayout(m_popup);
-    layout->setMargin(0);
+    layout->setContentsMargins(0, 0, 0, 0);
 
     m_list = new QListWidget();
 
