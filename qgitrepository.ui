@@ -199,12 +199,6 @@
            </widget>
           </widget>
           <widget class="QScrollArea" name="scrollArea_diff_commit">
-           <property name="sizePolicy">
-            <sizepolicy hsizetype="Fixed" vsizetype="Expanding">
-             <horstretch>1</horstretch>
-             <verstretch>0</verstretch>
-            </sizepolicy>
-           </property>
            <property name="readonly" stdset="0">
             <bool>false</bool>
            </property>
@@ -254,7 +248,6 @@
               <widget class="QLabel" name="label_signatureEmail">
                <property name="font">
                 <font>
-                 <weight>75</weight>
                  <bold>true</bold>
                 </font>
                </property>
@@ -510,8 +503,8 @@
               <rect>
                <x>0</x>
                <y>0</y>
-               <width>90</width>
-               <height>429</height>
+               <width>68</width>
+               <height>435</height>
               </rect>
              </property>
              <property name="readonly" stdset="0">
