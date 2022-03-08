@@ -36,7 +36,6 @@ QComboBoxGitDiffOptions::QComboBoxGitDiffOptions(QWidget *parent)
     item->setFlags(Qt::NoItemFlags);
     m_list->addItem(item);
 
-
     item = new QListWidgetItem(tr("1"));
     item->setCheckState(Qt::Unchecked);
     m_list->addItem(item);
