@@ -16,12 +16,12 @@ QGitDiffHunk::QGitDiffHunk(const git_diff_hunk *hunk)
 
 QGitDiffHunk &QGitDiffHunk::operator=(QGitDiffHunk &&other) noexcept
 {
-    qSwap(m_header, other.m_header);
-    qSwap(m_new_lines, other.m_new_lines);
-    qSwap(m_new_start, other.m_new_start);
-    qSwap(m_old_lines, other.m_old_lines);
-    qSwap(m_old_start, other.m_old_start);
-    qSwap(m_lines, other.m_lines);
+    std::swap(m_header, other.m_header);
+    std::swap(m_new_lines, other.m_new_lines);
+    std::swap(m_new_start, other.m_new_start);
+    std::swap(m_old_lines, other.m_old_lines);
+    std::swap(m_old_start, other.m_old_start);
+    std::swap(m_lines, other.m_lines);
 
     return *this;
 }

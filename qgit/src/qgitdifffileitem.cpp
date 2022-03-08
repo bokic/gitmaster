@@ -16,11 +16,11 @@ QGitDiffFileItem::QGitDiffFileItem(const git_diff_file &file)
 
 QGitDiffFileItem &QGitDiffFileItem::operator=(QGitDiffFileItem &&other) noexcept
 {
-    qSwap(m_path, other.m_path);
-    qSwap(m_id, other.m_id);
-    qSwap(m_mode, other.m_mode);
-    qSwap(m_flags, other.m_flags);
-    qSwap(m_size, other.m_size);
+    std::swap(m_path, other.m_path);
+    std::swap(m_id, other.m_id);
+    std::swap(m_mode, other.m_mode);
+    std::swap(m_flags, other.m_flags);
+    std::swap(m_size, other.m_size);
 
     return *this;
 }

@@ -28,13 +28,13 @@ QGitDiffFile::QGitDiffFile(const QGitDiffFile &other)
 
 QGitDiffFile &QGitDiffFile::operator=(QGitDiffFile &&other) noexcept
 {
-    qSwap(m_new_file, other.m_new_file);
-    qSwap(m_old_file, other.m_old_file);
-    qSwap(m_flags, other.m_flags);
-    qSwap(m_nfiles, other.m_nfiles);
-    qSwap(m_simularity, other.m_simularity);
-    qSwap(m_status, other.m_status);
-    qSwap(m_hunks, other.m_hunks);
+    std::swap(m_new_file, other.m_new_file);
+    std::swap(m_old_file, other.m_old_file);
+    std::swap(m_flags, other.m_flags);
+    std::swap(m_nfiles, other.m_nfiles);
+    std::swap(m_simularity, other.m_simularity);
+    std::swap(m_status, other.m_status);
+    std::swap(m_hunks, other.m_hunks);
 
     return *this;
 }

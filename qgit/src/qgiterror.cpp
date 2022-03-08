@@ -9,8 +9,8 @@ QGitError::QGitError(const QString &functionName, int errorCode)
 
 QGitError &QGitError::operator=(QGitError &&other) noexcept
 {
-    qSwap(m_functionName, other.m_functionName);
-    qSwap(m_errorCode, other.m_errorCode);
+    std::swap(m_functionName, other.m_functionName);
+    std::swap(m_errorCode, other.m_errorCode);
 
     return *this;
 }

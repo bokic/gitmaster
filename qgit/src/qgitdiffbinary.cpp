@@ -9,8 +9,8 @@ QGitDiffBinary::QGitDiffBinary(const git_diff_binary *binary)
 
 QGitDiffBinary &QGitDiffBinary::operator=(QGitDiffBinary &&other) noexcept
 {
-    qSwap(m_oldFile, other.m_oldFile);
-    qSwap(m_newFile, other.m_newFile);
+    std::swap(m_oldFile, other.m_oldFile);
+    std::swap(m_newFile, other.m_newFile);
 
     return *this;
 }

@@ -9,8 +9,8 @@ QGitCommitDiffParent::QGitCommitDiffParent(const QByteArray &commitHash)
 
 QGitCommitDiffParent &QGitCommitDiffParent::operator=(QGitCommitDiffParent &&other) noexcept
 {
-    qSwap(m_commitHash, other.m_commitHash);
-    qSwap(m_files, other.m_files);
+    std::swap(m_commitHash, other.m_commitHash);
+    std::swap(m_files, other.m_files);
 
     return *this;
 }

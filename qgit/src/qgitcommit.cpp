@@ -13,12 +13,12 @@ QGitCommit::QGitCommit(const QString &id, const QList<QGitCommitDiffParent> &par
 
 QGitCommit &QGitCommit::operator=(QGitCommit &&other) noexcept
 {
-    qSwap(m_id, other.m_id);
-    qSwap(m_parents, other.m_parents);
-    qSwap(m_time, other.m_time);
-    qSwap(m_author, other.m_author);
-    qSwap(m_commiter, other.m_commiter);
-    qSwap(m_message, other.m_message);
+    std::swap(m_id, other.m_id);
+    std::swap(m_parents, other.m_parents);
+    std::swap(m_time, other.m_time);
+    std::swap(m_author, other.m_author);
+    std::swap(m_commiter, other.m_commiter);
+    std::swap(m_message, other.m_message);
 
     return *this;
 }
