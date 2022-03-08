@@ -883,5 +883,5 @@ void QGitRepository::fetchRepositoryChangedFiles()
     ui->listWidget_unstaged->clear();
     ui->listWidget_staged->setEnabled(false);
     ui->listWidget_unstaged->setEnabled(false);
-    repositoryChangedFiles(show, sort, reversed);
+    emit repositoryChangedFiles(show, sort, reversed);
 }

@@ -63,7 +63,7 @@ QSize QCustomComboBox::minimumSizeHint() const
     ret.setHeight(qMax(qCeil(ret.height()), 22));
 
     if (!iconSizes.isEmpty()) {
-        ret.setWidth(qMax(ret.width(), m_icon.availableSizes().first().height()));
+        ret.setWidth(qMax(ret.width(), iconSizes.first().height()));
     }
 
     ret += QSize(ret.height() + 8, 4);
