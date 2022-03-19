@@ -5,6 +5,7 @@
 #include "qgiterror.h"
 #include "git2.h"
 
+#include <QProcessEnvironment>
 #include <QApplication>
 #include <QVector>
 #include <QList>
@@ -35,6 +36,11 @@ void registerTypes()
 int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
+
+#ifdef Q_OS_UNIX
+    if (QProcessEnvironment::systemEnvironment().value("XDG_CURRENT_DESKTOP") == "XFCE")
+        QApplication::setStyle("gtk2");
+#endif
 
     setAppSettings();
     registerTypes();
