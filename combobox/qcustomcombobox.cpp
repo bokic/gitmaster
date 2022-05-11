@@ -141,9 +141,9 @@ void QCustomComboBox::mousePressEvent(QMouseEvent *event)
         {
             m_popup->move(QPoint(0, m_popup->pos().y()));
         }
-        else if (m_popup->pos().x() + m_popup->width() > currentScreen->size().width())
+        else if (m_popup->pos().x() + m_popup->width() > currentScreen->geometry().right())
         {
-            m_popup->move(QPoint(currentScreen->size().width() - m_popup->width(), m_popup->pos().y()));
+            m_popup->move(QPoint(currentScreen->geometry().right() - m_popup->width(), m_popup->pos().y()));
         }
 
         m_popup->show();
