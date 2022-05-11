@@ -350,14 +350,14 @@ void QGitDiffWidget::mouseMoveEvent(QMouseEvent *event)
     int file_index = 0;
     for(const auto &file : m_private->files)
     {
-        if (file.rect.contains(event->localPos().toPoint()))
+        if (file.rect.contains(event->position().toPoint()))
         {
             l_hoverFile = file_index;
 
             int hunk_index = 0;
             for(const auto &hunk : file.hunks)
             {
-                if (hunk.rect.contains(event->localPos().toPoint()))
+                if (hunk.rect.contains(event->position().toPoint()))
                 {
                     l_hoverHunk = hunk_index;
 
@@ -366,7 +366,7 @@ void QGitDiffWidget::mouseMoveEvent(QMouseEvent *event)
                         int line_index = 0;
                         for(const auto &line : hunk.lines)
                         {
-                            if (line.rect.contains(event->localPos().toPoint()))
+                            if (line.rect.contains(event->position().toPoint()))
                             {
                                 if ((line.origin == '-')||(line.origin == '+'))
                                 {

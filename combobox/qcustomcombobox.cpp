@@ -121,7 +121,7 @@ void QCustomComboBox::mousePressEvent(QMouseEvent *event)
 
     if (m_popup->isHidden())
     {
-        currentScreen = QApplication::screenAt(event->globalPos());
+        currentScreen = QApplication::screenAt(event->globalPosition().toPoint());
 
         m_popup->move(mapToGlobal(QPoint(0, height())));
 
