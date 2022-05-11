@@ -10,10 +10,8 @@
 
 QExtTextBrowser::QExtTextBrowser(QWidget* parent)
     : QTextBrowser(parent)
+    , m_imgPath(QStandardPaths::writableLocation(QStandardPaths::AppDataLocation).append("/webimgs"))
 {
-    m_imgPath = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
-
-    m_imgPath.append("/webimgs");
     QDir dir;
 
     if (!dir.exists(m_imgPath))

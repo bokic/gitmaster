@@ -5,10 +5,8 @@
 
 QLogHistoryItemDelegate::QLogHistoryItemDelegate(QWidget *parent)
     : QStyledItemDelegate(parent)
+    , m_colors({QColor(71, 143, 178)})
 {
-    m_colors = {
-            QColor(71, 143, 178)
-    };
 }
 
 void QLogHistoryItemDelegate::paint(QPainter *painter, const QStyleOptionViewItem &option, const QModelIndex &index) const
