@@ -6,7 +6,9 @@
 #include "qgitrepository.h"
 
 #include <QTreeWidgetItem>
+#include <QStyleFactory>
 #include <QInputDialog>
+#include <QActionGroup>
 #include <QMessageBox>
 #include <QSettings>
 
@@ -34,6 +36,33 @@ QGitMasterMainWindow::QGitMasterMainWindow(QWidget *parent)
     ui->treeWidget->setItemDelegate(treeDelegate);
 
     readSettings();
+
+    auto themes = QStyleFactory::keys();
+
+    if ((m_appTheme.isEmpty())||(!themes.contains(m_appTheme)))
+        m_appTheme = QApplication::style()->name();
+    else
+        QApplication::setStyle(QStyleFactory::create(m_appTheme));
+
+    auto themeGroup = new QActionGroup(this);
+
+    for(const auto &theme: themes)
+    {
+        QAction *newAction = new QAction(ui->menu_Themes);
+
+        newAction->setText(theme);
+        newAction->setCheckable(true);
+        themeGroup->addAction(newAction);
+
+        if (m_appTheme.compare(theme, Qt::CaseInsensitive) == 0)
+        {
+            newAction->setChecked(true);
+        }
+
+        ui->menu_Themes->addAction(newAction);
+
+        connect(newAction, &QAction::triggered, this, &QGitMasterMainWindow::on_themeChanged_triggered);
+    }
 }
 
 QGitMasterMainWindow::~QGitMasterMainWindow()
@@ -88,6 +117,8 @@ void QGitMasterMainWindow::readSettings()
 
         ui->treeWidget->addTopLevelItem(item);
     }
+
+    m_appTheme = settings.value("theme").toString();
 }
 
 void QGitMasterMainWindow::writeSettings()
@@ -300,5 +331,22 @@ void QGitMasterMainWindow::on_actionStash_triggered()
         if(!stashName.isEmpty()) {
             widget->stash(stashName);
         }
+    }
+}
+
+void QGitMasterMainWindow::on_themeChanged_triggered(bool checked)
+{
+    QAction *menu = nullptr;
+    QSettings settings;
+
+    menu = dynamic_cast<QAction *>(sender());
+    if (menu)
+    {
+        auto name = menu->text();
+
+        QApplication::setStyle(QStyleFactory::create(name));
+        menu->setChecked(true);
+
+        settings.setValue("theme", name);
     }
 }

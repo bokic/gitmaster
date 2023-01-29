@@ -35,8 +35,11 @@ private slots:
     void on_tabWidget_currentChanged(int index);
     void on_actionStash_triggered();
 
+    void on_themeChanged_triggered(bool checked);
+
 private:
     void readSettings();
 
-    Ui::QGitMasterMainWindow *ui;
+    Ui::QGitMasterMainWindow *ui = nullptr;
+    QString m_appTheme;
 };

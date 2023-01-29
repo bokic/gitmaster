@@ -162,7 +162,7 @@
      <x>0</x>
      <y>0</y>
      <width>971</width>
-     <height>19</height>
+     <height>23</height>
     </rect>
    </property>
    <widget class="QMenu" name="menu_File">
@@ -192,6 +192,11 @@
     <property name="title">
      <string>&amp;View</string>
     </property>
+    <widget class="QMenu" name="menu_Themes">
+     <property name="title">
+      <string>&amp;Themes</string>
+     </property>
+    </widget>
     <addaction name="actionShow_Hide_Bookmarks"/>
     <addaction name="actionShow_Hosted_Repositories"/>
     <addaction name="actionRefresh"/>
@@ -203,6 +208,8 @@
     <addaction name="actionFile_Status_View"/>
     <addaction name="actionLog_View"/>
     <addaction name="actionSearch_View"/>
+    <addaction name="separator"/>
+    <addaction name="menu_Themes"/>
     <addaction name="separator"/>
     <addaction name="actionFull_Screen"/>
    </widget>
@@ -612,12 +619,28 @@
    <slot>trigger()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>821</x>
-     <y>556</y>
+     <x>256</x>
+     <y>575</y>
     </hint>
     <hint type="destinationlabel">
      <x>-1</x>
      <y>-1</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>actionExit</sender>
+   <signal>triggered()</signal>
+   <receiver>QGitMasterMainWindow</receiver>
+   <slot>close()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>485</x>
+     <y>299</y>
     </hint>
    </hints>
   </connection>
