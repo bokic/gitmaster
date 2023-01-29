@@ -257,6 +257,13 @@ void QGitMasterMainWindow::on_actionCloneNew_triggered()
     }
 }
 
+
+void QGitMasterMainWindow::on_actionOpen_triggered()
+{
+    Q_UNIMPLEMENTED();
+}
+
+
 void QGitMasterMainWindow::on_actionNewFolderRepository_triggered()
 {
     Q_UNIMPLEMENTED();
@@ -280,6 +287,41 @@ void QGitMasterMainWindow::on_actionDeleteRepository_triggered()
 }
 
 void QGitMasterMainWindow::on_actionSettingsRepository_triggered()
+{
+    Q_UNIMPLEMENTED();
+}
+
+void QGitMasterMainWindow::on_actionOpen_Bookmarked_triggered()
+{
+    Q_UNIMPLEMENTED();
+}
+
+void QGitMasterMainWindow::on_actionUndo_triggered()
+{
+    Q_UNIMPLEMENTED();
+}
+
+void QGitMasterMainWindow::on_actionRedo_triggered()
+{
+    Q_UNIMPLEMENTED();
+}
+
+void QGitMasterMainWindow::on_actionCut_triggered()
+{
+    Q_UNIMPLEMENTED();
+}
+
+void QGitMasterMainWindow::on_actionCopy_triggered()
+{
+    Q_UNIMPLEMENTED();
+}
+
+void QGitMasterMainWindow::on_actionPaste_triggered()
+{
+    Q_UNIMPLEMENTED();
+}
+
+void QGitMasterMainWindow::on_actionSelect_All_triggered()
 {
     Q_UNIMPLEMENTED();
 }
