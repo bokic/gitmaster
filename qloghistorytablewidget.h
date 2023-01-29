@@ -10,7 +10,7 @@
 class QLogHistoryTableWidget : public QTableWidget
 {
 public:
-    QLogHistoryTableWidget(QWidget *parent = nullptr);
+    explicit QLogHistoryTableWidget(QWidget *parent = nullptr);
 
     void addCommit(const QGitCommit &commit);
 

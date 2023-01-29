@@ -33,5 +33,5 @@ private slots:
     void on_checkBoxCreateNewRepositoryBookmark_stateChanged(int state);
 
 private:
-    Ui::QNewRepositoryDialog *ui;
+    Ui::QNewRepositoryDialog *ui = nullptr;
 };

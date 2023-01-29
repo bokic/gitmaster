@@ -21,7 +21,7 @@ public slots:
 private:
     void refreshItem();
     QThread m_thread;
-    QGit *m_git;
+    QGit *m_git = nullptr;
     int m_refreshIndex;
 
 signals:
