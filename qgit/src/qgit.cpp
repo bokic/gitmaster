@@ -10,6 +10,7 @@
 #include <QVector>
 #include <QDir>
 
+
 #define LINE_END '\n'
 
 
@@ -450,7 +451,7 @@ void QGit::stashSave(QString name)
     //git_index *index = nullptr;
     git_oid *oid = nullptr;
 
-    QStringList stashes;
+    //QStringList stashes;
     int res = 0;
 
     QGitError error;
