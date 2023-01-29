@@ -2,7 +2,6 @@
 
 #include "qgitcommitdiffparent.h"
 #include "qgitsignature.h"
-#include "qgitdifffile.h"
 
 #include <QDateTime>
 #include <QString>

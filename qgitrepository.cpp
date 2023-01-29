@@ -1,5 +1,4 @@
 #include "qgitmastermainwindow.h"
-#include "ui_qgitmastermainwindow.h"
 #include "qloghistoryitemdelegate.h"
 #include "qgitrepository.h"
 #include "ui_qgitrepository.h"

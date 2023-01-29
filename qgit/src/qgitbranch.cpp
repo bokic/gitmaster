@@ -1,5 +1,4 @@
 #include "qgitbranch.h"
-#include "git2.h"
 
 #include <QString>
 

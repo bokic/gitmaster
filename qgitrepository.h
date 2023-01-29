@@ -5,7 +5,6 @@
 #include <QThread>
 #include <QWidget>
 
-#include "qgitdiffwidget.h"
 #include "qgit.h"
 #include "qgitcommit.h"
 

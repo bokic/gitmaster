@@ -1,6 +1,5 @@
 #pragma once
 
-#include "git2.h"
 #include "qgitdifffile.h"
 #include "qgitdiffhunk.h"
 

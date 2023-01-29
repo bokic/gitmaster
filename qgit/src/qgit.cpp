@@ -3,7 +3,6 @@
 #include "qgitdiffhunk.h"
 #include "qgitdiffline.h"
 #include "qgiterror.h"
-#include "git2.h"
 
 #include <QWriteLocker>
 #include <QReadLocker>
