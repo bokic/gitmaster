@@ -55,7 +55,6 @@ public:
 
     bool setPath(const QDir &path);
     QDir path() const;
-    void abort();
     static QString getBranchNameFromPath(const QString &path);
     static int createLocalRepository(const QDir &path);
     static bool isGitRepository(const QDir &path);
@@ -110,6 +109,4 @@ signals:
 private:
     QReadWriteLock m_pathLock;
     QDir m_path;
-
-    volatile int m_abort = 0;
 };

@@ -30,7 +30,6 @@ private:
     QString m_url;
     QString m_path;
     QGit *m_git = nullptr;
-    bool m_aborted;
 
 signals:
 	void clone(QUrl url);

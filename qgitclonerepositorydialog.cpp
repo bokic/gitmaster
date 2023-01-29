@@ -7,7 +7,6 @@ QGitCloneRepositoryDialog::QGitCloneRepositoryDialog(const QString &url, const Q
     , m_url(url)
     , m_path(path)
     , m_git(new QGit())
-    , m_aborted(false)
 {
     ui->setupUi(this);
 
@@ -48,8 +47,7 @@ void QGitCloneRepositoryDialog::on_pushButton_close_clicked()
         ui->pushButton_close->setText(tr("&Aborting"));
         ui->pushButton_close->setEnabled(false);
 
-        m_git->abort();
-        m_aborted = true;
+        m_thread.requestInterruption();
     }
 }
 
@@ -57,7 +55,7 @@ void QGitCloneRepositoryDialog::cloneReply(QGitError error)
 {
     Q_UNUSED(error)
 
-    if (m_aborted)
+    if (m_thread.isRunning())
     {
        reject();
 

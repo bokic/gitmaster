@@ -6,6 +6,7 @@
 
 #include <QWriteLocker>
 #include <QReadLocker>
+#include <QThread>
 #include <QString>
 #include <QVector>
 #include <QDir>
@@ -49,11 +50,6 @@ bool QGit::setPath(const QDir &path)
 QDir QGit::path() const
 {
     return m_path;
-}
-
-void QGit::abort()
-{
-    m_abort = 1;
 }
 
 QString QGit::getBranchNameFromPath(const QString &path)
@@ -1531,7 +1527,7 @@ void QGit::clone(QUrl url)
 
             emit _this->cloneTransferReply(stats->total_objects, stats->indexed_objects, stats->received_objects, stats->local_objects, stats->total_deltas, stats->indexed_deltas, stats->received_bytes);
 
-            return _this->m_abort;
+            return QThread::currentThread()->isInterruptionRequested();
         };
 
         opts.checkout_opts.progress_payload = this;
@@ -1547,8 +1543,6 @@ void QGit::clone(QUrl url)
 
             _this = nullptr;
         };
-
-        m_abort = 0;
 
         res = git_clone(&repo, url.toString().toUtf8().constData(), m_path.absolutePath().toUtf8().constData(), &opts);
         if (res)
