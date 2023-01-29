@@ -127,3 +127,7 @@ set_target_properties(gitmaster PROPERTIES
 if(QT_VERSION_MAJOR EQUAL 6)
     qt_finalize_executable(gitmaster)
 endif()
+
+install(TARGETS gitmaster
+    PUBLIC_HEADER
+)
