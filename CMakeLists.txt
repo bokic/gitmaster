@@ -8,13 +8,13 @@ set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
 
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/bin)
 
-find_package(QT NAMES Qt6 Qt5 COMPONENTS Gui Widgets Network REQUIRED)
-find_package(Qt${QT_VERSION_MAJOR} COMPONENTS Gui Widgets Network REQUIRED)
+find_package(QT NAMES Qt6 COMPONENTS Gui Widgets Network REQUIRED)
+find_package(Qt6 COMPONENTS Gui Widgets Network REQUIRED)
 
 set(PROJECT_SOURCES
     main.cpp
@@ -87,18 +87,11 @@ IF (WIN32)
     target_sources(foobar PRIVATE resource.rc)
 ENDIF()
 
-if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
-    message('qt6')
-    qt_add_executable(gitmaster
-        MANUAL_FINALIZATION
-        ${PROJECT_SOURCES}
-    )
-else()
-    message('qt5')
-    add_executable(gitmaster
-        ${PROJECT_SOURCES}
-    )
-endif()
+message('qt6')
+qt_add_executable(gitmaster
+    MANUAL_FINALIZATION
+    ${PROJECT_SOURCES}
+)
 
 target_include_directories(gitmaster PRIVATE combobox qgit/include)
 
@@ -113,9 +106,9 @@ ELSE()
 ENDIF()
 
 target_link_libraries(gitmaster PRIVATE
-    Qt${QT_VERSION_MAJOR}::Widgets
-    Qt${QT_VERSION_MAJOR}::Gui
-    Qt${QT_VERSION_MAJOR}::Network
+    Qt6::Widgets
+    Qt6::Gui
+    Qt6::Network
 )
 
 IF (WIN32)
