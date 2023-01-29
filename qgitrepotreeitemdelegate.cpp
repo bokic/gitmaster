@@ -1,9 +1,13 @@
 #include "qgitrepotreeitemdelegate.h"
+#include <QApplication>
 #include <QPainter>
+#include <QPalette>
 #include <QColor>
+#include <QStyle>
+
 
 QGitRepoTreeItemDelegate::QGitRepoTreeItemDelegate(QObject *parent)
-    : QAbstractItemDelegate(parent)
+    : QStyledItemDelegate(parent)
     , m_boldFont("Arial", 10, QFont::Bold, false)
     , m_normalFont("Arial", 10, QFont::Normal, false)
 {
@@ -13,29 +17,28 @@ void QGitRepoTreeItemDelegate::paint(QPainter *painter, const QStyleOptionViewIt
 {
     QFontMetrics fm(m_normalFont);
     QFontMetrics fmb(m_boldFont);
+    QColor background;
     QString text;
 
-    painter->setPen(QPen(Qt::NoPen));
-    if (option.state & QStyle::State_Selected) {
-        if (option.state & QStyle::State_Active) {
-            painter->setBrush(QBrush(QPalette().color(QPalette::Active, QPalette::Highlight)));
-        } else {
-            painter->setBrush(QBrush(QPalette().color(QPalette::Inactive, QPalette::Highlight)));
-        }
-    } else {
-        if (option.state & QStyle::State_Active) {
-            painter->setBrush(QBrush(QPalette().color(QPalette::Active, QPalette::Base)));
-        } else {
-            painter->setBrush(QBrush(QPalette().color(QPalette::Inactive, QPalette::Base)));
-        }
-    }
+    background = QPalette().color(
+                option.state & QStyle::State_Active?
+                    QPalette::Active:
+                    QPalette::Inactive,
+                option.state & QStyle::State_Selected?
+                    QPalette::Highlight:
+                    QPalette::Base
+                );
 
-    painter->drawRect(option.rect);
-
-    painter->setPen(QPen(QPalette().color(QPalette::Active, QPalette::Text)));
+    auto modifiedFiles = index.data(QItemModifiedFiles);
+    auto deletedFiles = index.data(QItemDeletedFiles);
+    auto newFiles = index.data(QItemNewFiles);
+    auto unversionedFiles = index.data(QItemUnversionedFiles);
+    auto branchName = index.data(QItemBranchName);
 
     int x = option.rect.left();
     int y = option.rect.top();
+
+    painter->fillRect(option.rect, background);
 
     if(!m_branchLogoImage.isNull())
     {
@@ -48,6 +51,7 @@ void QGitRepoTreeItemDelegate::paint(QPainter *painter, const QStyleOptionViewIt
 
     if (!text.isEmpty())
     {
+        painter->setPen(QPen(QPalette().color(QPalette::Active, QPalette::Text)));
         painter->setFont(m_boldFont);
         painter->drawText(x, y + 17, text);
 
@@ -59,17 +63,16 @@ void QGitRepoTreeItemDelegate::paint(QPainter *painter, const QStyleOptionViewIt
     if (!text.isEmpty())
     {
         painter->setFont(m_normalFont);
-        painter->setPen(QPen(QPalette().color(QPalette::Disabled, QPalette::Text)));
+        painter->setPen(QPen(QPalette().color(
+                                 QPalette::Disabled,
+                                 option.state & QStyle::State_Selected?
+                                     QPalette::HighlightedText:
+                                     QPalette::Text
+                                 )));
         painter->drawText(x, y + 17, text);
 
         //x += fm.width(text) + 6;
     }
-
-    const QVariant &modifiedFiles = index.data(QItemModifiedFiles);
-    const QVariant &deletedFiles = index.data(QItemDeletedFiles);
-    const QVariant &newFiles = index.data(QItemNewFiles);
-    const QVariant &unversionedFiles = index.data(QItemUnversionedFiles);
-    const QVariant &branchName = index.data(QItemBranchName);
 
     x = option.rect.x() + 10;
     y = option.rect.y() + 24;
@@ -88,9 +91,7 @@ void QGitRepoTreeItemDelegate::paint(QPainter *painter, const QStyleOptionViewIt
             x += m_fileStatusModifiedImage.width() + 1;
 
             text = QString::number(modifiedFiles.toInt());
-
             painter->drawText(x, y + fm.height() - fm.descent(), text);
-
             x += fm.horizontalAdvance(text) + 4;
         }
 
@@ -101,9 +102,7 @@ void QGitRepoTreeItemDelegate::paint(QPainter *painter, const QStyleOptionViewIt
             x += m_fileStatusRemovedImage.width() + 1;
 
             text = QString::number(deletedFiles.toInt());
-
             painter->drawText(x, y + fm.height() - fm.descent(), text);
-
             x += fm.horizontalAdvance(text) + 4;
         }
 
@@ -114,15 +113,12 @@ void QGitRepoTreeItemDelegate::paint(QPainter *painter, const QStyleOptionViewIt
             x += m_fileStatusNewImage.width() + 1;
 
             text = QString::number(newFiles.toInt());
-
             painter->drawText(x, y + fm.height() - fm.descent(), text);
-
             x += fm.horizontalAdvance(text) + 4;
         }
 
         if ((modifiedFiles.toInt() == 0)&&(deletedFiles.toInt() == 0)&&(newFiles.toInt() == 0)) {
             painter->drawImage(x, y, m_fileStatusOkImage);
-
             x += m_fileStatusOkImage.width() + 4;
         }
     }

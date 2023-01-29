@@ -1,10 +1,10 @@
 #pragma once
 
-#include <QAbstractItemDelegate>
+#include <QStyledItemDelegate>
 #include <QImage>
 #include <QFont>
 
-class QGitRepoTreeItemDelegate : public QAbstractItemDelegate
+class QGitRepoTreeItemDelegate : public QStyledItemDelegate
 {
     Q_OBJECT
 public:
