@@ -361,7 +361,7 @@ void QGitDiffWidget::mouseMoveEvent(QMouseEvent *event)
                 {
                     l_hoverHunk = hunk_index;
 
-                    if (event->x() >= 100)
+                    if (event->position().x() >= 100)
                     {
                         int line_index = 0;
                         for(const auto &line : hunk.lines)
