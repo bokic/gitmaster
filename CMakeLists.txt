@@ -87,7 +87,6 @@ IF (WIN32)
     target_sources(foobar PRIVATE resource.rc)
 ENDIF()
 
-message('qt6')
 qt_add_executable(gitmaster
     MANUAL_FINALIZATION
     ${PROJECT_SOURCES}
