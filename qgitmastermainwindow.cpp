@@ -326,6 +326,41 @@ void QGitMasterMainWindow::on_actionSelect_All_triggered()
     Q_UNIMPLEMENTED();
 }
 
+void QGitMasterMainWindow::on_actionShow_Hide_Bookmarks_triggered()
+{
+    Q_UNIMPLEMENTED();
+}
+
+
+void QGitMasterMainWindow::on_actionShow_Hosted_Repositories_triggered()
+{
+    Q_UNIMPLEMENTED();
+}
+
+
+void QGitMasterMainWindow::on_actionRefresh_triggered()
+{
+    Q_UNIMPLEMENTED();
+}
+
+
+void QGitMasterMainWindow::on_actionClose_Tab_triggered()
+{
+    Q_UNIMPLEMENTED();
+}
+
+
+void QGitMasterMainWindow::on_actionNext_Tab_triggered()
+{
+    Q_UNIMPLEMENTED();
+}
+
+
+void QGitMasterMainWindow::on_actionPrevious_Tab_triggered()
+{
+    Q_UNIMPLEMENTED();
+}
+
 void QGitMasterMainWindow::on_treeWidget_itemDoubleClicked(QTreeWidgetItem *item, int column)
 {
     QString repositoryName = item->data(column, Qt::DisplayRole).toString();

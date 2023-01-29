@@ -37,6 +37,13 @@ private slots:
     void on_actionPaste_triggered();
     void on_actionSelect_All_triggered();
 
+    void on_actionShow_Hide_Bookmarks_triggered();
+    void on_actionShow_Hosted_Repositories_triggered();
+    void on_actionRefresh_triggered();
+    void on_actionClose_Tab_triggered();
+    void on_actionNext_Tab_triggered();
+    void on_actionPrevious_Tab_triggered();
+
     void on_actionNewFolderRepository_triggered();
     void on_actionDeleteRepository_triggered();
     void on_actionSettingsRepository_triggered();
