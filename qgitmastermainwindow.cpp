@@ -361,6 +361,19 @@ void QGitMasterMainWindow::on_actionPrevious_Tab_triggered()
     Q_UNIMPLEMENTED();
 }
 
+void QGitMasterMainWindow::on_actionFull_Screen_triggered()
+{
+    if (ui->actionFull_Screen->isChecked())
+    {
+        m_prevWindowState = windowState();
+        setWindowState(Qt::WindowFullScreen);
+    }
+    else
+    {
+        setWindowState(m_prevWindowState);
+    }
+}
+
 void QGitMasterMainWindow::on_treeWidget_itemDoubleClicked(QTreeWidgetItem *item, int column)
 {
     QString repositoryName = item->data(column, Qt::DisplayRole).toString();

@@ -43,6 +43,7 @@ private slots:
     void on_actionClose_Tab_triggered();
     void on_actionNext_Tab_triggered();
     void on_actionPrevious_Tab_triggered();
+    void on_actionFull_Screen_triggered();
 
     void on_actionNewFolderRepository_triggered();
     void on_actionDeleteRepository_triggered();
@@ -58,5 +59,6 @@ private:
     void readSettings();
 
     Ui::QGitMasterMainWindow *ui = nullptr;
+    Qt::WindowStates m_prevWindowState = Qt::WindowNoState;
     QString m_appTheme;
 };
