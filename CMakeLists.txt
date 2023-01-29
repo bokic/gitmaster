@@ -127,6 +127,5 @@ if(QT_VERSION_MAJOR EQUAL 6)
     qt_finalize_executable(gitmaster)
 endif()
 
-install(TARGETS gitmaster
-    PUBLIC_HEADER
-)
+set(CMAKE_INSTALL_PREFIX /usr)
+install(TARGETS gitmaster)
