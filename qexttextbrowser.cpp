@@ -48,7 +48,7 @@ QVariant QExtTextBrowser::loadResource(int type, const QUrl &name)
 
             connect(
                 reply, &QNetworkReply::finished,
-                [=]() {
+                this, [this, filename, reply]() {
                     QByteArray ba = reply->readAll();
 
                     if (!ba.isEmpty())
