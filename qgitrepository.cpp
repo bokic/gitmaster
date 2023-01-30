@@ -169,12 +169,17 @@ void QGitRepository::repositoryBranchesAndTagsReply(QList<QGitBranch> branches, 
     Q_UNUSED(error)
 
     QList<QTreeWidgetItem *> items;
+    QTreeWidgetItem *itemWorkingCopy = new QTreeWidgetItem(QStringList() << tr("Working Copy"));
     QTreeWidgetItem *itemFileStatus = new QTreeWidgetItem(QStringList() << tr("File Status"));
     QTreeWidgetItem *itemLocalBranches = new QTreeWidgetItem(QStringList() << tr("Branches"));
     QTreeWidgetItem *itemTags = new QTreeWidgetItem(QStringList() << tr("Tags"));
     QTreeWidgetItem *itemRemoteBranches = new QTreeWidgetItem(QStringList() << tr("Remotes"));
 
-    itemFileStatus->addChild(new QTreeWidgetItem(QStringList() << tr("Working Copy")));
+
+    itemWorkingCopy->setIcon(0, QIcon(":/small/white_checkbox"));
+    itemFileStatus->addChild(itemWorkingCopy);
+
+    auto current_branch = QGit::getBranchNameFromPath(m_git->path().path());
 
     for(const auto &branch: branches)
     {
@@ -205,6 +210,19 @@ void QGitRepository::repositoryBranchesAndTagsReply(QList<QGitBranch> branches, 
                     if (!found)
                     {
                         QTreeWidgetItem *child = new QTreeWidgetItem(QStringList() << name);
+                        if (name == current_branch)
+                        {
+                            auto font = child->font(0);
+                            font.setBold(true);
+                            child->setFont(0, font);
+
+                            child->setIcon(0, QIcon(":/small/current_branch"));
+                        }
+                        else
+                        {
+                            child->setIcon(0, QIcon(":/small/branch"));
+                        }
+
                         item->addChild(child);
                         item = child;
                     }
@@ -236,6 +254,12 @@ void QGitRepository::repositoryBranchesAndTagsReply(QList<QGitBranch> branches, 
                     if (!found)
                     {
                         QTreeWidgetItem *child = new QTreeWidgetItem(QStringList() << name);
+
+                        if (depth == 2)
+                            child->setIcon(0, QIcon(":/small/remote"));
+                        else
+                            child->setIcon(0, QIcon(":/small/remote_branch"));
+
                         item->addChild(child);
                         item = child;
                     }
@@ -248,6 +272,7 @@ void QGitRepository::repositoryBranchesAndTagsReply(QList<QGitBranch> branches, 
     {
         QTreeWidgetItem *child = new QTreeWidgetItem(QStringList() << tag);
 
+        child->setIcon(0, QIcon(":/small/tag"));
         itemTags->addChild(child);
     }
 

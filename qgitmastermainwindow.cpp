@@ -26,11 +26,11 @@ QGitMasterMainWindow::QGitMasterMainWindow(QWidget *parent)
     auto treeDelegate = new QGitRepoTreeItemDelegate(this);
 
     treeDelegate->setImages(
-                QImage(":/images/gray_branch"),
-                QImage(":/images/file_ok"),
-                QImage(":/images/file_new"),
-                QImage(":/images/file_modified"),
-                QImage(":/images/file_removed"),
+                QImage(":/small/git"),
+                QImage(":/small/clean"),
+                QImage(":/small/unknown"),
+                QImage(":/small/modified"),
+                QImage(":/small/deleted"),
                 QImage(":/images/branch_icon"));
 
     ui->treeWidget->setItemDelegate(treeDelegate);
