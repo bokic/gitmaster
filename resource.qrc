@@ -20,6 +20,7 @@
         <file>images/push.svg</file>
         <file>images/fetch.svg</file>
         <file>images/file_unknown.svg</file>
+        <file>images/window_icon.svg</file>
     </qresource>
     <qresource prefix="/QCustomComboBox">
         <file alias="check">images/combobox/check.svg</file>

@@ -13,6 +13,10 @@
   <property name="windowTitle">
    <string>Git Master</string>
   </property>
+  <property name="windowIcon">
+   <iconset resource="resource.qrc">
+    <normaloff>:/images/window_icon.svg</normaloff>:/images/window_icon.svg</iconset>
+  </property>
   <widget class="QWidget" name="centralWidget">
    <layout class="QVBoxLayout" name="verticalLayout">
     <property name="leftMargin">
