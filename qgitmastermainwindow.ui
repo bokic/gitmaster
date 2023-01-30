@@ -336,7 +336,7 @@
   <action name="actionCloneNew">
    <property name="icon">
     <iconset resource="resource.qrc">
-     <normaloff>:/images/database_add.svg</normaloff>:/images/database_add.svg</iconset>
+     <normaloff>:/toolbar/clone</normaloff>:/toolbar/clone</iconset>
    </property>
    <property name="text">
     <string>Clone / New</string>
@@ -348,7 +348,7 @@
   <action name="actionCommit">
    <property name="icon">
     <iconset resource="resource.qrc">
-     <normaloff>:/images/commit.svg</normaloff>:/images/commit.svg</iconset>
+     <normaloff>:/toolbar/commit</normaloff>:/toolbar/commit</iconset>
    </property>
    <property name="text">
     <string>Commit</string>
@@ -357,7 +357,7 @@
   <action name="actionCheckout">
    <property name="icon">
     <iconset resource="resource.qrc">
-     <normaloff>:/images/checkout.svg</normaloff>:/images/checkout.svg</iconset>
+     <normaloff>:/toolbar/checkout</normaloff>:/toolbar/checkout</iconset>
    </property>
    <property name="text">
     <string>Checkout</string>
@@ -366,7 +366,7 @@
   <action name="actionDiscard">
    <property name="icon">
     <iconset resource="resource.qrc">
-     <normaloff>:/images/discard.svg</normaloff>:/images/discard.svg</iconset>
+     <normaloff>:/toolbar/discard</normaloff>:/toolbar/discard</iconset>
    </property>
    <property name="text">
     <string>Discard</string>
@@ -375,7 +375,7 @@
   <action name="actionStash">
    <property name="icon">
     <iconset resource="resource.qrc">
-     <normaloff>:/images/stash.svg</normaloff>:/images/stash.svg</iconset>
+     <normaloff>:/toolbar/stash</normaloff>:/toolbar/stash</iconset>
    </property>
    <property name="text">
     <string>Stash</string>
@@ -384,7 +384,7 @@
   <action name="actionAdd">
    <property name="icon">
     <iconset resource="resource.qrc">
-     <normaloff>:/images/file_add.svg</normaloff>:/images/file_add.svg</iconset>
+     <normaloff>:/toolbar/add</normaloff>:/toolbar/add</iconset>
    </property>
    <property name="text">
     <string>Add</string>
@@ -393,7 +393,7 @@
   <action name="actionRemove">
    <property name="icon">
     <iconset resource="resource.qrc">
-     <normaloff>:/images/file_remove.svg</normaloff>:/images/file_remove.svg</iconset>
+     <normaloff>:/toolbar/remove</normaloff>:/toolbar/remove</iconset>
    </property>
    <property name="text">
     <string>Remove</string>
@@ -402,7 +402,7 @@
   <action name="actionAdd_Remove">
    <property name="icon">
     <iconset resource="resource.qrc">
-     <normaloff>:/images/file_add_remove.svg</normaloff>:/images/file_add_remove.svg</iconset>
+     <normaloff>:/toolbar/add_remove</normaloff>:/toolbar/add_remove</iconset>
    </property>
    <property name="text">
     <string>Add/Remove</string>
@@ -411,7 +411,7 @@
   <action name="actionFetch">
    <property name="icon">
     <iconset resource="resource.qrc">
-     <normaloff>:/images/fetch.svg</normaloff>:/images/fetch.svg</iconset>
+     <normaloff>:/toolbar/fetch</normaloff>:/toolbar/fetch</iconset>
    </property>
    <property name="text">
     <string>Fetch</string>
@@ -420,7 +420,7 @@
   <action name="actionPull">
    <property name="icon">
     <iconset resource="resource.qrc">
-     <normaloff>:/images/pull.svg</normaloff>:/images/pull.svg</iconset>
+     <normaloff>:/toolbar/pull</normaloff>:/toolbar/pull</iconset>
    </property>
    <property name="text">
     <string>Pull</string>
@@ -429,38 +429,62 @@
   <action name="actionPush">
    <property name="icon">
     <iconset resource="resource.qrc">
-     <normaloff>:/images/push.svg</normaloff>:/images/push.svg</iconset>
+     <normaloff>:/toolbar/push</normaloff>:/toolbar/push</iconset>
    </property>
    <property name="text">
     <string>Push</string>
    </property>
   </action>
   <action name="actionBranch">
+   <property name="icon">
+    <iconset resource="resource.qrc">
+     <normaloff>:/toolbar/branch</normaloff>:/toolbar/branch</iconset>
+   </property>
    <property name="text">
     <string>Branch</string>
    </property>
   </action>
   <action name="actionMerge">
+   <property name="icon">
+    <iconset resource="resource.qrc">
+     <normaloff>:/toolbar/merge</normaloff>:/toolbar/merge</iconset>
+   </property>
    <property name="text">
     <string>Merge</string>
    </property>
   </action>
   <action name="actionTag">
+   <property name="icon">
+    <iconset resource="resource.qrc">
+     <normaloff>:/toolbar/tag</normaloff>:/toolbar/tag</iconset>
+   </property>
    <property name="text">
     <string>Tag</string>
    </property>
   </action>
   <action name="actionGit_Flow">
+   <property name="icon">
+    <iconset resource="resource.qrc">
+     <normaloff>:/toolbar/git_flow</normaloff>:/toolbar/git_flow</iconset>
+   </property>
    <property name="text">
     <string>Git Flow</string>
    </property>
   </action>
   <action name="actionTerminal">
+   <property name="icon">
+    <iconset resource="resource.qrc">
+     <normaloff>:/toolbar/terminal</normaloff>:/toolbar/terminal</iconset>
+   </property>
    <property name="text">
     <string>Terminal</string>
    </property>
   </action>
   <action name="actionSettings">
+   <property name="icon">
+    <iconset resource="resource.qrc">
+     <normaloff>:/toolbar/settings</normaloff>:/toolbar/settings</iconset>
+   </property>
    <property name="text">
     <string>Settings</string>
    </property>
