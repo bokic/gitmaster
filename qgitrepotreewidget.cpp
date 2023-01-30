@@ -9,8 +9,8 @@ QGitRepoTreeWidget::QGitRepoTreeWidget(QWidget *parent)
 {
     m_git->moveToThread(&m_thread);
 
-    connect(this, SIGNAL(repositoryStatus()), m_git, SLOT(status()), Qt::QueuedConnection);
-    connect(m_git, SIGNAL(statusReply(QMap<git_status_t,int>,QGitError)), this, SLOT(repositoryStatusReply(QMap<git_status_t,int>,QGitError)), Qt::QueuedConnection);
+    connect(this, SIGNAL(repositoryStatus()), m_git, SLOT(status()));
+    connect(m_git, SIGNAL(statusReply(QMap<git_status_t,int>,QGitError)), this, SLOT(repositoryStatusReply(QMap<git_status_t,int>,QGitError)));
 
     m_thread.start();
 }

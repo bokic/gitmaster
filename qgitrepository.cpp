@@ -70,25 +70,26 @@ QGitRepository::QGitRepository(const QString &path, QWidget *parent)
 
     activateCommitOperation(false);
 
-    connect(this, SIGNAL(localStash(QString)), m_git, SLOT(stashSave(QString)), Qt::QueuedConnection);
-    connect(m_git, SIGNAL(stashSaveReply(QGitError)), this, SLOT(localStashSaveReply(QGitError)), Qt::QueuedConnection);
-    connect(this, SIGNAL(repositoryBranches()), m_git, SLOT(listBranchesAndTags()), Qt::QueuedConnection);
-    connect(m_git, SIGNAL(listBranchesAndTagsReply(QList<QGitBranch>,QList<QString>,QGitError)), this, SLOT(repositoryBranchesAndTagsReply(QList<QGitBranch>,QList<QString>,QGitError)), Qt::QueuedConnection);
+    connect(this, SIGNAL(localStash(QString)), m_git, SLOT(stashSave(QString)));
+    connect(m_git, SIGNAL(stashSaveReply(QGitError)), this, SLOT(localStashSaveReply(QGitError)));
 
-    connect(this, SIGNAL(repositoryStashes()), m_git, SLOT(listStashes()), Qt::QueuedConnection);
-    connect(m_git, SIGNAL(listStashesReply(QStringList,QGitError)), this, SLOT(repositoryStashesReply(QStringList,QGitError)), Qt::QueuedConnection);
+    connect(this, SIGNAL(repositoryBranches()), m_git, SLOT(listBranchesAndTags()));
+    connect(m_git, SIGNAL(listBranchesAndTagsReply(QList<QGitBranch>,QList<QString>,QGitError)), this, SLOT(repositoryBranchesAndTagsReply(QList<QGitBranch>,QList<QString>,QGitError)));
 
-    connect(this, SIGNAL(repositoryChangedFiles(int,int,bool)), m_git, SLOT(listChangedFiles(int,int,bool)), Qt::QueuedConnection);
-    connect(m_git, SIGNAL(listChangedFilesReply(QMap<QString,git_status_t>,QGitError)), this, SLOT(repositoryChangedFilesReply(QMap<QString,git_status_t>,QGitError)), Qt::QueuedConnection);
+    connect(this, SIGNAL(repositoryStashes()), m_git, SLOT(listStashes()));
+    connect(m_git, SIGNAL(listStashesReply(QStringList,QGitError)), this, SLOT(repositoryStashesReply(QStringList,QGitError)));
 
-    connect(this, SIGNAL(repositoryStageFiles(QStringList)), m_git, SLOT(stageFiles(QStringList)), Qt::QueuedConnection);
-    connect(m_git, SIGNAL(stageFilesReply(QGitError)), this, SLOT(repositoryStageFilesReply(QGitError)), Qt::QueuedConnection);
+    connect(this, SIGNAL(repositoryChangedFiles(int,int,bool)), m_git, SLOT(listChangedFiles(int,int,bool)));
+    connect(m_git, SIGNAL(listChangedFilesReply(QMap<QString,git_status_t>,QGitError)), this, SLOT(repositoryChangedFilesReply(QMap<QString,git_status_t>,QGitError)));
 
-    connect(this, SIGNAL(repositoryUnstageFiles(QStringList)), m_git, SLOT(unstageFiles(QStringList)), Qt::QueuedConnection);
-    connect(m_git, SIGNAL(unstageFilesReply(QGitError)), this, SLOT(repositoryUnstageFilesReply(QGitError)), Qt::QueuedConnection);
+    connect(this, SIGNAL(repositoryStageFiles(QStringList)), m_git, SLOT(stageFiles(QStringList)));
+    connect(m_git, SIGNAL(stageFilesReply(QGitError)), this, SLOT(repositoryStageFilesReply(QGitError)));
 
-    connect(this, SIGNAL(repositoryCommit(QString)), m_git, SLOT(commit(QString)), Qt::QueuedConnection);
-    connect(m_git, SIGNAL(commitReply(QString,QGitError)), this, SLOT(repositoryCommitReply(QString,QGitError)), Qt::QueuedConnection);
+    connect(this, SIGNAL(repositoryUnstageFiles(QStringList)), m_git, SLOT(unstageFiles(QStringList)));
+    connect(m_git, SIGNAL(unstageFilesReply(QGitError)), this, SLOT(repositoryUnstageFilesReply(QGitError)));
+
+    connect(this, SIGNAL(repositoryCommit(QString)), m_git, SLOT(commit(QString)));
+    connect(m_git, SIGNAL(commitReply(QString,QGitError)), this, SLOT(repositoryCommitReply(QString,QGitError)));
 
     connect(this, SIGNAL(repositoryGetCommits(QString,int)), m_git, SLOT(listCommits(QString,int)));
     connect(m_git, SIGNAL(listCommitsReply(QList<QGitCommit>,QGitError)), this, SLOT(repositoryGetCommitsReply(QList<QGitCommit>,QGitError)));
