@@ -236,16 +236,46 @@
     <addaction name="actionBranch"/>
     <addaction name="actionMerge"/>
     <addaction name="actionTag"/>
+    <addaction name="separator"/>
+    <addaction name="actionAdd_Remote"/>
+    <addaction name="actionAdd_Submodule"/>
+    <addaction name="separator"/>
+    <addaction name="actionGit_Flow_2"/>
+    <addaction name="actionCreate_pullrequest"/>
    </widget>
    <widget class="QMenu" name="menu_Actions">
     <property name="title">
      <string>&amp;Actions</string>
     </property>
+    <addaction name="actionOpen_2"/>
+    <addaction name="actionShow_in_File_manager"/>
+    <addaction name="actionShow_in_Terminal"/>
+    <addaction name="separator"/>
+    <addaction name="actionExternal_Diff"/>
+    <addaction name="separator"/>
+    <addaction name="actionAdd_2"/>
+    <addaction name="separator"/>
+    <addaction name="actionRemove_2"/>
+    <addaction name="actionUnstage_from_index"/>
+    <addaction name="actionAdd_Remove_2"/>
+    <addaction name="actionStop_Tracking"/>
+    <addaction name="actionIgnore"/>
+    <addaction name="actionCommit_Selected"/>
+    <addaction name="actionDiscard_Selected"/>
+    <addaction name="separator"/>
+    <addaction name="actionContinue_Rebase"/>
+    <addaction name="separator"/>
+    <addaction name="actionLog_Selected"/>
+    <addaction name="actionBlame_Selected"/>
+    <addaction name="separator"/>
+    <addaction name="actionCopy_2"/>
+    <addaction name="actionMove"/>
    </widget>
    <widget class="QMenu" name="menu_Tools">
     <property name="title">
      <string>&amp;Tools</string>
     </property>
+    <addaction name="actionOptions"/>
    </widget>
    <widget class="QMenu" name="menu_Help">
     <property name="title">
@@ -595,6 +625,116 @@
    </property>
    <property name="shortcut">
     <string>F1</string>
+   </property>
+  </action>
+  <action name="actionOptions">
+   <property name="text">
+    <string>&amp;Options</string>
+   </property>
+  </action>
+  <action name="actionAdd_Remote">
+   <property name="text">
+    <string>Add Remote</string>
+   </property>
+  </action>
+  <action name="actionAdd_Submodule">
+   <property name="text">
+    <string>Add Submodule</string>
+   </property>
+  </action>
+  <action name="actionGit_Flow_2">
+   <property name="text">
+    <string>Git Flow</string>
+   </property>
+  </action>
+  <action name="actionCreate_pullrequest">
+   <property name="text">
+    <string>Create pullrequest</string>
+   </property>
+  </action>
+  <action name="actionOpen_2">
+   <property name="text">
+    <string>Open</string>
+   </property>
+  </action>
+  <action name="actionShow_in_File_manager">
+   <property name="text">
+    <string>Show in File manager</string>
+   </property>
+  </action>
+  <action name="actionShow_in_Terminal">
+   <property name="text">
+    <string>Show in Terminal</string>
+   </property>
+  </action>
+  <action name="actionExternal_Diff">
+   <property name="text">
+    <string>External Diff</string>
+   </property>
+  </action>
+  <action name="actionAdd_2">
+   <property name="text">
+    <string>Add</string>
+   </property>
+  </action>
+  <action name="actionRemove_2">
+   <property name="text">
+    <string>Remove</string>
+   </property>
+  </action>
+  <action name="actionUnstage_from_index">
+   <property name="text">
+    <string>Unstage from index</string>
+   </property>
+  </action>
+  <action name="actionAdd_Remove_2">
+   <property name="text">
+    <string>Add/Remove</string>
+   </property>
+  </action>
+  <action name="actionStop_Tracking">
+   <property name="text">
+    <string>Stop Tracking</string>
+   </property>
+  </action>
+  <action name="actionIgnore">
+   <property name="text">
+    <string>Ignore</string>
+   </property>
+  </action>
+  <action name="actionCommit_Selected">
+   <property name="text">
+    <string>Commit Selected</string>
+   </property>
+  </action>
+  <action name="actionDiscard_Selected">
+   <property name="text">
+    <string>Discard Selected</string>
+   </property>
+  </action>
+  <action name="actionContinue_Rebase">
+   <property name="text">
+    <string>Continue Rebase</string>
+   </property>
+  </action>
+  <action name="actionLog_Selected">
+   <property name="text">
+    <string>Log Selected</string>
+   </property>
+  </action>
+  <action name="actionBlame_Selected">
+   <property name="text">
+    <string>Blame Selected</string>
+   </property>
+  </action>
+  <action name="actionCopy_2">
+   <property name="text">
+    <string>Copy</string>
+   </property>
+  </action>
+  <action name="actionMove">
+   <property name="text">
+    <string>Move</string>
    </property>
   </action>
  </widget>
