@@ -317,10 +317,12 @@ void QGitRepository::repositoryChangedFilesReply(QMap<QString, git_status_t> fil
     ui->listWidget_unstaged->setEnabled(true);
 
 
-    QIcon icon_file_new = QIcon(":/images/file_new.svg");
-    QIcon icon_file_modified = QIcon(":/images/file_modified.svg");
-    QIcon icon_file_removed = QIcon(":/images/file_removed.svg");
-    QIcon icon_file_unknown = QIcon(":/images/file_unknown.svg");
+    QIcon icon_file_new(":/small/added");
+    QIcon icon_file_clean(":/small/clean");
+    QIcon icon_file_modified(":/small/modified");
+    QIcon icon_file_removed(":/small/deleted");
+    QIcon icon_file_ignored(":/small/ignored");
+    QIcon icon_file_unknown(":/small/unknown");
 
     QMapIterator<QString, git_status_t> i(files);
     while (i.hasNext())
@@ -330,7 +332,7 @@ void QGitRepository::repositoryChangedFilesReply(QMap<QString, git_status_t> fil
         const QString &file = i.key();
         const git_status_t status = i.value();
 
-        if (status & (GIT_STATUS_INDEX_NEW | GIT_STATUS_INDEX_MODIFIED | GIT_STATUS_INDEX_DELETED | GIT_STATUS_INDEX_RENAMED | GIT_STATUS_INDEX_TYPECHANGE))
+        if (status & (GIT_STATUS_INDEX_NEW | GIT_STATUS_INDEX_MODIFIED | GIT_STATUS_INDEX_DELETED | GIT_STATUS_INDEX_RENAMED | GIT_STATUS_INDEX_TYPECHANGE | GIT_STATUS_IGNORED))
         {
             item = new QListWidgetItem(file);
 
@@ -364,6 +366,9 @@ void QGitRepository::repositoryChangedFilesReply(QMap<QString, git_status_t> fil
 
             switch(status)
             {
+            case GIT_STATUS_CURRENT:
+                item->setIcon(icon_file_clean);
+                break;
             case GIT_STATUS_WT_NEW:
                 item->setIcon(icon_file_new);
                 break;
@@ -372,6 +377,9 @@ void QGitRepository::repositoryChangedFilesReply(QMap<QString, git_status_t> fil
                 break;
             case GIT_STATUS_WT_DELETED:
                 item->setIcon(icon_file_removed);
+                break;
+            case GIT_STATUS_IGNORED:
+                item->setIcon(icon_file_ignored);
                 break;
             default:
                 item->setIcon(icon_file_unknown);
@@ -458,10 +466,10 @@ void QGitRepository::repositoryGetCommitDiffReply(QString commitId, QGitCommit d
     {
         m_commitDiff = diff;
 
-        QIcon icon_file_new = QIcon(":/images/file_new.svg");
-        QIcon icon_file_modified = QIcon(":/images/file_modified.svg");
-        QIcon icon_file_removed = QIcon(":/images/file_removed.svg");
-        QIcon icon_file_unknown = QIcon(":/images/file_unknown.svg");
+        QIcon icon_file_new = QIcon(":/small/added");
+        QIcon icon_file_modified = QIcon(":/small/modified");
+        QIcon icon_file_removed = QIcon(":/small/deleted");
+        QIcon icon_file_unknown = QIcon(":/small/unknown");
 
         int currentRow = ui->logHistory_commits->currentRow();
 
