@@ -1,5 +1,6 @@
 #include "qloghistorytablewidget.h"
 
+
 QLogHistoryTableWidget::QLogHistoryTableWidget(QWidget *parent)
     : QTableWidget(parent)
 {

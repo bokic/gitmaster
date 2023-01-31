@@ -1,7 +1,8 @@
-#include "qgitmastermainwindow.h"
-#include "qloghistoryitemdelegate.h"
 #include "qgitrepository.h"
 #include "ui_qgitrepository.h"
+#include "qloghistoryitemdelegate.h"
+#include "qgitmastermainwindow.h"
+
 #include <QCryptographicHash>
 #include <QTableWidgetItem>
 #include <QTreeWidgetItem>

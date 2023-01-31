@@ -1,5 +1,6 @@
 #include "qgitdiffbinaryfile.h"
 
+
 QGitDiffBinaryFile::QGitDiffBinaryFile()
     : m_type(GIT_DIFF_BINARY_NONE)
     , m_data()

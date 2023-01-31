@@ -1,6 +1,7 @@
 #include "qgitrepotreewidget.h"
 #include "qgitrepotreeitemdelegate.h"
 
+
 QGitRepoTreeWidget::QGitRepoTreeWidget(QWidget *parent)
     : QTreeWidget(parent)
     , m_thread(this)

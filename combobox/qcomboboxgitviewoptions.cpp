@@ -1,5 +1,6 @@
 #include "qcomboboxgitviewoptions.h"
 
+
 QComboBoxGitViewOptions::QComboBoxGitViewOptions(QWidget *parent)
     : QCustomComboBox(parent)
 {

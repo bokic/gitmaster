@@ -2,8 +2,10 @@
 #include "qgitmastermainwindow.h"
 #include "ui_qnewrepositorydialog.h"
 #include "qgit.h"
+
 #include <QFileDialog>
 #include <QPushButton>
+
 
 QNewRepositoryDialog::QNewRepositoryDialog(QWidget *parent)
     : QDialog(parent)

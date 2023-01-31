@@ -1,4 +1,5 @@
 #include "qexttextbrowser.h"
+
 #include <QNetworkAccessManager>
 #include <QCryptographicHash>
 #include <QStandardPaths>

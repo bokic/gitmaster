@@ -1,4 +1,5 @@
 #include "qgitrepotreeitemdelegate.h"
+
 #include <QApplication>
 #include <QPainter>
 #include <QPalette>

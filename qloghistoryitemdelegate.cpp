@@ -1,4 +1,5 @@
 #include "qloghistoryitemdelegate.h"
+
 #include <QPalette>
 #include <QPainter>
 

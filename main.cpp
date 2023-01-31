@@ -1,9 +1,8 @@
 #include "qgitmastermainwindow.h"
-#include "qgitdiffwidget.h"
 #include "qgitbranch.h"
 #include "qgitcommit.h"
 #include "qgiterror.h"
-#include "git2.h"
+#include "qgit.h"
 
 #include <QProcessEnvironment>
 #include <QApplication>
@@ -11,6 +10,7 @@
 #include <QList>
 #include <QMap>
 #include <QDir>
+
 
 void setAppSettings()
 {

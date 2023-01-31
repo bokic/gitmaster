@@ -1,5 +1,6 @@
 #include "qadvplaintextedit.h"
 
+
 QAdvPlainTextEdit::QAdvPlainTextEdit(QWidget *parent) : QPlainTextEdit(parent)
 {
 

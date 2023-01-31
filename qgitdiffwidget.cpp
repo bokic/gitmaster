@@ -1,4 +1,5 @@
 #include "qgitdiffwidget.h"
+
 #include <QPaintEvent>
 #include <QScrollBar>
 #include <QPainter>

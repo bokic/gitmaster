@@ -1,6 +1,7 @@
 #include "qgitclonerepositorydialog.h"
 #include "ui_qgitclonerepositorydialog.h"
 
+
 QGitCloneRepositoryDialog::QGitCloneRepositoryDialog(const QString &url, const QString &path, QWidget *parent)
     : QDialog(parent)
     , ui(new Ui::QGitCloneRepositoryDialog)
