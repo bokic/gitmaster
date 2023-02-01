@@ -12,45 +12,41 @@ QLogHistoryItemDelegate::QLogHistoryItemDelegate(QWidget *parent)
 
 void QLogHistoryItemDelegate::paint(QPainter *painter, const QStyleOptionViewItem &option, const QModelIndex &index) const
 {
-    QStyleOptionViewItem _option = option;
-
     if (index.column() == 0)
     {
         auto data = index.data(Qt::UserRole).toList();
 
         if (data.count() > 0)
         {
-            QRectF circle(_option.rect);
             int colorIndex = 0;
 
-            circle.setLeft(0.5 + circle.left() + 4.0 + (circle.height() * data.at(0).toInt()));
-            circle.setTop(0.5 + circle.top() + 4.0);
-            circle.setHeight(circle.height() - 8.0);
-            circle.setWidth(circle.height());
-
-            painter->setClipRect(_option.rect);
-
-            initStyleOption(&_option, index);
-
-            // TODO: Something is weird here. Revisit when possible.
-            if (_option.state & QStyle::State_Selected)
+            if (option.state & QStyle::State_Selected)
             {
-                painter->fillRect(_option.rect, _option.palette.highlight());
+                painter->fillRect(option.rect, option.palette.highlight());
             }
             else
             {
-                painter->fillRect(_option.rect, _option.backgroundBrush);
+                painter->fillRect(option.rect, option.backgroundBrush);
             }
 
             painter->setRenderHint(QPainter::Antialiasing, true);
 
             painter->setPen(QPen());
             painter->setBrush(QBrush(m_colors[colorIndex % m_colors.count()]));
-            painter->drawEllipse(circle);
+
+            QPoint circleCenter;
+            int circleRadius = 0;
+            constexpr int padding = 4;
+            circleRadius = (option.rect.height() / 2) - padding;
+            circleCenter.setY(option.rect.top() + (option.rect.height() / 2));
+            circleCenter.setX(option.rect.left() + (option.rect.height() / 2) + padding + (option.rect.height() * data.at(0).toInt()));
+            //painter->setClipRect(option.rect);
+            painter->drawEllipse(circleCenter, circleRadius, circleRadius);
+            //painter->setClipping(false);
         }
     }
     else
     {
-        QStyledItemDelegate::paint(painter, _option, index);
+        QStyledItemDelegate::paint(painter, option, index);
     }
 }
