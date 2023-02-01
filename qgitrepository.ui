@@ -160,6 +160,9 @@
              </item>
              <item>
               <widget class="QListWidget" name="listWidget_staged">
+               <property name="focusPolicy">
+                <enum>Qt::NoFocus</enum>
+               </property>
                <property name="selectionMode">
                 <enum>QAbstractItemView::ExtendedSelection</enum>
                </property>
@@ -190,6 +193,9 @@
              </item>
              <item>
               <widget class="QListWidget" name="listWidget_unstaged">
+               <property name="focusPolicy">
+                <enum>Qt::NoFocus</enum>
+               </property>
                <property name="selectionMode">
                 <enum>QAbstractItemView::ExtendedSelection</enum>
                </property>
@@ -383,6 +389,9 @@
            <enum>Qt::Vertical</enum>
           </property>
           <widget class="QLogHistoryTableWidget" name="logHistory_commits">
+           <property name="focusPolicy">
+            <enum>Qt::NoFocus</enum>
+           </property>
            <property name="editTriggers">
             <set>QAbstractItemView::NoEditTriggers</set>
            </property>
@@ -450,8 +459,15 @@
             <property name="orientation">
              <enum>Qt::Vertical</enum>
             </property>
-            <widget class="QExtTextBrowser" name="logHistory_info"/>
+            <widget class="QExtTextBrowser" name="logHistory_info">
+             <property name="focusPolicy">
+              <enum>Qt::NoFocus</enum>
+             </property>
+            </widget>
             <widget class="QTableWidget" name="logHistory_files">
+             <property name="focusPolicy">
+              <enum>Qt::NoFocus</enum>
+             </property>
              <property name="editTriggers">
               <set>QAbstractItemView::NoEditTriggers</set>
              </property>
