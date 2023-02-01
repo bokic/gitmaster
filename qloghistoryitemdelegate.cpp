@@ -20,7 +20,7 @@ void QLogHistoryItemDelegate::paint(QPainter *painter, const QStyleOptionViewIte
 
         if (data.count() > 0)
         {
-            QRectF circle = QRectF(_option.rect);
+            QRectF circle(_option.rect);
             int colorIndex = 0;
 
             circle.setLeft(0.5 + circle.left() + 4.0 + (circle.height() * data.at(0).toInt()));

@@ -91,7 +91,7 @@ void QGitRepoTreeWidget::refreshItem()
 
     QTreeWidgetItem *item = topLevelItem(m_refreshIndex++);
 
-    QDir dir = QDir(item->data(0, QGitRepoTreeItemDelegate::QItemPath).toString());
+    QDir dir(item->data(0, QGitRepoTreeItemDelegate::QItemPath).toString());
 
     m_git->setPath(dir);
 

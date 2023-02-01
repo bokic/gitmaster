@@ -467,10 +467,10 @@ void QGitRepository::repositoryGetCommitDiffReply(QString commitId, QGitCommit d
     {
         m_commitDiff = diff;
 
-        QIcon icon_file_new = QIcon(":/small/added");
-        QIcon icon_file_modified = QIcon(":/small/modified");
-        QIcon icon_file_removed = QIcon(":/small/deleted");
-        QIcon icon_file_unknown = QIcon(":/small/unknown");
+        QIcon icon_file_new(":/small/added");
+        QIcon icon_file_modified(":/small/modified");
+        QIcon icon_file_removed(":/small/deleted");
+        QIcon icon_file_unknown(":/small/unknown");
 
         int currentRow = ui->logHistory_commits->currentRow();
 
