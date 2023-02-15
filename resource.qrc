@@ -36,4 +36,16 @@
         <file alias="split_view_staging">images/combobox/split_view_staging.svg</file>
         <file alias="tree_view">images/combobox/tree_view.svg</file>
     </qresource>
+    <qresource prefix="/toolbar">
+        <file alias="add">images/toolbar/add.svg</file>
+        <file alias="remove">images/toolbar/remove.svg</file>
+        <file alias="add_remove">images/toolbar/add_remove.svg</file>
+        <file alias="branch">images/toolbar/branch.svg</file>
+        <file alias="merge">images/toolbar/merge.svg</file>
+        <file alias="git_flow">images/toolbar/git_flow.svg</file>
+        <file alias="tag">images/toolbar/tag.svg</file>
+        <file alias="fetch">images/toolbar/fetch.svg</file>
+        <file alias="pull">images/toolbar/pull.svg</file>
+        <file alias="push">images/toolbar/push.svg</file>
+    </qresource>
 </RCC>
