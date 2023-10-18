@@ -18,17 +18,16 @@ void QGitRepoTreeItemDelegate::paint(QPainter *painter, const QStyleOptionViewIt
 {
     QFontMetrics fm(m_normalFont);
     QFontMetrics fmb(m_boldFont);
-    QColor background;
+    QColor background, text_color;
     QString text;
 
-    background = QPalette().color(
-                option.state & QStyle::State_Active?
-                    QPalette::Active:
-                    QPalette::Inactive,
-                option.state & QStyle::State_Selected?
-                    QPalette::Highlight:
-                    QPalette::Base
-                );
+    if (option.state & QStyle::State_Selected) {
+        background = option.palette.highlight().color();
+        text_color = option.palette.highlightedText().color();
+    } else {
+        background = option.palette.base().color();
+        text_color = option.palette.text().color();
+    }
 
     auto modifiedFiles = index.data(QItemModifiedFiles);
     auto deletedFiles = index.data(QItemDeletedFiles);
@@ -50,9 +49,10 @@ void QGitRepoTreeItemDelegate::paint(QPainter *painter, const QStyleOptionViewIt
 
     text = index.data(Qt::DisplayRole).toString();
 
+    painter->setPen(text_color);
+
     if (!text.isEmpty())
     {
-        painter->setPen(QPen(QPalette().color(QPalette::Active, QPalette::Text)));
         painter->setFont(m_boldFont);
         painter->drawText(x, y + 17, text);
 
@@ -64,12 +64,6 @@ void QGitRepoTreeItemDelegate::paint(QPainter *painter, const QStyleOptionViewIt
     if (!text.isEmpty())
     {
         painter->setFont(m_normalFont);
-        painter->setPen(QPen(QPalette().color(
-                                 QPalette::Disabled,
-                                 option.state & QStyle::State_Selected?
-                                     QPalette::HighlightedText:
-                                     QPalette::Text
-                                 )));
         painter->drawText(x, y + 17, text);
 
         //x += fm.width(text) + 6;
@@ -83,7 +77,6 @@ void QGitRepoTreeItemDelegate::paint(QPainter *painter, const QStyleOptionViewIt
     {
 
         painter->setFont(m_normalFont);
-        painter->setPen(QPen(QPalette().color(QPalette::Active, QPalette::Text)));
 
         if (modifiedFiles.toInt() > 0)
         {

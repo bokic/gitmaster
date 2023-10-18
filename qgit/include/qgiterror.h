@@ -10,6 +10,7 @@ public:
     QGitError(const QString &functionName, int errorCode);
 
     QGitError(const QGitError &other) = default;
+    QGitError(QGitError &&other) noexcept;
 
     QGitError &operator=(QGitError &&other) noexcept;
     QGitError &operator=(const QGitError &other) = default;

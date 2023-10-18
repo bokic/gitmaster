@@ -10,6 +10,7 @@ public:
     QGitBranch() = default;
     QGitBranch(const QString &name, git_branch_t type = GIT_BRANCH_ALL);
     QGitBranch(const QGitBranch &other) = default;
+    QGitBranch(QGitBranch &&other) noexcept;
 
     QGitBranch &operator=(QGitBranch &&other) noexcept;
     QGitBranch &operator=(const QGitBranch &other) = default;

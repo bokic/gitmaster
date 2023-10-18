@@ -14,6 +14,7 @@ public:
     QGitCommitDiffParent() = default;
     QGitCommitDiffParent(const QByteArray &commitHash);
     QGitCommitDiffParent(const QGitCommitDiffParent &other) = default;
+    QGitCommitDiffParent(QGitCommitDiffParent &&other) noexcept;
 
     QGitCommitDiffParent &operator=(QGitCommitDiffParent &&other) noexcept;
     QGitCommitDiffParent &operator=(const QGitCommitDiffParent &other) = default;

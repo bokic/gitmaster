@@ -12,6 +12,7 @@ public:
     QGitDiffBinaryFile(const git_diff_binary_file &binary);
 
     QGitDiffBinaryFile(const QGitDiffBinaryFile &other) = default;
+    QGitDiffBinaryFile(QGitDiffBinaryFile &&other) noexcept;
 
     QGitDiffBinaryFile &operator=(QGitDiffBinaryFile &&other) noexcept;
     QGitDiffBinaryFile &operator=(const QGitDiffBinaryFile &other) = default;

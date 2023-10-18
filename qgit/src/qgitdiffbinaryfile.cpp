@@ -16,6 +16,13 @@ QGitDiffBinaryFile::QGitDiffBinaryFile(const git_diff_binary_file &binary)
 {
 }
 
+QGitDiffBinaryFile::QGitDiffBinaryFile(QGitDiffBinaryFile &&other) noexcept
+{
+    std::swap(m_type, other.m_type);
+    std::swap(m_data, other.m_data);
+    std::swap(m_inflatedLen, other.m_inflatedLen);
+}
+
 QGitDiffBinaryFile &QGitDiffBinaryFile::operator=(QGitDiffBinaryFile &&other) noexcept
 {
     std::swap(m_type, other.m_type);

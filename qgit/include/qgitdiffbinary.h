@@ -13,6 +13,7 @@ public:
     QGitDiffBinary(const git_diff_binary *binary);
 
     QGitDiffBinary(const QGitDiffBinary &other) = default;
+    QGitDiffBinary(QGitDiffBinary &&other) noexcept;
 
     QGitDiffBinary &operator=(QGitDiffBinary &&other) noexcept;
     QGitDiffBinary &operator=(const QGitDiffBinary &other) = default;

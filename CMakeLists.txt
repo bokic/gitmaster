@@ -1,5 +1,8 @@
 cmake_minimum_required(VERSION 3.5)
 
+#add_compile_options(-fsanitize=address)
+#add_link_options(-fsanitize=address)
+
 project(gitmaster VERSION 0.1 LANGUAGES CXX)
 
 set(CMAKE_INCLUDE_CURRENT_DIR ON)

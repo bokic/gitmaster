@@ -6,6 +6,12 @@ QGitCommitDiffParent::QGitCommitDiffParent(const QByteArray &commitHash)
 {
 }
 
+QGitCommitDiffParent::QGitCommitDiffParent(QGitCommitDiffParent &&other) noexcept
+{
+    std::swap(m_commitHash, other.m_commitHash);
+    std::swap(m_files, other.m_files);
+}
+
 QGitCommitDiffParent &QGitCommitDiffParent::operator=(QGitCommitDiffParent &&other) noexcept
 {
     std::swap(m_commitHash, other.m_commitHash);

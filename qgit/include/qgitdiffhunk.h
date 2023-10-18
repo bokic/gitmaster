@@ -13,6 +13,7 @@ public:
     QGitDiffHunk() = default;
     QGitDiffHunk(const git_diff_hunk *hunk);
     QGitDiffHunk(const QGitDiffHunk &other) = default;
+    QGitDiffHunk(QGitDiffHunk &&other) noexcept;
 
     QGitDiffHunk &operator=(QGitDiffHunk &&other) noexcept;
     QGitDiffHunk &operator=(const QGitDiffHunk &other) = default;

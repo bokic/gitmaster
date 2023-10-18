@@ -61,7 +61,7 @@ QGitMasterMainWindow::QGitMasterMainWindow(QWidget *parent)
 
         ui->menu_Themes->addAction(newAction);
 
-        connect(newAction, &QAction::triggered, this, &QGitMasterMainWindow::on_themeChanged_triggered);
+        connect(newAction, &QAction::triggered, this, &QGitMasterMainWindow::change_theme_triggered);
     }
 }
 
@@ -424,7 +424,7 @@ void QGitMasterMainWindow::on_actionStash_triggered()
     }
 }
 
-void QGitMasterMainWindow::on_themeChanged_triggered(bool checked)
+void QGitMasterMainWindow::change_theme_triggered(bool checked)
 {
     QAction *menu = nullptr;
     QSettings settings;

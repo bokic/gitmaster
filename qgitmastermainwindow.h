@@ -53,7 +53,7 @@ private slots:
     void on_tabWidget_currentChanged(int index);
     void on_actionStash_triggered();
 
-    void on_themeChanged_triggered(bool checked);
+    void change_theme_triggered(bool checked);
 
 private:
     void readSettings();

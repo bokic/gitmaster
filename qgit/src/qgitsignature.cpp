@@ -8,6 +8,13 @@ QGitSignature::QGitSignature(const QString &name, const QString &email, const QD
 {
 }
 
+QGitSignature::QGitSignature(QGitSignature &&other) noexcept
+{
+    std::swap(m_name, other.m_name);
+    std::swap(m_email, other.m_email);
+    std::swap(m_when, other.m_when);
+}
+
 QGitSignature &QGitSignature::operator=(QGitSignature &&other) noexcept
 {
     std::swap(m_name, other.m_name);

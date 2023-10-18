@@ -9,6 +9,12 @@ QGitBranch::QGitBranch(const QString &name, git_branch_t type)
 {
 }
 
+QGitBranch::QGitBranch(QGitBranch &&other) noexcept
+{
+    std::swap(m_name, other.m_name);
+    std::swap(m_type, other.m_type);
+}
+
 QGitBranch &QGitBranch::operator=(QGitBranch &&other) noexcept
 {
     std::swap(m_name, other.m_name);

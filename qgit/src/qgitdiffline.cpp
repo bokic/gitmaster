@@ -21,6 +21,16 @@ QGitDiffLine::QGitDiffLine(const git_diff_line *line)
 {
 }
 
+QGitDiffLine::QGitDiffLine(QGitDiffLine &&other) noexcept
+{
+    std::swap(m_content, other.m_content);
+    std::swap(m_offset, other.m_offset);
+    std::swap(m_new_lineno, other.m_new_lineno);
+    std::swap(m_num_lines, other.m_num_lines);
+    std::swap(m_old_lineno, other.m_old_lineno);
+    std::swap(m_origin, other.m_origin);
+}
+
 QGitDiffLine &QGitDiffLine::operator=(QGitDiffLine &&other) noexcept
 {
     std::swap(m_content, other.m_content);
