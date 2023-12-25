@@ -107,16 +107,20 @@ ELSE()
     set_target_properties(gitmaster PROPERTIES OUTPUT_NAME "gitmaster")
 ENDIF()
 
+if (APPLE)
+    target_link_libraries(gitmaster PRIVATE -L/opt/homebrew/lib)
+ENDIF()
+
 target_link_libraries(gitmaster PRIVATE
     Qt6::Widgets
     Qt6::Gui
     Qt6::Network
+    git2
 )
 
 IF (WIN32)
     link_directories(${CMAKE_SOURCE_DIR}/bin)
 ENDIF()
-target_link_libraries(gitmaster PRIVATE git2)
 
 set_target_properties(gitmaster PROPERTIES
     MACOSX_BUNDLE_GUI_IDENTIFIER my.example.com
