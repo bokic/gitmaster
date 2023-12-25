@@ -135,4 +135,7 @@ if(QT_VERSION_MAJOR EQUAL 6)
 endif()
 
 set(CMAKE_INSTALL_PREFIX /usr)
-install(TARGETS gitmaster)
+install(
+    TARGETS gitmaster
+    BUNDLE DESTINATION gitmaster
+)
