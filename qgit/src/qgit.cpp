@@ -1255,6 +1255,11 @@ void QGit::stageFileLines(QString filename, QVector<QGitDiffWidgetLine> lines)
 
         git_blob *blob = nullptr;
         res = git_blob_lookup(&blob, repo, &entry->id);
+        if (res)
+        {
+            throw QGitError("git_blob_lookup", res);
+        }
+
         const char *blob_content = (const char *)git_blob_rawcontent(blob);
         git_off_t blob_size = git_blob_rawsize(blob);
         buffer = QByteArray::fromRawData(blob_content, blob_size);
