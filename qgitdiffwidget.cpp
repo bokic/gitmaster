@@ -49,7 +49,7 @@ public:
 class QGitDiffWidgetPrivate : private QObject
 {
 public:
-    QGitDiffWidgetPrivate(QObject *parent = nullptr): QObject(parent)
+    explicit QGitDiffWidgetPrivate(QObject *parent = nullptr): QObject(parent)
     {
 
     }

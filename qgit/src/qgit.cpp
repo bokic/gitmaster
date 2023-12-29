@@ -792,9 +792,9 @@ void QGit::commitDiff(QString commitId)
                 }
 
                 size_t _count = git_diff_num_deltas(diff);
-                for(size_t c = 0; c < _count; c++)
+                for(size_t c2 = 0; c2 < _count; c2++)
                 {
-                    delta = git_diff_get_delta(diff, c);
+                    delta = git_diff_get_delta(diff, c2);
 
                     item.addFile(delta);
                 }
@@ -1260,7 +1260,7 @@ void QGit::stageFileLines(QString filename, QVector<QGitDiffWidgetLine> lines)
             throw QGitError("git_blob_lookup", res);
         }
 
-        const char *blob_content = (const char *)git_blob_rawcontent(blob);
+        const char *blob_content = static_cast<const char *>(git_blob_rawcontent(blob));
         git_off_t blob_size = git_blob_rawsize(blob);
         buffer = QByteArray::fromRawData(blob_content, blob_size);
 #ifdef Q_OS_WIN
@@ -1714,9 +1714,7 @@ void QGit::listCommits(QString object, int length)
     QList<QGitCommit> commits;
     git_repository *repo = nullptr;
     git_revwalk *walker = nullptr;
-    git_commit *parent = nullptr;
     git_commit *commit = nullptr;
-    git_diff *diff = nullptr;
     git_oid oid;
     int count = 0;
     int res = 0;
@@ -1830,12 +1828,6 @@ void QGit::listCommits(QString object, int length)
 
             commits.push_back(item);
 
-            git_diff_free(diff);
-            diff = nullptr;
-
-            git_commit_free(parent);
-            parent = nullptr;
-
             git_commit_free(commit);
             commit = nullptr;
 
@@ -1847,18 +1839,6 @@ void QGit::listCommits(QString object, int length)
     }
 
     emit listCommitsReply(commits, error);
-
-    if (diff)
-    {
-        git_diff_free(diff);
-        diff = nullptr;
-    }
-
-    if (parent)
-    {
-        git_commit_free(parent);
-        parent = nullptr;
-    }
 
     if (walker)
     {
