@@ -7,7 +7,7 @@ QT        = core
 CONFIG   += debug_and_release c++11
 TARGET    = qgitlib
 DESTDIR   = $$_PRO_FILE_PWD_/../bin
-VERSION   = 0.1.0.0
+VERSION   = 0.1.4.0
 
 DEPENDPATH  += ../include
 INCLUDEPATH += ../include
