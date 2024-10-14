@@ -828,7 +828,7 @@ void QGitRepository::on_logHistory_files_itemSelectionChanged()
 {
     QList<QString> files;
 
-    auto selected = ui->logHistory_files->selectedItems();
+    const auto &selected = ui->logHistory_files->selectedItems();
     int parent = 0; // TODO: Parent is hardcoded.
 
     for(auto cell: selected) {
@@ -847,15 +847,15 @@ void QGitRepository::on_listWidget_staged_itemSelectionChanged()
 
     if (ui->listWidget_staged->isActiveWindow())
     {
-        auto selected = ui->listWidget_staged->selectedItems();
-
-        for(auto row: selected) {
+        const auto &staged = ui->listWidget_staged->selectedItems();
+        for(auto row: staged) {
             files << row->text();
         }
 
         ui->commit_diff->setGitDiff("", "staged", files);
 
-        for(auto item: ui->listWidget_unstaged->selectedItems())
+        const auto &unstaged = ui->listWidget_unstaged->selectedItems();
+        for(auto item: unstaged)
         {
             item->setSelected(false);
         }
@@ -868,15 +868,15 @@ void QGitRepository::on_listWidget_unstaged_itemSelectionChanged()
 
     if (ui->listWidget_unstaged->isActiveWindow())
     {
-        auto selected = ui->listWidget_unstaged->selectedItems();
-
-        for(auto row: selected) {
+        const auto &unstaged = ui->listWidget_unstaged->selectedItems();
+        for(const auto &row: unstaged) {
             files << row->text();
         }
 
         ui->commit_diff->setGitDiff("", "unstaged", files);
 
-        for(auto item: ui->listWidget_staged->selectedItems())
+        const auto &staged = ui->listWidget_staged->selectedItems();
+        for(const auto &item: staged)
         {
             item->setSelected(false);
         }

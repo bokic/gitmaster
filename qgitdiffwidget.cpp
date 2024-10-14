@@ -119,9 +119,11 @@ void QGitDiffWidget::responseGitDiff(QString first, QString second, QList<QGitDi
 
     for(const QGitDiffFile &diffFile: diff)
     {
-        for(const QGitDiffHunk &diffHunk: diffFile.hunks())
+        const auto &hunks = diffFile.hunks();
+        for(const QGitDiffHunk &diffHunk: hunks)
         {
-            for(const QGitDiffLine &diffLine: diffHunk.lines())
+            const auto &lines = diffHunk.lines();
+            for(const QGitDiffLine &diffLine: lines)
             {
                 auto line = diffLine.content();
 
@@ -220,7 +222,9 @@ void QGitDiffWidget::paintEvent(QPaintEvent *event)
     int fileIndex = 0, hunkIndex = 0, lineIndex = 0;
 
     fileIndex = 0;
-    for(const auto &file: m_private->files)
+
+    const auto &files = m_private->files;
+    for(const auto &file: files)
     {
         if (!event->region().intersected(file.rect).isEmpty())
         {
@@ -349,7 +353,9 @@ void QGitDiffWidget::mouseMoveEvent(QMouseEvent *event)
         return;
 
     int file_index = 0;
-    for(const auto &file : m_private->files)
+    const auto &files = m_private->files;
+
+    for(const auto &file : files)
     {
         if (file.rect.contains(event->position().toPoint()))
         {
