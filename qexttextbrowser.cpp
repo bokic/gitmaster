@@ -19,15 +19,15 @@ QExtTextBrowser::QExtTextBrowser(QWidget* parent)
     {
         dir.mkpath(m_imgPath);
     }
+
+    connect(&m_nam, &QNetworkAccessManager::finished, this, &QExtTextBrowser::imgDownloaded);
 }
 
-// FIXME: loadResource is been called 6 times for one URL!
 QVariant QExtTextBrowser::loadResource(int type, const QUrl &name)
 {
     if (type == QTextDocument::ImageResource)
     {
         QByteArray urlHash = QCryptographicHash::hash(name.url().toUtf8(), QCryptographicHash::Sha1).toHex();
-
         QString filename = m_imgPath + "/" + urlHash;
 
         if(QFile::exists(filename))
@@ -45,26 +45,28 @@ QVariant QExtTextBrowser::loadResource(int type, const QUrl &name)
         }
         else
         {
-            QNetworkReply* reply = m_nam.get(QNetworkRequest(name));
-
-            connect(
-                reply, &QNetworkReply::finished,
-                this, [this, filename, reply]() {
-                    QByteArray ba = reply->readAll();
-
-                    if (!ba.isEmpty())
-                    {
-                        QFile file(filename);
-                        file.open(QIODevice::WriteOnly | QIODevice::Truncate);
-                        file.write(ba);
-                        file.close();
-
-                        QExtTextBrowser::reload(); // TODO: Reload do not work!
-                    }
-                }
-            );
+            m_nam.get(QNetworkRequest(name));
         }
     }
 
     return QPixmap();
+}
+
+void QExtTextBrowser::imgDownloaded(QNetworkReply *reply)
+{
+    QByteArray ba = reply->readAll();
+
+    if (!ba.isEmpty())
+    {
+        QByteArray urlHash = QCryptographicHash::hash(reply->request().url().url().toUtf8(), QCryptographicHash::Sha1).toHex();
+        QString filename = m_imgPath + "/" + urlHash;
+
+        QFile file(filename);
+        file.open(QIODevice::WriteOnly | QIODevice::Truncate);
+        file.write(ba);
+        file.close();
+
+        //reload();
+        setHtml(toHtml());
+    }
 }

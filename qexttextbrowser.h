@@ -13,7 +13,10 @@ public:
     explicit QExtTextBrowser(QWidget* parent = nullptr);
     QVariant loadResource(int type, const QUrl &name) override;
 
-private:
+private slots:
+    void imgDownloaded(QNetworkReply *reply);
+
+private:    
     QNetworkAccessManager m_nam;
     QString m_imgPath;
 };
