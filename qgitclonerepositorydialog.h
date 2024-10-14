@@ -18,6 +18,9 @@ public:
     explicit QGitCloneRepositoryDialog(const QString &url, const QString &path, QWidget *parent = nullptr);
     ~QGitCloneRepositoryDialog();
 
+protected:
+    void showEvent(QShowEvent *event) override;
+
 private slots:
     void on_pushButton_close_clicked();
 	void cloneReply(QGitError error);

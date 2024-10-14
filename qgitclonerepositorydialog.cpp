@@ -1,5 +1,6 @@
 #include "qgitclonerepositorydialog.h"
 #include "ui_qgitclonerepositorydialog.h"
+#include <QShowEvent>
 
 
 QGitCloneRepositoryDialog::QGitCloneRepositoryDialog(const QString &url, const QString &path, QWidget *parent)
@@ -23,8 +24,6 @@ QGitCloneRepositoryDialog::QGitCloneRepositoryDialog(const QString &url, const Q
 	m_git->setPath(m_path);
 
     m_thread.start();
-
-	emit clone(m_url);
 }
 
 QGitCloneRepositoryDialog::~QGitCloneRepositoryDialog()
@@ -35,6 +34,14 @@ QGitCloneRepositoryDialog::~QGitCloneRepositoryDialog()
     delete m_git; m_git = nullptr;
 
     delete ui;
+}
+
+void QGitCloneRepositoryDialog::showEvent(QShowEvent *event)
+{
+    if (event->type() == QEvent::Show)
+    {
+        emit clone(m_url);
+    }
 }
 
 void QGitCloneRepositoryDialog::on_pushButton_close_clicked()

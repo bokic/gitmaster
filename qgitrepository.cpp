@@ -109,8 +109,6 @@ QGitRepository::QGitRepository(const QString &path, QWidget *parent)
     m_thread.start();
 
     m_git->setPath(QDir(m_path));
-    emit repositoryBranches();
-    emit repositoryStashes();
 }
 
 QGitRepository::~QGitRepository()
@@ -158,6 +156,17 @@ void QGitRepository::push()
     QGitMasterMainWindow::instance()->updateStatusBarText("Pushing...");
     m_git->push();
     QGitMasterMainWindow::instance()->updateStatusBarText(QString());
+}
+
+bool QGitRepository::event(QEvent *event)
+{
+    if (event->type() == QEvent::WindowActivate)
+    {
+        emit repositoryBranches();
+        emit repositoryStashes();
+    }
+
+    return QWidget::event(event);
 }
 
 void QGitRepository::gravatarImageDownloadFinished()

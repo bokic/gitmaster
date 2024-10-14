@@ -38,6 +38,9 @@ signals:
     void stageFileLines(QString filename, QVector<QGitDiffWidgetLine> lines);
     void unstageFileLines(QString filename, QVector<QGitDiffWidgetLine> lines);
 
+protected:
+    bool event(QEvent *event) override;
+
 private slots:
     void gravatarImageDownloadFinished();
     void localStashSaveReply(QGitError error);
