@@ -1,5 +1,8 @@
 *.pro.user
 CMakeLists.txt.user
+/*-build-*
 /include
+/build
+/.cache
 bin/gitmaster*
 bin/gitmaster_d*
