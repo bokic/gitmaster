@@ -374,6 +374,37 @@ void QGitMasterMainWindow::on_actionFull_Screen_triggered()
     }
 }
 
+
+void QGitMasterMainWindow::on_actionFetch_triggered()
+{
+    auto panel = dynamic_cast<QGitRepository *>(ui->tabWidget->currentWidget());
+    if (panel)
+    {
+        panel->fetch();
+        panel->refreshData();
+    }
+}
+
+void QGitMasterMainWindow::on_actionPull_triggered()
+{
+    auto panel = dynamic_cast<QGitRepository *>(ui->tabWidget->currentWidget());
+    if (panel)
+    {
+        panel->pull();
+        panel->refreshData();
+    }
+}
+
+void QGitMasterMainWindow::on_actionPush_triggered()
+{
+    auto panel = dynamic_cast<QGitRepository *>(ui->tabWidget->currentWidget());
+    if (panel)
+    {
+        panel->push();
+        panel->refreshData();
+    }
+}
+
 void QGitMasterMainWindow::on_treeWidget_itemDoubleClicked(QTreeWidgetItem *item, int column)
 {
     QString repositoryName = item->data(column, Qt::DisplayRole).toString();

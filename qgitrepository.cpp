@@ -139,6 +139,27 @@ void QGitRepository::stash(const QString &name)
     m_git->stashSave(name);
 }
 
+void QGitRepository::fetch()
+{
+    QGitMasterMainWindow::instance()->updateStatusBarText("Fetching...");
+    m_git->fetch();
+    QGitMasterMainWindow::instance()->updateStatusBarText(QString());
+}
+
+void QGitRepository::pull()
+{
+    QGitMasterMainWindow::instance()->updateStatusBarText("Pulling...");
+    m_git->pull();
+    QGitMasterMainWindow::instance()->updateStatusBarText(QString());
+}
+
+void QGitRepository::push()
+{
+    QGitMasterMainWindow::instance()->updateStatusBarText("Pushing...");
+    m_git->push();
+    QGitMasterMainWindow::instance()->updateStatusBarText(QString());
+}
+
 void QGitRepository::gravatarImageDownloadFinished()
 {
     auto reply = dynamic_cast<QNetworkReply *>(sender());

@@ -5,6 +5,7 @@
 #include "qgiterror.h"
 
 #include <QWriteLocker>
+#include <QInputDialog>
 #include <QReadLocker>
 #include <QThread>
 #include <QString>
@@ -1590,7 +1591,34 @@ void QGit::pull()
             throw QGitError("git_remote_lookup", res);
         }
 
-        res = git_remote_fetch(remote, nullptr, nullptr, "pull");
+        git_fetch_options fetch_opts = GIT_FETCH_OPTIONS_INIT;
+        fetch_opts.callbacks.credentials = [](git_credential **out, const char *url, const char *username_from_url, unsigned int allowed_types, void *payload)
+        {
+            if (allowed_types & GIT_CREDENTIAL_SSH_KEY) {
+                auto pass = QInputDialog::getText(nullptr, "SSh password", "Enter password", QLineEdit::Password).toUtf8();
+                if (!pass.isEmpty())
+                {
+                    QString sshDir = QDir::homePath() + "/.ssh";
+                    auto keys = QDir(sshDir).entryInfoList({"*.pub"});
+                    if (keys.size() == 1)
+                    {
+                        QFileInfo pubkeyFileInfo = keys.first();
+                        QFileInfo privkeyFileInfo(pubkeyFileInfo.dir(), pubkeyFileInfo.completeBaseName());
+
+                        auto pubkeyPathname = pubkeyFileInfo.absoluteFilePath().toUtf8();
+                        auto privkeyPathname = privkeyFileInfo.absoluteFilePath().toUtf8();
+
+                        git_credential_ssh_key_new(out, strdup(username_from_url), strdup(pubkeyPathname), strdup(privkeyPathname), strdup(pass.constData()));
+
+                        return 0;
+                    }
+                }
+            }
+
+            return -1;
+        };
+
+        res = git_remote_fetch(remote, nullptr, &fetch_opts, "pull");
         if (res)
         {
             throw QGitError("git_remote_fetch", res);
@@ -1637,13 +1665,41 @@ void QGit::fetch()
             throw QGitError("git_remote_lookup", res);
         }
 
-        res = git_remote_fetch(remote, nullptr, nullptr, "fetch");
+        git_fetch_options fetch_opts = GIT_FETCH_OPTIONS_INIT;
+        fetch_opts.callbacks.credentials = [](git_credential **out, const char *url, const char *username_from_url, unsigned int allowed_types, void *payload)
+        {
+            if (allowed_types & GIT_CREDENTIAL_SSH_KEY) {
+                auto pass = QInputDialog::getText(nullptr, "SSh password", "Enter password", QLineEdit::Password).toUtf8();
+                if (!pass.isEmpty())
+                {
+                    QString sshDir = QDir::homePath() + "/.ssh";
+                    auto keys = QDir(sshDir).entryInfoList({"*.pub"});
+                    if (keys.size() == 1)
+                    {
+                        QFileInfo pubkeyFileInfo = keys.first();
+                        QFileInfo privkeyFileInfo(pubkeyFileInfo.dir(), pubkeyFileInfo.completeBaseName());
+
+                        auto pubkeyPathname = pubkeyFileInfo.absoluteFilePath().toUtf8();
+                        auto privkeyPathname = privkeyFileInfo.absoluteFilePath().toUtf8();
+
+                        git_credential_ssh_key_new(out, strdup(username_from_url), strdup(pubkeyPathname), strdup(privkeyPathname), strdup(pass.constData()));
+
+                        return 0;
+                    }
+                }
+            }
+
+            return -1;
+        };
+
+        res = git_remote_fetch(remote, nullptr, &fetch_opts, "fetch");
         if (res)
         {
             throw QGitError("git_remote_fetch", res);
         }
 
     } catch(const QGitError &ex) {
+        fprintf(stderr, "error doing git fetch!\n");
         error = ex;
     }
 
@@ -1684,7 +1740,34 @@ void QGit::push()
             throw QGitError("git_remote_lookup", res);
         }
 
-        res = git_remote_push(remote, nullptr, nullptr);
+        git_push_options push_opts = GIT_PUSH_OPTIONS_INIT;
+        push_opts.callbacks.credentials = [](git_credential **out, const char *url, const char *username_from_url, unsigned int allowed_types, void *payload)
+        {
+            if (allowed_types & GIT_CREDENTIAL_SSH_KEY) {
+                auto pass = QInputDialog::getText(nullptr, "SSh password", "Enter password", QLineEdit::Password).toUtf8();
+                if (!pass.isEmpty())
+                {
+                    QString sshDir = QDir::homePath() + "/.ssh";
+                    auto keys = QDir(sshDir).entryInfoList({"*.pub"});
+                    if (keys.size() == 1)
+                    {
+                        QFileInfo pubkeyFileInfo = keys.first();
+                        QFileInfo privkeyFileInfo(pubkeyFileInfo.dir(), pubkeyFileInfo.completeBaseName());
+
+                        auto pubkeyPathname = pubkeyFileInfo.absoluteFilePath().toUtf8();
+                        auto privkeyPathname = privkeyFileInfo.absoluteFilePath().toUtf8();
+
+                        git_credential_ssh_key_new(out, strdup(username_from_url), strdup(pubkeyPathname), strdup(privkeyPathname), strdup(pass.constData()));
+
+                        return 0;
+                    }
+                }
+            }
+
+            return -1;
+        };
+
+        res = git_remote_push(remote, nullptr, &push_opts);
         if (res)
         {
             throw QGitError("git_remote_push", res);

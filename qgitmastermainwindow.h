@@ -45,6 +45,10 @@ private slots:
     void on_actionPrevious_Tab_triggered();
     void on_actionFull_Screen_triggered();
 
+    void on_actionFetch_triggered();
+    void on_actionPull_triggered();
+    void on_actionPush_triggered();
+
     void on_actionNewFolderRepository_triggered();
     void on_actionDeleteRepository_triggered();
     void on_actionSettingsRepository_triggered();

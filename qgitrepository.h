@@ -21,6 +21,9 @@ public:
     ~QGitRepository();
     void refreshData();
     void stash(const QString &name);
+    void fetch();
+    void pull();
+    void push();
 
 signals:
     void localStash(QString name);
