@@ -21,89 +21,95 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/bin)
 find_package(QT NAMES Qt6 COMPONENTS Gui Widgets Network REQUIRED)
 find_package(Qt6 COMPONENTS Gui Widgets Network REQUIRED)
 
-set(PROJECT_SOURCES
-    main.cpp
-    qgitmastermainwindow.cpp
+set(PROJECT_HEADERS
     qgitmastermainwindow.h
-    qgitmastermainwindow.ui
-    qgitrepository.cpp
     qgitrepository.h
-    qgitrepository.ui
-    qnewrepositorydialog.cpp
     qnewrepositorydialog.h
-    qnewrepositorydialog.ui
-    qgitclonerepositorydialog.cpp
     qgitclonerepositorydialog.h
-    qgitclonerepositorydialog.ui
-    qgitpushdialog.cpp
     qgitpushdialog.h
-    qgitpushdialog.ui
-    qgitpulldialog.cpp
     qgitpulldialog.h
-    qgitpulldialog.ui
-    qgitfetchdialog.cpp
     qgitfetchdialog.h
-    qgitfetchdialog.ui
 
-    qgitrepotreeitemdelegate.cpp
     qgitrepotreeitemdelegate.h
-    qgitrepotreewidget.cpp
     qgitrepotreewidget.h
-    qgitdiffwidget.cpp
     qgitdiffwidget.h
-    qadvplaintextedit.cpp
     qadvplaintextedit.h
-    qloghistoryitemdelegate.cpp
     qloghistoryitemdelegate.h
-    qloghistorytablewidget.cpp
     qloghistorytablewidget.h
-    qexttextbrowser.cpp
     qexttextbrowser.h
 
-    combobox/qcustomcombobox.cpp
     combobox/qcustomcombobox.h
-    combobox/qcomboboxgitdiffoptions.cpp
     combobox/qcomboboxgitdiffoptions.h
-    combobox/qcomboboxgitstatusfiles.cpp
     combobox/qcomboboxgitstatusfiles.h
-    combobox/qcomboboxgitviewoptions.cpp
     combobox/qcomboboxgitviewoptions.h
 
-    qgit/src/qgit.cpp
     qgit/include/qgit.h
-    qgit/src/qgitbranch.cpp
     qgit/include/qgitbranch.h
-    qgit/src/qgitcommit.cpp
     qgit/include/qgitcommit.h
-    qgit/src/qgitcommitdiffparent.cpp
     qgit/include/qgitcommitdiffparent.h
-    qgit/src/qgitdiffbinary.cpp
     qgit/include/qgitdiffbinary.h
-    qgit/src/qgitdiffbinaryfile.cpp
     qgit/include/qgitdiffbinaryfile.h
-    qgit/src/qgitdifffile.cpp
     qgit/include/qgitdifffile.h
-    qgit/src/qgitdifffileitem.cpp
     qgit/include/qgitdifffileitem.h
-    qgit/src/qgitdiffhunk.cpp
     qgit/include/qgitdiffhunk.h
-    qgit/src/qgitdiffline.cpp
     qgit/include/qgitdiffline.h
-    qgit/src/qgiterror.cpp
     qgit/include/qgiterror.h
-    qgit/src/qgitsignature.cpp
     qgit/include/qgitsignature.h
+)
+
+set(PROJECT_SOURCES
+    main.cpp
+
+    qgitmastermainwindow.cpp      qgitmastermainwindow.ui
+    qgitrepository.cpp            qgitrepository.ui
+    qnewrepositorydialog.cpp      qnewrepositorydialog.ui
+    qgitclonerepositorydialog.cpp qgitclonerepositorydialog.ui
+    qgitpushdialog.cpp            qgitpushdialog.ui
+    qgitpulldialog.cpp            qgitpulldialog.ui
+    qgitfetchdialog.cpp           qgitfetchdialog.ui
+
+    qgitrepotreeitemdelegate.cpp
+    qgitrepotreewidget.cpp
+    qgitdiffwidget.cpp
+    qadvplaintextedit.cpp
+    qloghistoryitemdelegate.cpp
+    qloghistorytablewidget.cpp
+    qexttextbrowser.cpp
+
+    combobox/qcustomcombobox.cpp
+    combobox/qcomboboxgitdiffoptions.cpp
+    combobox/qcomboboxgitstatusfiles.cpp
+    combobox/qcomboboxgitviewoptions.cpp
+
+    qgit/src/qgit.cpp
+    qgit/src/qgitbranch.cpp
+    qgit/src/qgitcommit.cpp
+    qgit/src/qgitcommitdiffparent.cpp
+    qgit/src/qgitdiffbinary.cpp
+    qgit/src/qgitdiffbinaryfile.cpp
+    qgit/src/qgitdifffile.cpp
+    qgit/src/qgitdifffileitem.cpp
+    qgit/src/qgitdiffhunk.cpp
+    qgit/src/qgitdiffline.cpp
+    qgit/src/qgiterror.cpp
+    qgit/src/qgitsignature.cpp
 
     resource.qrc
+
+    ${PROJECT_HEADERS}
 )
 
 IF (WIN32)
-    target_sources(foobar PRIVATE resource.rc)
+    target_sources(cfeditor PRIVATE resource.rc)
 ENDIF()
 
 qt_add_executable(gitmaster
     MANUAL_FINALIZATION
     ${PROJECT_SOURCES}
+)
+
+target_precompile_headers(gitmaster PRIVATE
+    ${PROJECT_HEADERS}
 )
 
 target_include_directories(gitmaster PRIVATE combobox qgit/include)
@@ -139,6 +145,7 @@ set_target_properties(gitmaster PROPERTIES
     MACOSX_BUNDLE_SHORT_VERSION_STRING ${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}
     MACOSX_BUNDLE TRUE
     WIN32_EXECUTABLE TRUE
+    INTERPROCEDURAL_OPTIMIZATION TRUE
 )
 
 if(QT_VERSION_MAJOR EQUAL 6)
