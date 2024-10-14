@@ -35,6 +35,15 @@ set(PROJECT_SOURCES
     qgitclonerepositorydialog.cpp
     qgitclonerepositorydialog.h
     qgitclonerepositorydialog.ui
+    qgitpushdialog.cpp
+    qgitpushdialog.h
+    qgitpushdialog.ui
+    qgitpulldialog.cpp
+    qgitpulldialog.h
+    qgitpulldialog.ui
+    qgitfetchdialog.cpp
+    qgitfetchdialog.h
+    qgitfetchdialog.ui
 
     qgitrepotreeitemdelegate.cpp
     qgitrepotreeitemdelegate.h
