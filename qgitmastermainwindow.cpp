@@ -21,7 +21,7 @@ QGitMasterMainWindow::QGitMasterMainWindow(QWidget *parent)
 
     QWidget *spacer = new QWidget();
     spacer->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-    ui->mainToolBar->insertWidget(ui->actionSettings, spacer);
+    ui->mainToolBar->insertWidget(ui->actionGit_Flow, spacer);
 
     auto treeDelegate = new QGitRepoTreeItemDelegate(this);
 
@@ -179,7 +179,15 @@ void QGitMasterMainWindow::updateStatusBarText(const QString &text)
         ui->statusBar->clearMessage();
 }
 
-void QGitMasterMainWindow::on_actionCloneNew_triggered()
+void QGitMasterMainWindow::on_treeWidget_itemSelectionChanged()
+{
+    bool newState = ui->treeWidget->selectedItems().size() > 0;
+
+    ui->toolButton_RemoveItem->setEnabled(newState);
+    ui->toolButton_RepositorySettings->setEnabled(newState);
+}
+
+void QGitMasterMainWindow::on_toolButton_NewRepository_clicked()
 {
     QNewRepositoryDialog dlg(this);
     QString bookmarkStr;
@@ -257,19 +265,7 @@ void QGitMasterMainWindow::on_actionCloneNew_triggered()
     }
 }
 
-
-void QGitMasterMainWindow::on_actionOpen_triggered()
-{
-    Q_UNIMPLEMENTED();
-}
-
-
-void QGitMasterMainWindow::on_actionNewFolderRepository_triggered()
-{
-    Q_UNIMPLEMENTED();
-}
-
-void QGitMasterMainWindow::on_actionDeleteRepository_triggered()
+void QGitMasterMainWindow::on_toolButton_RemoveItem_clicked()
 {
     QTreeWidgetItem *item = ui->treeWidget->currentItem();
 
@@ -285,95 +281,6 @@ void QGitMasterMainWindow::on_actionDeleteRepository_triggered()
         }
     }
 }
-
-void QGitMasterMainWindow::on_actionSettingsRepository_triggered()
-{
-    Q_UNIMPLEMENTED();
-}
-
-void QGitMasterMainWindow::on_actionOpen_Bookmarked_triggered()
-{
-    Q_UNIMPLEMENTED();
-}
-
-void QGitMasterMainWindow::on_actionUndo_triggered()
-{
-    Q_UNIMPLEMENTED();
-}
-
-void QGitMasterMainWindow::on_actionRedo_triggered()
-{
-    Q_UNIMPLEMENTED();
-}
-
-void QGitMasterMainWindow::on_actionCut_triggered()
-{
-    Q_UNIMPLEMENTED();
-}
-
-void QGitMasterMainWindow::on_actionCopy_triggered()
-{
-    Q_UNIMPLEMENTED();
-}
-
-void QGitMasterMainWindow::on_actionPaste_triggered()
-{
-    Q_UNIMPLEMENTED();
-}
-
-void QGitMasterMainWindow::on_actionSelect_All_triggered()
-{
-    Q_UNIMPLEMENTED();
-}
-
-void QGitMasterMainWindow::on_actionShow_Hide_Bookmarks_triggered()
-{
-    Q_UNIMPLEMENTED();
-}
-
-
-void QGitMasterMainWindow::on_actionShow_Hosted_Repositories_triggered()
-{
-    Q_UNIMPLEMENTED();
-}
-
-
-void QGitMasterMainWindow::on_actionRefresh_triggered()
-{
-    Q_UNIMPLEMENTED();
-}
-
-
-void QGitMasterMainWindow::on_actionClose_Tab_triggered()
-{
-    Q_UNIMPLEMENTED();
-}
-
-
-void QGitMasterMainWindow::on_actionNext_Tab_triggered()
-{
-    Q_UNIMPLEMENTED();
-}
-
-
-void QGitMasterMainWindow::on_actionPrevious_Tab_triggered()
-{
-    Q_UNIMPLEMENTED();
-}
-
-void QGitMasterMainWindow::on_actionFull_Screen_triggered()
-{
-    if (ui->actionFull_Screen->isChecked())
-    {
-        m_prevWindowState = windowState();
-        setWindowState(Qt::WindowFullScreen);
-    }
-    else
-    {
-        setWindowState(m_prevWindowState);
-    }
-}
-
 
 void QGitMasterMainWindow::on_actionFetch_triggered()
 {
@@ -455,7 +362,7 @@ void QGitMasterMainWindow::on_actionStash_triggered()
     }
 }
 
-void QGitMasterMainWindow::change_theme_triggered(bool checked)
+/*void QGitMasterMainWindow::change_theme_triggered(bool checked)
 {
     QAction *menu = nullptr;
     QSettings settings;
@@ -470,4 +377,4 @@ void QGitMasterMainWindow::change_theme_triggered(bool checked)
 
         settings.setValue("theme", name);
     }
-}
+}*/

@@ -34,10 +34,43 @@
     <item>
      <widget class="QSplitter" name="splitter">
       <property name="orientation">
-       <enum>Qt::Horizontal</enum>
+       <enum>Qt::Orientation::Horizontal</enum>
       </property>
       <widget class="QWidget" name="layoutWidget">
        <layout class="QGridLayout" name="gridLayout">
+        <item row="1" column="2">
+         <spacer name="horizontalSpacer">
+          <property name="orientation">
+           <enum>Qt::Orientation::Horizontal</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>40</width>
+            <height>20</height>
+           </size>
+          </property>
+         </spacer>
+        </item>
+        <item row="1" column="3">
+         <widget class="QToolButton" name="toolButton_RepositorySettings">
+          <property name="enabled">
+           <bool>false</bool>
+          </property>
+          <property name="toolTip">
+           <string>Repository Settings</string>
+          </property>
+          <property name="icon">
+           <iconset resource="resource.qrc">
+            <normaloff>:/images/database_settings.svg</normaloff>:/images/database_settings.svg</iconset>
+          </property>
+          <property name="iconSize">
+           <size>
+            <width>32</width>
+            <height>32</height>
+           </size>
+          </property>
+         </widget>
+        </item>
         <item row="1" column="0">
          <widget class="QToolButton" name="toolButton_NewRepository">
           <property name="toolTip">
@@ -55,25 +88,32 @@
           </property>
          </widget>
         </item>
-        <item row="1" column="1">
-         <widget class="QToolButton" name="toolButton_NewFolder">
-          <property name="toolTip">
-           <string>New Folder</string>
+        <item row="0" column="0" colspan="4">
+         <widget class="QGitRepoTreeWidget" name="treeWidget">
+          <property name="styleSheet">
+           <string notr="true">border-color:none</string>
           </property>
-          <property name="icon">
-           <iconset resource="resource.qrc">
-            <normaloff>:/images/repository_add_common.svg</normaloff>:/images/repository_add_common.svg</iconset>
+          <property name="frameShape">
+           <enum>QFrame::Shape::NoFrame</enum>
           </property>
-          <property name="iconSize">
-           <size>
-            <width>32</width>
-            <height>32</height>
-           </size>
+          <property name="verticalScrollMode">
+           <enum>QAbstractItemView::ScrollMode::ScrollPerPixel</enum>
           </property>
+          <attribute name="headerVisible">
+           <bool>false</bool>
+          </attribute>
+          <column>
+           <property name="text">
+            <string notr="true">1</string>
+           </property>
+          </column>
          </widget>
         </item>
-        <item row="1" column="2">
+        <item row="1" column="1">
          <widget class="QToolButton" name="toolButton_RemoveItem">
+          <property name="enabled">
+           <bool>false</bool>
+          </property>
           <property name="toolTip">
            <string>Delete Item</string>
           </property>
@@ -87,57 +127,6 @@
             <height>32</height>
            </size>
           </property>
-         </widget>
-        </item>
-        <item row="1" column="3">
-         <spacer name="horizontalSpacer">
-          <property name="orientation">
-           <enum>Qt::Horizontal</enum>
-          </property>
-          <property name="sizeHint" stdset="0">
-           <size>
-            <width>40</width>
-            <height>20</height>
-           </size>
-          </property>
-         </spacer>
-        </item>
-        <item row="1" column="4">
-         <widget class="QToolButton" name="toolButton_RepositorySettings">
-          <property name="toolTip">
-           <string>Repository Settings</string>
-          </property>
-          <property name="icon">
-           <iconset resource="resource.qrc">
-            <normaloff>:/images/database_settings.svg</normaloff>:/images/database_settings.svg</iconset>
-          </property>
-          <property name="iconSize">
-           <size>
-            <width>32</width>
-            <height>32</height>
-           </size>
-          </property>
-         </widget>
-        </item>
-        <item row="0" column="0" colspan="5">
-         <widget class="QGitRepoTreeWidget" name="treeWidget">
-          <property name="styleSheet">
-           <string notr="true">border-color:none</string>
-          </property>
-          <property name="frameShape">
-           <enum>QFrame::NoFrame</enum>
-          </property>
-          <property name="verticalScrollMode">
-           <enum>QAbstractItemView::ScrollPerPixel</enum>
-          </property>
-          <attribute name="headerVisible">
-           <bool>false</bool>
-          </attribute>
-          <column>
-           <property name="text">
-            <string notr="true">1</string>
-           </property>
-          </column>
          </widget>
         </item>
        </layout>
@@ -181,7 +170,7 @@
     </size>
    </property>
    <property name="toolButtonStyle">
-    <enum>Qt::ToolButtonTextUnderIcon</enum>
+    <enum>Qt::ToolButtonStyle::ToolButtonTextUnderIcon</enum>
    </property>
    <property name="floatable">
     <bool>false</bool>
@@ -192,38 +181,24 @@
    <attribute name="toolBarBreak">
     <bool>false</bool>
    </attribute>
-   <addaction name="actionCloneNew"/>
-   <addaction name="separator"/>
    <addaction name="actionCommit"/>
-   <addaction name="actionCheckout"/>
-   <addaction name="actionDiscard"/>
-   <addaction name="actionStash"/>
-   <addaction name="actionAdd"/>
-   <addaction name="actionRemove"/>
-   <addaction name="actionAdd_Remove"/>
-   <addaction name="actionFetch"/>
+   <addaction name="separator"/>
    <addaction name="actionPull"/>
+   <addaction name="actionFetch"/>
    <addaction name="actionPush"/>
+   <addaction name="separator"/>
    <addaction name="actionBranch"/>
    <addaction name="actionMerge"/>
+   <addaction name="separator"/>
+   <addaction name="actionStash"/>
+   <addaction name="separator"/>
+   <addaction name="actionDiscard"/>
    <addaction name="actionTag"/>
    <addaction name="actionGit_Flow"/>
    <addaction name="actionTerminal"/>
    <addaction name="actionSettings"/>
   </widget>
   <widget class="QStatusBar" name="statusBar"/>
-  <action name="actionCloneNew">
-   <property name="icon">
-    <iconset resource="resource.qrc">
-     <normaloff>:/toolbar/clone</normaloff>:/toolbar/clone</iconset>
-   </property>
-   <property name="text">
-    <string>Clone / New</string>
-   </property>
-   <property name="shortcut">
-    <string>Ctrl+N</string>
-   </property>
-  </action>
   <action name="actionCommit">
    <property name="icon">
     <iconset resource="resource.qrc">
@@ -231,15 +206,6 @@
    </property>
    <property name="text">
     <string>Commit</string>
-   </property>
-  </action>
-  <action name="actionCheckout">
-   <property name="icon">
-    <iconset resource="resource.qrc">
-     <normaloff>:/toolbar/checkout</normaloff>:/toolbar/checkout</iconset>
-   </property>
-   <property name="text">
-    <string>Checkout</string>
    </property>
   </action>
   <action name="actionDiscard">
@@ -258,33 +224,6 @@
    </property>
    <property name="text">
     <string>Stash</string>
-   </property>
-  </action>
-  <action name="actionAdd">
-   <property name="icon">
-    <iconset resource="resource.qrc">
-     <normaloff>:/toolbar/add</normaloff>:/toolbar/add</iconset>
-   </property>
-   <property name="text">
-    <string>Add</string>
-   </property>
-  </action>
-  <action name="actionRemove">
-   <property name="icon">
-    <iconset resource="resource.qrc">
-     <normaloff>:/toolbar/remove</normaloff>:/toolbar/remove</iconset>
-   </property>
-   <property name="text">
-    <string>Remove</string>
-   </property>
-  </action>
-  <action name="actionAdd_Remove">
-   <property name="icon">
-    <iconset resource="resource.qrc">
-     <normaloff>:/toolbar/add_remove</normaloff>:/toolbar/add_remove</iconset>
-   </property>
-   <property name="text">
-    <string>Add/Remove</string>
    </property>
   </action>
   <action name="actionFetch">
@@ -368,278 +307,6 @@
     <string>Settings</string>
    </property>
   </action>
-  <action name="actionNewFolderRepository">
-   <property name="text">
-    <string>New Repository Folder</string>
-   </property>
-  </action>
-  <action name="actionDeleteRepository">
-   <property name="text">
-    <string>Delete Repository</string>
-   </property>
-  </action>
-  <action name="actionSettingsRepository">
-   <property name="text">
-    <string>Repository Settings</string>
-   </property>
-  </action>
-  <action name="actionOpen">
-   <property name="text">
-    <string>Open...</string>
-   </property>
-  </action>
-  <action name="actionOpen_Bookmarked">
-   <property name="text">
-    <string>Bookmark Open Repositories</string>
-   </property>
-  </action>
-  <action name="actionExit">
-   <property name="text">
-    <string>Exit</string>
-   </property>
-  </action>
-  <action name="actionUndo">
-   <property name="text">
-    <string>Undo</string>
-   </property>
-   <property name="shortcut">
-    <string>Ctrl+Z</string>
-   </property>
-  </action>
-  <action name="actionRedo">
-   <property name="text">
-    <string>Redo</string>
-   </property>
-   <property name="shortcut">
-    <string>Ctrl+Y</string>
-   </property>
-  </action>
-  <action name="actionCut">
-   <property name="text">
-    <string>Cut</string>
-   </property>
-   <property name="shortcut">
-    <string>Ctrl+X, Shift+Del</string>
-   </property>
-  </action>
-  <action name="actionCopy">
-   <property name="text">
-    <string>Copy</string>
-   </property>
-   <property name="shortcut">
-    <string>Ctrl+C, Ctrl+Ins</string>
-   </property>
-  </action>
-  <action name="actionPaste">
-   <property name="text">
-    <string>Paste</string>
-   </property>
-   <property name="shortcut">
-    <string>Ctrl+V, Shift+Ins</string>
-   </property>
-  </action>
-  <action name="actionSelect_All">
-   <property name="text">
-    <string>Select All</string>
-   </property>
-   <property name="shortcut">
-    <string>Ctrl+A</string>
-   </property>
-  </action>
-  <action name="actionShow_Hide_Bookmarks">
-   <property name="text">
-    <string>Show/Hide Bookmarks</string>
-   </property>
-   <property name="shortcut">
-    <string>F3</string>
-   </property>
-  </action>
-  <action name="actionShow_Hosted_Repositories">
-   <property name="text">
-    <string>Show Hosted Repositories</string>
-   </property>
-   <property name="shortcut">
-    <string>F4</string>
-   </property>
-  </action>
-  <action name="actionRefresh">
-   <property name="text">
-    <string>Refresh</string>
-   </property>
-   <property name="shortcut">
-    <string>F5</string>
-   </property>
-  </action>
-  <action name="actionClose_Tab">
-   <property name="text">
-    <string>Close Tab</string>
-   </property>
-  </action>
-  <action name="actionNext_Tab">
-   <property name="text">
-    <string>Next Tab</string>
-   </property>
-   <property name="shortcut">
-    <string>F8</string>
-   </property>
-  </action>
-  <action name="actionPrevious_Tab">
-   <property name="text">
-    <string>Previous Tab</string>
-   </property>
-   <property name="shortcut">
-    <string>F7</string>
-   </property>
-  </action>
-  <action name="actionFile_Status_View">
-   <property name="text">
-    <string>File Status View</string>
-   </property>
-  </action>
-  <action name="actionLog_View">
-   <property name="text">
-    <string>Log View</string>
-   </property>
-  </action>
-  <action name="actionSearch_View">
-   <property name="text">
-    <string>Search View</string>
-   </property>
-  </action>
-  <action name="actionFull_Screen">
-   <property name="checkable">
-    <bool>true</bool>
-   </property>
-   <property name="text">
-    <string>Fullscreen</string>
-   </property>
-   <property name="shortcut">
-    <string>F11</string>
-   </property>
-  </action>
-  <action name="actionRefresh_Repository_Status">
-   <property name="text">
-    <string>Refresh Repository Status</string>
-   </property>
-  </action>
-  <action name="action_About">
-   <property name="text">
-    <string>&amp;About</string>
-   </property>
-   <property name="shortcut">
-    <string>F1</string>
-   </property>
-  </action>
-  <action name="actionOptions">
-   <property name="text">
-    <string>&amp;Options</string>
-   </property>
-  </action>
-  <action name="actionAdd_Remote">
-   <property name="text">
-    <string>Add Remote</string>
-   </property>
-  </action>
-  <action name="actionAdd_Submodule">
-   <property name="text">
-    <string>Add Submodule</string>
-   </property>
-  </action>
-  <action name="actionGit_Flow_2">
-   <property name="text">
-    <string>Git Flow</string>
-   </property>
-  </action>
-  <action name="actionCreate_pullrequest">
-   <property name="text">
-    <string>Create pullrequest</string>
-   </property>
-  </action>
-  <action name="actionOpen_2">
-   <property name="text">
-    <string>Open</string>
-   </property>
-  </action>
-  <action name="actionShow_in_File_manager">
-   <property name="text">
-    <string>Show in File manager</string>
-   </property>
-  </action>
-  <action name="actionShow_in_Terminal">
-   <property name="text">
-    <string>Show in Terminal</string>
-   </property>
-  </action>
-  <action name="actionExternal_Diff">
-   <property name="text">
-    <string>External Diff</string>
-   </property>
-  </action>
-  <action name="actionAdd_2">
-   <property name="text">
-    <string>Add</string>
-   </property>
-  </action>
-  <action name="actionRemove_2">
-   <property name="text">
-    <string>Remove</string>
-   </property>
-  </action>
-  <action name="actionUnstage_from_index">
-   <property name="text">
-    <string>Unstage from index</string>
-   </property>
-  </action>
-  <action name="actionAdd_Remove_2">
-   <property name="text">
-    <string>Add/Remove</string>
-   </property>
-  </action>
-  <action name="actionStop_Tracking">
-   <property name="text">
-    <string>Stop Tracking</string>
-   </property>
-  </action>
-  <action name="actionIgnore">
-   <property name="text">
-    <string>Ignore</string>
-   </property>
-  </action>
-  <action name="actionCommit_Selected">
-   <property name="text">
-    <string>Commit Selected</string>
-   </property>
-  </action>
-  <action name="actionDiscard_Selected">
-   <property name="text">
-    <string>Discard Selected</string>
-   </property>
-  </action>
-  <action name="actionContinue_Rebase">
-   <property name="text">
-    <string>Continue Rebase</string>
-   </property>
-  </action>
-  <action name="actionLog_Selected">
-   <property name="text">
-    <string>Log Selected</string>
-   </property>
-  </action>
-  <action name="actionBlame_Selected">
-   <property name="text">
-    <string>Blame Selected</string>
-   </property>
-  </action>
-  <action name="actionCopy_2">
-   <property name="text">
-    <string>Copy</string>
-   </property>
-  </action>
-  <action name="actionMove">
-   <property name="text">
-    <string>Move</string>
-   </property>
-  </action>
  </widget>
  <layoutdefault spacing="6" margin="11"/>
  <customwidgets>
@@ -652,86 +319,5 @@
  <resources>
   <include location="resource.qrc"/>
  </resources>
- <connections>
-  <connection>
-   <sender>toolButton_NewRepository</sender>
-   <signal>clicked()</signal>
-   <receiver>actionCloneNew</receiver>
-   <slot>trigger()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>19</x>
-     <y>556</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>-1</x>
-     <y>-1</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>toolButton_NewFolder</sender>
-   <signal>clicked()</signal>
-   <receiver>actionNewFolderRepository</receiver>
-   <slot>trigger()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>63</x>
-     <y>556</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>-1</x>
-     <y>-1</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>toolButton_RemoveItem</sender>
-   <signal>clicked()</signal>
-   <receiver>actionDeleteRepository</receiver>
-   <slot>trigger()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>107</x>
-     <y>556</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>-1</x>
-     <y>-1</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>toolButton_RepositorySettings</sender>
-   <signal>clicked()</signal>
-   <receiver>actionSettingsRepository</receiver>
-   <slot>trigger()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>256</x>
-     <y>575</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>-1</x>
-     <y>-1</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>actionExit</sender>
-   <signal>triggered()</signal>
-   <receiver>QGitMasterMainWindow</receiver>
-   <slot>close()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>-1</x>
-     <y>-1</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>485</x>
-     <y>299</y>
-    </hint>
-   </hints>
-  </connection>
- </connections>
+ <connections/>
 </ui>

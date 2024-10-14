@@ -26,43 +26,22 @@ protected:
     bool event(QEvent *event) override;
 
 private slots:
-    void on_actionCloneNew_triggered();
-    void on_actionOpen_triggered();
-    void on_actionOpen_Bookmarked_triggered();
-
-    void on_actionUndo_triggered();
-    void on_actionRedo_triggered();
-    void on_actionCut_triggered();
-    void on_actionCopy_triggered();
-    void on_actionPaste_triggered();
-    void on_actionSelect_All_triggered();
-
-    void on_actionShow_Hide_Bookmarks_triggered();
-    void on_actionShow_Hosted_Repositories_triggered();
-    void on_actionRefresh_triggered();
-    void on_actionClose_Tab_triggered();
-    void on_actionNext_Tab_triggered();
-    void on_actionPrevious_Tab_triggered();
-    void on_actionFull_Screen_triggered();
+    void on_treeWidget_itemSelectionChanged();
+    void on_toolButton_NewRepository_clicked();
+    void on_toolButton_RemoveItem_clicked();
 
     void on_actionFetch_triggered();
     void on_actionPull_triggered();
     void on_actionPush_triggered();
 
-    void on_actionNewFolderRepository_triggered();
-    void on_actionDeleteRepository_triggered();
-    void on_actionSettingsRepository_triggered();
     void on_treeWidget_itemDoubleClicked(QTreeWidgetItem *item, int column);
     void on_tabWidget_tabCloseRequested(int index);
     void on_tabWidget_currentChanged(int index);
     void on_actionStash_triggered();
 
-    void change_theme_triggered(bool checked);
-
 private:
     void readSettings();
 
     Ui::QGitMasterMainWindow *ui = nullptr;
-    Qt::WindowStates m_prevWindowState = Qt::WindowNoState;
     QString m_appTheme;
 };
