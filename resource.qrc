@@ -37,16 +37,11 @@
         <file alias="tree_view">images/combobox/tree_view.svg</file>
     </qresource>
     <qresource prefix="/toolbar">
-        <file alias="checkout">images/toolbar/checkout.png</file>
-        <file alias="clone">images/toolbar/clone.png</file>
         <file alias="commit">images/toolbar/commit.png</file>
         <file alias="discard">images/toolbar/discard.png</file>
         <file alias="stash">images/toolbar/stash.png</file>
         <file alias="terminal">images/toolbar/terminal.png</file>
         <file alias="settings">images/toolbar/settings.png</file>
-        <file alias="add">images/toolbar/add.svg</file>
-        <file alias="remove">images/toolbar/remove.svg</file>
-        <file alias="add_remove">images/toolbar/add_remove.svg</file>
         <file alias="branch">images/toolbar/branch.svg</file>
         <file alias="merge">images/toolbar/merge.svg</file>
         <file alias="git_flow">images/toolbar/git_flow.svg</file>
