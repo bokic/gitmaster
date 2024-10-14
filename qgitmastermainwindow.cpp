@@ -48,7 +48,7 @@ QGitMasterMainWindow::QGitMasterMainWindow(QWidget *parent)
 
     for(const auto &theme: themes)
     {
-        QAction *newAction = new QAction(ui->menu_Themes);
+        /*QAction *newAction = new QAction(ui->menu_Themes);
 
         newAction->setText(theme);
         newAction->setCheckable(true);
@@ -61,7 +61,7 @@ QGitMasterMainWindow::QGitMasterMainWindow(QWidget *parent)
 
         ui->menu_Themes->addAction(newAction);
 
-        connect(newAction, &QAction::triggered, this, &QGitMasterMainWindow::change_theme_triggered);
+        connect(newAction, &QAction::triggered, this, &QGitMasterMainWindow::change_theme_triggered);*/
     }
 }
 
