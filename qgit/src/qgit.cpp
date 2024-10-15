@@ -1608,7 +1608,7 @@ void QGit::pull()
                         auto pubkeyPathname = pubkeyFileInfo.absoluteFilePath().toUtf8();
                         auto privkeyPathname = privkeyFileInfo.absoluteFilePath().toUtf8();
 
-                        git_credential_ssh_key_new(out, strdup(username_from_url), strdup(pubkeyPathname), strdup(privkeyPathname), strdup(pass.constData()));
+                        git_credential_ssh_key_new(out, username_from_url, pubkeyPathname, privkeyPathname, pass);
 
                         return 0;
                     }
@@ -1682,7 +1682,7 @@ void QGit::fetch()
                         auto pubkeyPathname = pubkeyFileInfo.absoluteFilePath().toUtf8();
                         auto privkeyPathname = privkeyFileInfo.absoluteFilePath().toUtf8();
 
-                        git_credential_ssh_key_new(out, strdup(username_from_url), strdup(pubkeyPathname), strdup(privkeyPathname), strdup(pass.constData()));
+                        git_credential_ssh_key_new(out, username_from_url, pubkeyPathname, privkeyPathname, pass);
 
                         return 0;
                     }
@@ -1757,7 +1757,7 @@ void QGit::push()
                         auto pubkeyPathname = pubkeyFileInfo.absoluteFilePath().toUtf8();
                         auto privkeyPathname = privkeyFileInfo.absoluteFilePath().toUtf8();
 
-                        git_credential_ssh_key_new(out, strdup(username_from_url), strdup(pubkeyPathname), strdup(privkeyPathname), strdup(pass.constData()));
+                        git_credential_ssh_key_new(out, username_from_url, pubkeyPathname, privkeyPathname, pass);
 
                         return 0;
                     }
