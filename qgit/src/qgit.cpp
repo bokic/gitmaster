@@ -736,7 +736,7 @@ void QGit::commitDiff(QString commitId)
         auto time = git_commit_time(commit);
         auto timeOffset = git_commit_time_offset(commit);
         commitTime = QDateTime::fromMSecsSinceEpoch(time * 1000);
-        commitTime.setOffsetFromUtc(timeOffset * 60);
+        commitTime.setTimeZone(QTimeZone(timeOffset * 60));
 
         commitMessage = QString::fromUtf8(git_commit_message(commit));
 
@@ -1891,18 +1891,18 @@ void QGit::listCommits(QString object, int length)
             auto time = git_commit_time(commit);
             auto timeOffset = git_commit_time_offset(commit);
             commit_time = QDateTime::fromMSecsSinceEpoch(time * 1000);
-            commit_time.setOffsetFromUtc(timeOffset * 60);
+            commit_time.setTimeZone(QTimeZone(timeOffset * 60));
 
             QString author_name = QString::fromUtf8(git_commit_author(commit)->name);
             QString author_email = QString::fromUtf8(git_commit_author(commit)->email);
             QDateTime author_when = QDateTime::fromMSecsSinceEpoch(git_commit_author(commit)->when.time * 1000);
-            author_when.setOffsetFromUtc(git_commit_author(commit)->when.offset * 60);
+            author_when.setTimeZone(QTimeZone(git_commit_author(commit)->when.offset * 60));
             commit_author = QGitSignature(author_name, author_email, author_when);
 
             QString commiter_name =  QString::fromUtf8(git_commit_committer(commit)->name);
             QString commiter_email = QString::fromUtf8(git_commit_committer(commit)->email);
             QDateTime commiter_when = QDateTime::fromMSecsSinceEpoch(git_commit_committer(commit)->when.time * 1000);
-            commiter_when.setOffsetFromUtc(git_commit_committer(commit)->when.offset * 60);
+            commiter_when.setTimeZone(QTimeZone(git_commit_committer(commit)->when.offset * 60));
             commit_commiter = QGitSignature(commiter_name, commiter_email, commiter_when);
 
             commit_message = QString::fromUtf8(git_commit_message(commit));
