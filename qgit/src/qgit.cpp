@@ -682,7 +682,7 @@ void QGit::commitDiff(QString commitId)
             commitId = QStringLiteral("HEAD");
         }
 
-        res = git_revparse_single(&obj, repo, commitId.toLatin1());
+        res = git_revparse_single(&obj, repo, commitId.toUtf8());
         if (res)
         {
             throw QGitError("git_revparse_single", res);
@@ -857,7 +857,7 @@ void QGit::commitDiffContent(QString first, QString second, QList<QString> files
 
         if (!first.isEmpty())
         {
-            res = git_revparse_single(&first_obj, repo, first.toLatin1());
+            res = git_revparse_single(&first_obj, repo, first.toUtf8());
             if (res)
             {
                 throw QGitError("git_revparse_single(first)", res);
@@ -937,7 +937,7 @@ void QGit::commitDiffContent(QString first, QString second, QList<QString> files
         }
         else
         {
-            res = git_revparse_single(&second_obj, repo, second.toLatin1());
+            res = git_revparse_single(&second_obj, repo, second.toUtf8());
             if (res)
             {
                 throw QGitError("git_revparse_single(second)", res);
@@ -1798,7 +1798,7 @@ void QGit::listCommits(QString object, int length)
         }
         else
         {
-            res = git_oid_fromstr(&oid, object.toLatin1().constData());
+            res = git_oid_fromstr(&oid, object.toUtf8().constData());
             if (res)
             {
                 throw QGitError("git_oid_fromstr", res);

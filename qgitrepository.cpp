@@ -59,7 +59,7 @@ QGitRepository::QGitRepository(const QString &path, QWidget *parent)
         QByteArray hash;
         QNetworkReply *reply = nullptr;
 
-        hash = QCryptographicHash::hash(email.trimmed().toLatin1(), QCryptographicHash::Md5).toHex();
+        hash = QCryptographicHash::hash(email.trimmed().toUtf8(), QCryptographicHash::Md5).toHex();
 
         QString urlStr = QString("http://www.gravatar.com/avatar/%1?s=24").arg(QString::fromLatin1(hash));
         auto url = QUrl(urlStr);
