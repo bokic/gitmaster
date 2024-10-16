@@ -21,6 +21,18 @@ QGitRepository::QGitRepository(const QString &path, QWidget *parent)
     , ui(new Ui::QGitRepository)
     , m_path(path)
     , m_allCommitsLoaded(false)
+    , m_iconFileNew(":/small/added")
+    , m_iconFileClean(":/small/clean")
+    , m_iconFileModified(":/small/modified")
+    , m_iconFileRemoved(":/small/deleted")
+    , m_iconFileIgnored(":/small/ignored")
+    , m_iconFileUnknown(":/small/unknown")
+    , m_iconTag(":/small/tag")
+    , m_iconWhiteCheckbox(":/small/white_checkbox")
+    , m_iconCurrentBranch(":/small/current_branch")
+    , m_iconBranch(":/small/branch")
+    , m_iconRemote(":/small/remote")
+    , m_iconRemoteBranch(":/small/remote_branch")
     , m_git(new QGit())
 {
     QString name;
@@ -211,7 +223,7 @@ void QGitRepository::repositoryBranchesAndTagsReply(QList<QGitBranch> branches, 
     QTreeWidgetItem *itemRemoteBranches = new QTreeWidgetItem(QStringList() << tr("Remotes"));
 
 
-    itemWorkingCopy->setIcon(0, QIcon(":/small/white_checkbox"));
+    itemWorkingCopy->setIcon(0, m_iconWhiteCheckbox);
     itemFileStatus->addChild(itemWorkingCopy);
 
     auto current_branch = QGit::getBranchNameFromPath(m_git->path().path());
@@ -251,11 +263,11 @@ void QGitRepository::repositoryBranchesAndTagsReply(QList<QGitBranch> branches, 
                             font.setBold(true);
                             child->setFont(0, font);
 
-                            child->setIcon(0, QIcon(":/small/current_branch"));
+                            child->setIcon(0, m_iconCurrentBranch);
                         }
                         else
                         {
-                            child->setIcon(0, QIcon(":/small/branch"));
+                            child->setIcon(0, m_iconBranch);
                         }
 
                         item->addChild(child);
@@ -291,9 +303,9 @@ void QGitRepository::repositoryBranchesAndTagsReply(QList<QGitBranch> branches, 
                         QTreeWidgetItem *child = new QTreeWidgetItem(QStringList() << name);
 
                         if (depth == 2)
-                            child->setIcon(0, QIcon(":/small/remote"));
+                            child->setIcon(0, m_iconRemote);
                         else
-                            child->setIcon(0, QIcon(":/small/remote_branch"));
+                            child->setIcon(0, m_iconRemoteBranch);
 
                         item->addChild(child);
                         item = child;
@@ -307,7 +319,7 @@ void QGitRepository::repositoryBranchesAndTagsReply(QList<QGitBranch> branches, 
     {
         QTreeWidgetItem *child = new QTreeWidgetItem(QStringList() << tag);
 
-        child->setIcon(0, QIcon(":/small/tag"));
+        child->setIcon(0, m_iconTag);
         itemTags->addChild(child);
     }
 
@@ -352,12 +364,6 @@ void QGitRepository::repositoryChangedFilesReply(QMap<QString, git_status_t> fil
     ui->listWidget_unstaged->setEnabled(true);
 
 
-    QIcon icon_file_new(":/small/added");
-    QIcon icon_file_clean(":/small/clean");
-    QIcon icon_file_modified(":/small/modified");
-    QIcon icon_file_removed(":/small/deleted");
-    QIcon icon_file_ignored(":/small/ignored");
-    QIcon icon_file_unknown(":/small/unknown");
 
     QMapIterator<QString, git_status_t> i(files);
     while (i.hasNext())
@@ -377,16 +383,16 @@ void QGitRepository::repositoryChangedFilesReply(QMap<QString, git_status_t> fil
             switch(status)
             {
             case GIT_STATUS_INDEX_NEW:
-                item->setIcon(icon_file_new);
+                item->setIcon(m_iconFileNew);
                 break;
             case GIT_STATUS_INDEX_MODIFIED:
-                item->setIcon(icon_file_modified);
+                item->setIcon(m_iconFileModified);
                 break;
             case GIT_STATUS_INDEX_DELETED:
-                item->setIcon(icon_file_removed);
+                item->setIcon(m_iconFileRemoved);
                 break;
             default:
-                item->setIcon(icon_file_unknown);
+                item->setIcon(m_iconFileUnknown);
                 break;
             }
 
@@ -402,22 +408,22 @@ void QGitRepository::repositoryChangedFilesReply(QMap<QString, git_status_t> fil
             switch(status)
             {
             case GIT_STATUS_CURRENT:
-                item->setIcon(icon_file_clean);
+                item->setIcon(m_iconFileClean);
                 break;
             case GIT_STATUS_WT_NEW:
-                item->setIcon(icon_file_new);
+                item->setIcon(m_iconFileNew);
                 break;
             case GIT_STATUS_WT_MODIFIED:
-                item->setIcon(icon_file_modified);
+                item->setIcon(m_iconFileModified);
                 break;
             case GIT_STATUS_WT_DELETED:
-                item->setIcon(icon_file_removed);
+                item->setIcon(m_iconFileRemoved);
                 break;
             case GIT_STATUS_IGNORED:
-                item->setIcon(icon_file_ignored);
+                item->setIcon(m_iconFileIgnored);
                 break;
             default:
-                item->setIcon(icon_file_unknown);
+                item->setIcon(m_iconFileUnknown);
                 break;
             }
 
@@ -501,11 +507,6 @@ void QGitRepository::repositoryGetCommitDiffReply(QString commitId, QGitCommit d
     {
         m_commitDiff = diff;
 
-        QIcon icon_file_new(":/small/added");
-        QIcon icon_file_modified(":/small/modified");
-        QIcon icon_file_removed(":/small/deleted");
-        QIcon icon_file_unknown(":/small/unknown");
-
         int currentRow = ui->logHistory_commits->currentRow();
 
         const QString commit_id = ui->logHistory_commits->item(currentRow, 4)->data(Qt::UserRole).toString();
@@ -565,16 +566,16 @@ void QGitRepository::repositoryGetCommitDiffReply(QString commitId, QGitCommit d
 
             switch(files.at(c).status()) {
             case GIT_DELTA_ADDED:
-                item_icon = icon_file_new;
+                item_icon = m_iconFileNew;
                 break;
             case GIT_DELTA_DELETED:
-                item_icon = icon_file_removed;
+                item_icon = m_iconFileRemoved;
                 break;
             case GIT_DELTA_MODIFIED:
-                item_icon = icon_file_modified;
+                item_icon = m_iconFileModified;
                 break;
             default:
-                item_icon = icon_file_unknown; // TODO: Add icons for other statuses.
+                item_icon = m_iconFileUnknown; // TODO: Add icons for other statuses.
                 break;
             }
 

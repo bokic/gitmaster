@@ -3,22 +3,25 @@
 
 QComboBoxGitViewOptions::QComboBoxGitViewOptions(QWidget *parent)
     : QCustomComboBox(parent)
+    , m_iconFlatListSingleColumn(":/QComboBoxGitViewOptions/flat_list_single_column")
+    , m_iconFlatListMultipleColumn(":/QComboBoxGitViewOptions/flat_list_multiple_column")
+    , m_iconTreeView(":/QComboBoxGitViewOptions/tree_view")
 {
     QListWidgetItem *item = nullptr;
 
     item = new QListWidgetItem(tr("Flat list (single column)"));
     item->setCheckState(Qt::Checked);
-    item->setIcon(QIcon(":/QComboBoxGitViewOptions/flat_list_single_column"));
+    item->setIcon(m_iconFlatListSingleColumn);
     m_list->addItem(item);
 
     item = new QListWidgetItem(tr("Flat list (multiple column)"));
     item->setCheckState(Qt::Unchecked);
-    item->setIcon(QIcon(":/QComboBoxGitViewOptions/flat_list_multiple_column"));
+    item->setIcon(m_iconFlatListMultipleColumn);
     m_list->addItem(item);
 
     item = new QListWidgetItem(tr("Tree view"));
     item->setCheckState(Qt::Unchecked);
-    item->setIcon(QIcon(":/QComboBoxGitViewOptions/tree_view"));
+    item->setIcon(m_iconTreeView);
     m_list->addItem(item);
 
     item = new QListWidgetItem();
@@ -51,11 +54,11 @@ QComboBoxGitViewOptions::QComboBoxGitViewOptions(QWidget *parent)
 void QComboBoxGitViewOptions::updateIcon()
 {
     if (m_list->item(0)->checkState() == Qt::Checked)
-        setCurrentIcon(QIcon(":/QComboBoxGitViewOptions/flat_list_single_column"));
+        setCurrentIcon(m_iconFlatListSingleColumn);
     else if (m_list->item(1)->checkState() == Qt::Checked)
-        setCurrentIcon(QIcon(":/QComboBoxGitViewOptions/flat_list_multiple_column"));
+        setCurrentIcon(m_iconFlatListMultipleColumn);
     else if (m_list->item(2)->checkState() == Qt::Checked)
-        setCurrentIcon(QIcon(":/QComboBoxGitViewOptions/tree_view"));
+        setCurrentIcon(m_iconTreeView);
 }
 
 int QComboBoxGitViewOptions::viewType() const

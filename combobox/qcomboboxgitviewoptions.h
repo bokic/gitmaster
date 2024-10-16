@@ -2,6 +2,7 @@
 
 #include "qcustomcombobox.h"
 #include <QWidget>
+#include <QIcon>
 
 
 class QComboBoxGitViewOptions : public QCustomComboBox
@@ -15,4 +16,9 @@ public:
 
 protected:
     void clicked(QListWidgetItem *item) override;
+
+private:
+    QIcon m_iconFlatListSingleColumn;
+    QIcon m_iconFlatListMultipleColumn;
+    QIcon m_iconTreeView;
 };

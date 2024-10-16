@@ -4,6 +4,7 @@
 #include <QListWidgetItem>
 #include <QThread>
 #include <QWidget>
+#include <QIcon>
 
 #include "qgit.h"
 #include "qgitcommit.h"
@@ -80,6 +81,18 @@ private:
     QGitCommit m_unstagedDiff;
     QGitCommit m_commitDiff;
     QThread m_thread;
+    QIcon m_iconFileNew;
+    QIcon m_iconFileClean;
+    QIcon m_iconFileModified;
+    QIcon m_iconFileRemoved;
+    QIcon m_iconFileIgnored;
+    QIcon m_iconFileUnknown;
+    QIcon m_iconTag;
+    QIcon m_iconWhiteCheckbox;
+    QIcon m_iconCurrentBranch;
+    QIcon m_iconBranch;
+    QIcon m_iconRemote;
+    QIcon m_iconRemoteBranch;
     bool m_stageFiles = true;
     QGit *m_git = nullptr;
 };
