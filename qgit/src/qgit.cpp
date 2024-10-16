@@ -442,13 +442,9 @@ void QGit::listBranchesAndTags()
 void QGit::stashSave(QString name)
 {
     git_repository *repo = nullptr;
-    git_reference *head = nullptr;
-    //git_commit *commit = nullptr;
     git_signature *me = nullptr;
-    //git_index *index = nullptr;
-    git_oid *oid = nullptr;
+    git_oid stashid;
 
-    //QStringList stashes;
     int res = 0;
 
     QGitError error;
@@ -467,20 +463,7 @@ void QGit::stashSave(QString name)
             throw QGitError("git_signature_default", res);
         }
 
-        res = git_repository_head(&head, repo);
-        if (res)
-        {
-            throw QGitError("git_repository_head", res);
-        }
-
-        // TODO: Check if we have memory leak here!
-        oid = const_cast<git_oid *>(git_reference_target(head));
-        if (!oid)
-        {
-            throw QGitError("git_reference_target returned NULL", 0);
-        }
-
-        res = git_stash_save(oid, repo, me, name.toUtf8().constData(), 0);
+        res = git_stash_save(&stashid, repo, me, name.toUtf8().constData(), GIT_STASH_DEFAULT);
         if (res)
         {
             throw QGitError("git_stash_save", res);
@@ -491,19 +474,6 @@ void QGit::stashSave(QString name)
     }
 
     emit stashSaveReply(error);
-
-    if (oid)
-    {
-        // TODO: Check if we need to free memory here!
-        //git_oid_shorten_free();
-        oid = nullptr;
-    }
-
-    if (head)
-    {
-        git_reference_delete(head);
-        head = nullptr;
-    }
 
     if (me)
     {
