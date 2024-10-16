@@ -16,10 +16,10 @@ QGitCloneRepositoryDialog::QGitCloneRepositoryDialog(const QString &url, const Q
 
     m_git->moveToThread(&m_thread);
 
-	connect(this, SIGNAL(clone(QUrl)), m_git, SLOT(clone(QUrl)));
-	connect(m_git, SIGNAL(cloneReply(QGitError)), this, SLOT(cloneReply(QGitError)));
-	connect(m_git, SIGNAL(cloneTransferReply(uint,uint,uint,uint,uint,uint,size_t)), this, SLOT(cloneTransferReply(uint,uint,uint,uint,uint,uint,size_t)));
-	connect(m_git, SIGNAL(cloneProgressReply(QString,size_t,size_t)), this, SLOT(cloneProgressReply(QString,size_t,size_t)));
+    connect(this, &QGitCloneRepositoryDialog::clone, m_git, &QGit::clone);
+    connect(m_git, &QGit::cloneReply, this, &QGitCloneRepositoryDialog::cloneReply);
+    connect(m_git, &QGit::cloneTransferReply, this, &QGitCloneRepositoryDialog::cloneTransferReply);
+    connect(m_git, &QGit::cloneProgressReply, this, &QGitCloneRepositoryDialog::cloneProgressReply);
 
 	m_git->setPath(m_path);
 

@@ -13,13 +13,13 @@ QNewRepositoryDialog::QNewRepositoryDialog(QWidget *parent)
 {
     ui->setupUi(this);
 
-    connect(ui->lineEditCloneRepositorySourceURL, SIGNAL(textChanged(QString)), SLOT(updateWidgets()));
-    connect(ui->lineEditCloneRepositoryDestinationPath, SIGNAL(textChanged(QString)), SLOT(updateWidgets()));
-    connect(ui->lineEditCloneRepositoryBookmark, SIGNAL(textChanged(QString)), SLOT(updateWidgets()));
-    connect(ui->lineEditAddWorkingCopyPath, SIGNAL(textChanged(QString)), SLOT(updateWidgets()));
-    connect(ui->lineEditAddWorkingCopyBookmark, SIGNAL(textChanged(QString)), SLOT(updateWidgets()));
-    connect(ui->lineEditCreateNewRepositoryPath, SIGNAL(textChanged(QString)), SLOT(updateWidgets()));
-    connect(ui->lineEditCreateNewRepositoryBookmark, SIGNAL(textChanged(QString)), SLOT(updateWidgets()));
+    connect(ui->lineEditCloneRepositorySourceURL, &QLineEdit::textChanged, this,  &QNewRepositoryDialog::updateWidgets);
+    connect(ui->lineEditCloneRepositoryDestinationPath, &QLineEdit::textChanged, this,  &QNewRepositoryDialog::updateWidgets);
+    connect(ui->lineEditCloneRepositoryBookmark, &QLineEdit::textChanged, this,  &QNewRepositoryDialog::updateWidgets);
+    connect(ui->lineEditAddWorkingCopyPath, &QLineEdit::textChanged, this,  &QNewRepositoryDialog::updateWidgets);
+    connect(ui->lineEditAddWorkingCopyBookmark, &QLineEdit::textChanged, this,  &QNewRepositoryDialog::updateWidgets);
+    connect(ui->lineEditCreateNewRepositoryPath, &QLineEdit::textChanged, this,  &QNewRepositoryDialog::updateWidgets);
+    connect(ui->lineEditCreateNewRepositoryBookmark, &QLineEdit::textChanged, this,  &QNewRepositoryDialog::updateWidgets);
 
     ui->lineEditCloneRepositoryBookmark->setEnabled(false);
     ui->lineEditAddWorkingCopyBookmark->setEnabled(false);

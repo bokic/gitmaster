@@ -76,39 +76,39 @@ QGitRepository::QGitRepository(const QString &path, QWidget *parent)
 
     activateCommitOperation(false);
 
-    connect(this, SIGNAL(localStash(QString)), m_git, SLOT(stashSave(QString)));
-    connect(m_git, SIGNAL(stashSaveReply(QGitError)), this, SLOT(localStashSaveReply(QGitError)));
+    connect(this, &QGitRepository::localStash, m_git, &QGit::stashSave);
+    connect(m_git, &QGit::stashSaveReply, this, &QGitRepository::localStashSaveReply);
 
-    connect(this, SIGNAL(repositoryBranches()), m_git, SLOT(listBranchesAndTags()));
-    connect(m_git, SIGNAL(listBranchesAndTagsReply(QList<QGitBranch>,QList<QString>,QGitError)), this, SLOT(repositoryBranchesAndTagsReply(QList<QGitBranch>,QList<QString>,QGitError)));
+    connect(this, &QGitRepository::repositoryBranches, m_git, &QGit::listBranchesAndTags);
+    connect(m_git, &QGit::listBranchesAndTagsReply, this, &QGitRepository::repositoryBranchesAndTagsReply);
 
-    connect(this, SIGNAL(repositoryStashes()), m_git, SLOT(listStashes()));
-    connect(m_git, SIGNAL(listStashesReply(QStringList,QGitError)), this, SLOT(repositoryStashesReply(QStringList,QGitError)));
+    connect(this, &QGitRepository::repositoryStashes, m_git, &QGit::listStashes);
+    connect(m_git, &QGit::listStashesReply, this, &QGitRepository::repositoryStashesReply);
 
-    connect(this, SIGNAL(repositoryChangedFiles(int,int,bool)), m_git, SLOT(listChangedFiles(int,int,bool)));
-    connect(m_git, SIGNAL(listChangedFilesReply(QMap<QString,git_status_t>,QGitError)), this, SLOT(repositoryChangedFilesReply(QMap<QString,git_status_t>,QGitError)));
+    connect(this, &QGitRepository::repositoryChangedFiles, m_git, &QGit::listChangedFiles);
+    connect(m_git, &QGit::listChangedFilesReply, this, &QGitRepository::repositoryChangedFilesReply);
 
-    connect(this, SIGNAL(repositoryStageFiles(QStringList)), m_git, SLOT(stageFiles(QStringList)));
-    connect(m_git, SIGNAL(stageFilesReply(QGitError)), this, SLOT(repositoryStageFilesReply(QGitError)));
+    connect(this, &QGitRepository::repositoryStageFiles, m_git, &QGit::stageFiles);
+    connect(m_git, &QGit::stageFilesReply, this, &QGitRepository::repositoryStageFilesReply);
 
-    connect(this, SIGNAL(repositoryUnstageFiles(QStringList)), m_git, SLOT(unstageFiles(QStringList)));
-    connect(m_git, SIGNAL(unstageFilesReply(QGitError)), this, SLOT(repositoryUnstageFilesReply(QGitError)));
+    connect(this, &QGitRepository::repositoryUnstageFiles, m_git, &QGit::unstageFiles);
+    connect(m_git, &QGit::unstageFilesReply, this, &QGitRepository::repositoryUnstageFilesReply);
 
-    connect(this, SIGNAL(repositoryCommit(QString)), m_git, SLOT(commit(QString)));
-    connect(m_git, SIGNAL(commitReply(QString,QGitError)), this, SLOT(repositoryCommitReply(QString,QGitError)));
+    connect(this, &QGitRepository::repositoryCommit, m_git, &QGit::commit);
+    connect(m_git, &QGit::commitReply, this, &QGitRepository::repositoryCommitReply);
 
-    connect(this, SIGNAL(repositoryGetCommits(QString,int)), m_git, SLOT(listCommits(QString,int)));
-    connect(m_git, SIGNAL(listCommitsReply(QList<QGitCommit>,QGitError)), this, SLOT(repositoryGetCommitsReply(QList<QGitCommit>,QGitError)));
+    connect(this, &QGitRepository::repositoryGetCommits, m_git, &QGit::listCommits);
+    connect(m_git, &QGit::listCommitsReply, this, &QGitRepository::repositoryGetCommitsReply);
 
-    connect(this, SIGNAL(repositoryGetCommitDiff(QString)), m_git, SLOT(commitDiff(QString)));
-    connect(m_git, SIGNAL(commitDiffReply(QString,QGitCommit,QGitError)), this, SLOT(repositoryGetCommitDiffReply(QString,QGitCommit,QGitError)));
+    connect(this, &QGitRepository::repositoryGetCommitDiff, m_git, &QGit::commitDiff);
+    connect(m_git, &QGit::commitDiffReply, this, &QGitRepository::repositoryGetCommitDiffReply);
 
-    connect(ui->commit_diff, SIGNAL(select(QString,QVector<QGitDiffWidgetLine>)), this, SLOT(selectedLines(QString,QVector<QGitDiffWidgetLine>)));
+    connect(ui->commit_diff, &QGitDiffWidget::select, this, &QGitRepository::selectedLines);
 
-    connect(this, SIGNAL(stageFileLines(QString,QVector<QGitDiffWidgetLine>)), m_git, SLOT(stageFileLines(QString,QVector<QGitDiffWidgetLine>)));
-    connect(this, SIGNAL(unstageFileLines(QString,QVector<QGitDiffWidgetLine>)), m_git, SLOT(unstageFileLines(QString,QVector<QGitDiffWidgetLine>)));
+    connect(this, &QGitRepository::stageFileLines, m_git, &QGit::stageFileLines);
+    connect(this, &QGitRepository::unstageFileLines, m_git, &QGit::unstageFileLines);
 
-    connect(ui->logHistory_commits->verticalScrollBar(), SIGNAL(sliderMoved(int)), this, SLOT(historyTableSliderMoved(int)));
+    connect(ui->logHistory_commits->verticalScrollBar(), &QScrollBar::sliderMoved, this, &QGitRepository::historyTableSliderMoved);
 
     m_thread.start();
 
@@ -597,20 +597,20 @@ void QGitRepository::on_repositoryDetail_currentChanged(int index)
 {
     switch(index) {
     case 0:
-        disconnect(ui->logHistory_diff, SIGNAL(requestGitDiff(QString,QString,QList<QString>)), m_git, SLOT(commitDiffContent(QString,QString,QList<QString>)));
-        disconnect(m_git, SIGNAL(commitDiffContentReply(QString,QString,QList<QGitDiffFile>,QGitError)), ui->logHistory_diff, SLOT(responseGitDiff(QString,QString,QList<QGitDiffFile>,QGitError)));
+        disconnect(ui->logHistory_diff, &QGitDiffWidget::requestGitDiff, m_git, &QGit::commitDiffContent);
+        disconnect(m_git, &QGit::commitDiffContentReply, ui->logHistory_diff, &QGitDiffWidget::responseGitDiff);
 
-        connect(ui->commit_diff, SIGNAL(requestGitDiff(QString,QString,QList<QString>)), m_git, SLOT(commitDiffContent(QString,QString,QList<QString>)));
-        connect(m_git, SIGNAL(commitDiffContentReply(QString,QString,QList<QGitDiffFile>,QGitError)), ui->commit_diff, SLOT(responseGitDiff(QString,QString,QList<QGitDiffFile>,QGitError)));
+        connect(ui->commit_diff, &QGitDiffWidget::requestGitDiff, m_git, &QGit::commitDiffContent);
+        connect(m_git, &QGit::commitDiffContentReply, ui->commit_diff, &QGitDiffWidget::responseGitDiff);
 
         fetchRepositoryChangedFiles();
         break;
     case 1:
-        disconnect(ui->commit_diff, SIGNAL(requestGitDiff(QString,QString,QList<QString>)), m_git, SLOT(commitDiffContent(QString,QString,QList<QString>)));
-        disconnect(m_git, SIGNAL(commitDiffContentReply(QString,QString,QList<QGitDiffFile>,QGitError)), ui->commit_diff, SLOT(responseGitDiff(QString,QString,QList<QGitDiffFile>,QGitError)));
+        disconnect(ui->commit_diff, &QGitDiffWidget::requestGitDiff, m_git, &QGit::commitDiffContent);
+        disconnect(m_git, &QGit::commitDiffContentReply, ui->commit_diff, &QGitDiffWidget::responseGitDiff);
 
-        connect(ui->logHistory_diff, SIGNAL(requestGitDiff(QString,QString,QList<QString>)), m_git, SLOT(commitDiffContent(QString,QString,QList<QString>)));
-        connect(m_git, SIGNAL(commitDiffContentReply(QString,QString,QList<QGitDiffFile>,QGitError)), ui->logHistory_diff, SLOT(responseGitDiff(QString,QString,QList<QGitDiffFile>,QGitError)));
+        connect(ui->logHistory_diff, &QGitDiffWidget::requestGitDiff, m_git, &QGit::commitDiffContent);
+        connect(m_git, &QGit::commitDiffContentReply, ui->logHistory_diff, &QGitDiffWidget::responseGitDiff);
 
         fetchCommits();
         break;
