@@ -42,7 +42,7 @@ protected:
     bool event(QEvent *event) override;
 
 private slots:
-    void gravatarImageDownloadFinished();
+    void gravatarImageDownloadFinished(QNetworkReply *reply);
     void localStashSaveReply(QGitError error);
     void repositoryBranchesAndTagsReply(QList<QGitBranch> branches, QList<QString> tags, QGitError error);
     void repositoryStashesReply(QStringList stashes, QGitError error);

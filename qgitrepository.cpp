@@ -41,6 +41,7 @@ QGitRepository::QGitRepository(const QString &path, QWidget *parent)
     ui->logHistory_splitter_2->setStretchFactor(0, 0);
     ui->logHistory_splitter_2->setStretchFactor(1, 1);
 
+
     if (QGit::gitRepositoryDefaultSignature(m_path, name, email))
     {
         QByteArray hash;
@@ -50,11 +51,14 @@ QGitRepository::QGitRepository(const QString &path, QWidget *parent)
 
         QString urlStr = QString("http://www.gravatar.com/avatar/%1?s=24").arg(QString::fromLatin1(hash));
         auto url = QUrl(urlStr);
-        auto req = QNetworkRequest(url);
-        reply = m_networkManager.get(req);
+        //auto req = QNetworkRequest(url);
+        connect(&m_networkManager, &QNetworkAccessManager::finished, this, &QGitRepository::gravatarImageDownloadFinished);
 
-        connect(reply, SIGNAL(finished()), this, SLOT(gravatarImageDownloadFinished()));
-        reply = nullptr;
+        m_networkManager.get(QNetworkRequest(url));
+
+        //reply = m_networkManager.get(req);
+
+        //connect(reply, &QNetworkReply::finished, this, &QGitRepository::gravatarImageDownloadFinished);
 
         ui->label_signatureGravatarImage->setToolTip(tr("%1 <%2>").arg(name, email));
         ui->label_signatureEmail->setText(tr("%1 <%2>").arg(name, email));
@@ -160,7 +164,7 @@ void QGitRepository::push()
 
 bool QGitRepository::event(QEvent *event)
 {
-    if (event->type() == QEvent::WindowActivate)
+    if (event->type() == QEvent::Show)
     {
         emit repositoryBranches();
         emit repositoryStashes();
@@ -169,9 +173,9 @@ bool QGitRepository::event(QEvent *event)
     return QWidget::event(event);
 }
 
-void QGitRepository::gravatarImageDownloadFinished()
+void QGitRepository::gravatarImageDownloadFinished(QNetworkReply *reply)
 {
-    auto reply = dynamic_cast<QNetworkReply *>(sender());
+    //auto reply = dynamic_cast<QNetworkReply *>(sender());
 
     if (reply) {
         QByteArray data = reply->readAll();
