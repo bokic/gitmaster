@@ -29,15 +29,9 @@
    <item>
     <widget class="QSplitter" name="splitter">
      <property name="orientation">
-      <enum>Qt::Horizontal</enum>
+      <enum>Qt::Orientation::Horizontal</enum>
      </property>
      <widget class="QTreeWidget" name="branchesTreeView">
-      <property name="sizePolicy">
-       <sizepolicy hsizetype="Fixed" vsizetype="Expanding">
-        <horstretch>0</horstretch>
-        <verstretch>0</verstretch>
-       </sizepolicy>
-      </property>
       <property name="styleSheet">
        <string notr="true">border: none</string>
       </property>
@@ -61,7 +55,7 @@
        <string notr="true">border-color:none</string>
       </property>
       <property name="tabPosition">
-       <enum>QTabWidget::South</enum>
+       <enum>QTabWidget::TabPosition::South</enum>
       </property>
       <property name="currentIndex">
        <number>0</number>
@@ -91,7 +85,7 @@
           <item>
            <spacer name="horizontalSpacer">
             <property name="orientation">
-             <enum>Qt::Horizontal</enum>
+             <enum>Qt::Orientation::Horizontal</enum>
             </property>
             <property name="sizeHint" stdset="0">
              <size>
@@ -110,7 +104,7 @@
              </sizepolicy>
             </property>
             <property name="alignment">
-             <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+             <set>Qt::AlignmentFlag::AlignRight|Qt::AlignmentFlag::AlignTrailing|Qt::AlignmentFlag::AlignVCenter</set>
             </property>
             <property name="placeholderText">
              <string>Search</string>
@@ -125,7 +119,7 @@
         <item>
          <widget class="QSplitter" name="splitter_3">
           <property name="orientation">
-           <enum>Qt::Horizontal</enum>
+           <enum>Qt::Orientation::Horizontal</enum>
           </property>
           <widget class="QSplitter" name="splitter_2">
            <property name="sizePolicy">
@@ -135,12 +129,12 @@
             </sizepolicy>
            </property>
            <property name="orientation">
-            <enum>Qt::Vertical</enum>
+            <enum>Qt::Orientation::Vertical</enum>
            </property>
            <widget class="QWidget" name="layoutWidget">
             <layout class="QVBoxLayout" name="verticalLayout_2" stretch="0,1">
              <property name="sizeConstraint">
-              <enum>QLayout::SetDefaultConstraint</enum>
+              <enum>QLayout::SizeConstraint::SetDefaultConstraint</enum>
              </property>
              <property name="leftMargin">
               <number>0</number>
@@ -161,7 +155,7 @@
              <item>
               <widget class="QListWidget" name="listWidget_staged">
                <property name="selectionMode">
-                <enum>QAbstractItemView::ExtendedSelection</enum>
+                <enum>QAbstractItemView::SelectionMode::ExtendedSelection</enum>
                </property>
               </widget>
              </item>
@@ -191,7 +185,7 @@
              <item>
               <widget class="QListWidget" name="listWidget_unstaged">
                <property name="selectionMode">
-                <enum>QAbstractItemView::ExtendedSelection</enum>
+                <enum>QAbstractItemView::SelectionMode::ExtendedSelection</enum>
                </property>
               </widget>
              </item>
@@ -284,7 +278,7 @@
              </size>
             </property>
             <property name="alignment">
-             <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
+             <set>Qt::AlignmentFlag::AlignLeading|Qt::AlignmentFlag::AlignLeft|Qt::AlignmentFlag::AlignTop</set>
             </property>
            </widget>
           </item>
@@ -316,7 +310,7 @@
              <item>
               <spacer name="horizontalSpacer_3">
                <property name="orientation">
-                <enum>Qt::Horizontal</enum>
+                <enum>Qt::Orientation::Horizontal</enum>
                </property>
                <property name="sizeHint" stdset="0">
                 <size>
@@ -361,10 +355,10 @@
              </size>
             </property>
             <property name="verticalScrollBarPolicy">
-             <enum>Qt::ScrollBarAlwaysOff</enum>
+             <enum>Qt::ScrollBarPolicy::ScrollBarAlwaysOff</enum>
             </property>
             <property name="horizontalScrollBarPolicy">
-             <enum>Qt::ScrollBarAlwaysOff</enum>
+             <enum>Qt::ScrollBarPolicy::ScrollBarAlwaysOff</enum>
             </property>
            </widget>
           </item>
@@ -380,23 +374,23 @@
         <item>
          <widget class="QSplitter" name="logHistory_splitter_1">
           <property name="orientation">
-           <enum>Qt::Vertical</enum>
+           <enum>Qt::Orientation::Vertical</enum>
           </property>
           <widget class="QLogHistoryTableWidget" name="logHistory_commits">
            <property name="editTriggers">
-            <set>QAbstractItemView::NoEditTriggers</set>
+            <set>QAbstractItemView::EditTrigger::NoEditTriggers</set>
            </property>
            <property name="selectionMode">
-            <enum>QAbstractItemView::SingleSelection</enum>
+            <enum>QAbstractItemView::SelectionMode::SingleSelection</enum>
            </property>
            <property name="selectionBehavior">
-            <enum>QAbstractItemView::SelectRows</enum>
+            <enum>QAbstractItemView::SelectionBehavior::SelectRows</enum>
            </property>
            <property name="verticalScrollMode">
-            <enum>QAbstractItemView::ScrollPerPixel</enum>
+            <enum>QAbstractItemView::ScrollMode::ScrollPerPixel</enum>
            </property>
            <property name="horizontalScrollMode">
-            <enum>QAbstractItemView::ScrollPerPixel</enum>
+            <enum>QAbstractItemView::ScrollMode::ScrollPerPixel</enum>
            </property>
            <property name="showGrid">
             <bool>false</bool>
@@ -444,29 +438,29 @@
           </widget>
           <widget class="QSplitter" name="logHistory_splitter_2">
            <property name="orientation">
-            <enum>Qt::Horizontal</enum>
+            <enum>Qt::Orientation::Horizontal</enum>
            </property>
            <widget class="QSplitter" name="logHistory_splitter_3">
             <property name="orientation">
-             <enum>Qt::Vertical</enum>
+             <enum>Qt::Orientation::Vertical</enum>
             </property>
             <widget class="QExtTextBrowser" name="logHistory_info">
              <property name="focusPolicy">
-              <enum>Qt::NoFocus</enum>
+              <enum>Qt::FocusPolicy::NoFocus</enum>
              </property>
             </widget>
             <widget class="QTableWidget" name="logHistory_files">
              <property name="editTriggers">
-              <set>QAbstractItemView::NoEditTriggers</set>
+              <set>QAbstractItemView::EditTrigger::NoEditTriggers</set>
              </property>
              <property name="selectionBehavior">
-              <enum>QAbstractItemView::SelectRows</enum>
+              <enum>QAbstractItemView::SelectionBehavior::SelectRows</enum>
              </property>
              <property name="verticalScrollMode">
-              <enum>QAbstractItemView::ScrollPerPixel</enum>
+              <enum>QAbstractItemView::ScrollMode::ScrollPerPixel</enum>
              </property>
              <property name="horizontalScrollMode">
-              <enum>QAbstractItemView::ScrollPerPixel</enum>
+              <enum>QAbstractItemView::ScrollMode::ScrollPerPixel</enum>
              </property>
              <property name="showGrid">
               <bool>false</bool>
