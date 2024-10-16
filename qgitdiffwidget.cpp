@@ -78,6 +78,10 @@ void QGitDiffWidget::setGitDiff(const QString &first, const QString &second, con
 {
     m_private->clear();
 
+    m_requestedFirst = first;
+    m_requestedSecond = second;
+    m_requestedFiles = files;
+
     emit requestGitDiff(first, second, files);
 
     update();
@@ -92,6 +96,14 @@ void QGitDiffWidget::setReadonly(bool readonly)
         setMouseTracking(!m_readonly);
 
         update();
+    }
+}
+
+void QGitDiffWidget::refresh()
+{
+    if (!m_requestedFiles.isEmpty())
+    {
+        emit requestGitDiff(m_requestedFirst, m_requestedSecond, m_requestedFiles);
     }
 }
 

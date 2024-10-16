@@ -4,6 +4,7 @@
 
 #include <QWidget>
 #include <QVector>
+#include <QString>
 #include <QRect>
 #include <QList>
 
@@ -20,6 +21,7 @@ public:
 
     void setGitDiff(const QString &first, const QString &second, const QList<QString> &files);
     void setReadonly(bool readonly = true);
+    void refresh();
     bool readonly() const;
 
 signals:
@@ -36,6 +38,9 @@ protected:
 
 private:
     QGitDiffWidgetPrivate *m_private = nullptr;
+    QString m_requestedFirst;
+    QString m_requestedSecond;
+    QList<QString> m_requestedFiles;
     QFont m_font;
     int m_fontHeight = 0;
     int m_fontAscent = 0;
