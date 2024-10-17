@@ -670,17 +670,12 @@ void QGitRepository::on_listWidget_staged_itemChanged(QListWidgetItem *item)
     {
         QListWidgetItem *item = ui->listWidget_staged->item(row);
 
-        if (item->isSelected())
+        if (item->checkState() == Qt::Unchecked)
         {
             selectedItems.append(item->text());
 
             delete ui->listWidget_staged->takeItem(row);
         }
-    }
-
-    if ((selectedItems.isEmpty())&&(item->checkState() == Qt::Unchecked))
-    {
-        selectedItems.append(item->text());
     }
 
     if (!selectedItems.isEmpty())
@@ -699,17 +694,12 @@ void QGitRepository::on_listWidget_unstaged_itemChanged(QListWidgetItem *item)
     {
         QListWidgetItem *item = ui->listWidget_unstaged->item(row);
 
-        if (item->isSelected())
+        if (item->checkState() == Qt::Checked)
         {
             selectedItems.append(item->text());
 
             delete ui->listWidget_unstaged->takeItem(row);
         }
-    }
-
-    if ((selectedItems.isEmpty())&&(item->checkState() == Qt::Checked))
-    {
-        selectedItems.append(item->text());
     }
 
     if (!selectedItems.isEmpty())
