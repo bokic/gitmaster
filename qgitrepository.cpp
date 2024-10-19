@@ -603,7 +603,7 @@ void QGitRepository::repositoryGetCommitDiffReply(QString commitId, QGitCommit d
         html += QStringLiteral("<img src=\"https://www.gravatar.com/avatar/") + QCryptographicHash::hash(email.trimmed().toUtf8(), QCryptographicHash::Md5).toHex() + QStringLiteral("?s=32\" width=\"32\" height=\"32\" style=\"float: right\" />");
         html += QStringLiteral("</div>");
         html += QStringLiteral("<b>Commit:</b> ") + commit_id + QStringLiteral("<br />");
-        html += QStringLiteral("<b>Parents:</b> ") + parentsHtml.join(", ") + QStringLiteral("<br />");
+        html += (parentsHtml.count() > 1? QStringLiteral("<b>Parents:</b>"): QStringLiteral("<b>Parent:</b>")) + parentsHtml.join(", ") + QStringLiteral("<br />");
         html += QStringLiteral("<b>Date:</b> ") + m_commitDiff.time().toString() + QStringLiteral("<br />");
         html += QStringLiteral("<b>Labels:</b> ") + labelsHtml.join(", ") + QStringLiteral("<br />");
         html += QStringLiteral("<br />");
