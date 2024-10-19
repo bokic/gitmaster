@@ -354,31 +354,62 @@ void QGitRepository::repositoryStashesReply(QStringList stashes, QGitError error
 
 void QGitRepository::repositoryChangedFilesReply(QMap<QString, git_status_t> files, QGitError error)
 {
-    QListWidgetItem *item = nullptr;
+    int stagedCnt = 0;
+    int unstagedCnt = 0;
 
     Q_UNUSED(error)
 
-    ui->listWidget_staged->clear();
-    ui->listWidget_unstaged->clear();
     ui->listWidget_staged->setEnabled(true);
     ui->listWidget_unstaged->setEnabled(true);
 
+    const auto &keys = files.keys();
 
-
-    QMapIterator<QString, git_status_t> i(files);
-    while (i.hasNext())
+    for(int c = 0; c < keys.count(); c++)
     {
-        i.next();
-
-        const QString &file = i.key();
-        const git_status_t status = i.value();
+        auto file = keys.at(c);
+        auto status = files[file];
 
         if (status & (GIT_STATUS_INDEX_NEW | GIT_STATUS_INDEX_MODIFIED | GIT_STATUS_INDEX_DELETED | GIT_STATUS_INDEX_RENAMED | GIT_STATUS_INDEX_TYPECHANGE | GIT_STATUS_IGNORED))
         {
-            item = new QListWidgetItem(file);
+            QListWidgetItem *item = nullptr;
 
-            item->setFlags(item->flags() | Qt::ItemIsUserCheckable);
-            item->setCheckState(Qt::Checked);
+            // UI item already on same row
+            if ((ui->listWidget_staged->count() > stagedCnt)&&(ui->listWidget_staged->item(stagedCnt)->text() == file))
+            {
+                item = ui->listWidget_staged->item(stagedCnt);
+            }
+
+            // Check if UI item is furder list
+            if (!item)
+            {
+                for(int c2 = stagedCnt + 1; c2 < ui->listWidget_staged->count(); c2++)
+                {
+                    if (ui->listWidget_staged->item(c2)->text() == file)
+                    {
+                        int deleteCnt = c2 - c;
+                        for(int c3 = 0; c3 < deleteCnt; c3++)
+                        {
+                            ui->listWidget_staged->takeItem(c3);
+                        }
+                        item = ui->listWidget_staged->item(stagedCnt);
+                        break;
+                    }
+                }
+            }
+
+            // Add as new UI item
+            if (!item)
+            {
+                item = new QListWidgetItem(file);
+
+                item->setFlags(item->flags() | Qt::ItemIsUserCheckable);
+                item->setCheckState(Qt::Checked);
+
+                if (stagedCnt < ui->listWidget_staged->count())
+                    ui->listWidget_staged->insertItem(stagedCnt, item);
+                else
+                    ui->listWidget_staged->addItem(item);
+            }
 
             switch(status)
             {
@@ -396,14 +427,50 @@ void QGitRepository::repositoryChangedFilesReply(QMap<QString, git_status_t> fil
                 break;
             }
 
-            ui->listWidget_staged->addItem(item);
+            stagedCnt++;
         }
 
         if ((status == GIT_STATUS_CURRENT)||(status & (GIT_STATUS_WT_NEW | GIT_STATUS_WT_MODIFIED | GIT_STATUS_WT_DELETED | GIT_STATUS_WT_TYPECHANGE | GIT_STATUS_WT_RENAMED | GIT_STATUS_WT_UNREADABLE | GIT_STATUS_IGNORED | GIT_STATUS_CONFLICTED)))
         {
-            item = new QListWidgetItem(file);
-            item->setFlags(item->flags() | Qt::ItemIsUserCheckable);
-            item->setCheckState(Qt::Unchecked);
+            QListWidgetItem *item = nullptr;
+
+            // UI item already on same row
+            if ((ui->listWidget_unstaged->count() > unstagedCnt)&&(ui->listWidget_unstaged->item(unstagedCnt)->text() == file))
+            {
+                item = ui->listWidget_unstaged->item(unstagedCnt);
+            }
+
+            // Check if UI item is furder list
+            if (!item)
+            {
+                for(int c2 = unstagedCnt + 1; c2 < ui->listWidget_unstaged->count(); c2++)
+                {
+                    if (ui->listWidget_unstaged->item(c2)->text() == file)
+                    {
+                        int deleteCnt = c2 - c;
+                        for(int c3 = 0; c3 < deleteCnt; c3++)
+                        {
+                            ui->listWidget_unstaged->takeItem(c3);
+                        }
+                        item = ui->listWidget_unstaged->item(unstagedCnt);
+                        break;
+                    }
+                }
+            }
+
+            // Add as new UI item
+            if (!item)
+            {
+                item = new QListWidgetItem(file);
+
+                item->setFlags(item->flags() | Qt::ItemIsUserCheckable);
+                item->setCheckState(Qt::Unchecked);
+
+                if (unstagedCnt < ui->listWidget_unstaged->count())
+                    ui->listWidget_unstaged->insertItem(unstagedCnt, item);
+                else
+                    ui->listWidget_unstaged->addItem(item);
+            }
 
             switch(status)
             {
@@ -427,9 +494,20 @@ void QGitRepository::repositoryChangedFilesReply(QMap<QString, git_status_t> fil
                 break;
             }
 
-            ui->listWidget_unstaged->addItem(item);
+            unstagedCnt++;
         }
     }
+
+    while(ui->listWidget_staged->count() > stagedCnt)
+    {
+        delete ui->listWidget_staged->takeItem(ui->listWidget_staged->count() - 1);
+    }
+    while(ui->listWidget_unstaged->count() > unstagedCnt)
+    {
+        delete ui->listWidget_unstaged->takeItem(ui->listWidget_unstaged->count() - 1);
+    }
+
+    ui->commit_diff->refresh();
 
     if (ui->listWidget_staged->count() > 0)
     {
@@ -939,8 +1017,6 @@ void QGitRepository::fetchRepositoryChangedFiles()
         break;
     }
 
-    ui->listWidget_staged->clear();
-    ui->listWidget_unstaged->clear();
     ui->listWidget_staged->setEnabled(false);
     ui->listWidget_unstaged->setEnabled(false);
     emit repositoryChangedFiles(show, sort, reversed);
