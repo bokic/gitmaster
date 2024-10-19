@@ -49,26 +49,21 @@ void QGitRepoTreeWidget::repositoryStatusReply(QMap<git_status_t,int> items, QGi
             item->setData(0, QGitRepoTreeItemDelegate::QItemUnversionedFiles, 0);
             item->setData(0, QGitRepoTreeItemDelegate::QItemBranchName, QGit::getBranchNameFromPath(item_path));
 
-            QMapIterator<git_status_t,int> i(items);
-            while (i.hasNext())
+            for(const auto &[key, value]: items.asKeyValueRange())
             {
-                i.next();
-
-                git_status_t key = i.key();
-
                 if (key & (GIT_STATUS_WT_MODIFIED | GIT_STATUS_INDEX_MODIFIED))
                 {
-                    item->setData(0, QGitRepoTreeItemDelegate::QItemModifiedFiles, item->data(0, QGitRepoTreeItemDelegate::QItemModifiedFiles).toInt() + i.value());
+                    item->setData(0, QGitRepoTreeItemDelegate::QItemModifiedFiles, item->data(0, QGitRepoTreeItemDelegate::QItemModifiedFiles).toInt() + value);
                 }
 
                 if (key & (GIT_STATUS_WT_DELETED | GIT_STATUS_INDEX_DELETED))
                 {
-                    item->setData(0, QGitRepoTreeItemDelegate::QItemDeletedFiles, item->data(0, QGitRepoTreeItemDelegate::QItemDeletedFiles).toInt() + i.value());
+                    item->setData(0, QGitRepoTreeItemDelegate::QItemDeletedFiles, item->data(0, QGitRepoTreeItemDelegate::QItemDeletedFiles).toInt() + value);
                 }
 
                 if (key & (GIT_STATUS_WT_NEW | GIT_STATUS_INDEX_NEW))
                 {
-                    item->setData(0, QGitRepoTreeItemDelegate::QItemNewFiles, item->data(0, QGitRepoTreeItemDelegate::QItemNewFiles).toInt() + i.value());
+                    item->setData(0, QGitRepoTreeItemDelegate::QItemNewFiles, item->data(0, QGitRepoTreeItemDelegate::QItemNewFiles).toInt() + value);
                 }
             }
 
