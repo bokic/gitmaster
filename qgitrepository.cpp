@@ -613,7 +613,7 @@ void QGitRepository::repositoryGetCommitDiffReply(QString commitId, QGitCommit d
 
         ui->logHistory_files->clearContents();
 
-        auto files = m_commitDiff.parents().at(0).files(); // TODO: For now from first parent only!
+        auto files = m_commitDiff.parents().at(0).files(); // TODO: For now from first parent commit only!
         ui->logHistory_files->setRowCount(files.count());
 
         for(int c = 0; c < files.count(); c++)
