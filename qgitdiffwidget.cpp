@@ -1,10 +1,9 @@
 #include "qgitdiffwidget.h"
 
+#include <QStylePainter>
 #include <QPaintEvent>
 #include <QScrollBar>
-#include <QPainter>
 #include <QObject>
-#include <QDebug>
 
 
 class QGitDiffWidgetPrivateLine
@@ -114,7 +113,7 @@ bool QGitDiffWidget::readonly() const
 
 void QGitDiffWidget::responseGitDiff(QString first, QString second, QList<QGitDiffFile> diff, QGitError error)
 {
-    int y = 0, h = 0, lineMax = 0;
+    int y = 0, file_h = 0, lineMax = 0;
     QSize newSize;
 
     QFontMetrics fm(m_font);
@@ -164,12 +163,13 @@ void QGitDiffWidget::responseGitDiff(QString first, QString second, QList<QGitDi
         file.rect.setLeft(contentsMargins().left());
         file.rect.setWidth(100 + lineMax); // TODO: Unhardcode 100
 
-        h = m_fontHeight * 2;
+        file_h = m_fontHeight * 2;
 
         for(int pos_hunk = 0; pos_hunk < file_item.hunks().count(); pos_hunk++)
-        {            
+        {
             const auto &hunk_item = file_item.hunks().at(pos_hunk);
             QGitDiffWidgetPrivateHunk hunk;
+            int hunk_h = 0;
 
             hunk.header = hunk_item.header();
             hunk.new_lines = hunk_item.new_lines();
@@ -178,9 +178,9 @@ void QGitDiffWidget::responseGitDiff(QString first, QString second, QList<QGitDi
             hunk.old_start = hunk_item.old_start();
 
             if (pos_hunk > 0)
-                h += m_fontHeight + 1;
+                file_h += m_fontHeight + 1;
 
-            hunk.rect.setTop(y + h);
+            hunk.rect.setTop(y + file_h);
             hunk.rect.setLeft(contentsMargins().left());
             hunk.rect.setWidth(100 + lineMax); // TODO: Unhardcode 100
 
@@ -196,25 +196,26 @@ void QGitDiffWidget::responseGitDiff(QString first, QString second, QList<QGitDi
                 line.old_lineno = line_item.old_lineno();
                 line.origin = line_item.origin();
 
-                line.rect.setTop(y + h);
+                line.rect.setTop(y + file_h + hunk_h);
                 line.rect.setLeft(contentsMargins().left());
                 line.rect.setWidth(100 + lineMax); // TODO: Unhardcode 100
 
-                h += m_fontHeight + 1;
+                hunk_h += m_fontHeight + 1;
 
                 line.rect.setHeight(m_fontHeight + 1);
 
                 hunk.lines.push_back(line);
             }
 
-            hunk.rect.setHeight(h);
+            hunk.rect.setHeight(hunk_h);
+            file_h += hunk_h;
 
             file.hunks.push_back(hunk);
         }
 
-        file.rect.setHeight(h);
+        file.rect.setHeight(file_h);
 
-        y += h;
+        y += file_h;
 
         m_private->files.push_back(file);
     }
@@ -229,7 +230,7 @@ void QGitDiffWidget::responseGitDiff(QString first, QString second, QList<QGitDi
 
 void QGitDiffWidget::paintEvent(QPaintEvent *event)
 {
-    QPainter painter(this);
+    QStylePainter painter(this);
     int fileIndex = 0, hunkIndex = 0, lineIndex = 0;
 
     fileIndex = 0;
@@ -264,7 +265,6 @@ void QGitDiffWidget::paintEvent(QPaintEvent *event)
                                 painter.setPen(Qt::NoPen);
                                 painter.setBrush(QBrush(QColor(235, 204, 204)));
                                 painter.drawRect(line.rect);
-                                painter.setBrush(QBrush(QColor(Qt::darkRed)));
                                 painter.setPen(Qt::darkRed);
                             } else if (line.origin == '+') {
                                 painter.setPen(Qt::NoPen);
@@ -276,31 +276,30 @@ void QGitDiffWidget::paintEvent(QPaintEvent *event)
                                 painter.setBrush(QBrush(QColor(Qt::black)));
                             }
 
-                            painter.drawText(10, yFont, old_lineNo);
-                            painter.drawText(40, yFont, new_lineNo);
-
-                            painter.drawText(100, yFont, line.content);
+                            painter.drawText(10, yFont, old_lineNo); // TODO: Unhardcode 10
+                            painter.drawText(40, yFont, new_lineNo); // TODO: Unhardcode 40
+                            painter.drawText(100, yFont, line.content); // TODO: Unhardcode 100
 
                             if ((fileIndex == m_hoverFile)&&(hunkIndex == m_hoverHunk)&&(lineIndex == m_hoverLine))
                             {
-                                painter.setPen(Qt::SolidLine);
-                                painter.setBrush(QBrush());
-
-                                painter.drawRect(line.rect.adjusted(100, 0, -1, -1));
+                                QStyleOptionFocusRect option;
+                                option.initFrom(this);
+                                option.rect = line.rect.adjusted(100 - contentsMargins().left(), 0, 0, 0);
+                                painter.setBrush(Qt::NoBrush);
+                                painter.drawPrimitive(QStyle::PE_FrameFocusRect, option);
                             }
                         }
 
                         lineIndex++;
                     }
 
-                    if ((fileIndex == m_hoverFile)&&(hunkIndex == m_hoverHunk)&&(lineIndex == -1))
+                    if ((fileIndex == m_hoverFile)&&(hunkIndex == m_hoverHunk)&&(m_hoverLine == -1))
                     {
-                        painter.setPen(Qt::SolidLine);
-                        painter.setBrush(QBrush());
-
-                        painter.drawRect(hunk.rect);
-
-                        qDebug() << "hunk";
+                        QStyleOptionFocusRect option;
+                        option.initFrom(this);
+                        option.rect = hunk.rect;
+                        painter.setBrush(Qt::NoBrush);
+                        painter.drawPrimitive(QStyle::PE_FrameFocusRect, option);
                     }
                 }
 
@@ -318,7 +317,7 @@ void QGitDiffWidget::mousePressEvent(QMouseEvent *event)
 
     Q_UNUSED(event)
 
-    if ((!m_readonly)&&(m_hoverFile >= 0)&&(m_hoverHunk >= 0)&&(m_hoverLine >= -1))
+    if ((!m_readonly)&&(m_hoverFile >= 0)&&(m_hoverHunk >= 0))
     {
         auto file = m_private->files.at(m_hoverFile);
 
@@ -379,7 +378,7 @@ void QGitDiffWidget::mouseMoveEvent(QMouseEvent *event)
                 {
                     l_hoverHunk = hunk_index;
 
-                    if (event->position().x() >= 100)
+                    if (event->position().x() >= 100) // TODO Unhardcode magic number 100
                     {
                         int line_index = 0;
                         for(const auto &line : hunk.lines)
