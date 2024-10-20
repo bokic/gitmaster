@@ -1260,7 +1260,7 @@ void QGit::stageFileLines(QString filename, QVector<QGitDiffWidgetLine> lines)
         }
         buffer = bufferLines.join(LINE_END);
 
-        res = git_index_add_frombuffer(index, entry, buffer.constData(), buffer.length());
+        res = git_index_add_from_buffer(index, entry, buffer.constData(), buffer.length());
         if (res)
         {
             throw QGitError("git_index_add_frombuffer", res);
