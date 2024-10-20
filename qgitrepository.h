@@ -93,6 +93,6 @@ private:
     QIcon m_iconBranch;
     QIcon m_iconRemote;
     QIcon m_iconRemoteBranch;
-    bool m_stageFiles = true;
+    bool m_stageingFiles = true;
     QGit *m_git = nullptr;
 };

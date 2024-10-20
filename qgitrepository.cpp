@@ -760,8 +760,6 @@ void QGitRepository::on_listWidget_staged_itemChanged(QListWidgetItem *item)
     {
         emit repositoryUnstageFiles(selectedItems);
     }
-
-    m_stageFiles = true;
 }
 
 void QGitRepository::on_listWidget_unstaged_itemChanged(QListWidgetItem *item)
@@ -784,8 +782,6 @@ void QGitRepository::on_listWidget_unstaged_itemChanged(QListWidgetItem *item)
     {
         emit repositoryStageFiles(selectedItems);
     }
-
-    m_stageFiles = false;
 }
 
 void QGitRepository::on_pushButton_commit_clicked()
@@ -816,7 +812,7 @@ void QGitRepository::historyTableSliderMoved(int pos)
 
 void QGitRepository::selectedLines(QString filename, QVector<QGitDiffWidgetLine> lines)
 {
-    if (m_stageFiles)
+    if (m_stageingFiles)
     {
         emit stageFileLines(filename, lines);
     }
@@ -933,6 +929,8 @@ void QGitRepository::on_listWidget_staged_itemSelectionChanged()
             item->setSelected(false);
         }
     }
+
+    m_stageingFiles = false;
 }
 
 void QGitRepository::on_listWidget_unstaged_itemSelectionChanged()
@@ -954,6 +952,8 @@ void QGitRepository::on_listWidget_unstaged_itemSelectionChanged()
             item->setSelected(false);
         }
     }
+
+    m_stageingFiles = true;
 }
 
 void QGitRepository::on_comboBox_gitStatusFiles_itemClicked(QListWidgetItem *item)
