@@ -114,7 +114,6 @@ bool QGitDiffWidget::readonly() const
 
 void QGitDiffWidget::responseGitDiff(QString first, QString second, QList<QGitDiffFile> diff, QGitError error)
 {
-    const int MARGIN = 10;
     int y = 0, h = 0, lineMax = 0;
     QSize newSize;
 
@@ -152,7 +151,7 @@ void QGitDiffWidget::responseGitDiff(QString first, QString second, QList<QGitDi
         const auto &file_item = diff.at(c);
         QGitDiffWidgetPrivateFile file;
 
-        y += MARGIN;
+        y += contentsMargins().top();
 
         file.new_file = file_item.new_file();
         file.old_file = file_item.old_file();
@@ -162,7 +161,7 @@ void QGitDiffWidget::responseGitDiff(QString first, QString second, QList<QGitDi
         file.status = file_item.status();
 
         file.rect.setTop(y);
-        file.rect.setLeft(MARGIN);
+        file.rect.setLeft(contentsMargins().left());
         file.rect.setWidth(100 + lineMax); // TODO: Unhardcode 100
 
         h = m_fontHeight * 2;
@@ -182,7 +181,7 @@ void QGitDiffWidget::responseGitDiff(QString first, QString second, QList<QGitDi
                 h += m_fontHeight + 1;
 
             hunk.rect.setTop(y + h);
-            hunk.rect.setLeft(MARGIN);
+            hunk.rect.setLeft(contentsMargins().left());
             hunk.rect.setWidth(100 + lineMax); // TODO: Unhardcode 100
 
             for(int pos_line = 0; pos_line < hunk_item.lines().count(); pos_line++)
@@ -198,7 +197,7 @@ void QGitDiffWidget::responseGitDiff(QString first, QString second, QList<QGitDi
                 line.origin = line_item.origin();
 
                 line.rect.setTop(y + h);
-                line.rect.setLeft(MARGIN);
+                line.rect.setLeft(contentsMargins().left());
                 line.rect.setWidth(100 + lineMax); // TODO: Unhardcode 100
 
                 h += m_fontHeight + 1;
@@ -220,7 +219,7 @@ void QGitDiffWidget::responseGitDiff(QString first, QString second, QList<QGitDi
         m_private->files.push_back(file);
     }
 
-    newSize = QSize(MARGIN + 100 + lineMax + (MARGIN * 2), y + (MARGIN * 2)); // TODO: Unhardcode 100
+    newSize = QSize(contentsMargins().left() + 100 + lineMax + contentsMargins().right(), contentsMargins().top() + y + contentsMargins().bottom()); // TODO: Unhardcode 100
 
     setMinimumSize(newSize);
     setMaximumSize(newSize);

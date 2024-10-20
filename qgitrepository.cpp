@@ -40,6 +40,8 @@ QGitRepository::QGitRepository(const QString &path, QWidget *parent)
 
     ui->setupUi(this);
 
+    ui->commit_diff->setContentsMargins(10, 10, 10, 10);
+
     ui->logHistory_commits->setItemDelegate(new QLogHistoryItemDelegate());
 
     m_git->moveToThread(&m_thread);
