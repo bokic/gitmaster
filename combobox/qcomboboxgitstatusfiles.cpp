@@ -212,7 +212,9 @@ QComboBoxGitStatusFiles::QComboBoxGitStatusFilesOrderFiles QComboBoxGitStatusFil
     return QUnsortedFiles;
 }
 
-void QComboBoxGitStatusFiles::clicked(__attribute__((unused)) QListWidgetItem *item)
+void QComboBoxGitStatusFiles::clicked(QListWidgetItem *item)
 {
+    Q_UNUSED(item);
+
     updateText();
 }

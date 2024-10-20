@@ -69,7 +69,7 @@ QComboBoxGitDiffOptions::QComboBoxGitDiffOptions(QWidget *parent)
     setCurrentIcon(QIcon(":/QComboBoxGitDiffOptions/gear"));
 }
 
-void QComboBoxGitDiffOptions::clicked(__attribute__((unused)) QListWidgetItem *item)
+void QComboBoxGitDiffOptions::clicked(QListWidgetItem *item)
 {
-
+    Q_UNUSED(item);
 }

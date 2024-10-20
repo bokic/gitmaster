@@ -1,8 +1,9 @@
-*.pro.user
 CMakeLists.txt.user
 /*-build-*
+/windows/libgit2
+/windows/build
+/windows/*.exe
 /include
 /build
 /.cache
-bin/gitmaster*
-bin/gitmaster_d*
+/bin

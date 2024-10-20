@@ -89,11 +89,13 @@ void QCustomComboBox::setCurrentIcon(const QIcon &icon)
     update();
 }
 
-void QCustomComboBox::paintEvent(__attribute__((unused)) QPaintEvent *event)
+void QCustomComboBox::paintEvent(QPaintEvent *event)
 {
     QStyleOptionComboBox opt;
     QStylePainter p(this);
     bool paintIcon = false;
+
+    Q_UNUSED(event);
 
     paintIcon = !m_icon.isNull();
 

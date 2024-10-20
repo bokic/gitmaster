@@ -71,7 +71,9 @@ int QComboBoxGitViewOptions::stagingType() const
     return -1;
 }
 
-void QComboBoxGitViewOptions::clicked(__attribute__((unused)) QListWidgetItem *item)
+void QComboBoxGitViewOptions::clicked(QListWidgetItem *item)
 {
+    Q_UNUSED(item);
+
     updateIcon();
 }

@@ -6,13 +6,13 @@ for /f "delims=" %%i in ('git describe --tags --dirty') do set git_describe=%%i
 >installer.ini (
 	echo [installer]
 	echo target_name = "gitmaster_%git_describe%"
-	echo description = "Git GUI client(git hash #%git_hash%)"
+	echo description = "Git GUI client(#%git_hash%)"
 )
 
-IF EXIST "C:\Qt\6.2.3" (set QT_PATH=C:\Qt\6.2.3) ELSE (set QT_PATH=C:\Qt\6.2.2)
-set OPENSSL_PATH=C:\Qt\Tools\OpenSSL\Win_x64
-set QT_KIT=mingw_64
+IF EXIST "C:\Qt\6.8.0" (set QT_PATH=C:\Qt\6.8.0) ELSE (set QT_PATH=C:\Qt\6.7.2)
+set OPENSSL_PATH=C:\Qt\Tools\OpenSSLv3\Win_x64
+set QT_KIT=msvc2022_64
 
-"C:\Program Files (x86)\Inno Setup 5\iscc" "gitmaster.iss"
+"C:\Program Files (x86)\Inno Setup 6\ISCC.exe" "gitmaster.iss"
 
 del installer.ini

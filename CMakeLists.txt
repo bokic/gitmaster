@@ -99,14 +99,14 @@ set(PROJECT_SOURCES
     ${PROJECT_HEADERS}
 )
 
-IF (WIN32)
-    target_sources(cfeditor PRIVATE resource.rc)
-ENDIF()
-
 qt_add_executable(gitmaster
     MANUAL_FINALIZATION
     ${PROJECT_SOURCES}
 )
+
+IF (WIN32)
+    target_sources(gitmaster PRIVATE resource.rc)
+ENDIF()
 
 target_precompile_headers(gitmaster PRIVATE
     ${PROJECT_HEADERS}
@@ -136,7 +136,9 @@ target_link_libraries(gitmaster PRIVATE
 )
 
 IF (WIN32)
-    link_directories(${CMAKE_SOURCE_DIR}/bin)
+    target_link_directories(gitmaster PRIVATE
+        bin
+    )
 ENDIF()
 
 set_target_properties(gitmaster PROPERTIES

@@ -1,4 +1,4 @@
-#define AppVer GetFileVersion('..\bin\gitmaster.exe')
+#define AppVer GetVersionNumbersString('..\bin\gitmaster.exe')
 
 [Setup]
 AppName=GitMaster
@@ -6,8 +6,8 @@ AppVerName=GitMaster version {#AppVer}
 AppPublisher=Boris Barbulovski
 AppPublisherURL=https://github.com/bokic/gitmaster
 AppVersion={#AppVer}
-ArchitecturesInstallIn64BitMode=x64
-DefaultDirName={pf}\GitMaster
+ArchitecturesInstallIn64BitMode=x64os
+DefaultDirName={commonpf}\GitMaster
 DefaultGroupName=GitMaster
 UninstallDisplayIcon={app}\GitMaster.exe
 Compression=lzma
@@ -25,14 +25,9 @@ Name: "{app}\imageformats";
 Name: "{app}\iconengines";
 
 [Files]
-; MinGW runtime
-Source: "{#%QT_PATH}\{#%QT_KIT}\bin\libwinpthread-1.dll"; DestDir: "{app}";
-Source: "{#%QT_PATH}\{#%QT_KIT}\bin\libgcc_s_seh-1.dll"; DestDir: "{app}";
-Source: "{#%QT_PATH}\{#%QT_KIT}\bin\libstdc++-6.dll"; DestDir: "{app}";
-
 ; OpenSSL
-Source: "{#%OPENSSL_PATH}\bin\libcrypto-1_1-x64.dll"; DestDir: "{app}";
-Source: "{#%OPENSSL_PATH}\bin\libssl-1_1-x64.dll"; DestDir: "{app}";
+Source: "{#%OPENSSL_PATH}\bin\libcrypto-3-x64.dll"; DestDir: "{app}";
+Source: "{#%OPENSSL_PATH}\bin\libssl-3-x64.dll"; DestDir: "{app}";
 
 ; Qt library
 Source: "{#%QT_PATH}\{#%QT_KIT}\bin\Qt6Core.dll"; DestDir: "{app}";
@@ -56,5 +51,5 @@ Source: "{#%QT_PATH}\{#%QT_KIT}\plugins\imageformats\qsvg.dll"; DestDir: "{app}\
 ; App
 Source: "..\bin\gitmaster.exe"; DestDir: "{app}";
 
-; git library
-Source: "..\bin\libgit2.dll"; DestDir: "{app}";
+; libgit2 library
+Source: "..\bin\git2.dll"; DestDir: "{app}";
