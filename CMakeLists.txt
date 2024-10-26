@@ -150,9 +150,7 @@ set_target_properties(gitmaster PROPERTIES
     INTERPROCEDURAL_OPTIMIZATION TRUE
 )
 
-if(QT_VERSION_MAJOR EQUAL 6)
-    qt_finalize_executable(gitmaster)
-endif()
+qt_finalize_executable(gitmaster)
 
 set(CMAKE_INSTALL_PREFIX /usr)
 install(
