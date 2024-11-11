@@ -313,7 +313,10 @@ void QGitDiffWidget::mousePressEvent(QMouseEvent *event)
 {
     QVector<QGitDiffWidgetLine> lines;
 
-    Q_UNUSED(event)
+    if (event->buttons() != Qt::LeftButton)
+    {
+        return;
+    }
 
     if ((!m_readonly)&&(m_hoverFile >= 0)&&(m_hoverHunk >= 0))
     {
