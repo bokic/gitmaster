@@ -12,7 +12,6 @@ public:
     QByteArray content;
     git_off_t offset = 0;
     int new_lineno = 0;
-    int num_lines = 0;
     int old_lineno = 0;
     char origin = '\0';
     QRect rect;
@@ -192,7 +191,6 @@ void QGitDiffWidget::responseGitDiff(QString first, QString second, QList<QGitDi
                 line.content = line_item.content();
                 line.offset = line_item.offset();
                 line.new_lineno = line_item.new_lineno();
-                line.num_lines = line_item.num_lines();
                 line.old_lineno = line_item.old_lineno();
                 line.origin = line_item.origin();
 
