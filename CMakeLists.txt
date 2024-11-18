@@ -147,8 +147,14 @@ set_target_properties(gitmaster PROPERTIES
     MACOSX_BUNDLE_SHORT_VERSION_STRING ${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}
     MACOSX_BUNDLE TRUE
     WIN32_EXECUTABLE TRUE
-    INTERPROCEDURAL_OPTIMIZATION TRUE
 )
+
+if (CMAKE_BUILD_TYPE STREQUAL "Release")
+    message("release mode")
+    set_target_properties(gitmaster PROPERTIES
+        INTERPROCEDURAL_OPTIMIZATION TRUE
+    )
+endif()
 
 qt_finalize_executable(gitmaster)
 
