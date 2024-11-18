@@ -311,8 +311,6 @@ void QGitDiffWidget::paintEvent(QPaintEvent *event)
 
 void QGitDiffWidget::mousePressEvent(QMouseEvent *event)
 {
-    QVector<QGitDiffWidgetLine> lines;
-
     if (event->buttons() != Qt::LeftButton)
     {
         return;
@@ -320,37 +318,82 @@ void QGitDiffWidget::mousePressEvent(QMouseEvent *event)
 
     if ((!m_readonly)&&(m_hoverFile >= 0)&&(m_hoverHunk >= 0))
     {
-        auto file = m_private->files.at(m_hoverFile);
+        QVector<QGitDiffWidgetLine> lines;
+
+        const auto &file = m_private->files.at(m_hoverFile);
+        const auto &hunk = file.hunks.at(m_hoverHunk);
 
         if (m_hoverLine < 0)
         {
-            for(const auto &line: file.hunks.at(m_hoverHunk).lines)
+            int delta = 0;
+
+            for(const auto &line: hunk.lines)
             {
                 QGitDiffWidgetLine newLine;
 
-                newLine.content = line.content;
-                newLine.new_lineno = line.new_lineno;
-                newLine.old_lineno = line.old_lineno;
-                newLine.origin = line.origin;
+                if (line.origin == ' ')
+                {
+                    delta = line.new_lineno - line.old_lineno;
+                }
+                else if (line.origin == '+')
+                {
+                    newLine.content = line.content;
+                    newLine.new_lineno = line.new_lineno - delta;
+                    newLine.old_lineno = -1;
 
-                lines.push_back(newLine);
+                    newLine.origin = line.origin;
+
+                    lines.push_back(newLine);
+                }
+                else if (line.origin == '-')
+                {
+                    newLine.content = line.content;
+                    newLine.new_lineno = -1;
+                    newLine.old_lineno = line.old_lineno;
+
+                    newLine.origin = line.origin;
+
+                    lines.push_back(newLine);
+                }
             }
         }
         else
         {
+            int last_oldLineNo = 0;
+
+            for(int c = 0; c < m_hoverLine; c++)
+            {
+                const auto &line = hunk.lines.at(c);
+
+                if (line.origin == ' ')
+                {
+                    last_oldLineNo = line.old_lineno;
+                }
+            }
+
+            const auto &line = hunk.lines.at(m_hoverLine);
             QGitDiffWidgetLine newLine;
-
-            const auto &line = file.hunks.at(m_hoverHunk).lines.at(m_hoverLine);
-
             newLine.content = line.content;
-            newLine.new_lineno = line.new_lineno;
-            newLine.old_lineno = line.old_lineno;
             newLine.origin = line.origin;
+
+            if (newLine.origin == '+')
+            {
+                newLine.new_lineno = last_oldLineNo + 1;
+                newLine.old_lineno = -1;
+            }
+            else
+            {
+                newLine.new_lineno = -1;
+                newLine.old_lineno = line.old_lineno;
+            }
 
             lines.push_back(newLine);
         }
 
-        emit select(file.new_file.path(), lines);
+        if (!lines.isEmpty())
+        {
+            emit select(file.new_file.path(), lines);
+        }
     }
 }
 

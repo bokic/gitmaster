@@ -1203,7 +1203,6 @@ void QGit::stageFileLines(QString filename, QVector<QGitDiffWidgetLine> lines)
     QGitError error;
 
     try {
-
         if (lines.count() == 0)
         {
             throw QGitError();
@@ -1241,7 +1240,10 @@ void QGit::stageFileLines(QString filename, QVector<QGitDiffWidgetLine> lines)
             QByteArray content;
 
             if (line.origin == ' ')
+            {
+                deltaLine = 0;
                 continue;
+            }
 
             switch(line.origin)
             {
@@ -1253,7 +1255,6 @@ void QGit::stageFileLines(QString filename, QVector<QGitDiffWidgetLine> lines)
                 content = line.content;
                 content = content.left(content.length() - 1);
                 bufferLines.insert(line.new_lineno - 1, content);
-                deltaLine++;
                 break;
             default:
                 throw QGitError("Unknown operation", 0);
@@ -1272,7 +1273,6 @@ void QGit::stageFileLines(QString filename, QVector<QGitDiffWidgetLine> lines)
         {
             throw QGitError("git_index_write", res);
         }
-
     } catch(const QGitError &ex) {
         error = ex;
     }
@@ -1299,9 +1299,6 @@ void QGit::unstageFileLines(QString filename, QVector<QGitDiffWidgetLine> lines)
     const git_index_entry *entry = nullptr;
     git_index *index = nullptr;
     int res = 0;
-
-    Q_UNUSED(filename);
-    Q_UNUSED(lines);
 
     QGitError error;
 
@@ -1343,7 +1340,10 @@ void QGit::unstageFileLines(QString filename, QVector<QGitDiffWidgetLine> lines)
             QByteArray content;
 
             if (line.origin == ' ')
+            {
+                deltaLine = 0;
                 continue;
+            }
 
             switch(line.origin)
             {
@@ -1355,7 +1355,6 @@ void QGit::unstageFileLines(QString filename, QVector<QGitDiffWidgetLine> lines)
                 content = line.content;
                 content = content.left(content.length() - 1);
                 bufferLines.insert(line.old_lineno - 1, content);
-                deltaLine++;
                 break;
             default:
                 throw QGitError("Unknown operation", 0);
@@ -1379,6 +1378,18 @@ void QGit::unstageFileLines(QString filename, QVector<QGitDiffWidgetLine> lines)
     }
 
     emit unstageFilesReply(error);
+
+    if (index)
+    {
+        git_index_free(index);
+        index = nullptr;
+    }
+
+    if (repo)
+    {
+        git_repository_free(repo);
+        repo = nullptr;
+    }
 }
 
 void QGit::commit(QString message)
