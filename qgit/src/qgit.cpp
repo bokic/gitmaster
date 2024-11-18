@@ -53,6 +53,39 @@ QDir QGit::path() const
     return m_path;
 }
 
+QList<QString> QGit::remotes() const
+{
+    QList<QString> ret;
+
+    git_repository *repo = nullptr;
+    git_strarray remotes = {.strings = nullptr, .count = 0};
+    int res = 0;
+
+    res = git_repository_open(&repo, m_path.absolutePath().toUtf8().constData());
+    if (res)
+    {
+        goto exit;
+    }
+
+    git_remote_list(&remotes, repo);
+
+    for(size_t c = 0; c < remotes.count; c++)
+    {
+        ret.append(remotes.strings[c]);
+    }
+
+exit:
+    git_strarray_dispose(&remotes);
+
+    if (repo)
+    {
+        git_repository_free(repo);
+        repo = nullptr;
+    }
+
+    return ret;
+}
+
 QString QGit::getBranchNameFromPath(const QString &path)
 {
     git_repository *repo = nullptr;
