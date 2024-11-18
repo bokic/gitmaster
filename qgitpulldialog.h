@@ -1,5 +1,4 @@
-#ifndef QGITPULLDIALOG_H
-#define QGITPULLDIALOG_H
+#pragma once
 
 #include <QDialog>
 
@@ -18,5 +17,3 @@ public:
 private:
     Ui::QGitPullDialog *ui;
 };
-
-#endif // QGITPULLDIALOG_H

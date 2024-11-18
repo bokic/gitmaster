@@ -1,5 +1,5 @@
-#ifndef QGITPUSHDIALOG_H
-#define QGITPUSHDIALOG_H
+#pragma once
+
 
 #include <QDialog>
 
@@ -18,5 +18,3 @@ public:
 private:
     Ui::QGitPushDialog *ui;
 };
-
-#endif // QGITPUSHDIALOG_H
