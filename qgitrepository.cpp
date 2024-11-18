@@ -2,6 +2,9 @@
 #include "ui_qgitrepository.h"
 #include "qloghistoryitemdelegate.h"
 #include "qgitmastermainwindow.h"
+#include "qgitfetchdialog.h"
+#include "qgitpulldialog.h"
+#include "qgitpushdialog.h"
 
 #include <QCryptographicHash>
 #include <QTableWidgetItem>

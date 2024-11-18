@@ -2,6 +2,8 @@
 #define QGITFETCHDIALOG_H
 
 #include <QDialog>
+#include <QWidget>
+
 
 namespace Ui {
 class QGitFetchDialog;
