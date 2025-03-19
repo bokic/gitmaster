@@ -49,7 +49,7 @@ Source: "{#%QT_PATH}\{#%QT_KIT}\plugins\imageformats\qjpeg.dll"; DestDir: "{app}
 Source: "{#%QT_PATH}\{#%QT_KIT}\plugins\imageformats\qsvg.dll"; DestDir: "{app}\imageformats";
 
 ; App
-Source: "..\bin\gitmaster.exe"; DestDir: "{app}";
+Source: "..\bin\Release\gitmaster.exe"; DestDir: "{app}";
 
 ; libgit2 library
 Source: "..\bin\git2.dll"; DestDir: "{app}";
