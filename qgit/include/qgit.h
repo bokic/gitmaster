@@ -56,6 +56,7 @@ public:
     bool setPath(const QDir &path);
     QDir path();
     QList<QString> remotes() const;
+    QList<QString> localBranches() const;
 
     static QString getBranchNameFromPath(const QString &path);
     static int createLocalRepository(const QDir &path);

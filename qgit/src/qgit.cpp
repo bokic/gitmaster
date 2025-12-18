@@ -83,6 +83,64 @@ exit:
     return ret;
 }
 
+QList<QString> QGit::localBranches() const
+{
+    QList<QString> ret;
+    git_repository *repo = nullptr;
+    git_branch_iterator *it = nullptr;
+    git_reference *ref = nullptr;
+    git_branch_t type = GIT_BRANCH_LOCAL;
+    int res = 0;
+
+    res = git_repository_open(&repo, m_path.absolutePath().toUtf8().constData());
+    if (res)
+    {
+        goto exit;
+    }
+
+    res = git_branch_iterator_new(&it, repo, GIT_BRANCH_LOCAL);
+    if (res)
+    {
+        goto exit;
+    }
+
+    while (git_branch_next(&ref, &type, it) == 0)
+    {
+        const char *name = nullptr;
+        res = git_branch_name(&name, ref);
+        if (res == 0 && name)
+        {
+            ret.append(QString::fromUtf8(name));
+        }
+
+        git_reference_free(ref);
+        ref = nullptr;
+    }
+
+
+exit:
+    if (ref)
+    {
+        git_reference_free(ref);
+        ref = nullptr;
+    }
+
+    if (it)
+    {
+        git_branch_iterator_free(it);
+        it = nullptr;
+    }
+
+    if (repo)
+    {
+        git_repository_free(repo);
+        repo = nullptr;
+    }
+
+    return ret;
+}
+
+
 QString QGit::getBranchNameFromPath(const QString &path)
 {
     git_repository *repo = nullptr;
