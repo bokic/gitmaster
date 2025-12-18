@@ -73,7 +73,7 @@ QGitMasterMainWindow::~QGitMasterMainWindow()
 QGitMasterMainWindow *QGitMasterMainWindow::instance()
 {
     const auto &topLevelWidgets = QApplication::topLevelWidgets();
-    for(auto &widget: topLevelWidgets)
+    for(const auto &widget: topLevelWidgets)
     {
         auto mainWindow = dynamic_cast<QGitMasterMainWindow *>(widget);
         if (mainWindow)
