@@ -7,6 +7,7 @@
 
 #include <QTreeWidgetItem>
 #include <QStyleFactory>
+#include <QApplication>
 #include <QInputDialog>
 #include <QActionGroup>
 #include <QMessageBox>
@@ -20,6 +21,10 @@ QGitMasterMainWindow::QGitMasterMainWindow(QWidget *parent)
     ui->setupUi(this);
 
     git_libgit2_init();
+
+    QCoreApplication::setOrganizationName("BorisBarbulovski");
+    QCoreApplication::setApplicationName("GitMaster");
+
 
     QWidget *spacer = new QWidget();
     spacer->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
