@@ -16,6 +16,10 @@ public:
     explicit QGitFetchDialog(QWidget *parent = nullptr);
     ~QGitFetchDialog();
 
+    bool fetchFromAllRemotes() const;
+    bool purgeDeletedBranches() const;
+    bool fetchAllTags() const;
+
 private:
     Ui::QGitFetchDialog *ui = nullptr;
 };

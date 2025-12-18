@@ -160,23 +160,42 @@ void QGitRepository::stash(const QString &name)
 
 void QGitRepository::fetch()
 {
-    QGitMasterMainWindow::instance()->updateStatusBarText("Fetching...");
-    m_git->fetch();
-    QGitMasterMainWindow::instance()->updateStatusBarText(QString());
+    QGitFetchDialog dlg(this);
+
+    if (dlg.exec() == QDialog::Accepted)
+    {
+        bool fetchFromAllRemotes = dlg.fetchFromAllRemotes();
+        bool purgeDeletedBranches = dlg.purgeDeletedBranches();
+        bool fetchAllTags = dlg.fetchAllTags();
+
+        QGitMasterMainWindow::instance()->updateStatusBarText("Fetching...");
+        m_git->fetch(fetchFromAllRemotes, purgeDeletedBranches, fetchAllTags);
+        QGitMasterMainWindow::instance()->updateStatusBarText(QString());
+    }
 }
 
 void QGitRepository::pull()
 {
-    QGitMasterMainWindow::instance()->updateStatusBarText("Pulling...");
-    m_git->pull();
-    QGitMasterMainWindow::instance()->updateStatusBarText(QString());
+    QGitPullDialog dlg(this);
+
+    if (dlg.exec() == QDialog::Accepted)
+    {
+        QGitMasterMainWindow::instance()->updateStatusBarText("Pulling...");
+        m_git->pull();
+        QGitMasterMainWindow::instance()->updateStatusBarText(QString());
+    }
 }
 
 void QGitRepository::push()
 {
-    QGitMasterMainWindow::instance()->updateStatusBarText("Pushing...");
-    m_git->push();
-    QGitMasterMainWindow::instance()->updateStatusBarText(QString());
+    QGitPushDialog dlg(this);
+
+    if (dlg.exec() == QDialog::Accepted)
+    {
+        QGitMasterMainWindow::instance()->updateStatusBarText("Pushing...");
+        m_git->push();
+        QGitMasterMainWindow::instance()->updateStatusBarText(QString());
+    }
 }
 
 bool QGitRepository::event(QEvent *event)

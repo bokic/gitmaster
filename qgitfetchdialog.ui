@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>381</width>
+    <width>413</width>
     <height>177</height>
    </rect>
   </property>
@@ -15,21 +15,21 @@
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>
-    <widget class="QCheckBox" name="checkBox">
+    <widget class="QCheckBox" name="checkBox_fetchFromAllRemotes">
      <property name="text">
       <string>Fetch from all remotes</string>
      </property>
     </widget>
    </item>
    <item>
-    <widget class="QCheckBox" name="checkBox_2">
+    <widget class="QCheckBox" name="checkBox_PurgeDeletedBranches">
      <property name="text">
-      <string>Purne tracking branches no longer present on remote(s)</string>
+      <string>Purge tracking branches no longer present on remote(s)</string>
      </property>
     </widget>
    </item>
    <item>
-    <widget class="QCheckBox" name="checkBox_3">
+    <widget class="QCheckBox" name="checkBox_fetchAllTags">
      <property name="text">
       <string>Fetch all tags</string>
      </property>
@@ -64,14 +64,14 @@
       </spacer>
      </item>
      <item>
-      <widget class="QPushButton" name="pushButton_2">
+      <widget class="QPushButton" name="pushButton_OK">
        <property name="text">
         <string>OK</string>
        </property>
       </widget>
      </item>
      <item>
-      <widget class="QPushButton" name="pushButton">
+      <widget class="QPushButton" name="pushButton_Cancel">
        <property name="text">
         <string>Cancel</string>
        </property>
@@ -82,5 +82,38 @@
   </layout>
  </widget>
  <resources/>
- <connections/>
+ <connections>
+  <connection>
+   <sender>pushButton_OK</sender>
+   <signal>clicked()</signal>
+   <receiver>QGitFetchDialog</receiver>
+   <slot>accept()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>273</x>
+     <y>155</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>158</x>
+     <y>154</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>pushButton_Cancel</sender>
+   <signal>clicked()</signal>
+   <receiver>QGitFetchDialog</receiver>
+   <slot>reject()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>367</x>
+     <y>152</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>367</x>
+     <y>121</y>
+    </hint>
+   </hints>
+  </connection>
+ </connections>
 </ui>
