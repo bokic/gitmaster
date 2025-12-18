@@ -1567,7 +1567,7 @@ void QGit::commit(QString message)
         error = ex;
     }
 
-    emit commitReply(QString::fromUtf8(reinterpret_cast<const char *>(new_commit_id.id)), error);
+    emit commitReply(QString::fromUtf8(git_oid_tostr_s(&new_commit_id)), error);
 
     if (parent)
     {
