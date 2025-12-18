@@ -1269,6 +1269,12 @@ void QGit::stageFileLines(QString filename, QVector<QGitDiffWidgetLine> lines)
         auto bufferLines = buffer.split(LINE_END);
         int deltaLine = 0;
 
+        if (blob)
+        {
+            git_blob_free(blob);
+            blob = nullptr;
+        }
+
         for(const auto &line: lines)
         {
             QByteArray content;
@@ -1312,12 +1318,6 @@ void QGit::stageFileLines(QString filename, QVector<QGitDiffWidgetLine> lines)
     }
 
     emit stageFilesReply(error);
-
-    if (blob)
-    {
-        git_blob_free(blob);
-        blob = nullptr;
-    }
 
     if (index)
     {
@@ -1379,6 +1379,12 @@ void QGit::unstageFileLines(QString filename, QVector<QGitDiffWidgetLine> lines)
         auto bufferLines = buffer.split(LINE_END);
         int deltaLine = 0;
 
+        if (blob)
+        {
+            git_blob_free(blob);
+            blob = nullptr;
+        }
+
         for(const auto &line: lines)
         {
             QByteArray content;
@@ -1423,12 +1429,7 @@ void QGit::unstageFileLines(QString filename, QVector<QGitDiffWidgetLine> lines)
 
     emit unstageFilesReply(error);
 
-    if (blob)
-    {
-        git_blob_free(blob);
-        blob = nullptr;
-    }
-        if (index)
+    if (index)
     {
         git_index_free(index);
         index = nullptr;
