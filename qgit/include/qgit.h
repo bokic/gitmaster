@@ -5,7 +5,6 @@
 #include "qgitbranch.h"
 #include "qgiterror.h"
 
-#include <QReadWriteLock>
 #include <QStringList>
 #include <QDateTime>
 #include <QObject>
@@ -109,6 +108,5 @@ signals:
     void listCommitsReply(QList<QGitCommit> commits, QGitError error);
 
 private:
-    QReadWriteLock m_pathLock;
     QDir m_path;
 };
