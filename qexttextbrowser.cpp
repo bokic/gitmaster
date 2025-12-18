@@ -33,7 +33,9 @@ QVariant QExtTextBrowser::loadResource(int type, const QUrl &name)
         if(QFile::exists(filename))
         {
             QFile file(filename);
-            file.open(QIODevice::ReadOnly);
+            if (file.open(QIODevice::ReadOnly) == false)
+                return QPixmap();
+
             QByteArray ba = file.readAll();
 
             if (!ba.isEmpty())
@@ -62,9 +64,8 @@ void QExtTextBrowser::imgDownloaded(QNetworkReply *reply)
         QString filename = m_imgPath + "/" + urlHash;
 
         QFile file(filename);
-        file.open(QIODevice::WriteOnly | QIODevice::Truncate);
-        file.write(ba);
-        file.close();
+        if (file.open(QIODevice::WriteOnly | QIODevice::Truncate) == true)
+            file.write(ba);
 
         //reload();
         setHtml(toHtml());
