@@ -36,6 +36,9 @@ Source: "{#%QT_PATH}\{#%QT_KIT}\bin\Qt6Svg.dll"; DestDir: "{app}";
 ; Qt platform
 Source: "{#%QT_PATH}\{#%QT_KIT}\plugins\platforms\qwindows.dll"; DestDir: "{app}\platforms";
 
+; Qt Style
+Source: "{#%QT_PATH}\{#%QT_KIT}\plugins\styles\qmodernwindowsstyle.dll"; DestDir: "{app}\styles";
+
 ; Qt image icon engines
 Source: "{#%QT_PATH}\{#%QT_KIT}\plugins\iconengines\qsvgicon.dll"; DestDir: "{app}\iconengines";
 
