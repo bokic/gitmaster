@@ -54,7 +54,7 @@ public:
     ~QGit();
 
     bool setPath(const QDir &path);
-    QDir path() const;
+    QDir path();
     QList<QString> remotes() const;
 
     static QString getBranchNameFromPath(const QString &path);
