@@ -46,10 +46,12 @@ public:
         QGIT_SORT_CHECKED
     };
 
-
     explicit QGit(const QDir &path, QObject *parent = nullptr);
     explicit QGit(QObject *parent = nullptr);
-    ~QGit();
+    QGit(QGit&& other);
+    QGit& operator=(const QGit &other);
+    QGit& operator=(QGit &&other);
+    virtual ~QGit();
 
     bool setPath(const QDir &path);
     QDir path();

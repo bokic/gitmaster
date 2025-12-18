@@ -11,7 +11,6 @@
 #include <QDir>
 
 
-
 static void git_repository_defer_cleanup(git_repository **repo)
 {
     git_repository_free(*repo);
@@ -130,6 +129,23 @@ QGit::QGit(const QDir &path, QObject *parent)
 QGit::QGit(QObject *parent)
     : QObject(parent)
 {
+}
+
+QGit::QGit(QGit&& other)
+{
+    qSwap(m_path, other.m_path);
+}
+
+QGit& QGit::operator=(const QGit &other)
+{
+    m_path = other.m_path;
+    return *this;
+}
+
+QGit& QGit::operator=(QGit &&other)
+{
+    qSwap(m_path, other.m_path);
+    return *this;
 }
 
 QGit::~QGit()
