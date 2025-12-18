@@ -1295,6 +1295,7 @@ void QGit::stageFileLines(QString filename, QVector<QGitDiffWidgetLine> lines)
                 content = line.content;
                 content = content.left(content.length() - 1);
                 bufferLines.insert(line.new_lineno - 1, content);
+                deltaLine++;
                 break;
             default:
                 throw QGitError("Unknown operation", 0);
@@ -1404,7 +1405,8 @@ void QGit::unstageFileLines(QString filename, QVector<QGitDiffWidgetLine> lines)
             case '-':
                 content = line.content;
                 content = content.left(content.length() - 1);
-                bufferLines.insert(line.old_lineno - 1, content);
+                bufferLines.insert(line.old_lineno + deltaLine - 1, content);
+                deltaLine++;
                 break;
             default:
                 throw QGitError("Unknown operation", 0);
