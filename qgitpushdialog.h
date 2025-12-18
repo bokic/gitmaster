@@ -12,7 +12,7 @@ class QGitPushDialog : public QDialog
     Q_OBJECT
 
 public:
-    explicit QGitPushDialog(QWidget *parent = nullptr);
+    explicit QGitPushDialog(QGitRepository *parent = nullptr);
     ~QGitPushDialog();
 
 private:
