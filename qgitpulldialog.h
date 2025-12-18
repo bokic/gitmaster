@@ -15,5 +15,5 @@ public:
     ~QGitPullDialog();
 
 private:
-    Ui::QGitPullDialog *ui;
+    Ui::QGitPullDialog *ui = nullptr;
 };

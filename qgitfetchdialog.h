@@ -18,7 +18,7 @@ public:
     ~QGitFetchDialog();
 
 private:
-    Ui::QGitFetchDialog *ui;
+    Ui::QGitFetchDialog *ui = nullptr;
 };
 
 #endif // QGITFETCHDIALOG_H

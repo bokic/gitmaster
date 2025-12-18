@@ -16,5 +16,5 @@ public:
     ~QGitPushDialog();
 
 private:
-    Ui::QGitPushDialog *ui;
+    Ui::QGitPushDialog *ui = nullptr;
 };

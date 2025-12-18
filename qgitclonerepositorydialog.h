@@ -28,7 +28,7 @@ private slots:
 	void cloneProgressReply(QString path, size_t completed_steps, size_t total);
 
 private:
-    Ui::QGitCloneRepositoryDialog *ui;
+    Ui::QGitCloneRepositoryDialog *ui = nullptr;
     QThread m_thread;
     QString m_url;
     QString m_path;
