@@ -81,7 +81,7 @@ public slots:
     void commit(QString message);
     void clone(QUrl url);
     void pull();
-    void fetch();
+    void fetch(bool fetchFromAllRemotes, bool purgeDeletedBranches, bool fetchAllTags);
     void push();
     void listCommits(QString object, int length);
 

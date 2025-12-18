@@ -1738,10 +1738,11 @@ void QGit::pull()
     }
 }
 
-void QGit::fetch()
+void QGit::fetch(bool fetchFromAllRemotes, bool purgeDeletedBranches, bool fetchAllTags)
 {
     git_repository *repo = nullptr;
     git_remote *remote = nullptr;
+    git_strarray remotes = {nullptr, 0};
     int res = 0;
 
     QGitError error;
@@ -1754,10 +1755,48 @@ void QGit::fetch()
             throw QGitError("git_repository_open", res);
         }
 
-        res = git_remote_lookup(&remote, repo, "origin");
+        res = git_remote_list(&remotes, repo);
         if (res)
         {
-            throw QGitError("git_remote_lookup", res);
+            throw QGitError("git_remote_list", res);
+        }
+
+        QVector<QByteArray> remotesToFetch;
+
+        if (fetchFromAllRemotes)
+        {
+            remotesToFetch.reserve(static_cast<int>(remotes.count));
+            for(size_t idx = 0; idx < remotes.count; idx++)
+            {
+                remotesToFetch.append(QByteArray(remotes.strings[idx]));
+            }
+        }
+        else
+        {
+            QByteArray selected;
+            for(size_t idx = 0; idx < remotes.count; idx++)
+            {
+                if (QString::fromUtf8(remotes.strings[idx]) == QStringLiteral("origin"))
+                {
+                    selected = QByteArray(remotes.strings[idx]);
+                    break;
+                }
+            }
+
+            if (selected.isEmpty() && remotes.count > 0)
+            {
+                selected = QByteArray(remotes.strings[0]);
+            }
+
+            if (!selected.isEmpty())
+            {
+                remotesToFetch.append(selected);
+            }
+        }
+
+        if (remotesToFetch.isEmpty())
+        {
+            throw QGitError("git_remote_lookup", GIT_ENOTFOUND);
         }
 
         git_fetch_options fetch_opts = GIT_FETCH_OPTIONS_INIT;
@@ -1786,11 +1825,25 @@ void QGit::fetch()
 
             return -1;
         };
+        fetch_opts.prune = purgeDeletedBranches ? GIT_FETCH_PRUNE : GIT_FETCH_NO_PRUNE;
+        fetch_opts.download_tags = fetchAllTags ? GIT_REMOTE_DOWNLOAD_TAGS_ALL : GIT_REMOTE_DOWNLOAD_TAGS_AUTO;
 
-        res = git_remote_fetch(remote, nullptr, &fetch_opts, "fetch");
-        if (res)
+        for(const auto &remoteName: remotesToFetch)
         {
-            throw QGitError("git_remote_fetch", res);
+            res = git_remote_lookup(&remote, repo, remoteName.constData());
+            if (res)
+            {
+                throw QGitError("git_remote_lookup", res);
+            }
+
+            res = git_remote_fetch(remote, nullptr, &fetch_opts, "fetch");
+            if (res)
+            {
+                throw QGitError("git_remote_fetch", res);
+            }
+
+            git_remote_free(remote);
+            remote = nullptr;
         }
 
     } catch(const QGitError &ex) {
@@ -1804,6 +1857,12 @@ void QGit::fetch()
     {
         git_remote_free(remote);
         remote = nullptr;
+    }
+
+    if (remotes.strings)
+    {
+        git_strarray_dispose(&remotes);
+        remotes = {nullptr, 0};
     }
 
     if (repo)
