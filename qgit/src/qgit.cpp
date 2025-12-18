@@ -1309,6 +1309,12 @@ void QGit::stageFileLines(QString filename, QVector<QGitDiffWidgetLine> lines)
 
     emit stageFilesReply(error);
 
+    if (blob)
+    {
+        git_blob_free(blob);
+        blob = nullptr;
+    }
+
     if (index)
     {
         git_index_free(index);
@@ -1409,7 +1415,12 @@ void QGit::unstageFileLines(QString filename, QVector<QGitDiffWidgetLine> lines)
 
     emit unstageFilesReply(error);
 
-    if (index)
+    if (blob)
+    {
+        git_blob_free(blob);
+        blob = nullptr;
+    }
+        if (index)
     {
         git_index_free(index);
         index = nullptr;
