@@ -5,5 +5,6 @@ CMakeLists.txt.user
 /windows/*.exe
 /include
 /build
+/.vscode
 /.cache
 /bin
