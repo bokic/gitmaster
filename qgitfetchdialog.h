@@ -1,5 +1,4 @@
-#ifndef QGITFETCHDIALOG_H
-#define QGITFETCHDIALOG_H
+#pragma once
 
 #include <QDialog>
 #include <QWidget>
@@ -20,5 +19,3 @@ public:
 private:
     Ui::QGitFetchDialog *ui = nullptr;
 };
-
-#endif // QGITFETCHDIALOG_H
