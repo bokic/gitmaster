@@ -198,6 +198,11 @@ void QGitRepository::push()
     }
 }
 
+QGit *QGitRepository::git() const
+{
+    return m_git;
+}
+
 bool QGitRepository::event(QEvent *event)
 {
     if (event->type() == QEvent::Show)

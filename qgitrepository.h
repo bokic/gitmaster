@@ -25,6 +25,7 @@ public:
     void fetch();
     void pull();
     void push();
+    QGit *git() const;
 
 signals:
     void localStash(QString name);
