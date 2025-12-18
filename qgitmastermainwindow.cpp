@@ -19,6 +19,8 @@ QGitMasterMainWindow::QGitMasterMainWindow(QWidget *parent)
 {
     ui->setupUi(this);
 
+    git_libgit2_init();
+
     QWidget *spacer = new QWidget();
     spacer->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     ui->mainToolBar->insertWidget(ui->actionGit_Flow, spacer);
@@ -67,6 +69,8 @@ QGitMasterMainWindow::QGitMasterMainWindow(QWidget *parent)
 
 QGitMasterMainWindow::~QGitMasterMainWindow()
 {
+    git_libgit2_shutdown();
+
     delete ui;
 }
 
