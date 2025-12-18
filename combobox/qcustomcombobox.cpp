@@ -2,6 +2,7 @@
 #include <QStylePainter>
 #include <QApplication>
 #include <QStyleOption>
+#include <QStyle>
 #include <QFontMetrics>
 #include <QHBoxLayout>
 #include <QMouseEvent>
@@ -42,33 +43,32 @@ QSize QCustomComboBox::sizeHint() const
 
 QSize QCustomComboBox::minimumSizeHint() const
 {
-    QSize ret;
+    QStyleOptionComboBox opt;
+    opt.initFrom(this);
 
-    const QFontMetrics &fm = fontMetrics();
-
-    auto iconSizes = m_icon.availableSizes();
+    QSize contentSize;
+    const QFontMetrics fm = fontMetrics();
 
     if (m_icon.isNull())
     {
-        if (m_text.isEmpty())
-            ret = fm.size(Qt::TextSingleLine, "xxxxxx");
-        else
-            ret = fm.size(Qt::TextSingleLine, m_text);
+        const QString text = m_text.isEmpty() ? QStringLiteral("xxxxxx") : m_text;
+        contentSize = fm.size(Qt::TextSingleLine, text);
     }
     else
     {
-        ret.setWidth(16);
+        QSize iconSize = QSize(16, 16);
+        const QList<QSize> availableSizes = m_icon.availableSizes();
+        if (!availableSizes.isEmpty())
+        {
+            iconSize = availableSizes.first();
+        }
+
+        opt.currentIcon = m_icon;
+        opt.iconSize = iconSize;
+        contentSize = iconSize;
     }
 
-    ret.setHeight(qMax(qCeil(ret.height()), 22));
-
-    if (!iconSizes.isEmpty()) {
-        ret.setWidth(qMax(ret.width(), iconSizes.first().height()));
-    }
-
-    ret += QSize(ret.height() + 8, 4);
-
-    return ret;
+    return style()->sizeFromContents(QStyle::CT_ComboBox, &opt, contentSize, this);
 }
 
 void QCustomComboBox::setCurrentText(const QString &text)
