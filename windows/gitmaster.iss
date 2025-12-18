@@ -25,9 +25,6 @@ Name: "{app}\imageformats";
 Name: "{app}\iconengines";
 
 [Files]
-; OpenSSL
-Source: "{#%OPENSSL_PATH}\bin\libcrypto-3-x64.dll"; DestDir: "{app}";
-Source: "{#%OPENSSL_PATH}\bin\libssl-3-x64.dll"; DestDir: "{app}";
 
 ; Qt library
 Source: "{#%QT_PATH}\{#%QT_KIT}\bin\Qt6Core.dll"; DestDir: "{app}";

@@ -1,15 +1,25 @@
 @echo off
 
-SET PATH=C:\Qt\Tools\CMake_64\bin;C:\Qt\Tools\Ninja;C:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Current\Bin\amd64;%PATH%
+SET LIBGIT2_VERSION=1.8.2
 
-git clone -bv1.8.2 --depth 1 https://github.com/libgit2/libgit2
-cd libgit2
-mkdir build
-cd build
-cmake.exe -DBUILD_TESTS=OFF ..
-MSBuild.exe libgit2.sln /property:Configuration=Release
-cd ..\..
+rmdir /s /q libgit2
+rmdir /s /q build
+
+curl -L --output libgit2.zip https://github.com/libgit2/libgit2/archive/refs/tags/v%LIBGIT2_VERSION%.zip
+tar -xf libgit2.zip
+del libgit2.zip
+ren libgit2-%LIBGIT2_VERSION% libgit2
+
+cmake.exe -S libgit2 -B build -DBUILD_TESTS=OFF
+cmake --build build --target libgit2package --config Release
+
+rmdir /s /q ..\include
+mkdir ..\bin
 mkdir ..\include
+
 xcopy /y /e libgit2\include ..\include
-xcopy /y /e libgit2\build\Release\git2.dll ..\bin
-xcopy /y /e libgit2\build\Release\git2.lib ..\bin
+xcopy /y /e build\Release\git2.dll ..\bin
+xcopy /y /e build\Release\git2.lib ..\bin
+
+rmdir /s /q libgit2
+rmdir /s /q build
