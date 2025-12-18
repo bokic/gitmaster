@@ -1251,6 +1251,10 @@ void QGit::stageFileLines(QString filename, QVector<QGitDiffWidgetLine> lines)
         }
 
         entry = git_index_get_bypath(index, filename.toUtf8().constData(), GIT_INDEX_STAGE_NORMAL);
+        if (entry == nullptr)
+        {
+            throw QGitError("git_index_get_bypath", res);
+        }
 
         git_blob *blob = nullptr;
         res = git_blob_lookup(&blob, repo, &entry->id);
@@ -1357,6 +1361,10 @@ void QGit::unstageFileLines(QString filename, QVector<QGitDiffWidgetLine> lines)
         }
 
         entry = git_index_get_bypath(index, filename.toUtf8().constData(), GIT_INDEX_STAGE_NORMAL);
+        if (entry == nullptr)
+        {
+            throw QGitError("git_index_get_bypath", res);
+        }
 
         git_blob *blob = nullptr;
         res = git_blob_lookup(&blob, repo, &entry->id);
