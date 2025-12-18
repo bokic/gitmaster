@@ -17,14 +17,14 @@
    <item>
     <layout class="QHBoxLayout" name="horizontalLayout_2" stretch="0,0,1">
      <item>
-      <widget class="QLabel" name="label">
+      <widget class="QLabel" name="remote_label">
        <property name="text">
         <string>Push to repository:</string>
        </property>
       </widget>
      </item>
      <item>
-      <widget class="QComboBox" name="comboBox"/>
+      <widget class="QComboBox" name="remote_comboBox"/>
      </item>
      <item>
       <widget class="QLineEdit" name="lineEdit"/>
@@ -38,10 +38,10 @@
      </property>
      <layout class="QVBoxLayout" name="verticalLayout_2" stretch="1,0">
       <item>
-       <widget class="QTableWidget" name="tableWidget"/>
+       <widget class="QTableWidget" name="branches_tableWidget"/>
       </item>
       <item>
-       <widget class="QCheckBox" name="checkBox_3">
+       <widget class="QCheckBox" name="selectAllBranches_checkBox">
         <property name="text">
          <string>Select All</string>
         </property>
@@ -53,7 +53,7 @@
    <item>
     <layout class="QHBoxLayout" name="horizontalLayout">
      <item>
-      <widget class="QCheckBox" name="checkBox">
+      <widget class="QCheckBox" name="pushAllTags_checkBox">
        <property name="text">
         <string>Push all tags</string>
        </property>
@@ -63,7 +63,7 @@
       </widget>
      </item>
      <item>
-      <widget class="QCheckBox" name="checkBox_2">
+      <widget class="QCheckBox" name="forcePush_checkBox">
        <property name="enabled">
         <bool>false</bool>
        </property>
@@ -93,7 +93,7 @@
       </widget>
      </item>
      <item>
-      <widget class="QPushButton" name="pushButton_2">
+      <widget class="QPushButton" name="cancelButton">
        <property name="text">
         <string>Cancel</string>
        </property>
