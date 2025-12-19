@@ -105,9 +105,11 @@ IF (WIN32)
     target_sources(gitmaster PRIVATE resource.rc)
 ENDIF()
 
-target_precompile_headers(gitmaster PRIVATE
-    ${PROJECT_HEADERS}
-)
+if (CMAKE_BUILD_TYPE STREQUAL "Release")
+    target_precompile_headers(gitmaster PRIVATE
+        ${PROJECT_HEADERS}
+    )
+ENDIF()
 
 target_include_directories(gitmaster PRIVATE combobox qgit/include)
 
