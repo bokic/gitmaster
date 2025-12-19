@@ -32,9 +32,6 @@
       <enum>Qt::Orientation::Horizontal</enum>
      </property>
      <widget class="QTreeWidget" name="branchesTreeView">
-      <property name="styleSheet">
-       <string notr="true">border: none</string>
-      </property>
       <attribute name="headerVisible">
        <bool>false</bool>
       </attribute>
