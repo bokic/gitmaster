@@ -1,103 +1,169 @@
 #include "qcomboboxgitstatusfiles.h"
 
+#include <QStandardItemModel>
+#include <QAbstractItemView>
+#include <QStylePainter>
 
-#define ITEM_SHOW_ONLY         0
-#define ITEM_PENDING           1
-#define ITEM_CONFLICTS         2
-#define ITEM_UNTRACKED         3
-#define ITEM_IGNORED           4
-#define ITEM_CLEAN             5
-#define ITEM_MODIFIED          6
-#define ITEM_ALL               7
-#define ITEM_SEPARATOR         8
-#define ITEM_SORT_BY           9
-#define ITEM_PATH_APLHA        10
-#define ITEM_PATH_APLHA_REV    11
-#define ITEM_FILE_APLHA        12
-#define ITEM_FILE_APLHA_REV    13
-#define ITEM_FILE_STATUS       14
-#define ITEM_CHECKED_UNCHECHED 15
+
+enum {
+    ITEM_SHOW_ONLY,
+    ITEM_PENDING,
+    ITEM_CONFLICTS,
+    ITEM_UNTRACKED,
+    ITEM_IGNORED,
+    ITEM_CLEAN,
+    ITEM_MODIFIED,
+    ITEM_ALL,
+    ITEM_SEPARATOR,
+    ITEM_SORT_BY,
+    ITEM_PATH_APLHA,
+    ITEM_PATH_APLHA_REV,
+    ITEM_FILE_APLHA,
+    ITEM_FILE_APLHA_REV,
+    ITEM_FILE_STATUS,
+    ITEM_CHECKED_UNCHECHED,
+};
 
 QComboBoxGitStatusFiles::QComboBoxGitStatusFiles(QWidget *parent)
-    : QCustomComboBox(parent)
+    : QComboBox(parent)
 {
-    QListWidgetItem *item = nullptr;
+    QStandardItemModel *model = new QStandardItemModel();
+    setModel(model);
 
-    item = new QListWidgetItem(tr("Show only"));
+    QStandardItem* item = nullptr;
+
+    item = new QStandardItem(tr("Show only"));
     item->setFlags(Qt::NoItemFlags);
-    m_list->addItem(item);
+    model->appendRow(item);
 
-    item = new QListWidgetItem(tr("Pending"));
+    item = new QStandardItem(tr("Pending"));
+    item->setFlags(Qt::ItemIsSelectable | Qt::ItemIsEnabled);
     item->setCheckState(Qt::Checked);
-    m_list->addItem(item);
+    model->appendRow(item);
 
-    item = new QListWidgetItem(tr("Conflicts"));
+    item = new QStandardItem(tr("Conflicts"));
+    item->setFlags(Qt::ItemIsSelectable | Qt::ItemIsEnabled);
     item->setCheckState(Qt::Unchecked);
-    m_list->addItem(item);
+    model->appendRow(item);
 
-    item = new QListWidgetItem(tr("Untracked"));
+    item = new QStandardItem(tr("Untracked"));
+    item->setFlags(Qt::ItemIsSelectable | Qt::ItemIsEnabled);
     item->setCheckState(Qt::Unchecked);
-    m_list->addItem(item);
+    model->appendRow(item);
 
-    item = new QListWidgetItem(tr("Ignored"));
+    item = new QStandardItem(tr("Ignored"));
+    item->setFlags(Qt::ItemIsSelectable | Qt::ItemIsEnabled);
     item->setCheckState(Qt::Unchecked);
-    m_list->addItem(item);
+    model->appendRow(item);
 
-    item = new QListWidgetItem(tr("Clean"));
+    item = new QStandardItem(tr("Clean"));
+    item->setFlags(Qt::ItemIsSelectable | Qt::ItemIsEnabled);
     item->setCheckState(Qt::Unchecked);
-    m_list->addItem(item);
+    model->appendRow(item);
 
-    item = new QListWidgetItem(tr("Modified"));
+    item = new QStandardItem(tr("Modified"));
+    item->setFlags(Qt::ItemIsSelectable | Qt::ItemIsEnabled);
     item->setCheckState(Qt::Unchecked);
-    m_list->addItem(item);
+    model->appendRow(item);
 
-    item = new QListWidgetItem(tr("All"));
+    item = new QStandardItem(tr("All"));
+    item->setFlags(Qt::ItemIsSelectable | Qt::ItemIsEnabled);
     item->setCheckState(Qt::Unchecked);
-    m_list->addItem(item);
+    model->appendRow(item);
 
-    item = new QListWidgetItem();
+    insertSeparator(model->rowCount());
+
+    item = new QStandardItem(tr("Sort by"));
     item->setFlags(Qt::NoItemFlags);
-    auto separator = new QFrame(m_list);
-    separator->setFrameShape(QFrame::HLine);
-    m_list->addItem(item);
-    m_list->setItemWidget(item, separator);
+    model->appendRow(item);
 
-    item = new QListWidgetItem(tr("Sort by"));
-    item->setFlags(Qt::NoItemFlags);
-    m_list->addItem(item);
-
-    item = new QListWidgetItem(tr("Path aplhabetically"));
+    item = new QStandardItem(tr("Path aplhabetically"));
+    item->setFlags(Qt::ItemIsSelectable | Qt::ItemIsEnabled);
     item->setCheckState(Qt::Unchecked);
-    m_list->addItem(item);
+    model->appendRow(item);
 
-    item = new QListWidgetItem(tr("Path aplhabetically (reversed)"));
+    item = new QStandardItem(tr("Path aplhabetically (reversed)"));
+    item->setFlags(Qt::ItemIsSelectable | Qt::ItemIsEnabled);
     item->setCheckState(Qt::Unchecked);
-    m_list->addItem(item);
+    model->appendRow(item);
 
-    item = new QListWidgetItem(tr("File name aplhabetically"));
+    item = new QStandardItem(tr("File name aplhabetically"));
+    item->setFlags(Qt::ItemIsSelectable | Qt::ItemIsEnabled);
     item->setCheckState(Qt::Unchecked);
-    m_list->addItem(item);
+    model->appendRow(item);
 
-    item = new QListWidgetItem(tr("File name aplhabetically (reversed)"));
+    item = new QStandardItem(tr("File name aplhabetically (reversed)"));
+    item->setFlags(Qt::ItemIsSelectable | Qt::ItemIsEnabled);
     item->setCheckState(Qt::Unchecked);
-    m_list->addItem(item);
+    model->appendRow(item);
 
-    item = new QListWidgetItem(tr("File status"));
+    item = new QStandardItem(tr("File status"));
+    item->setFlags(Qt::ItemIsSelectable | Qt::ItemIsEnabled);
     item->setCheckState(Qt::Checked);
-    m_list->addItem(item);
+    model->appendRow(item);
 
-    item = new QListWidgetItem(tr("Checked / unchecked"));
+    item = new QStandardItem(tr("Checked / unchecked"));
+    item->setFlags(Qt::ItemIsSelectable | Qt::ItemIsEnabled);
     item->setCheckState(Qt::Unchecked);
-    m_list->addItem(item);
+    model->appendRow(item);
 
-    m_list->setMinimumWidth(m_list->sizeHintForColumn(0));
+    // TODO: Need to find better way to resize combobox popup window.
+    view()->setMinimumWidth(view()->sizeHintForColumn(0));
+    int height = 0;
+    for(int r  = 0; r < model->rowCount(); r++)
+    {
+        height += view()->sizeHintForRow(r);
+    }
+    view()->setMinimumHeight(height);
+
+    connect(this, &QComboBox::activated, this,  &QComboBoxGitStatusFiles::activated);
 
     updateText();
 }
 
+QSize QComboBoxGitStatusFiles::sizeHint() const
+{
+    return minimumSizeHint();
+}
+
+QSize QComboBoxGitStatusFiles::minimumSizeHint() const
+{
+    QStyleOptionComboBox opt;
+    opt.initFrom(this);
+
+    QSize contentSize;
+
+    QFontMetrics fm = fontMetrics();
+
+    contentSize = fm.size(Qt::TextSingleLine, m_text);
+
+// TODO: Periodicly check if we still need this Windows style fix.
+#ifdef Q_OS_WIN
+    contentSize.setWidth(contentSize.width() - iconSize().width());
+#endif
+
+    return style()->sizeFromContents(QStyle::CT_ComboBox, &opt, contentSize, this);
+}
+
+void QComboBoxGitStatusFiles::paintEvent(QPaintEvent *event)
+{
+    QStyleOptionComboBox opt;
+    QStylePainter p(this);
+
+    Q_UNUSED(event);
+
+    opt.initFrom(this);
+
+    opt.currentText = m_text;
+
+    p.drawComplexControl(QStyle::CC_ComboBox, opt);
+    p.drawControl(QStyle::CE_ComboBoxLabel, opt);
+}
+
+
 void QComboBoxGitStatusFiles::updateText()
 {
-    QString text, show, sort;
+    QString show, sort;
     int showFilesIdx;
     int sortFilesIdx;
 
@@ -156,32 +222,34 @@ void QComboBoxGitStatusFiles::updateText()
         break;
     }
 
-    text = tr("%1 files, sorted by %2").arg(show, sort);
-
-    setCurrentText(text);
+    m_text = tr("%1 files, sorted by %2").arg(show, sort);
+    updateGeometry();
+    update();
 }
 
 QComboBoxGitStatusFiles::QComboBoxGitStatusFilesShowFiles QComboBoxGitStatusFiles::showFiles() const
 {
-    if (m_list->item(ITEM_PENDING)->checkState() == Qt::Checked) {
+    QAbstractItemModel *items = model();
+
+    if (items->index(ITEM_PENDING, 0).data(Qt::CheckStateRole) == Qt::Checked) {
         return QShowPendingFiles;
     }
-    if (m_list->item(ITEM_CONFLICTS)->checkState() == Qt::Checked) {
+    if (items->index(ITEM_CONFLICTS, 0).data(Qt::CheckStateRole) == Qt::Checked) {
         return QShowConflictFiles;
     }
-    if (m_list->item(ITEM_UNTRACKED)->checkState() == Qt::Checked) {
+    if (items->index(ITEM_UNTRACKED, 0).data(Qt::CheckStateRole) == Qt::Checked) {
         return QShowUntracked;
     }
-    if (m_list->item(ITEM_IGNORED)->checkState() == Qt::Checked) {
+    if (items->index(ITEM_IGNORED, 0).data(Qt::CheckStateRole) == Qt::Checked) {
         return QShowIgnored;
     }
-    if (m_list->item(ITEM_CLEAN)->checkState() == Qt::Checked) {
+    if (items->index(ITEM_CLEAN, 0).data(Qt::CheckStateRole) == Qt::Checked) {
         return QShowClean;
     }
-    if (m_list->item(ITEM_MODIFIED)->checkState() == Qt::Checked) {
+    if (items->index(ITEM_MODIFIED, 0).data(Qt::CheckStateRole) == Qt::Checked) {
         return QShowModified;
     }
-    if (m_list->item(ITEM_ALL)->checkState() == Qt::Checked) {
+    if (items->index(ITEM_ALL, 0).data(Qt::CheckStateRole) == Qt::Checked) {
         return QShowAll;
     }
 
@@ -190,31 +258,51 @@ QComboBoxGitStatusFiles::QComboBoxGitStatusFilesShowFiles QComboBoxGitStatusFile
 
 QComboBoxGitStatusFiles::QComboBoxGitStatusFilesOrderFiles QComboBoxGitStatusFiles::showSortBy() const
 {
-    if (m_list->item(ITEM_PATH_APLHA)->checkState() == Qt::Checked) {
+    QAbstractItemModel *items = model();
+
+    if (items->index(ITEM_PATH_APLHA, 0).data(Qt::CheckStateRole) == Qt::Checked) {
         return QFilePathSortFiles;
     }
-    if (m_list->item(ITEM_PATH_APLHA_REV)->checkState() == Qt::Checked) {
+    if (items->index(ITEM_PATH_APLHA_REV, 0).data(Qt::CheckStateRole) == Qt::Checked) {
         return QReversedFilePathSortFiles;
     }
-    if (m_list->item(ITEM_FILE_APLHA)->checkState() == Qt::Checked) {
+    if (items->index(ITEM_FILE_APLHA, 0).data(Qt::CheckStateRole) == Qt::Checked) {
         return QFileNameSortFiles;
     }
-    if (m_list->item(ITEM_FILE_APLHA_REV)->checkState() == Qt::Checked) {
+    if (items->index(ITEM_FILE_APLHA_REV, 0).data(Qt::CheckStateRole) == Qt::Checked) {
         return QReversedFileNameSortFiles;
     }
-    if (m_list->item(ITEM_FILE_STATUS)->checkState() == Qt::Checked) {
+    if (items->index(ITEM_FILE_STATUS, 0).data(Qt::CheckStateRole) == Qt::Checked) {
         return QFileStatusSortFiles;
     }
-    if (m_list->item(ITEM_CHECKED_UNCHECHED)->checkState() == Qt::Checked) {
+    if (items->index(ITEM_CHECKED_UNCHECHED, 0).data(Qt::CheckStateRole) == Qt::Checked) {
         return QCheckedUncheckedSortFiles;
     }
 
     return QUnsortedFiles;
 }
 
-void QComboBoxGitStatusFiles::clicked(QListWidgetItem *item)
+void QComboBoxGitStatusFiles::activated(int index)
 {
-    Q_UNUSED(item);
+    QAbstractItemModel *items = model();
+
+    if ((index >= ITEM_SHOW_ONLY)&&(index <= ITEM_ALL))
+    {
+        for(int c = ITEM_SHOW_ONLY; c <= ITEM_ALL; c++)
+        {
+            items->setData(items->index(c, 0), (c == index)?Qt::Checked:Qt::Unchecked, Qt::CheckStateRole);
+        }
+    }
+
+    if ((index >= ITEM_SORT_BY)&&(index <= ITEM_CHECKED_UNCHECHED))
+    {
+        for(int c = ITEM_SORT_BY; c <= ITEM_CHECKED_UNCHECHED; c++)
+        {
+            items->setData(items->index(c, 0), (c == index)?Qt::Checked:Qt::Unchecked, Qt::CheckStateRole);
+        }
+    }
 
     updateText();
+
+    emit itemClicked(index);
 }

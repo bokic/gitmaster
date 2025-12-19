@@ -1,7 +1,10 @@
 #pragma once
 
 
+#include "qgitrepository.h"
+
 #include <QDialog>
+
 
 namespace Ui {
 class QGitPushDialog;

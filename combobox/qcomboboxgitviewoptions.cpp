@@ -1,79 +1,148 @@
 #include "qcomboboxgitviewoptions.h"
 
+#include <QStandardItemModel>
+#include <QAbstractItemView>
+#include <QStylePainter>
+
+
+enum {
+    ITEM_FLAT_LIST_SINGLE_COLUMN,
+    ITEM_FLAT_LIST_MULTIPLE_COLUMN,
+    ITEM_TREE_VIEW,
+    ITEM_SEPARATOR,
+    ITEM_NO_STAGING,
+    ITEM_FLUID_STAGING,
+    ITEM_SPLIT_VIEW_STAGING,
+};
 
 QComboBoxGitViewOptions::QComboBoxGitViewOptions(QWidget *parent)
-    : QCustomComboBox(parent)
+    : QComboBox(parent)
     , m_iconFlatListSingleColumn(":/QComboBoxGitViewOptions/flat_list_single_column")
     , m_iconFlatListMultipleColumn(":/QComboBoxGitViewOptions/flat_list_multiple_column")
     , m_iconTreeView(":/QComboBoxGitViewOptions/tree_view")
+    , m_iconNoStaging(":/QComboBoxGitViewOptions/no_staging")
+    , m_iconFluidStaging(":/QComboBoxGitViewOptions/fluid_staging")
+    , m_iconSplitViewStaging(":/QComboBoxGitViewOptions/split_view_staging")
 {
-    QListWidgetItem *item = nullptr;
+    QStandardItemModel *model = new QStandardItemModel();
+    setModel(model);
 
-    item = new QListWidgetItem(tr("Flat list (single column)"));
+    QStandardItem* item = nullptr;
+
+    item = new QStandardItem(tr("Flat list (single column)"));
+    item->setFlags(Qt::ItemIsSelectable | Qt::ItemIsEnabled);
     item->setCheckState(Qt::Checked);
     item->setIcon(m_iconFlatListSingleColumn);
-    m_list->addItem(item);
+    model->appendRow(item);
 
-    item = new QListWidgetItem(tr("Flat list (multiple column)"));
+    item = new QStandardItem(tr("Flat list (multiple column)"));
+    item->setFlags(Qt::ItemIsSelectable | Qt::ItemIsEnabled);
     item->setCheckState(Qt::Unchecked);
     item->setIcon(m_iconFlatListMultipleColumn);
-    m_list->addItem(item);
+    model->appendRow(item);
 
-    item = new QListWidgetItem(tr("Tree view"));
+    item = new QStandardItem(tr("Tree view"));
+    item->setFlags(Qt::ItemIsSelectable | Qt::ItemIsEnabled);
     item->setCheckState(Qt::Unchecked);
     item->setIcon(m_iconTreeView);
-    m_list->addItem(item);
+    model->appendRow(item);
 
-    item = new QListWidgetItem();
-    item->setFlags(Qt::NoItemFlags);
-    auto separator = new QFrame(m_list);
-    separator->setFrameShape(QFrame::HLine);
-    m_list->addItem(item);
-    m_list->setItemWidget(item, separator);
+    insertSeparator(model->rowCount());
 
-    item = new QListWidgetItem(tr("No staging"));
+    item = new QStandardItem(tr("No staging"));
+    item->setFlags(Qt::ItemIsSelectable | Qt::ItemIsEnabled);
     item->setCheckState(Qt::Unchecked);
-    item->setIcon(QIcon(":/QComboBoxGitViewOptions/no_staging"));
-    m_list->addItem(item);
+    item->setIcon(m_iconNoStaging);
+    model->appendRow(item);
 
-    item = new QListWidgetItem(tr("Fluid staging"));
+    item = new QStandardItem(tr("Fluid staging"));
+    item->setFlags(Qt::ItemIsSelectable | Qt::ItemIsEnabled);
     item->setCheckState(Qt::Unchecked);
-    item->setIcon(QIcon(":/QComboBoxGitViewOptions/fluid_staging"));
-    m_list->addItem(item);
+    item->setIcon(m_iconFluidStaging);
+    model->appendRow(item);
 
-    item = new QListWidgetItem(tr("Split view staging"));
+    item = new QStandardItem(tr("Split view staging"));
+    item->setFlags(Qt::ItemIsSelectable | Qt::ItemIsEnabled);
     item->setCheckState(Qt::Checked);
-    item->setIcon(QIcon(":/QComboBoxGitViewOptions/split_view_staging"));
-    m_list->addItem(item);
+    item->setIcon(m_iconSplitViewStaging);
+    model->appendRow(item);
 
-    m_list->setMinimumWidth(m_list->sizeHintForColumn(0));
+    // TODO: Need to find better way to resize combobox popup window.
+    view()->setMinimumWidth(view()->sizeHintForColumn(0));
+    int height = 0;
+    for(int r  = 0; r < model->rowCount(); r++)
+    {
+        height += view()->sizeHintForRow(r);
+    }
+    view()->setMinimumHeight(height);
 
-    updateIcon();
+    m_icon = m_iconFlatListSingleColumn;
+
+    connect(this, &QComboBox::activated, this,  &QComboBoxGitViewOptions::activated);
 }
 
-void QComboBoxGitViewOptions::updateIcon()
+QSize QComboBoxGitViewOptions::sizeHint() const
 {
-    if (m_list->item(0)->checkState() == Qt::Checked)
-        setCurrentIcon(m_iconFlatListSingleColumn);
-    else if (m_list->item(1)->checkState() == Qt::Checked)
-        setCurrentIcon(m_iconFlatListMultipleColumn);
-    else if (m_list->item(2)->checkState() == Qt::Checked)
-        setCurrentIcon(m_iconTreeView);
+    return minimumSizeHint();
 }
 
-int QComboBoxGitViewOptions::viewType() const
+QSize QComboBoxGitViewOptions::minimumSizeHint() const
 {
-    return -1;
+    QStyleOptionComboBox opt;
+    opt.initFrom(this);
+
+    QSize contentSize;
+
+    opt.currentIcon = m_iconTreeView;
+    opt.iconSize = iconSize();
+
+// TODO: Periodicly check if we still need this Windows style fix.
+#ifdef Q_OS_WIN
+    contentSize = QSize(0, iconSize().width());
+#else
+    contentSize = iconSize();
+#endif
+
+    return style()->sizeFromContents(QStyle::CT_ComboBox, &opt, contentSize, this);
 }
 
-int QComboBoxGitViewOptions::stagingType() const
+void QComboBoxGitViewOptions::paintEvent(QPaintEvent *event)
 {
-    return -1;
+    QStyleOptionComboBox opt;
+    QStylePainter p(this);
+
+    Q_UNUSED(event);
+
+    opt.initFrom(this);
+
+    opt.currentIcon = m_icon;
+    opt.iconSize = iconSize();
+
+    p.drawComplexControl(QStyle::CC_ComboBox, opt);
+    p.drawControl(QStyle::CE_ComboBoxLabel, opt);
 }
 
-void QComboBoxGitViewOptions::clicked(QListWidgetItem *item)
+void QComboBoxGitViewOptions::activated(int index)
 {
-    Q_UNUSED(item);
+    QAbstractItemModel *items = model();
 
-    updateIcon();
+    if ((index >= ITEM_FLAT_LIST_SINGLE_COLUMN)&&(index <= ITEM_TREE_VIEW))
+    {
+        for(int c = ITEM_FLAT_LIST_SINGLE_COLUMN; c <= ITEM_TREE_VIEW; c++)
+        {
+            items->setData(items->index(c, 0), (c == index)?Qt::Checked:Qt::Unchecked, Qt::CheckStateRole);
+        }
+    }
+
+    if ((index >= ITEM_NO_STAGING)&&(index <= ITEM_SPLIT_VIEW_STAGING))
+    {
+        for(int c = ITEM_NO_STAGING; c <= ITEM_SPLIT_VIEW_STAGING; c++)
+        {
+            items->setData(items->index(c, 0), (c == index)?Qt::Checked:Qt::Unchecked, Qt::CheckStateRole);
+        }
+    }
+
+    if (index == 0) m_icon = m_iconFlatListSingleColumn;
+    if (index == 1) m_icon = m_iconFlatListMultipleColumn;
+    if (index == 2) m_icon = m_iconTreeView;
 }

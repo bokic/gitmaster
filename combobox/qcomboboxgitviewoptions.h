@@ -1,24 +1,30 @@
 #pragma once
 
-#include "qcustomcombobox.h"
+#include <QComboBox>
 #include <QWidget>
 #include <QIcon>
 
 
-class QComboBoxGitViewOptions : public QCustomComboBox
+class QComboBoxGitViewOptions : public QComboBox
 {
     Q_OBJECT
 public:
     explicit QComboBoxGitViewOptions(QWidget *parent = nullptr);
-    void updateIcon();
-    int viewType() const;
-    int stagingType() const;
+    QSize sizeHint() const override;
+    QSize minimumSizeHint() const override;
 
 protected:
-    void clicked(QListWidgetItem *item) override;
+    void paintEvent(QPaintEvent *event) override;
+
+private Q_SLOTS:
+    void activated(int index);
 
 private:
+    QIcon m_icon;
     QIcon m_iconFlatListSingleColumn;
     QIcon m_iconFlatListMultipleColumn;
     QIcon m_iconTreeView;
+    QIcon m_iconNoStaging;
+    QIcon m_iconFluidStaging;
+    QIcon m_iconSplitViewStaging;
 };

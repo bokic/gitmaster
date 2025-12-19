@@ -985,9 +985,9 @@ void QGitRepository::on_listWidget_unstaged_itemSelectionChanged()
     m_stageingFiles = true;
 }
 
-void QGitRepository::on_comboBox_gitStatusFiles_itemClicked(QListWidgetItem *item)
+void QGitRepository::on_comboBox_gitStatusFiles_itemClicked(int index)
 {
-    Q_UNUSED(item)
+    Q_UNUSED(index)
 
     fetchRepositoryChangedFiles();
 }

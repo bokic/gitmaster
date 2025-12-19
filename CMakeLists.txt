@@ -37,7 +37,6 @@ set(PROJECT_HEADERS
     qloghistorytablewidget.h
     qexttextbrowser.h
 
-    combobox/qcustomcombobox.h
     combobox/qcomboboxgitdiffoptions.h
     combobox/qcomboboxgitstatusfiles.h
     combobox/qcomboboxgitviewoptions.h
@@ -75,7 +74,6 @@ set(PROJECT_SOURCES
     qloghistorytablewidget.cpp
     qexttextbrowser.cpp
 
-    combobox/qcustomcombobox.cpp
     combobox/qcomboboxgitdiffoptions.cpp
     combobox/qcomboboxgitstatusfiles.cpp
     combobox/qcomboboxgitviewoptions.cpp

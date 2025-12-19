@@ -68,7 +68,7 @@ private slots:
     void on_logHistory_files_itemSelectionChanged();
     void on_listWidget_staged_itemSelectionChanged();
     void on_listWidget_unstaged_itemSelectionChanged();
-    void on_comboBox_gitStatusFiles_itemClicked(QListWidgetItem *item);
+    void on_comboBox_gitStatusFiles_itemClicked(int index);
 
 private:
     void fetchCommits();

@@ -1,5 +1,6 @@
 #include "qgitdiffwidget.h"
 
+#include <QStyleOptionFocusRect>
 #include <QStylePainter>
 #include <QPaintEvent>
 #include <QScrollBar>
