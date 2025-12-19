@@ -38,11 +38,6 @@
       <attribute name="headerVisible">
        <bool>false</bool>
       </attribute>
-      <column>
-       <property name="text">
-        <string notr="true">1</string>
-       </property>
-      </column>
      </widget>
      <widget class="QTabWidget" name="repositoryDetail">
       <property name="sizePolicy">
@@ -50,9 +45,6 @@
         <horstretch>1</horstretch>
         <verstretch>0</verstretch>
        </sizepolicy>
-      </property>
-      <property name="styleSheet">
-       <string notr="true">border-color:none</string>
       </property>
       <property name="tabPosition">
        <enum>QTabWidget::TabPosition::South</enum>

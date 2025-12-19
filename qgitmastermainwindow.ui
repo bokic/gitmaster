@@ -90,9 +90,6 @@
         </item>
         <item row="0" column="0" colspan="4">
          <widget class="QGitRepoTreeWidget" name="treeWidget">
-          <property name="styleSheet">
-           <string notr="true">border-color:none</string>
-          </property>
           <property name="frameShape">
            <enum>QFrame::Shape::NoFrame</enum>
           </property>
@@ -102,11 +99,6 @@
           <attribute name="headerVisible">
            <bool>false</bool>
           </attribute>
-          <column>
-           <property name="text">
-            <string notr="true">1</string>
-           </property>
-          </column>
          </widget>
         </item>
         <item row="1" column="1">
@@ -137,9 +129,6 @@
          <horstretch>1</horstretch>
          <verstretch>0</verstretch>
         </sizepolicy>
-       </property>
-       <property name="styleSheet">
-        <string notr="true">backgrouund: .QMenuBar.background</string>
        </property>
        <property name="tabsClosable">
         <bool>true</bool>
