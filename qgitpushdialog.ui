@@ -10,6 +10,9 @@
     <height>458</height>
    </rect>
   </property>
+  <property name="windowTitle">
+   <string>Push</string>
+  </property>
   <property name="modal">
    <bool>true</bool>
   </property>
@@ -38,7 +41,23 @@
      </property>
      <layout class="QVBoxLayout" name="verticalLayout_2" stretch="1,0">
       <item>
-       <widget class="QTableWidget" name="branches_tableWidget"/>
+       <widget class="QTableWidget" name="branches_tableWidget">
+        <property name="showGrid">
+         <bool>false</bool>
+        </property>
+        <property name="wordWrap">
+         <bool>false</bool>
+        </property>
+        <property name="supportedDragActions">
+         <set>Qt::DropAction::IgnoreAction</set>
+        </property>
+        <attribute name="horizontalHeaderVisible">
+         <bool>false</bool>
+        </attribute>
+        <attribute name="verticalHeaderVisible">
+         <bool>false</bool>
+        </attribute>
+       </widget>
       </item>
       <item>
        <widget class="QCheckBox" name="selectAllBranches_checkBox">
@@ -64,9 +83,6 @@
      </item>
      <item>
       <widget class="QCheckBox" name="forcePush_checkBox">
-       <property name="enabled">
-        <bool>false</bool>
-       </property>
        <property name="text">
         <string>Force Push</string>
        </property>

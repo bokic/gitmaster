@@ -96,6 +96,12 @@ QGitRepository::QGitRepository(const QString &path, QWidget *parent)
     connect(this, &QGitRepository::localStash, m_git, &QGit::stashSave);
     connect(m_git, &QGit::stashSaveReply, this, &QGitRepository::localStashSaveReply);
 
+    connect(this, &QGitRepository::repositoryFetch, m_git, &QGit::fetch);
+    connect(m_git, &QGit::fetchReply, this, &QGitRepository::repoitoryFetchReply);
+
+    connect(this, &QGitRepository::repositoryPush, m_git, &QGit::push);
+    connect(m_git, &QGit::pushReply, this, &QGitRepository::repoitoryPushReply);
+
     connect(this, &QGitRepository::repositoryBranches, m_git, &QGit::listBranchesAndTags);
     connect(m_git, &QGit::listBranchesAndTagsReply, this, &QGitRepository::repositoryBranchesAndTagsReply);
 
@@ -169,8 +175,7 @@ void QGitRepository::fetch()
         bool fetchAllTags = dlg.fetchAllTags();
 
         QGitMasterMainWindow::instance()->updateStatusBarText("Fetching...");
-        m_git->fetch(fetchFromAllRemotes, purgeDeletedBranches, fetchAllTags);
-        QGitMasterMainWindow::instance()->updateStatusBarText(QString());
+        emit repositoryFetch(fetchFromAllRemotes, purgeDeletedBranches, fetchAllTags);
     }
 }
 
@@ -182,7 +187,6 @@ void QGitRepository::pull()
     {
         QGitMasterMainWindow::instance()->updateStatusBarText("Pulling...");
         m_git->pull();
-        QGitMasterMainWindow::instance()->updateStatusBarText(QString());
     }
 }
 
@@ -192,9 +196,13 @@ void QGitRepository::push()
 
     if (dlg.exec() == QDialog::Accepted)
     {
+        QString remote = dlg.remote();
+        QStringList branches = dlg.branches();
+        bool tags = dlg.tags();
+        bool force = dlg.force();
+
         QGitMasterMainWindow::instance()->updateStatusBarText("Pushing...");
-        m_git->push();
-        QGitMasterMainWindow::instance()->updateStatusBarText(QString());
+        emit repositoryPush(remote, branches, tags, force);
     }
 }
 
@@ -238,6 +246,23 @@ void QGitRepository::localStashSaveReply(QGitError error)
     } else {
         emit repositoryStashes();
     }
+}
+
+void QGitRepository::repoitoryFetchReply(QGitError error)
+{
+    if (error.errorCode())
+    {
+        QGitMasterMainWindow::instance()->updateStatusBarText(error.functionName());
+    }
+    else
+    {
+        QGitMasterMainWindow::instance()->clearStatusBarText();
+    }
+}
+
+void QGitRepository::repoitoryPushReply(QGitError error)
+{
+    QGitMasterMainWindow::instance()->clearStatusBarText();
 }
 
 void QGitRepository::repositoryBranchesAndTagsReply(QList<QGitBranch> branches, QList<QString> tags, QGitError error)
@@ -588,7 +613,7 @@ void QGitRepository::repositoryGetCommitsReply(QList<QGitCommit> commits, QGitEr
         m_allCommitsLoaded = true;
     }
 
-    QGitMasterMainWindow::instance()->updateStatusBarText(QString());
+    QGitMasterMainWindow::instance()->clearStatusBarText();
 }
 
 void QGitRepository::repositoryGetCommitDiffReply(QString commitId, QGitCommit diff, QGitError error)

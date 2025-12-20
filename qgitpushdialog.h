@@ -3,6 +3,8 @@
 
 #include "qgitrepository.h"
 
+#include <QStringList>
+#include <QString>
 #include <QDialog>
 
 
@@ -18,6 +20,15 @@ public:
     explicit QGitPushDialog(QGitRepository *parent = nullptr);
     ~QGitPushDialog();
 
+    QString remote() const;
+    QStringList branches() const;
+    bool tags() const;
+    bool force() const;
+
+private slots:
+    void on_selectAllBranches_checkBox_checkStateChanged(const Qt::CheckState &value);
+
 private:
     Ui::QGitPushDialog *ui = nullptr;
+    QStringList m_savedBranches;
 };

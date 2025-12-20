@@ -29,6 +29,8 @@ public:
 
 signals:
     void localStash(QString name);
+    void repositoryPush(QString remote, QStringList branches, bool tags, bool force);
+    void repositoryFetch(bool fetchFromAllRemotes, bool purgeDeletedBranches, bool fetchAllTags);
     void repositoryBranches();
     void repositoryStashes();
     void repositoryChangedFiles(int show, int sort, bool reversed);
@@ -46,6 +48,8 @@ protected:
 private slots:
     void gravatarImageDownloadFinished(QNetworkReply *reply);
     void localStashSaveReply(QGitError error);
+    void repoitoryFetchReply(QGitError error);
+    void repoitoryPushReply(QGitError error);
     void repositoryBranchesAndTagsReply(QList<QGitBranch> branches, QList<QString> tags, QGitError error);
     void repositoryStashesReply(QStringList stashes, QGitError error);
     void repositoryChangedFilesReply(QMap<QString, git_status_t> files, QGitError error);

@@ -56,6 +56,7 @@ public:
     bool setPath(const QDir &path);
     QDir path();
     QList<QString> remotes() const;
+    QString localBranch() const;
     QList<QString> localBranches() const;
 
     static QString getBranchNameFromPath(const QString &path);
@@ -83,7 +84,7 @@ public slots:
     void clone(QUrl url);
     void pull();
     void fetch(bool fetchFromAllRemotes, bool purgeDeletedBranches, bool fetchAllTags);
-    void push();
+    void push(QString remote, QStringList branches, bool tags, bool force);
     void listCommits(QString object, int length);
 
 signals:
@@ -107,6 +108,7 @@ signals:
     void pullReply(QGitError error);
     void fetchReply(QGitError error);
     void pushReply(QGitError error);
+    void pushProgress(unsigned int current, unsigned int total, size_t bytes);
     void listCommitsReply(QList<QGitCommit> commits, QGitError error);
 
 private:

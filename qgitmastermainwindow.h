@@ -21,6 +21,7 @@ public:
     void writeSettings();
     bool hasRepositoryWithName(const QString &name);
     void updateStatusBarText(const QString &text);
+    void clearStatusBarText();
 
 protected:
     bool event(QEvent *event) override;

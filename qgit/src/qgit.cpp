@@ -188,6 +188,44 @@ QList<QString> QGit::remotes() const
     return ret;
 }
 
+QString QGit::localBranch() const
+{
+    QString ret;
+
+    git_repository_defer(repo);
+    git_reference_defer(ref);
+    const char *branch = nullptr;
+    QGitError error;
+
+    try {
+
+        int res = git_repository_open(&repo, m_path.absolutePath().toUtf8().constData());
+        if (res)
+        {
+            throw QGitError("git_repository_open", res);
+        }
+
+        res = git_repository_head(&ref, repo);
+        if (res)
+        {
+            throw QGitError("git_repository_head", res);
+        }
+
+        res = git_branch_name(&branch, ref);
+        if (res)
+        {
+            throw QGitError("git_branch_name", res);
+        }
+
+        ret = branch;
+
+    } catch(const QGitError &ex) {
+        error = ex;
+    }
+
+    return ret;
+}
+
 QList<QString> QGit::localBranches() const
 {
     QList<QString> ret;
@@ -448,7 +486,7 @@ void QGit::listBranchesAndTags()
         }
 
         git_reference_defer(ref);
-        while(git_branch_next(&ref, &type, it) == 0)
+        while(git_branch_next(&ref, &type, it) == 0) // TODO: Memory leak!
         {
             const char *ref_name = git_reference_name(ref);
 
@@ -830,7 +868,7 @@ void QGit::commitDiffContent(QString first, QString second, QList<QString> files
         if (!files.isEmpty())
         {
             pathspec.count = static_cast<size_t>(files.count());
-            pathspec.strings = reinterpret_cast<char **>(malloc(sizeof(char *) * pathspec.count));
+            pathspec.strings = new char*[pathspec.count];
             if (pathspec.strings == nullptr)
             {
                 throw QGitError("malloc", 0);
@@ -1059,7 +1097,7 @@ void QGit::unstageFiles(QStringList items)
         }
 
         paths.count = static_cast<size_t>(items.count());
-        paths.strings = static_cast<char **>(malloc(sizeof(char *) * static_cast<size_t>(items.count())));
+        paths.strings = new char*[paths.count];
         if (paths.strings == nullptr)
         {
             throw QGitError("malloc", 0);
@@ -1656,29 +1694,63 @@ void QGit::fetch(bool fetchFromAllRemotes, bool purgeDeletedBranches, bool fetch
     }
 }
 
-void QGit::push()
+void QGit::push(QString remote, QStringList branches, bool tags, bool force)
 {
     git_repository_defer(repo);
-    int res = 0;
+    git_strarray_defer(refspecs);
 
     QGitError error;
 
     try {
 
-        res = git_repository_open(&repo, m_path.absolutePath().toUtf8().constData());
+        int res = git_repository_open(&repo, m_path.absolutePath().toUtf8().constData());
         if (res)
         {
             throw QGitError("git_repository_open", res);
         }
 
-        git_remote_defer(remote);
-        res = git_remote_lookup(&remote, repo, "origin");
+        git_remote_defer(libgit2_remote);
+        res = git_remote_lookup(&libgit2_remote, repo, remote.toUtf8().constData());
         if (res)
         {
             throw QGitError("git_remote_lookup", res);
         }
 
+        for(const auto &branch: branches)
+        {
+            git_reference_defer(ref);
+            res = git_reference_lookup(&ref, repo, branch.toUtf8().constData());
+            if (res)
+            {
+                throw QGitError("Local branch not found!", res);
+            }
+
+            git_reference_defer(upstream_branch_ref);
+            res = git_branch_upstream(&upstream_branch_ref, ref);
+            if (res)
+            {
+                throw QGitError("Local branch is not linked with remote branch!", res);
+            }
+        }
+
+        refspecs.count = branches.size();
+        refspecs.strings = new char*[refspecs.count];
+        for(int i = 0; i < branches.size(); i++)
+        {
+            QByteArray refspec = "refs/heads/" + branches[i].toUtf8() + ":refs/heads/" + branches[i].toUtf8();
+            if (force) refspec.prepend("+");
+            refspecs.strings[i] = strdup(refspec.constData());
+        }
+
         git_push_options push_opts = GIT_PUSH_OPTIONS_INIT;
+        push_opts.callbacks.payload = this;
+        push_opts.callbacks.push_transfer_progress = [](unsigned int current, unsigned int total, size_t bytes,void *payload)->int
+        {
+            QGit *_this = static_cast<QGit *>(payload);
+            emit _this->pushProgress(current, total, bytes);
+            return 0;
+        };
+
         push_opts.callbacks.credentials = [](git_credential **out, const char *url, const char *username_from_url, unsigned int allowed_types, void *payload)
         {
             if (allowed_types & GIT_CREDENTIAL_SSH_KEY) {
@@ -1705,7 +1777,7 @@ void QGit::push()
             return -1;
         };
 
-        res = git_remote_push(remote, nullptr, &push_opts);
+        res = git_remote_push(libgit2_remote, &refspecs, &push_opts);
         if (res)
         {
             throw QGitError("git_remote_push", res);

@@ -183,10 +183,12 @@ bool QGitMasterMainWindow::hasRepositoryWithName(const QString &name)
 
 void QGitMasterMainWindow::updateStatusBarText(const QString &text)
 {
-    if (!text.isEmpty())
-        ui->statusBar->showMessage(text);
-    else
-        ui->statusBar->clearMessage();
+    ui->statusBar->showMessage(text);
+}
+
+void QGitMasterMainWindow::clearStatusBarText()
+{
+    ui->statusBar->clearMessage();
 }
 
 void QGitMasterMainWindow::on_treeWidget_itemSelectionChanged()
