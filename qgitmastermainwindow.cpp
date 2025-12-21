@@ -294,6 +294,16 @@ void QGitMasterMainWindow::on_toolButton_RemoveItem_clicked()
     }
 }
 
+void QGitMasterMainWindow::on_actionCommit_triggered()
+{
+    auto panel = dynamic_cast<QGitRepository *>(ui->tabWidget->currentWidget());
+    if (panel)
+    {
+        panel->commit();
+        panel->refreshData();
+    }
+}
+
 void QGitMasterMainWindow::on_actionFetch_triggered()
 {
     auto panel = dynamic_cast<QGitRepository *>(ui->tabWidget->currentWidget());

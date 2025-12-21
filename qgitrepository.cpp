@@ -164,6 +164,13 @@ void QGitRepository::stash(const QString &name)
     m_git->stashSave(name);
 }
 
+void QGitRepository::commit()
+{
+    ui->repositoryDetail->setCurrentIndex(0);
+    activateCommitOperation(true);
+    ui->plainTextEdit_commitMessage->setFocus();
+}
+
 void QGitRepository::fetch()
 {
     QGitFetchDialog dlg(this);

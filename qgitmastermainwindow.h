@@ -31,6 +31,7 @@ private slots:
     void on_toolButton_NewRepository_clicked();
     void on_toolButton_RemoveItem_clicked();
 
+    void on_actionCommit_triggered();
     void on_actionFetch_triggered();
     void on_actionPull_triggered();
     void on_actionPush_triggered();
