@@ -11,111 +11,110 @@
 #include <QDir>
 
 
-static void git_repository_defer_cleanup(git_repository **repo)
-{
-    git_repository_free(*repo);
-    *repo = nullptr;
-}
+struct GitRepository {
+    operator git_repository*() { return value; }
+    operator git_repository**() { return &value; }
+    ~GitRepository() { if (value) { git_repository_free(value); value = nullptr; }}
+    git_repository *value = nullptr;
+};
 
-static void git_reference_defer_cleanup(git_reference **ref)
-{
-    git_reference_free(*ref);
-    *ref = nullptr;
-}
+struct GitReference {
+    operator git_reference*() { return value; }
+    operator git_reference**() { return &value; }
+    ~GitReference() { if (value) { git_reference_free(value); value = nullptr; }}
+    git_reference *value = nullptr;
+};
 
-static void git_signature_defer_cleanup(git_signature **me)
-{
-    git_signature_free(*me);
-    *me = nullptr;
-}
+struct GitSignature {
+    operator git_signature*() { return value; }
+    operator git_signature**() { return &value; }
+    ~GitSignature() { if (value) { git_signature_free(value); value = nullptr; }}
+    git_signature *value = nullptr;
+};
 
-static void git_status_list_defer_cleanup(git_status_list **list)
-{
-    git_status_list_free(*list);
-    *list = nullptr;
-}
+struct GitStatusList {
+    operator git_status_list*() { return value; }
+    operator git_status_list**() { return &value; }
+    ~GitStatusList() { if (value) { git_status_list_free(value); value = nullptr; }}
+    git_status_list *value = nullptr;
+};
 
-static void git_branch_iterator_defer_cleanup(git_branch_iterator **it)
-{
-    git_branch_iterator_free(*it);
-    *it = nullptr;
-}
+struct GitBranchIterator {
+    operator git_branch_iterator*() { return value; }
+    operator git_branch_iterator**() { return &value; }
+    ~GitBranchIterator() { if (value) { git_branch_iterator_free(value); value = nullptr; }}
+    git_branch_iterator *value = nullptr;
+};
 
-static void git_tree_defer_cleanup(git_tree **tree)
-{
-    git_tree_free(*tree);
-    *tree = nullptr;
-}
+struct GitTree {
+    operator git_tree*() { return value; }
+    operator git_tree**() { return &value; }
+    ~GitTree() { if (value) { git_tree_free(value); value = nullptr; }}
+    git_tree *value = nullptr;
+};
 
-static void git_commit_defer_cleanup(git_commit **commit)
-{
-    git_commit_free(*commit);
-    *commit = nullptr;
-}
+struct GitCommit {
+    operator git_commit*() { return value; }
+    operator git_commit**() { return &value; }
+    ~GitCommit() { if (value) { git_commit_free(value); value = nullptr; }}
+    git_commit *value = nullptr;
+};
 
-static void git_diff_defer_cleanup(git_diff **diff)
-{
-    git_diff_free(*diff);
-    *diff = nullptr;
-}
+struct GitDiff {
+    operator git_diff*() { return value; }
+    operator git_diff**() { return &value; }
+    ~GitDiff() { if (value) { git_diff_free(value); value = nullptr; }}
+    git_diff *value = nullptr;
+};
 
-static void git_remote_defer_cleanup(git_remote **remote)
-{
-    git_remote_free(*remote);
-    *remote = nullptr;
-}
+struct GitRemote {
+    operator git_remote*() { return value; }
+    operator git_remote**() { return &value; }
+    ~GitRemote() { if (value) { git_remote_free(value); value = nullptr; }}
+    git_remote *value = nullptr;
+};
 
-static void git_object_defer_cleanup(git_object **obj)
-{
-    git_object_free(*obj);
-    *obj = nullptr;
-}
+struct GitObject {
+    operator git_object*() { return value; }
+    operator git_object**() { return &value; }
+    ~GitObject() { if (value) { git_object_free(value); value = nullptr; }}
+    git_object *value = nullptr;
+};
 
-static void git_patch_defer_cleanup(git_patch **patch)
-{
-    git_patch_free(*patch);
-    *patch = nullptr;
-}
+struct GitPatch {
+    operator git_patch*() { return value; }
+    operator git_patch**() { return &value; }
+    ~GitPatch() { if (value) { git_patch_free(value); value = nullptr; }}
+    git_patch *value = nullptr;
+};
 
-static void git_index_defer_cleanup(git_index **index)
-{
-    git_index_free(*index);
-    *index = nullptr;
-}
+struct GitIndex {
+    operator git_index*() { return value; }
+    operator git_index**() { return &value; }
+    ~GitIndex() { if (value) { git_index_free(value); value = nullptr; }}
+    git_index *value = nullptr;
+};
 
-static void git_blob_defer_cleanup(git_blob **blob)
-{
-    git_blob_free(*blob);
-    *blob = nullptr;
-}
+struct GitBlob {
+    operator git_blob*() { return value; }
+    operator git_blob**() { return &value; }
+    ~GitBlob() { if (value) { git_blob_free(value); value = nullptr; }}
+    git_blob *value = nullptr;
+};
 
-static void git_revwalk_defer_cleanup(git_revwalk **walker)
-{
-    git_revwalk_free(*walker);
-    *walker = nullptr;
-}
+struct GitRevWalk {
+    operator git_revwalk*() { return value; }
+    operator git_revwalk**() { return &value; }
+    ~GitRevWalk() { if (value) { git_revwalk_free(value); value = nullptr; }}
+    git_revwalk *value = nullptr;
+};
 
-static void git_strarray_defer_cleanup(git_strarray *strarray)
-{
-    git_strarray_dispose(strarray);
-    *strarray = {nullptr, 0};
-}
-
-#define git_repository_defer(var) git_repository* var __attribute__((cleanup(git_repository_defer_cleanup))) = nullptr
-#define git_reference_defer(var) git_reference* var __attribute__((cleanup(git_reference_defer_cleanup))) = nullptr
-#define git_signature_defer(var) git_signature* var __attribute__((cleanup(git_signature_defer_cleanup))) = nullptr
-#define git_status_list_defer(var) git_status_list* var __attribute__((cleanup(git_status_list_defer_cleanup))) = nullptr
-#define git_branch_iterator_defer(var) git_branch_iterator* var __attribute__((cleanup(git_branch_iterator_defer_cleanup))) = nullptr
-#define git_tree_defer(var) git_tree* var __attribute__((cleanup(git_tree_defer_cleanup))) = nullptr
-#define git_commit_defer(var) git_commit* var __attribute__((cleanup(git_commit_defer_cleanup))) = nullptr
-#define git_diff_defer(var) git_diff* var __attribute__((cleanup(git_diff_defer_cleanup))) = nullptr
-#define git_remote_defer(var) git_remote* var __attribute__((cleanup(git_remote_defer_cleanup))) = nullptr
-#define git_object_defer(var) git_object* var __attribute__((cleanup(git_object_defer_cleanup))) = nullptr
-#define git_patch_defer(var) git_patch* var __attribute__((cleanup(git_patch_defer_cleanup))) = nullptr
-#define git_index_defer(var) git_index* var __attribute__((cleanup(git_index_defer_cleanup))) = nullptr
-#define git_blob_defer(var) git_blob* var __attribute__((cleanup(git_blob_defer_cleanup))) = nullptr
-#define git_revwalk_defer(var) git_revwalk* var __attribute__((cleanup(git_revwalk_defer_cleanup))) = nullptr
-#define git_strarray_defer(var) git_strarray var __attribute__((cleanup(git_strarray_defer_cleanup))) = {nullptr, 0}
+struct GitStrArray {
+    operator git_strarray&() { return value; }
+    operator git_strarray*() { return &value; }
+    ~GitStrArray() {  git_strarray_dispose(&value); value = {nullptr, 0}; }
+    git_strarray value = {nullptr, 0};
+};
 
 #define LINE_END '\n'
 
@@ -168,19 +167,19 @@ QList<QString> QGit::remotes() const
 {
     QList<QString> ret;
 
-    git_repository_defer(repo);
-    int res = git_repository_open(&repo, m_path.absolutePath().toUtf8().constData());
+    GitRepository repo;
+    int res = git_repository_open(repo, m_path.absolutePath().toUtf8().constData());
     if (res)
     {
         return ret;
     }
 
-    git_strarray_defer(remotes);
-    git_remote_list(&remotes, repo);
+    GitStrArray remotes;
+    git_remote_list(remotes, repo);
 
-    for(size_t c = 0; c < remotes.count; c++)
+    for(size_t c = 0; c < remotes.value.count; c++)
     {
-        ret.append(remotes.strings[c]);
+        ret.append(remotes.value.strings[c]);
     }
 
     return ret;
@@ -188,15 +187,15 @@ QList<QString> QGit::remotes() const
 
 QString QGit::localBranch() const
 {
-    git_repository_defer(repo);
-    int res = git_repository_open(&repo, m_path.absolutePath().toUtf8().constData());
+    GitRepository repo;
+    int res = git_repository_open(repo, m_path.absolutePath().toUtf8().constData());
     if (res)
     {
         return QString();
     }
 
-    git_reference_defer(ref);
-    res = git_repository_head(&ref, repo);
+    GitReference ref;
+    res = git_repository_head(ref, repo);
     if (res)
     {
         return QString();
@@ -216,15 +215,15 @@ QList<QString> QGit::localBranches() const
 {
     QList<QString> ret;
 
-    git_repository_defer(repo);
-    int res = git_repository_open(&repo, m_path.absolutePath().toUtf8().constData());
+    GitRepository repo;
+    int res = git_repository_open(repo, m_path.absolutePath().toUtf8().constData());
     if (res)
     {
         return ret;
     }
 
-    git_branch_iterator_defer(it);
-    res = git_branch_iterator_new(&it, repo, GIT_BRANCH_LOCAL);
+    GitBranchIterator it;
+    res = git_branch_iterator_new(it, repo, GIT_BRANCH_LOCAL);
     if (res)
     {
         return ret;
@@ -233,9 +232,9 @@ QList<QString> QGit::localBranches() const
     while (1)
     {
         git_branch_t type = GIT_BRANCH_LOCAL;
-        git_reference_defer(ref);
 
-        if (git_branch_next(&ref, &type, it) != 0)
+        GitReference ref;
+        if (git_branch_next(ref, &type, it) != 0)
         {
             break;
         }
@@ -255,15 +254,15 @@ QString QGit::getBranchNameFromPath(const QString &path)
 {
     QString ret;
 
-    git_repository_defer(repo);
-    int res = git_repository_open(&repo, path.toUtf8().constData());
+    GitRepository repo;
+    int res = git_repository_open(repo, path.toUtf8().constData());
     if (res)
     {
         return ret;
     }
 
-    git_reference_defer(ref);
-    res = git_repository_head(&ref, repo);
+    GitReference ref;
+    res = git_repository_head(ref, repo);
     if (res)
     {
         return ret;
@@ -277,16 +276,16 @@ QString QGit::getBranchNameFromPath(const QString &path)
 
 int QGit::createLocalRepository(const QDir &path)
 {
-    git_repository_defer(repo);
-    int res = git_repository_init(&repo, path.absolutePath().toUtf8().constData(), 0);
+    GitRepository repo;
+    int res = git_repository_init(repo, path.absolutePath().toUtf8().constData(), 0);
 
     return res;
 }
 
 bool QGit::isGitRepository(const QDir &path)
 {
-    git_repository_defer(repo);
-    int res = git_repository_open(&repo, path.absolutePath().toUtf8().constData());
+    GitRepository repo;
+    int res = git_repository_open(repo, path.absolutePath().toUtf8().constData());
     if (res)
     {
         return false;
@@ -297,22 +296,22 @@ bool QGit::isGitRepository(const QDir &path)
 
 bool QGit::gitRepositoryDefaultSignature(const QDir &path, QString &name, QString &email)
 {
-    git_repository_defer(repo);
-    int res = git_repository_open(&repo, path.absolutePath().toUtf8().constData());
+    GitRepository repo;
+    int res = git_repository_open(repo, path.absolutePath().toUtf8().constData());
     if (res)
     {
         return false;
     }
 
-    git_signature_defer(me);
-    res = git_signature_default(&me, repo);
+    GitSignature me;
+    res = git_signature_default(me, repo);
     if (res)
     {
         return false;
     }
 
-    name = me->name;
-    email = me->email;
+    name = me.value->name;
+    email = me.value->email;
 
     return true;
 }
@@ -324,15 +323,15 @@ void QGit::currentBranch()
 
     try
     {
-        git_repository_defer(repo);
-        int res = git_repository_open(&repo, m_path.absolutePath().toUtf8().constData());
+        GitRepository repo;
+        int res = git_repository_open(repo, m_path.absolutePath().toUtf8().constData());
         if (res)
         {
             throw QGitError("git_repository_open", res);
         }
 
-        git_reference_defer(ref);
-        res = git_repository_head(&ref, repo);
+        GitReference ref;
+        res = git_repository_head(ref, repo);
         if (res)
         {
             throw QGitError("git_repository_head", res);
@@ -360,8 +359,8 @@ void QGit::init()
 
     try
     {
-        git_repository_defer(repo);
-        int res = git_repository_init(&repo, m_path.absolutePath().toUtf8().constData(), 0);
+        GitRepository repo;
+        int res = git_repository_init(repo, m_path.absolutePath().toUtf8().constData(), 0);
         if(res)
         {
             throw QGitError("git_repository_init", res);
@@ -382,22 +381,22 @@ void QGit::signature()
 
     try
     {
-        git_repository_defer(repo);
-        int res = git_repository_open(&repo, m_path.absolutePath().toUtf8().constData());
+        GitRepository repo;
+        int res = git_repository_open(repo, m_path.absolutePath().toUtf8().constData());
         if (res)
         {
             throw QGitError("git_repository_open", res);
         }
 
-        git_signature_defer(me);
-        res = git_signature_default(&me, repo);
+        GitSignature me;
+        res = git_signature_default(me, repo);
         if (res)
         {
             throw QGitError("git_signature_default", res);
         }
 
-        name = QString::fromUtf8(me->name);
-        email = QString::fromUtf8(me->email);
+        name = QString::fromUtf8(me.value->name);
+        email = QString::fromUtf8(me.value->email);
 
     } catch(const QGitError & ex) {
         error = ex;
@@ -413,15 +412,15 @@ void QGit::status()
 
     try
     {
-        git_repository_defer(repo);
-        int res = git_repository_open(&repo, m_path.absolutePath().toUtf8().constData());
+        GitRepository repo;
+        int res = git_repository_open(repo, m_path.absolutePath().toUtf8().constData());
         if (res)
         {
             throw QGitError("git_repository_open", res);
         }
 
-        git_status_list_defer(list);
-        res = git_status_list_new(&list, repo, nullptr);
+        GitStatusList list;
+        res = git_status_list_new(list, repo, nullptr);
         if (res)
         {
             throw QGitError("git_status_list_new", res);
@@ -450,15 +449,15 @@ void QGit::listBranchesAndTags()
 
     try
     {
-        git_repository_defer(repo);
-        int res = git_repository_open(&repo, m_path.absolutePath().toUtf8().constData());
+        GitRepository repo;
+        int res = git_repository_open(repo, m_path.absolutePath().toUtf8().constData());
         if (res)
         {
             throw QGitError("git_repository_open", res);
         }
 
-        git_branch_iterator_defer(it);
-        res = git_branch_iterator_new(&it, repo, GIT_BRANCH_ALL);
+        GitBranchIterator it;
+        res = git_branch_iterator_new(it, repo, GIT_BRANCH_ALL);
         if (res)
         {
             throw QGitError("git_branch_iterator_new", res);
@@ -468,8 +467,8 @@ void QGit::listBranchesAndTags()
         {
             git_branch_t type = GIT_BRANCH_ALL;
 
-            git_reference_defer(ref);
-            if (git_branch_next(&ref, &type, it) != 0)
+            GitReference ref;
+            if (git_branch_next(ref, &type, it) != 0)
             {
                 break;
             }
@@ -479,16 +478,16 @@ void QGit::listBranchesAndTags()
             branches.append(branch);
         }
 
-        git_strarray_defer(tag_names);
-        res = git_tag_list(&tag_names, repo);
+        GitStrArray tag_names;
+        res = git_tag_list(tag_names, repo);
         if (res)
         {
             throw QGitError("git_tag_list", res);
         }
 
-        for(size_t c = 0; c < tag_names.count; c++)
+        for(size_t c = 0; c < tag_names.value.count; c++)
         {
-            tags.append(QString::fromUtf8(tag_names.strings[c]));
+            tags.append(QString::fromUtf8(tag_names.value.strings[c]));
         }
 
     } catch(const QGitError &ex) {
@@ -505,15 +504,15 @@ void QGit::stashSave(QString name)
 
     try
     {
-        git_repository_defer(repo);
-        int res = git_repository_open(&repo, m_path.absolutePath().toUtf8().constData());
+        GitRepository repo;
+        int res = git_repository_open(repo, m_path.absolutePath().toUtf8().constData());
         if (res)
         {
             throw QGitError("git_repository_open", res);
         }
 
-        git_signature_defer(me);
-        res = git_signature_default(&me, repo);
+        GitSignature me;
+        res = git_signature_default(me, repo);
         if (res)
         {
             throw QGitError("git_signature_default", res);
@@ -545,8 +544,8 @@ void QGit::listStashes()
 
     try
     {
-        git_repository_defer(repo);
-        int res = git_repository_open(&repo, m_path.absolutePath().toUtf8().constData());
+        GitRepository repo;
+        int res = git_repository_open(repo, m_path.absolutePath().toUtf8().constData());
         if (res)
         {
             throw QGitError("git_repository_open", res);
@@ -582,8 +581,8 @@ void QGit::listChangedFiles(int show, int sort, bool reversed)
 
     try
     {
-        git_repository_defer(repo);
-        int res = git_repository_open(&repo, m_path.absolutePath().toUtf8().constData());
+        GitRepository repo;
+        int res = git_repository_open(repo, m_path.absolutePath().toUtf8().constData());
         if (res)
         {
             throw QGitError("git_repository_open", res);
@@ -603,8 +602,8 @@ void QGit::listChangedFiles(int show, int sort, bool reversed)
         if ((show == QGIT_STATUS_NONE)||(show == QGIT_STATUS_ALL))
             opts.flags |= GIT_STATUS_OPT_INCLUDE_UNMODIFIED | GIT_STATUS_OPT_INCLUDE_UNREADABLE;
 
-        git_status_list_defer(list);
-        res = git_status_list_new(&list, repo, &opts);
+        GitStatusList list;
+        res = git_status_list_new(list, repo, &opts);
         if (res)
         {
             throw QGitError("git_status_list_new", res);
@@ -683,8 +682,8 @@ void QGit::commitDiff(QString commitId)
 
     try
     {
-        git_repository_defer(repo);
-        int res = git_repository_open(&repo, m_path.absolutePath().toUtf8().constData());
+        GitRepository repo;
+        int res = git_repository_open(repo, m_path.absolutePath().toUtf8().constData());
         if (res)
         {
             throw QGitError("git_repository_open", res);
@@ -695,22 +694,22 @@ void QGit::commitDiff(QString commitId)
             commitId = QStringLiteral("HEAD");
         }
 
-        git_object_defer(obj);
-        res = git_revparse_single(&obj, repo, commitId.toUtf8());
+        GitObject obj;
+        res = git_revparse_single(obj, repo, commitId.toUtf8());
         if (res)
         {
             throw QGitError("git_revparse_single", res);
         }
 
-        git_commit_defer(commit);
-        res = git_commit_lookup(&commit, repo, git_object_id(obj));
+        GitCommit commit;
+        res = git_commit_lookup(commit, repo, git_object_id(obj));
         if (res)
         {
             throw QGitError("git_commit_lookup", res);
         }
 
-        git_tree_defer(commit_tree);
-        res = git_commit_tree(&commit_tree, commit);
+        GitTree commit_tree;
+        res = git_commit_tree(commit_tree, commit);
         if (res)
         {
             throw QGitError("git_commit_tree", res);
@@ -731,8 +730,8 @@ void QGit::commitDiff(QString commitId)
         {
             QGitCommitDiffParent item;
 
-            git_diff_defer(diff);
-            res = git_diff_tree_to_tree(&diff, repo, nullptr, commit_tree, nullptr);
+            GitDiff diff;
+            res = git_diff_tree_to_tree(diff, repo, nullptr, commit_tree, nullptr);
             if (res)
             {
                 throw QGitError("git_diff_tree_to_tree", res);
@@ -752,8 +751,8 @@ void QGit::commitDiff(QString commitId)
         {
             for(unsigned int c = 0; c < parentCount; c++)
             {
-                git_commit_defer(parent);
-                res = git_commit_parent(&parent, commit, c);
+                GitCommit parent;
+                res = git_commit_parent(parent, commit, c);
                 if (res)
                 {
                     throw QGitError("git_commit_parent", res);
@@ -764,15 +763,15 @@ void QGit::commitDiff(QString commitId)
                 git_oid_tostr(commit_id, 41, oid);
                 QGitCommitDiffParent item(commit_id);
 
-                git_tree_defer(parent_tree);
-                res = git_commit_tree(&parent_tree, parent);
+                GitTree parent_tree;
+                res = git_commit_tree(parent_tree, parent);
                 if (res)
                 {
                     throw QGitError("git_commit_tree", res);
                 }
 
-                git_diff_defer(diff);
-                res = git_diff_tree_to_tree(&diff, repo, parent_tree, commit_tree, nullptr);
+                GitDiff diff;
+                res = git_diff_tree_to_tree(diff, repo, parent_tree, commit_tree, nullptr);
                 if (res)
                 {
                     throw QGitError("git_diff_tree_to_tree", res);
@@ -805,8 +804,8 @@ void QGit::commitDiffContent(QString first, QString second, QList<QString> files
 
     try
     {
-        git_repository_defer(repo);
-        int res = git_repository_open(&repo, m_path.absolutePath().toUtf8().constData());
+        GitRepository repo;
+        int res = git_repository_open(repo, m_path.absolutePath().toUtf8().constData());
         if (res)
         {
             throw QGitError("git_repository_open", res);
@@ -836,12 +835,12 @@ void QGit::commitDiffContent(QString first, QString second, QList<QString> files
             }
         }
 
-        git_strarray_defer(pathspec);
+        GitStrArray pathspec;
         if (!files.isEmpty())
         {
-            pathspec.count = static_cast<size_t>(files.count());
-            pathspec.strings = static_cast<char **>(malloc(sizeof(char *) * pathspec.count));
-            if (pathspec.strings == nullptr)
+            pathspec.value.count = static_cast<size_t>(files.count());
+            pathspec.value.strings = static_cast<char **>(malloc(sizeof(char *) * pathspec.value.count));
+            if (pathspec.value.strings == nullptr)
             {
                 throw QGitError("malloc", 0);
             }
@@ -849,16 +848,16 @@ void QGit::commitDiffContent(QString first, QString second, QList<QString> files
             int c = 0;
             for(const auto &file: files)
             {
-                pathspec.strings[c] = strdup(file.toUtf8().constData());
+                pathspec.value.strings[c] = strdup(file.toUtf8().constData());
                 c++;
             }
         }
 
-        git_diff_defer(diff);
+        GitDiff diff;
         if (second == "staged")
         {
-            git_object_defer(first_obj);
-            res = git_revparse_single(&first_obj, repo, "HEAD^{tree}");
+            GitObject first_obj;
+            res = git_revparse_single(first_obj, repo, "HEAD^{tree}");
             if (res)
             {
                 throw QGitError("git_revparse_single(staged)", res);
@@ -878,7 +877,7 @@ void QGit::commitDiffContent(QString first, QString second, QList<QString> files
             options.context_lines = 3;
             options.pathspec = pathspec;
 
-            res = git_diff_tree_to_index(&diff, repo, first_tree, nullptr, &options);
+            res = git_diff_tree_to_index(diff, repo, first_tree, nullptr, &options);
             if (res)
             {
                 throw QGitError("git_diff_tree_to_index(staged)", res);
@@ -894,7 +893,7 @@ void QGit::commitDiffContent(QString first, QString second, QList<QString> files
             options.context_lines = 3;
             options.pathspec = pathspec;
 
-            res = git_diff_index_to_workdir(&diff, repo, nullptr, &options);
+            res = git_diff_index_to_workdir(diff, repo, nullptr, &options);
             if (res)
             {
                 throw QGitError("git_diff_index_to_workdir", res);
@@ -902,8 +901,8 @@ void QGit::commitDiffContent(QString first, QString second, QList<QString> files
         }
         else
         {
-            git_object_defer(second_obj);
-            res = git_revparse_single(&second_obj, repo, second.toUtf8());
+            GitObject second_obj;
+            res = git_revparse_single(second_obj, repo, second.toUtf8());
             if (res)
             {
                 throw QGitError("git_revparse_single(second)", res);
@@ -923,7 +922,7 @@ void QGit::commitDiffContent(QString first, QString second, QList<QString> files
                 throw QGitError("git_commit_tree(second)", res);
             }
 
-            res = git_diff_tree_to_tree(&diff, repo, nullptr, second_tree, nullptr);
+            res = git_diff_tree_to_tree(diff, repo, nullptr, second_tree, nullptr);
             if (res)
             {
                 throw QGitError("git_diff_tree_to_tree", res);
@@ -938,8 +937,8 @@ void QGit::commitDiffContent(QString first, QString second, QList<QString> files
 
             if (files.contains(item.new_file().path()))
             {
-                git_patch_defer(patch);
-                res = git_patch_from_diff(&patch, diff, c);
+                GitPatch patch;
+                res = git_patch_from_diff(patch, diff, c);
                 if (res)
                 {
                     throw QGitError("git_patch_from_diff", res);
@@ -994,15 +993,15 @@ void QGit::stageFiles(QStringList items)
             throw QGitError();
         }
 
-        git_repository_defer(repo);
-        int res = git_repository_open(&repo, m_path.absolutePath().toUtf8().constData());
+        GitRepository repo;
+        int res = git_repository_open(repo, m_path.absolutePath().toUtf8().constData());
         if (res)
         {
             throw QGitError("git_repository_open", res);
         }
 
-        git_index_defer(index);
-        res = git_repository_index(&index, repo);
+        GitIndex index;
+        res = git_repository_index(index, repo);
         if (res)
         {
             throw QGitError("git_repository_index", res);
@@ -1048,39 +1047,39 @@ void QGit::unstageFiles(QStringList items)
             throw QGitError();
         }
 
-        git_repository_defer(repo);
-        int res = git_repository_open(&repo, m_path.absolutePath().toUtf8().constData());
+        GitRepository repo;
+        int res = git_repository_open(repo, m_path.absolutePath().toUtf8().constData());
         if (res)
         {
             throw QGitError("git_repository_open", res);
         }
 
-        git_strarray_defer(paths);
-        paths.count = static_cast<size_t>(items.count());
-        paths.strings = static_cast<char **>(malloc(sizeof(char *) * paths.count));
-        if (paths.strings == nullptr)
+        GitStrArray paths;
+        paths.value.count = static_cast<size_t>(items.count());
+        paths.value.strings = static_cast<char **>(malloc(sizeof(char *) * paths.value.count));
+        if (paths.value.strings == nullptr)
         {
             throw QGitError("malloc", 0);
         }
 
         for(int c = 0; c < items.count(); c++)
         {
-            paths.strings[c] = strdup(items.at(c).toUtf8().constData());
+            paths.value.strings[c] = strdup(items.at(c).toUtf8().constData());
         }
 
-        git_reference_defer(head);
-        git_object_defer(head_commit);
-        res = git_repository_head(&head, repo);
+        GitReference head;
+        GitObject head_commit;
+        res = git_repository_head(head, repo);
         if (res == 0)
         {
-            res = git_reference_peel(&head_commit, head, GIT_OBJ_COMMIT);
+            res = git_reference_peel(head_commit, head, GIT_OBJ_COMMIT);
             if (res)
             {
                 throw QGitError("git_reference_peel", res);
             }
         }
 
-        res = git_reset_default(repo, head_commit, &paths);
+        res = git_reset_default(repo, head_commit, &paths.value);
         if (res)
         {
             throw QGitError("git_reset_default", res);
@@ -1104,15 +1103,15 @@ void QGit::stageFileLines(QString filename, QVector<QGitDiffWidgetLine> lines)
             throw QGitError();
         }
 
-        git_repository_defer(repo);
-        int res = git_repository_open(&repo, m_path.absolutePath().toUtf8().constData());
+        GitRepository repo;
+        int res = git_repository_open(repo, m_path.absolutePath().toUtf8().constData());
         if (res)
         {
             throw QGitError("git_repository_open", res);
         }
 
-        git_index_defer(index);
-        res = git_repository_index(&index, repo);
+        GitIndex index;
+        res = git_repository_index(index, repo);
         if (res)
         {
             throw QGitError("git_repository_index", res);
@@ -1124,8 +1123,8 @@ void QGit::stageFileLines(QString filename, QVector<QGitDiffWidgetLine> lines)
             throw QGitError("git_index_get_bypath", res);
         }
 
-        git_blob_defer(blob);
-        res = git_blob_lookup(&blob, repo, &entry->id);
+        GitBlob blob;
+        res = git_blob_lookup(blob, repo, &entry->id);
         if (res)
         {
             throw QGitError("git_blob_lookup", res);
@@ -1196,15 +1195,15 @@ void QGit::unstageFileLines(QString filename, QVector<QGitDiffWidgetLine> lines)
             throw QGitError();
         }
 
-        git_repository_defer(repo);
-        int res = git_repository_open(&repo, m_path.absolutePath().toUtf8().constData());
+        GitRepository repo;
+        int res = git_repository_open(repo, m_path.absolutePath().toUtf8().constData());
         if (res)
         {
             throw QGitError("git_repository_open", res);
         }
 
-        git_index_defer(index);
-        res = git_repository_index(&index, repo);
+        GitIndex index;
+        res = git_repository_index(index, repo);
         if (res)
         {
             throw QGitError("git_repository_index", res);
@@ -1217,8 +1216,8 @@ void QGit::unstageFileLines(QString filename, QVector<QGitDiffWidgetLine> lines)
             throw QGitError("git_index_get_bypath", res);
         }
 
-        git_blob_defer(blob);
-        res = git_blob_lookup(&blob, repo, &entry->id);
+        GitBlob blob;
+        res = git_blob_lookup(blob, repo, &entry->id);
         if (res)
         {
             throw QGitError("git_blob_lookup", res);
@@ -1284,28 +1283,28 @@ void QGit::commit(QString message)
 
     try
     {
-        git_repository_defer(repo);
-        int res = git_repository_open(&repo, m_path.absolutePath().toUtf8().constData());
+        GitRepository repo;
+        int res = git_repository_open(repo, m_path.absolutePath().toUtf8().constData());
         if (res)
         {
             throw QGitError("git_repository_open", res);
         }
 
         /// Check if somthing is staged
-        git_object_defer(git_obj);
-        git_tree_defer(tree);
-        res = git_revparse_single(&git_obj, repo, "HEAD^{tree}");
+        GitTree tree;
+        GitObject git_obj;
+        res = git_revparse_single(git_obj, repo, "HEAD^{tree}");
         if (res == 0)
         {
-            res = git_tree_lookup(&tree, repo, git_object_id(git_obj));
+            res = git_tree_lookup(tree, repo, git_object_id(git_obj));
             if (res)
             {
                 throw QGitError("git_tree_lookup(staged)", res);
             }
         }
 
-        git_diff_defer(diff);
-        res = git_diff_tree_to_index(&diff, repo, tree, nullptr, nullptr);
+        GitDiff diff;
+        res = git_diff_tree_to_index(diff, repo, tree, nullptr, nullptr);
         if (res)
         {
             throw QGitError("git_diff_tree_to_index(staged)", res);
@@ -1317,15 +1316,15 @@ void QGit::commit(QString message)
             throw QGitError("Nothing staged.", res);
         }
 
-        git_signature_defer(me);
-        res = git_signature_default(&me, repo);
+        GitSignature me;
+        res = git_signature_default(me, repo);
         if (res)
         {
             throw QGitError("git_signature_default", res);
         }
 
-        git_index_defer(index);
-        res = git_repository_index(&index, repo);
+        GitIndex index;
+        res = git_repository_index(index, repo);
         if (res)
         {
             throw QGitError("git_repository_index", res);
@@ -1338,7 +1337,7 @@ void QGit::commit(QString message)
             throw QGitError("git_index_write_tree", res);
         }
 
-        res = git_tree_lookup(&tree, repo, &tree_id);
+        res = git_tree_lookup(tree, repo, &tree_id);
         if (res)
         {
             throw QGitError("git_tree_lookup", res);
@@ -1371,8 +1370,8 @@ void QGit::commit(QString message)
                 throw QGitError("git_reference_name_to_id", res);
             }
 
-            git_commit_defer(parent);
-            res = git_commit_lookup(&parent, repo, &parent_id);
+            GitCommit parent;
+            res = git_commit_lookup(parent, repo, &parent_id);
             if (res)
             {
                 throw QGitError("git_commit_lookup", res);
@@ -1388,7 +1387,7 @@ void QGit::commit(QString message)
               message.toUtf8().constData(),  /* message */
               tree,                          /* root tree */
               1,                             /* parent count */
-              parent);                       /* parent */
+              parent.value);                 /* parent */
             if (res)
             {
                 throw QGitError("git_commit_create_v", res);
@@ -1441,8 +1440,8 @@ void QGit::clone(QUrl url)
             _this = nullptr;
         };
 
-        git_repository_defer(repo);
-        res = git_clone(&repo, url.toString().toUtf8().constData(), m_path.absolutePath().toUtf8().constData(), &opts);
+        GitRepository repo;
+        res = git_clone(repo, url.toString().toUtf8().constData(), m_path.absolutePath().toUtf8().constData(), &opts);
         if (res)
         {
             throw QGitError("git_clone", res);
@@ -1461,15 +1460,15 @@ void QGit::pull()
 
     try
     {
-        git_repository_defer(repo);
-        int res = git_repository_open(&repo, m_path.absolutePath().toUtf8().constData());
+        GitRepository repo;
+        int res = git_repository_open(repo, m_path.absolutePath().toUtf8().constData());
         if (res)
         {
             throw QGitError("git_repository_open", res);
         }
 
-        git_remote_defer(remote);
-        res = git_remote_lookup(&remote, repo, "origin");
+        GitRemote remote;
+        res = git_remote_lookup(remote, repo, "origin");
         if (res)
         {
             throw QGitError("git_remote_lookup", res);
@@ -1524,15 +1523,15 @@ void QGit::fetch(bool fetchFromAllRemotes, bool purgeDeletedBranches, bool fetch
 
     try
     {
-        git_repository_defer(repo);
-        int res = git_repository_open(&repo, m_path.absolutePath().toUtf8().constData());
+        GitRepository repo;
+        int res = git_repository_open(repo, m_path.absolutePath().toUtf8().constData());
         if (res)
         {
             throw QGitError("git_repository_open", res);
         }
 
-        git_strarray_defer(remotes);
-        res = git_remote_list(&remotes, repo);
+        GitStrArray remotes;
+        res = git_remote_list(remotes, repo);
         if (res)
         {
             throw QGitError("git_remote_list", res);
@@ -1542,27 +1541,27 @@ void QGit::fetch(bool fetchFromAllRemotes, bool purgeDeletedBranches, bool fetch
 
         if (fetchFromAllRemotes)
         {
-            remotesToFetch.reserve(static_cast<int>(remotes.count));
-            for(size_t idx = 0; idx < remotes.count; idx++)
+            remotesToFetch.reserve(static_cast<int>(remotes.value.count));
+            for(size_t idx = 0; idx < remotes.value.count; idx++)
             {
-                remotesToFetch.append(QByteArray(remotes.strings[idx]));
+                remotesToFetch.append(QByteArray(remotes.value.strings[idx]));
             }
         }
         else
         {
             QByteArray selected;
-            for(size_t idx = 0; idx < remotes.count; idx++)
+            for(size_t idx = 0; idx < remotes.value.count; idx++)
             {
-                if (QString::fromUtf8(remotes.strings[idx]) == QStringLiteral("origin"))
+                if (QString::fromUtf8(remotes.value.strings[idx]) == QStringLiteral("origin"))
                 {
-                    selected = QByteArray(remotes.strings[idx]);
+                    selected = QByteArray(remotes.value.strings[idx]);
                     break;
                 }
             }
 
-            if (selected.isEmpty() && remotes.count > 0)
+            if (selected.isEmpty() && remotes.value.count > 0)
             {
-                selected = QByteArray(remotes.strings[0]);
+                selected = QByteArray(remotes.value.strings[0]);
             }
 
             if (!selected.isEmpty())
@@ -1611,8 +1610,8 @@ void QGit::fetch(bool fetchFromAllRemotes, bool purgeDeletedBranches, bool fetch
 
         for(const auto &remoteName: remotesToFetch)
         {
-            git_remote_defer(remote);
-            res = git_remote_lookup(&remote, repo, remoteName.constData());
+            GitRemote remote;
+            res = git_remote_lookup(remote, repo, remoteName.constData());
             if (res)
             {
                 throw QGitError("git_remote_lookup", res);
@@ -1639,15 +1638,15 @@ void QGit::push(QString remote, QStringList branches, bool tags, bool force)
 
     try
     {
-        git_repository_defer(repo);
-        int res = git_repository_open(&repo, m_path.absolutePath().toUtf8().constData());
+        GitRepository repo;
+        int res = git_repository_open(repo, m_path.absolutePath().toUtf8().constData());
         if (res)
         {
             throw QGitError("git_repository_open", res);
         }
 
-        git_remote_defer(libgit2_remote);
-        res = git_remote_lookup(&libgit2_remote, repo, remote.toUtf8().constData());
+        GitRemote libgit2_remote;
+        res = git_remote_lookup(libgit2_remote, repo, remote.toUtf8().constData());
         if (res)
         {
             throw QGitError("git_remote_lookup", res);
@@ -1655,29 +1654,29 @@ void QGit::push(QString remote, QStringList branches, bool tags, bool force)
 
         for(const auto &branch: branches)
         {
-            git_reference_defer(ref);
-            res = git_reference_lookup(&ref, repo, branch.toUtf8().constData());
+            GitReference ref;
+            res = git_reference_lookup(ref, repo, branch.toUtf8().constData());
             if (res)
             {
                 throw QGitError("Local branch not found!", res);
             }
 
-            git_reference_defer(upstream_branch_ref);
-            res = git_branch_upstream(&upstream_branch_ref, ref);
+            GitReference upstream_branch_ref;
+            res = git_branch_upstream(upstream_branch_ref, ref);
             if (res)
             {
                 throw QGitError("Local branch is not linked with remote branch!", res);
             }
         }
 
-        git_strarray_defer(refspecs);
-        refspecs.count = branches.size();
-        refspecs.strings = static_cast<char **>(malloc(sizeof(char *) * refspecs.count));
+        GitStrArray refspecs;
+        refspecs.value.count = branches.size();
+        refspecs.value.strings = static_cast<char **>(malloc(sizeof(char *) * refspecs.value.count));
         for(int i = 0; i < branches.size(); i++)
         {
             QByteArray refspec = "refs/heads/" + branches[i].toUtf8() + ":refs/heads/" + branches[i].toUtf8();
             if (force) refspec.prepend("+");
-            refspecs.strings[i] = strdup(refspec.constData());
+            refspecs.value.strings[i] = strdup(refspec.constData());
         }
 
         git_push_options push_opts = GIT_PUSH_OPTIONS_INIT;
@@ -1717,7 +1716,7 @@ void QGit::push(QString remote, QStringList branches, bool tags, bool force)
             return -1;
         };
 
-        res = git_remote_push(libgit2_remote, &refspecs, &push_opts);
+        res = git_remote_push(libgit2_remote, &refspecs.value, &push_opts);
         if (res)
         {
             throw QGitError("git_remote_push", res);
@@ -1737,15 +1736,15 @@ void QGit::listCommits(QString object, int length)
 
     try
     {
-        git_repository_defer(repo);
-        int res = git_repository_open(&repo, m_path.absolutePath().toUtf8().constData());
+        GitRepository repo;
+        int res = git_repository_open(repo, m_path.absolutePath().toUtf8().constData());
         if (res)
         {
             throw QGitError("git_repository_open", res);
         }
 
-        git_revwalk_defer(walker);
-        res = git_revwalk_new(&walker, repo);
+        GitRevWalk walker;
+        res = git_revwalk_new(walker, repo);
         if (res)
         {
             throw QGitError("git_revwalk_new", res);
@@ -1794,8 +1793,8 @@ void QGit::listCommits(QString object, int length)
             QGitSignature commit_commiter;
             QString commit_message;
 
-            git_commit_defer(commit);
-            res = git_commit_lookup(&commit, repo, &oid);
+            GitCommit commit;
+            res = git_commit_lookup(commit, repo, &oid);
             if (res)
             {
                 throw QGitError("git_commit_lookup", res);
@@ -1806,10 +1805,10 @@ void QGit::listCommits(QString object, int length)
             parents = git_commit_parentcount(commit);
             for(unsigned int index = 0; index < parents; index++)
             {
-                git_commit_defer(parent);
+                GitCommit parent;
                 QByteArray parentStr;
 
-                res = git_commit_parent(&parent, commit, index);
+                res = git_commit_parent(parent, commit, index);
                 if (res)
                 {
                     throw QGitError("git_commit_parent", res);
