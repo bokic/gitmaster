@@ -1,5 +1,6 @@
 cmake_minimum_required(VERSION 3.12)
 
+# Can be one of thoese: address, thread, memory, undefined, leak
 #add_compile_options(-fsanitize=address)
 #add_link_options(-fsanitize=address)
 
