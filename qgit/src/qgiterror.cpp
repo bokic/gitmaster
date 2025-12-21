@@ -1,4 +1,4 @@
-#include "qgiterror.h"
+#include <qgiterror.h>
 
 
 QGitError::QGitError(const QString &functionName, int errorCode)

@@ -1,4 +1,5 @@
-#include "qgitdifffileitem.h"
+#include <qgitdifffileitem.h>
+
 #include <git2.h>
 #include <cstring>
 

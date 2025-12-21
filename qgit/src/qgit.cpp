@@ -1,9 +1,9 @@
-#include "qgit.h"
-#include "qgitmastermainwindow.h"
-#include "qgitdifffile.h"
-#include "qgitdiffhunk.h"
-#include "qgitdiffline.h"
-#include "qgiterror.h"
+#include <qgit.h>
+#include <qgitmastermainwindow.h>
+#include <qgitdifffile.h>
+#include <qgitdiffhunk.h>
+#include <qgitdiffline.h>
+#include <qgiterror.h>
 
 #include <QThread>
 #include <QString>

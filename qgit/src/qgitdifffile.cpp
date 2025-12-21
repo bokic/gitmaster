@@ -1,6 +1,6 @@
-#include "qgitdifffile.h"
-#include "qgitdifffileitem.h"
-#include "qgitdiffhunk.h"
+#include <qgitdifffile.h>
+#include <qgitdifffileitem.h>
+#include <qgitdiffhunk.h>
 
 #include <QList>
 

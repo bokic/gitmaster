@@ -1,4 +1,5 @@
-#include "qgitdiffhunk.h"
+#include <qgitdiffhunk.h>
+
 #include <git2.h>
 
 #include <QString>

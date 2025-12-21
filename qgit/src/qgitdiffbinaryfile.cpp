@@ -1,4 +1,4 @@
-#include "qgitdiffbinaryfile.h"
+#include <qgitdiffbinaryfile.h>
 
 
 QGitDiffBinaryFile::QGitDiffBinaryFile()

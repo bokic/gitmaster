@@ -1,4 +1,4 @@
-#include "qgitcommitdiffparent.h"
+#include <qgitcommitdiffparent.h>
 
 
 QGitCommitDiffParent::QGitCommitDiffParent(const QByteArray &commitHash)

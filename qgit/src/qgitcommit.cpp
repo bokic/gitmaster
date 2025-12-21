@@ -1,4 +1,4 @@
-#include "qgitcommit.h"
+#include <qgitcommit.h>
 
 
 QGitCommit::QGitCommit(const QString &id, const QList<QGitCommitDiffParent> &parents, const QDateTime &time, const QGitSignature &author, const QGitSignature &commiter, const QString &message)
