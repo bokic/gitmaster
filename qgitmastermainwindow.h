@@ -23,6 +23,9 @@ public:
     void updateStatusBarText(const QString &text);
     void clearStatusBarText();
 
+public slots:
+    QString getPassword();
+
 protected:
     bool event(QEvent *event) override;
 

@@ -191,6 +191,11 @@ void QGitMasterMainWindow::clearStatusBarText()
     ui->statusBar->clearMessage();
 }
 
+QString QGitMasterMainWindow::getPassword()
+{
+    return QInputDialog::getText(this, tr("SSh password"), tr("Enter password"), QLineEdit::Password);
+}
+
 void QGitMasterMainWindow::on_treeWidget_itemSelectionChanged()
 {
     bool newState = ui->treeWidget->selectedItems().size() > 0;
