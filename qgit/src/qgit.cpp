@@ -246,7 +246,7 @@ QList<QString> QGit::localBranches() const
         git_branch_t type = GIT_BRANCH_LOCAL;
         git_reference_defer(ref);
 
-        if (git_branch_next(&ref, &type, it) == 0)
+        if (git_branch_next(&ref, &type, it) != 0)
         {
             break;
         }
