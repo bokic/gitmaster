@@ -169,7 +169,7 @@ QList<QString> QGit::remotes() const
     QList<QString> ret;
 
     git_repository_defer(repo);
-    git_strarray remotes = {.strings = nullptr, .count = 0};
+    git_strarray_defer(remotes);
     int res = 0;
 
     res = git_repository_open(&repo, m_path.absolutePath().toUtf8().constData());
@@ -241,10 +241,16 @@ QList<QString> QGit::localBranches() const
     if (res)
         return ret;
 
-    git_reference_defer(ref);
-    git_branch_t type = GIT_BRANCH_LOCAL;
-    while (git_branch_next(&ref, &type, it) == 0)
+    while (1)
     {
+        git_branch_t type = GIT_BRANCH_LOCAL;
+        git_reference_defer(ref);
+
+        if (git_branch_next(&ref, &type, it) == 0)
+        {
+            break;
+        }
+
         const char *name = nullptr;
         res = git_branch_name(&name, ref);
         if (res == 0 && name)
@@ -255,7 +261,6 @@ QList<QString> QGit::localBranches() const
 
     return ret;
 }
-
 
 QString QGit::getBranchNameFromPath(const QString &path)
 {
@@ -432,7 +437,8 @@ void QGit::status()
 
     try {
 
-        res = git_repository_open(&repo, m_path.absolutePath().toUtf8().constData());
+        auto ba = m_path.absolutePath().toUtf8();
+        res = git_repository_open(&repo, ba.constData());
         if (res)
         {
             throw QGitError("git_repository_open", res);
@@ -485,9 +491,15 @@ void QGit::listBranchesAndTags()
             throw QGitError("git_branch_iterator_new", res);
         }
 
-        git_reference_defer(ref);
-        while(git_branch_next(&ref, &type, it) == 0) // TODO: Memory leak!
+        while(1)
         {
+            git_reference_defer(ref);
+
+            if (git_branch_next(&ref, &type, it) == 0)
+            {
+                break;
+            }
+
             const char *ref_name = git_reference_name(ref);
 
             QGitBranch branch = QGitBranch(ref_name, type);
@@ -830,7 +842,7 @@ void QGit::commitDiffContent(QString first, QString second, QList<QString> files
     git_object *first_obj = nullptr, *second_obj = nullptr;
     git_tree *first_tree = nullptr, *second_tree = nullptr;
     const git_diff_delta *delta = nullptr;
-    git_strarray pathspec = {nullptr, 0};
+    git_strarray_defer(pathspec);
     git_repository_defer(repo);
     QList<QGitDiffFile> items;
     QList<QByteArray> tmp_files;
@@ -868,7 +880,7 @@ void QGit::commitDiffContent(QString first, QString second, QList<QString> files
         if (!files.isEmpty())
         {
             pathspec.count = static_cast<size_t>(files.count());
-            pathspec.strings = new char*[pathspec.count];
+            pathspec.strings = static_cast<char **>(malloc(sizeof(char *) * pathspec.count));
             if (pathspec.strings == nullptr)
             {
                 throw QGitError("malloc", 0);
@@ -879,7 +891,7 @@ void QGit::commitDiffContent(QString first, QString second, QList<QString> files
             {
                 QByteArray ba = file.toUtf8();
                 tmp_files.push_back(ba);
-                pathspec.strings[c] = tmp_files.last().data();
+                pathspec.strings[c] = strdup(tmp_files.last().data());
                 c++;
             }
         }
@@ -1010,12 +1022,6 @@ void QGit::commitDiffContent(QString first, QString second, QList<QString> files
     }
 
     emit commitDiffContentReply(first, second, items, error);
-
-    if (pathspec.strings)
-    {
-        free(pathspec.strings);
-        memset(&pathspec, 0, sizeof(pathspec));
-    }
 }
 
 void QGit::stageFiles(QStringList items)
@@ -1078,7 +1084,7 @@ void QGit::unstageFiles(QStringList items)
 {
     QVector<QByteArray> tmpStrList;
     git_repository_defer(repo);
-    git_strarray paths = {nullptr, 0};
+    git_strarray(paths);
     int res = 0;
 
     QGitError error;
@@ -1097,7 +1103,7 @@ void QGit::unstageFiles(QStringList items)
         }
 
         paths.count = static_cast<size_t>(items.count());
-        paths.strings = new char*[paths.count];
+        paths.strings = static_cast<char **>(malloc(sizeof(char *) * paths.count));
         if (paths.strings == nullptr)
         {
             throw QGitError("malloc", 0);
@@ -1134,13 +1140,6 @@ void QGit::unstageFiles(QStringList items)
     }
 
     emit unstageFilesReply(error);
-
-    if (paths.strings)
-    {
-        free(paths.strings);
-        paths.strings = nullptr;
-    }
-    paths.count = 0;
 }
 
 void QGit::stageFileLines(QString filename, QVector<QGitDiffWidgetLine> lines)
@@ -1578,7 +1577,7 @@ void QGit::pull()
 void QGit::fetch(bool fetchFromAllRemotes, bool purgeDeletedBranches, bool fetchAllTags)
 {
     git_repository_defer(repo);
-    git_strarray remotes = {nullptr, 0};
+    git_strarray_defer(remotes);
     int res = 0;
 
     QGitError error;
@@ -1686,12 +1685,6 @@ void QGit::fetch(bool fetchFromAllRemotes, bool purgeDeletedBranches, bool fetch
     }
 
     emit fetchReply(error);
-
-    if (remotes.strings)
-    {
-        git_strarray_dispose(&remotes);
-        remotes = {nullptr, 0};
-    }
 }
 
 void QGit::push(QString remote, QStringList branches, bool tags, bool force)
@@ -1734,7 +1727,7 @@ void QGit::push(QString remote, QStringList branches, bool tags, bool force)
         }
 
         refspecs.count = branches.size();
-        refspecs.strings = new char*[refspecs.count];
+        refspecs.strings = static_cast<char **>(malloc(sizeof(char *) * refspecs.count));
         for(int i = 0; i < branches.size(); i++)
         {
             QByteArray refspec = "refs/heads/" + branches[i].toUtf8() + ":refs/heads/" + branches[i].toUtf8();
