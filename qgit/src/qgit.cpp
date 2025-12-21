@@ -797,7 +797,7 @@ void QGit::commitDiff(QString commitId)
     emit commitDiffReply(commitId, commitDiff, error);
 }
 
-void QGit::commitDiffContent(QString first, QString second, QList<QString> files)
+void QGit::commitDiffContent(QString first, QString second, QList<QString> files, uint32_t context_lines)
 {
     QList<QGitDiffFile> items;
     QGitError error;
@@ -874,7 +874,7 @@ void QGit::commitDiffContent(QString first, QString second, QList<QString> files
             memset(&options, 0, sizeof(options));
             options.version = GIT_DIFF_OPTIONS_VERSION;
             options.flags = GIT_DIFF_INCLUDE_UNTRACKED | GIT_DIFF_SHOW_UNTRACKED_CONTENT;
-            options.context_lines = 3;
+            options.context_lines = context_lines;
             options.pathspec = pathspec;
 
             res = git_diff_tree_to_index(diff, repo, first_tree, nullptr, &options);
@@ -890,7 +890,7 @@ void QGit::commitDiffContent(QString first, QString second, QList<QString> files
             memset(&options, 0, sizeof(options));
             options.version = GIT_DIFF_OPTIONS_VERSION;
             options.flags = GIT_DIFF_INCLUDE_UNTRACKED | GIT_DIFF_RECURSE_UNTRACKED_DIRS | GIT_DIFF_SHOW_UNTRACKED_CONTENT;
-            options.context_lines = 3;
+            options.context_lines = context_lines;
             options.pathspec = pathspec;
 
             res = git_diff_index_to_workdir(diff, repo, nullptr, &options);

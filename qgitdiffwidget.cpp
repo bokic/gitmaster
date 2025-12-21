@@ -81,7 +81,7 @@ void QGitDiffWidget::setGitDiff(const QString &first, const QString &second, con
     m_requestedSecond = second;
     m_requestedFiles = files;
 
-    emit requestGitDiff(first, second, files);
+    emit requestGitDiff(first, second, files, 3);
 
     update();
 }
@@ -102,7 +102,7 @@ void QGitDiffWidget::refresh()
 {
     if (!m_requestedFiles.isEmpty())
     {
-        emit requestGitDiff(m_requestedFirst, m_requestedSecond, m_requestedFiles);
+        emit requestGitDiff(m_requestedFirst, m_requestedSecond, m_requestedFiles, 3);
     }
 }
 

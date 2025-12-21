@@ -25,7 +25,7 @@ public:
     bool readonly() const;
 
 signals:
-    void requestGitDiff(QString first, QString second, QList<QString> files);
+    void requestGitDiff(QString first, QString second, QList<QString> files, uint32_t context_lines);
     void select(QString file, QVector<QGitDiffWidgetLine> lines);
 
 public slots:
