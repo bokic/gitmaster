@@ -22,7 +22,7 @@ private:
     void refreshItem();
     QThread m_thread;
     QGit *m_git = nullptr;
-    int m_refreshIndex;
+    int m_refreshIndex = 0;
 
 signals:
     void repositoryStatus();

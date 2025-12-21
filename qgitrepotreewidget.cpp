@@ -6,7 +6,6 @@ QGitRepoTreeWidget::QGitRepoTreeWidget(QWidget *parent)
     : QTreeWidget(parent)
     , m_thread(this)
     , m_git(new QGit())
-    , m_refreshIndex(0)
 {
     m_git->moveToThread(&m_thread);
 
