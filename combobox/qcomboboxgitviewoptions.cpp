@@ -122,6 +122,17 @@ void QComboBoxGitViewOptions::paintEvent(QPaintEvent *event)
     p.drawControl(QStyle::CE_ComboBoxLabel, opt);
 }
 
+void QComboBoxGitViewOptions::showPopup()
+{
+    QComboBox::showPopup();
+
+    QWidget *popup = view()->parentWidget();
+    if (popup) {
+        QPoint pos = mapToGlobal(QPoint(0, height()));
+        popup->move(pos.x(), pos.y());
+    }
+}
+
 void QComboBoxGitViewOptions::activated(int index)
 {
     QAbstractItemModel *items = model();

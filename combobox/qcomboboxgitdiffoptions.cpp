@@ -141,6 +141,17 @@ void QComboBoxGitDiffOptions::paintEvent(QPaintEvent *event)
     p.drawControl(QStyle::CE_ComboBoxLabel, opt);
 }
 
+void QComboBoxGitDiffOptions::showPopup()
+{
+    QComboBox::showPopup();
+
+    QWidget *popup = view()->parentWidget();
+    if (popup) {
+        QPoint pos = mapToGlobal(QPoint(0, height()));
+        popup->move(pos.x(), pos.y());
+    }
+}
+
 void QComboBoxGitDiffOptions::activated(int index)
 {
     QAbstractItemModel *items = model();

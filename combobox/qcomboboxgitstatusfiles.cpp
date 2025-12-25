@@ -160,6 +160,16 @@ void QComboBoxGitStatusFiles::paintEvent(QPaintEvent *event)
     p.drawControl(QStyle::CE_ComboBoxLabel, opt);
 }
 
+void QComboBoxGitStatusFiles::showPopup()
+{
+    QComboBox::showPopup();
+
+    QWidget *popup = view()->parentWidget();
+    if (popup) {
+        QPoint pos = mapToGlobal(QPoint(0, height()));
+        popup->move(pos.x(), pos.y());
+    }
+}
 
 void QComboBoxGitStatusFiles::updateText()
 {

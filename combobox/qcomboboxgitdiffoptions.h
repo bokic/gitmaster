@@ -17,6 +17,7 @@ public:
 
 protected:
     void paintEvent(QPaintEvent *event) override;
+    void showPopup() override;
 
 private Q_SLOTS:
     void activated(int index);
