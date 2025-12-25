@@ -1,5 +1,5 @@
 [Desktop Entry]
-Name=gitmaster
+Name=Git Master
 Comment=Git repository browser
 Exec=gitmaster
 Terminal=false
