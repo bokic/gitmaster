@@ -48,9 +48,6 @@
         <property name="wordWrap">
          <bool>false</bool>
         </property>
-        <property name="supportedDragActions">
-         <set>Qt::DropAction::IgnoreAction</set>
-        </property>
         <attribute name="horizontalHeaderVisible">
          <bool>false</bool>
         </attribute>
