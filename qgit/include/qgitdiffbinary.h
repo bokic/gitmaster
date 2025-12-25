@@ -11,9 +11,9 @@ public:
 
     QGitDiffBinary() = default;
     QGitDiffBinary(const git_diff_binary *binary);
-
     QGitDiffBinary(const QGitDiffBinary &other) = default;
     QGitDiffBinary(QGitDiffBinary &&other) noexcept;
+    virtual ~QGitDiffBinary() = default;
 
     QGitDiffBinary &operator=(QGitDiffBinary &&other) noexcept;
     QGitDiffBinary &operator=(const QGitDiffBinary &other) = default;

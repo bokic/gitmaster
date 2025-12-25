@@ -18,6 +18,7 @@ class QGitDiffWidget : public QWidget
     Q_PROPERTY( bool readonly READ readonly WRITE setReadonly DESIGNABLE true )
 public:
     explicit QGitDiffWidget(QWidget *parent = nullptr);
+    ~QGitDiffWidget() = default;
 
     void setGitDiff(const QString &first, const QString &second, const QList<QString> &files);
     void setReadonly(bool readonly = true);

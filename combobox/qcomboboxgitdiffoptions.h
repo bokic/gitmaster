@@ -10,6 +10,8 @@ class QComboBoxGitDiffOptions : public QComboBox
     Q_OBJECT
 public:
     explicit QComboBoxGitDiffOptions(QWidget *parent = nullptr);
+    ~QComboBoxGitDiffOptions() = default;
+
     QSize sizeHint() const override;
     QSize minimumSizeHint() const override;
 

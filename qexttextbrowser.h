@@ -11,6 +11,8 @@ class QExtTextBrowser : public QTextBrowser
 {
 public:
     explicit QExtTextBrowser(QWidget* parent = nullptr);
+    ~QExtTextBrowser() = default;
+
     QVariant loadResource(int type, const QUrl &name) override;
 
 private slots:

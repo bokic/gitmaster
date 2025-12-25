@@ -147,10 +147,6 @@ QGit& QGit::operator=(QGit &&other)
     return *this;
 }
 
-QGit::~QGit()
-{
-}
-
 bool QGit::setPath(const QDir &path)
 {
     m_path = path;

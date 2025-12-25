@@ -10,6 +10,7 @@ public:
     QGitSignature(const QString &name, const QString &email, const QDateTime &when);
     QGitSignature(const QGitSignature &other) = default;
     QGitSignature(QGitSignature &&other) noexcept;
+    virtual ~QGitSignature() = default;
 
     QGitSignature &operator=(QGitSignature &&other) noexcept;
     QGitSignature &operator=(const QGitSignature &other) = default;

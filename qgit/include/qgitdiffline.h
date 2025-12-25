@@ -12,6 +12,7 @@ public:
     QGitDiffLine(const QByteArray &content, git_off_t offset, int new_lineno, int num_lines, int old_lineno, char origin);
     QGitDiffLine(const QGitDiffLine &other) = default;
     QGitDiffLine(QGitDiffLine &&other) noexcept;
+    virtual ~QGitDiffLine() = default;
 
     QGitDiffLine &operator=(QGitDiffLine &&other) noexcept;
     QGitDiffLine &operator=(const QGitDiffLine &other) = default;

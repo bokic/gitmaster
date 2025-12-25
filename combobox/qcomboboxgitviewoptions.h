@@ -10,6 +10,8 @@ class QComboBoxGitViewOptions : public QComboBox
     Q_OBJECT
 public:
     explicit QComboBoxGitViewOptions(QWidget *parent = nullptr);
+    ~QComboBoxGitViewOptions() = default;
+
     QSize sizeHint() const override;
     QSize minimumSizeHint() const override;
 

@@ -51,7 +51,7 @@ public:
     QGit(QGit&& other);
     QGit& operator=(const QGit &other);
     QGit& operator=(QGit &&other);
-    virtual ~QGit();
+    ~QGit() = default;
 
     bool setPath(const QDir &path);
     QDir path();

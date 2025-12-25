@@ -11,7 +11,10 @@ class QComboBoxGitStatusFiles : public QComboBox
 public:
     enum QComboBoxGitStatusFilesShowFiles {QShowPendingFiles, QShowConflictFiles, QShowUntracked, QShowIgnored, QShowClean, QShowModified, QShowAll};
     enum QComboBoxGitStatusFilesOrderFiles {QUnsortedFiles, QFilePathSortFiles, QReversedFilePathSortFiles, QFileNameSortFiles, QReversedFileNameSortFiles, QFileStatusSortFiles, QCheckedUncheckedSortFiles};
+
     explicit QComboBoxGitStatusFiles(QWidget *parent = nullptr);
+    ~QComboBoxGitStatusFiles() = default;
+
     QSize sizeHint() const override;
     QSize minimumSizeHint() const override;
     void updateText();
