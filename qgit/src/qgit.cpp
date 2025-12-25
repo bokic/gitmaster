@@ -1274,7 +1274,7 @@ void QGit::unstageFileLines(QString filename, QVector<QGitDiffWidgetLine> lines)
     emit unstageFilesReply(error);
 }
 
-void QGit::commit(QString message)
+void QGit::commit(QString message, bool withPush)
 {
     git_oid new_commit_id = { {0} };
     QGitError error;
@@ -1390,6 +1390,11 @@ void QGit::commit(QString message)
             {
                 throw QGitError("git_commit_create_v", res);
             }
+        }
+
+        if (withPush)
+        {
+
         }
 
     } catch(const QGitError &ex) {

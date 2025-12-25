@@ -80,7 +80,7 @@ public slots:
     void unstageFiles(QStringList items);
     void stageFileLines(QString filename, QVector<QGitDiffWidgetLine> lines);
     void unstageFileLines(QString filename, QVector<QGitDiffWidgetLine> lines);
-    void commit(QString message);
+    void commit(QString message, bool withPush);
     void clone(QUrl url);
     void pull();
     void fetch(bool fetchFromAllRemotes, bool purgeDeletedBranches, bool fetchAllTags);

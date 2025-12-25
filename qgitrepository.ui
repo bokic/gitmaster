@@ -290,7 +290,7 @@
               <number>0</number>
              </property>
              <item>
-              <widget class="QCheckBox" name="checkBox_3">
+              <widget class="QCheckBox" name="checkBox_pushChangesImmidietely">
                <property name="text">
                 <string>Push changes immidiately to[origin/branch]</string>
                </property>
@@ -488,7 +488,7 @@
                <x>0</x>
                <y>0</y>
                <width>68</width>
-               <height>435</height>
+               <height>434</height>
               </rect>
              </property>
              <property name="readonly" stdset="0">

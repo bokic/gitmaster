@@ -851,7 +851,9 @@ void QGitRepository::on_pushButton_commit_clicked()
     ui->plainTextEdit_commitMessage->setEnabled(false);
     ui->pushButton_commit->setEnabled(false);
 
-    emit repositoryCommit(ui->plainTextEdit_commitMessage->toPlainText());
+    bool withPush = ui->checkBox_pushChangesImmidietely->isChecked();
+
+    emit repositoryCommit(ui->plainTextEdit_commitMessage->toPlainText(), withPush);
 }
 
 void QGitRepository::on_pushButton_commitCancel_clicked()

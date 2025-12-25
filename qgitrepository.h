@@ -37,7 +37,7 @@ signals:
     void repositoryChangedFiles(int show, int sort, bool reversed);
     void repositoryStageFiles(QStringList items);
     void repositoryUnstageFiles(QStringList items);
-    void repositoryCommit(QString message);
+    void repositoryCommit(QString message, bool withPush);
     void repositoryGetCommits(QString object, int length);
     void repositoryGetCommitDiff(QString commitId);
     void stageFileLines(QString filename, QVector<QGitDiffWidgetLine> lines);
