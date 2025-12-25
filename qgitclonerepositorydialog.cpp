@@ -23,6 +23,7 @@ QGitCloneRepositoryDialog::QGitCloneRepositoryDialog(const QString &url, const Q
 
 	m_git->setPath(m_path);
 
+    m_thread.setObjectName("QGit(clone)");
     m_thread.start();
 }
 

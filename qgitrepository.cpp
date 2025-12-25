@@ -133,6 +133,7 @@ QGitRepository::QGitRepository(const QString &path, QWidget *parent)
 
     connect(ui->logHistory_commits->verticalScrollBar(), &QScrollBar::sliderMoved, this, &QGitRepository::historyTableSliderMoved);
 
+    m_thread.setObjectName("QGit(repo)");
     m_thread.start();
 
     m_git->setPath(QDir(m_path));

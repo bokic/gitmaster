@@ -12,6 +12,7 @@ QGitRepoTreeWidget::QGitRepoTreeWidget(QWidget *parent)
     connect(this, &QGitRepoTreeWidget::repositoryStatus, m_git, &QGit::status);
     connect(m_git, &QGit::statusReply, this, &QGitRepoTreeWidget::repositoryStatusReply);
 
+    m_thread.setObjectName("QGit(tree)");
     m_thread.start();
 }
 
