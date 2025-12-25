@@ -363,7 +363,7 @@ void QGitMasterMainWindow::on_treeWidget_itemDoubleClicked(QTreeWidgetItem *item
 
 void QGitMasterMainWindow::on_tabWidget_tabCloseRequested(int index)
 {
-    ui->tabWidget->removeTab(index);
+    delete ui->tabWidget->widget(index);
 }
 
 void QGitMasterMainWindow::on_tabWidget_currentChanged(int index)
