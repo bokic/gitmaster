@@ -469,9 +469,12 @@ void QGit::listBranchesAndTags()
                 break;
             }
 
-            const char *ref_name = git_reference_name(ref);
-            QGitBranch branch = QGitBranch(ref_name, type);
-            branches.append(branch);
+            if (git_reference_type(ref) == GIT_REFERENCE_DIRECT)
+            {
+                const char *ref_name = git_reference_name(ref);
+                QGitBranch branch = QGitBranch(ref_name, type);
+                branches.append(branch);
+            }
         }
 
         GitStrArray tag_names;
@@ -1269,7 +1272,6 @@ void QGit::unstageFileLines(QString filename, QVector<QGitDiffWidgetLine> lines)
     }
 
     emit unstageFilesReply(error);
-
 }
 
 void QGit::commit(QString message)
