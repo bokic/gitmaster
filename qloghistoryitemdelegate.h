@@ -12,7 +12,4 @@ public:
     explicit QLogHistoryItemDelegate(QWidget *parent = nullptr);
 
     void paint(QPainter *painter, const QStyleOptionViewItem &option, const QModelIndex &index) const override;
-
-private:
-    QList<QColor> m_colors;
 };
