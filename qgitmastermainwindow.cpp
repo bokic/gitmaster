@@ -368,12 +368,39 @@ void QGitMasterMainWindow::on_tabWidget_tabCloseRequested(int index)
 
 void QGitMasterMainWindow::on_tabWidget_currentChanged(int index)
 {
-    Q_UNUSED(index)
-
-    auto panel = dynamic_cast<QGitRepository *>(ui->tabWidget->currentWidget());
-    if (panel)
+    if (index >= 0)
     {
-        panel->refreshData();
+        auto panel = dynamic_cast<QGitRepository *>(ui->tabWidget->currentWidget());
+        if (panel)
+        {
+            panel->refreshData();
+        }
+
+        ui->actionCommit->setEnabled(true);
+        ui->actionPull->setEnabled(true);
+        ui->actionFetch->setEnabled(true);
+        ui->actionPush->setEnabled(true);
+        ui->actionBranch->setEnabled(true);
+        ui->actionMerge->setEnabled(true);
+        ui->actionStash->setEnabled(true);
+        ui->actionDiscard->setEnabled(true);
+        ui->actionTag->setEnabled(true);
+        ui->actionGit_Flow->setEnabled(true);
+        ui->actionTerminal->setEnabled(true);
+    }
+    else
+    {
+        ui->actionCommit->setEnabled(false);
+        ui->actionPull->setEnabled(false);
+        ui->actionFetch->setEnabled(false);
+        ui->actionPush->setEnabled(false);
+        ui->actionBranch->setEnabled(false);
+        ui->actionMerge->setEnabled(false);
+        ui->actionStash->setEnabled(false);
+        ui->actionDiscard->setEnabled(false);
+        ui->actionTag->setEnabled(false);
+        ui->actionGit_Flow->setEnabled(false);
+        ui->actionTerminal->setEnabled(false);
     }
 }
 
