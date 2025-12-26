@@ -155,6 +155,8 @@ void QComboBoxGitStatusFiles::paintEvent(QPaintEvent *event)
 
 void QComboBoxGitStatusFiles::showPopup()
 {
+    view()->selectionModel()->reset();
+
     QComboBox::showPopup();
 
     QWidget *popup = view()->parentWidget();

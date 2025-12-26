@@ -136,6 +136,8 @@ void QComboBoxGitDiffOptions::paintEvent(QPaintEvent *event)
 
 void QComboBoxGitDiffOptions::showPopup()
 {
+    view()->selectionModel()->reset();
+
     QComboBox::showPopup();
 
     QWidget *popup = view()->parentWidget();
