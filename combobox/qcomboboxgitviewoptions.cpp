@@ -67,14 +67,7 @@ QComboBoxGitViewOptions::QComboBoxGitViewOptions(QWidget *parent)
     item->setIcon(m_iconSplitViewStaging);
     model->appendRow(item);
 
-    // TODO: Need to find better way to resize combobox popup window.
     view()->setMinimumWidth(view()->sizeHintForColumn(0));
-    int height = 0;
-    for(int r  = 0; r < model->rowCount(); r++)
-    {
-        height += view()->sizeHintForRow(r);
-    }
-    view()->setMinimumHeight(height);
 
     m_icon = m_iconFlatListSingleColumn;
 
