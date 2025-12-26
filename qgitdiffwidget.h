@@ -36,6 +36,10 @@ protected:
     void paintEvent(QPaintEvent *event) override;
     void mousePressEvent(QMouseEvent *event) override;
     void mouseMoveEvent(QMouseEvent *event) override;
+    void moveEvent(QMoveEvent *event) override;
+
+private:
+    void updatePosition();
 
 private:
     QGitDiffWidgetPrivate *m_private = nullptr;

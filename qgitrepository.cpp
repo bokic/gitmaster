@@ -431,7 +431,7 @@ void QGitRepository::repositoryChangedFilesReply(QMap<QString, git_status_t> fil
         auto file = keys.at(c);
         auto status = files[file];
 
-        if (status & (GIT_STATUS_INDEX_NEW | GIT_STATUS_INDEX_MODIFIED | GIT_STATUS_INDEX_DELETED | GIT_STATUS_INDEX_RENAMED | GIT_STATUS_INDEX_TYPECHANGE | GIT_STATUS_IGNORED))
+        if (status & (GIT_STATUS_INDEX_NEW | GIT_STATUS_INDEX_MODIFIED | GIT_STATUS_INDEX_DELETED | GIT_STATUS_INDEX_RENAMED | GIT_STATUS_INDEX_TYPECHANGE))
         {
             QListWidgetItem *item = nullptr;
 
@@ -441,7 +441,7 @@ void QGitRepository::repositoryChangedFilesReply(QMap<QString, git_status_t> fil
                 item = ui->listWidget_staged->item(stagedCnt);
             }
 
-            // Check if UI item is furder list
+            // Check if UI item is further in the list
             if (!item)
             {
                 for(int c2 = stagedCnt + 1; c2 < ui->listWidget_staged->count(); c2++)
@@ -473,19 +473,16 @@ void QGitRepository::repositoryChangedFilesReply(QMap<QString, git_status_t> fil
                     ui->listWidget_staged->addItem(item);
             }
 
-            switch(status)
+            switch(status & (GIT_STATUS_INDEX_NEW | GIT_STATUS_INDEX_MODIFIED | GIT_STATUS_INDEX_DELETED | GIT_STATUS_INDEX_RENAMED | GIT_STATUS_INDEX_TYPECHANGE))
             {
             case GIT_STATUS_INDEX_NEW:
                 item->setIcon(m_iconFileNew);
-                break;
-            case GIT_STATUS_INDEX_MODIFIED:
-                item->setIcon(m_iconFileModified);
                 break;
             case GIT_STATUS_INDEX_DELETED:
                 item->setIcon(m_iconFileRemoved);
                 break;
             default:
-                item->setIcon(m_iconFileUnknown);
+                item->setIcon(m_iconFileModified);
                 break;
             }
 
@@ -502,7 +499,7 @@ void QGitRepository::repositoryChangedFilesReply(QMap<QString, git_status_t> fil
                 item = ui->listWidget_unstaged->item(unstagedCnt);
             }
 
-            // Check if UI item is furder list
+            // Check if UI item is further in the list
             if (!item)
             {
                 for(int c2 = unstagedCnt + 1; c2 < ui->listWidget_unstaged->count(); c2++)
@@ -534,7 +531,7 @@ void QGitRepository::repositoryChangedFilesReply(QMap<QString, git_status_t> fil
                     ui->listWidget_unstaged->addItem(item);
             }
 
-            switch(status)
+            switch(status & (GIT_STATUS_CURRENT | GIT_STATUS_WT_NEW | GIT_STATUS_WT_MODIFIED | GIT_STATUS_WT_DELETED | GIT_STATUS_IGNORED | GIT_STATUS_CONFLICTED))
             {
             case GIT_STATUS_CURRENT:
                 item->setIcon(m_iconFileClean);
