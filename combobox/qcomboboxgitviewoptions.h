@@ -30,4 +30,5 @@ private:
     QIcon m_iconNoStaging;
     QIcon m_iconFluidStaging;
     QIcon m_iconSplitViewStaging;
+    bool m_showIcons = false;
 };

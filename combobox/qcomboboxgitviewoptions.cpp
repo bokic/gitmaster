@@ -3,6 +3,7 @@
 #include <QStandardItemModel>
 #include <QAbstractItemView>
 #include <QStylePainter>
+#include <QApplication>
 
 
 enum {
@@ -27,24 +28,29 @@ QComboBoxGitViewOptions::QComboBoxGitViewOptions(QWidget *parent)
     QStandardItemModel *model = new QStandardItemModel();
     setModel(model);
 
+    if (QApplication::style()->name() == "fusion")
+    {
+        m_showIcons = true;
+    }
+
     QStandardItem* item = nullptr;
 
     item = new QStandardItem(tr("Flat list (single column)"));
     item->setFlags(Qt::ItemIsSelectable | Qt::ItemIsEnabled);
     item->setCheckState(Qt::Checked);
-    item->setIcon(m_iconFlatListSingleColumn);
+    if (m_showIcons) item->setIcon(m_iconFlatListSingleColumn);
     model->appendRow(item);
 
     item = new QStandardItem(tr("Flat list (multiple column)"));
     item->setFlags(Qt::ItemIsSelectable | Qt::ItemIsEnabled);
     item->setCheckState(Qt::Unchecked);
-    item->setIcon(m_iconFlatListMultipleColumn);
+    if (m_showIcons) item->setIcon(m_iconFlatListMultipleColumn);
     model->appendRow(item);
 
     item = new QStandardItem(tr("Tree view"));
     item->setFlags(Qt::ItemIsSelectable | Qt::ItemIsEnabled);
     item->setCheckState(Qt::Unchecked);
-    item->setIcon(m_iconTreeView);
+    if (m_showIcons) item->setIcon(m_iconTreeView);
     model->appendRow(item);
 
     insertSeparator(model->rowCount());
@@ -52,19 +58,19 @@ QComboBoxGitViewOptions::QComboBoxGitViewOptions(QWidget *parent)
     item = new QStandardItem(tr("No staging"));
     item->setFlags(Qt::ItemIsSelectable | Qt::ItemIsEnabled);
     item->setCheckState(Qt::Unchecked);
-    item->setIcon(m_iconNoStaging);
+    if (m_showIcons) item->setIcon(m_iconNoStaging);
     model->appendRow(item);
 
     item = new QStandardItem(tr("Fluid staging"));
     item->setFlags(Qt::ItemIsSelectable | Qt::ItemIsEnabled);
     item->setCheckState(Qt::Unchecked);
-    item->setIcon(m_iconFluidStaging);
+    if (m_showIcons) item->setIcon(m_iconFluidStaging);
     model->appendRow(item);
 
     item = new QStandardItem(tr("Split view staging"));
     item->setFlags(Qt::ItemIsSelectable | Qt::ItemIsEnabled);
     item->setCheckState(Qt::Checked);
-    item->setIcon(m_iconSplitViewStaging);
+    if (m_showIcons) item->setIcon(m_iconSplitViewStaging);
     model->appendRow(item);
 
     view()->setMinimumWidth(view()->sizeHintForColumn(0));
