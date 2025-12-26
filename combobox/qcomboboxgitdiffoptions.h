@@ -24,4 +24,6 @@ private Q_SLOTS:
 
 private:
     QIcon m_icon;
+    QIcon m_iconChecked;
+    QIcon m_iconUnchecked;
 };

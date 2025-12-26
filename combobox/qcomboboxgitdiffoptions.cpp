@@ -24,6 +24,8 @@ enum {
 QComboBoxGitDiffOptions::QComboBoxGitDiffOptions(QWidget *parent)
     : QComboBox(parent)
     , m_icon(":/QComboBoxGitDiffOptions/gear")
+    , m_iconChecked(":/QCustomComboBox/check")
+    , m_iconUnchecked(":/QCustomComboBox/uncheck")
 {
     QStandardItemModel *model = new QStandardItemModel();
     setModel(model);
@@ -32,6 +34,7 @@ QComboBoxGitDiffOptions::QComboBoxGitDiffOptions(QWidget *parent)
 
     item = new QStandardItem(tr("External Diff"));
     item->setFlags(Qt::ItemIsSelectable | Qt::ItemIsEnabled);
+    item->setIcon(m_iconUnchecked);
     model->appendRow(item);
 
     insertSeparator(model->rowCount());
@@ -39,52 +42,62 @@ QComboBoxGitDiffOptions::QComboBoxGitDiffOptions(QWidget *parent)
     item = new QStandardItem(tr("Ignore whitespace"));
     item->setFlags(Qt::ItemIsSelectable | Qt::ItemIsEnabled);
     item->setData(Qt::Unchecked, Qt::CheckStateRole);
+    item->setIcon(m_iconUnchecked);
     model->appendRow(item);
 
     item = new QStandardItem(tr("Show whitespace"));
     item->setFlags(Qt::ItemIsSelectable | Qt::ItemIsEnabled);
     item->setData(Qt::Checked, Qt::CheckStateRole);
+    item->setIcon(m_iconChecked);
     model->appendRow(item);
 
     insertSeparator(model->rowCount());
 
     item = new QStandardItem(tr("Lines of context"));
     item->setFlags(Qt::NoItemFlags);
+    item->setIcon(m_iconUnchecked);
     model->appendRow(item);
 
     item = new QStandardItem(tr("1"));
     item->setFlags(Qt::ItemIsSelectable | Qt::ItemIsEnabled);
     item->setData(Qt::Unchecked, Qt::CheckStateRole);
+    item->setIcon(m_iconUnchecked);
     model->appendRow(item);
 
     item = new QStandardItem(tr("3"));
     item->setFlags(Qt::ItemIsSelectable | Qt::ItemIsEnabled);
     item->setData(Qt::Checked, Qt::CheckStateRole);
+    item->setIcon(m_iconChecked);
     model->appendRow(item);
 
     item = new QStandardItem(tr("6"));
     item->setFlags(Qt::ItemIsSelectable | Qt::ItemIsEnabled);
     item->setData(Qt::Unchecked, Qt::CheckStateRole);
+    item->setIcon(m_iconUnchecked);
     model->appendRow(item);
 
     item = new QStandardItem(tr("12"));
     item->setFlags(Qt::ItemIsSelectable | Qt::ItemIsEnabled);
     item->setData(Qt::Unchecked, Qt::CheckStateRole);
+    item->setIcon(m_iconUnchecked);
     model->appendRow(item);
 
     item = new QStandardItem(tr("25"));
     item->setFlags(Qt::ItemIsSelectable | Qt::ItemIsEnabled);
     item->setData(Qt::Unchecked, Qt::CheckStateRole);
+    item->setIcon(m_iconUnchecked);
     model->appendRow(item);
 
     item = new QStandardItem(tr("50"));
     item->setFlags(Qt::ItemIsSelectable | Qt::ItemIsEnabled);
     item->setData(Qt::Unchecked, Qt::CheckStateRole);
+    item->setIcon(m_iconUnchecked);
     model->appendRow(item);
 
     item = new QStandardItem(tr("100"));
     item->setFlags(Qt::ItemIsSelectable | Qt::ItemIsEnabled);
     item->setData(Qt::Unchecked, Qt::CheckStateRole);
+    item->setIcon(m_iconUnchecked);
     model->appendRow(item);
 
     view()->setMinimumWidth(view()->sizeHintForColumn(0));
@@ -149,13 +162,22 @@ void QComboBoxGitDiffOptions::showPopup()
 
 void QComboBoxGitDiffOptions::activated(int index)
 {
-    QAbstractItemModel *items = model();
+    QStandardItemModel *items = static_cast<QStandardItemModel *>(model());
 
     if ((index >= ITEM_IGNORE_WHITESPACE)&&(index <= ITEM_SHOW_WHITESPACE))
     {
         for(int c = ITEM_IGNORE_WHITESPACE; c <= ITEM_SHOW_WHITESPACE; c++)
         {
-            items->setData(items->index(c, 0), (c == index)?Qt::Checked:Qt::Unchecked, Qt::CheckStateRole);
+            if (c == index)
+            {
+                items->setData(items->index(c, 0), Qt::Checked, Qt::CheckStateRole);
+                items->item(c, 0)->setIcon(m_iconChecked);
+            }
+            else
+            {
+                items->setData(items->index(c, 0), Qt::Unchecked, Qt::CheckStateRole);
+                items->item(c, 0)->setIcon(m_iconUnchecked);
+            }
         }
     }
 
@@ -163,7 +185,16 @@ void QComboBoxGitDiffOptions::activated(int index)
     {
         for(int c = ITEM_SHOW_1_LINE; c <= ITEM_SHOW_100_LINE; c++)
         {
-            items->setData(items->index(c, 0), (c == index)?Qt::Checked:Qt::Unchecked, Qt::CheckStateRole);
+            if (c == index)
+            {
+                items->setData(items->index(c, 0), Qt::Checked, Qt::CheckStateRole);
+                items->item(c, 0)->setIcon(m_iconChecked);
+            }
+            else
+            {
+                items->setData(items->index(c, 0), Qt::Unchecked, Qt::CheckStateRole);
+                items->item(c, 0)->setIcon(m_iconUnchecked);
+            }
         }
     }
 }

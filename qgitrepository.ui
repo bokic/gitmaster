@@ -73,7 +73,7 @@
            </widget>
           </item>
           <item>
-           <widget class="QComboBoxGitViewOptions" name="comboBox_gitVirewOptions"/>
+           <widget class="QComboBoxGitViewOptions" name="comboBox_gitViewOptions"/>
           </item>
           <item>
            <spacer name="horizontalSpacer">

@@ -3,6 +3,7 @@
 #include <QComboBox>
 #include <QWidget>
 #include <QString>
+#include <QIcon>
 
 
 class QComboBoxGitStatusFiles : public QComboBox
@@ -33,4 +34,6 @@ private Q_SLOTS:
 
 private:
     QString m_text;
+    QIcon m_iconChecked;
+    QIcon m_iconUnchecked;
 };
