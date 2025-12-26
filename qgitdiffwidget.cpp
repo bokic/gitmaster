@@ -241,6 +241,25 @@ void QGitDiffWidget::paintEvent(QPaintEvent *event)
         {
             painter.fillRect(file.rect, QColor(220,220,220));
 
+            if (m_hoverLine == -1)
+            {
+                hunkIndex = 0;
+                for(const auto &hunk: file.hunks)
+                {
+                    if ((fileIndex == m_hoverFile)&&(hunkIndex == m_hoverHunk))
+                    {
+                        QStyleOptionFocusRect option;
+                        option.initFrom(this);
+                        option.rect = hunk.rect.adjusted(0, 0, 0, -1);
+                        painter.setBrush(Qt::NoBrush);
+                        painter.fillRect(option.rect, QColor(192,192,192));
+                    }
+
+                    hunkIndex++;
+                }
+            }
+
+            painter.setPen(Qt::black);
             painter.drawText(file.rect.left() + 10, file.rect.top() + 20, file.new_file.path());
 
             hunkIndex = 0;
@@ -283,9 +302,11 @@ void QGitDiffWidget::paintEvent(QPaintEvent *event)
                             {
                                 QStyleOptionFocusRect option;
                                 option.initFrom(this);
-                                option.rect = line.rect.adjusted(100 - contentsMargins().left(), 0, 0, 0);
+                                option.rect = line.rect.adjusted(100 - contentsMargins().left(), 0, -1, -1);
+                                painter.setPen(Qt::SolidLine);
                                 painter.setBrush(Qt::NoBrush);
-                                painter.drawPrimitive(QStyle::PE_FrameFocusRect, option);
+                                painter.drawRect(option.rect);
+                                //painter.drawPrimitive(QStyle::PE_FrameFocusRect, option);
                             }
                         }
 
@@ -296,9 +317,11 @@ void QGitDiffWidget::paintEvent(QPaintEvent *event)
                     {
                         QStyleOptionFocusRect option;
                         option.initFrom(this);
-                        option.rect = hunk.rect;
+                        option.rect = hunk.rect.adjusted(0, 0, -1, -1);
+                        painter.setPen(Qt::SolidLine);
                         painter.setBrush(Qt::NoBrush);
-                        painter.drawPrimitive(QStyle::PE_FrameFocusRect, option);
+                        painter.drawRect(option.rect);
+                        //painter.drawPrimitive(QStyle::PE_FrameFocusRect, option);
                     }
                 }
 
@@ -324,7 +347,7 @@ void QGitDiffWidget::mousePressEvent(QMouseEvent *event)
         const auto &file = m_private->files.at(m_hoverFile);
         const auto &hunk = file.hunks.at(m_hoverHunk);
 
-        if (m_hoverLine < 0)
+        /*if (m_hoverLine < 0)
         {
             int delta = 0;
 
@@ -358,7 +381,7 @@ void QGitDiffWidget::mousePressEvent(QMouseEvent *event)
                 }
             }
         }
-        else
+        else*/
         {
             int last_oldLineNo = 0;
 
@@ -400,6 +423,18 @@ void QGitDiffWidget::mousePressEvent(QMouseEvent *event)
 
 void QGitDiffWidget::mouseMoveEvent(QMouseEvent *event)
 {
+    QWidget::mouseMoveEvent(event);
+
+    updatePosition();
+}
+
+void QGitDiffWidget::moveEvent(QMoveEvent *event)
+{
+    updatePosition();
+}
+
+void QGitDiffWidget::updatePosition()
+{
     int l_hoverFile = -1;
     int l_hoverHunk = -1;
     int l_hoverLine = -1;
@@ -407,28 +442,30 @@ void QGitDiffWidget::mouseMoveEvent(QMouseEvent *event)
     if (m_readonly)
         return;
 
+    QPoint point = this->mapFromGlobal(QCursor::pos());
+
     int file_index = 0;
     const auto &files = m_private->files;
 
     for(const auto &file : files)
     {
-        if (file.rect.contains(event->position().toPoint()))
+        if (file.rect.contains(point))
         {
             l_hoverFile = file_index;
 
             int hunk_index = 0;
             for(const auto &hunk : file.hunks)
             {
-                if (hunk.rect.contains(event->position().toPoint()))
+                if (hunk.rect.contains(point))
                 {
                     l_hoverHunk = hunk_index;
 
-                    if (event->position().x() >= 100) // TODO Unhardcode magic number 100
+                    if (point.x() >= 100) // TODO Unhardcode magic number 100
                     {
                         int line_index = 0;
                         for(const auto &line : hunk.lines)
                         {
-                            if (line.rect.contains(event->position().toPoint()))
+                            if (line.rect.contains(point))
                             {
                                 if ((line.origin == '-')||(line.origin == '+'))
                                 {
