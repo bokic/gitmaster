@@ -24,6 +24,7 @@
     </qresource>
     <qresource prefix="/QCustomComboBox">
         <file alias="check">images/combobox/check.svg</file>
+        <file alias="uncheck">images/combobox/uncheck.svg</file>
     </qresource>
     <qresource prefix="/QComboBoxGitDiffOptions">
         <file alias="gear">images/combobox/gear.svg</file>
