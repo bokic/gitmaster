@@ -17,6 +17,8 @@ OutputDir=.
 VersionInfoVersion={#AppVer}
 VersionInfoDescription={#ReadIni(SourcePath + "installer.ini", "installer", "description")}
 
+[Icons]
+Name: "{group}\Git Master"; Filename: "{app}\gitmaster.exe"; WorkingDir: "{app}"
 
 [Dirs]
 Name: "{app}";
