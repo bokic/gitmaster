@@ -335,53 +335,55 @@ void QGitDiffWidget::paintEvent(QPaintEvent *event)
 
 void QGitDiffWidget::mousePressEvent(QMouseEvent *event)
 {
-    if (event->buttons() != Qt::LeftButton)
+    if ((m_readonly)||(event->buttons() != Qt::LeftButton))
     {
         return;
     }
 
-    if ((!m_readonly)&&(m_hoverFile >= 0)&&(m_hoverHunk >= 0))
+    if ((m_hoverFile >= 0)&&(m_hoverHunk >= 0))
     {
         QVector<QGitDiffWidgetLine> lines;
 
         const auto &file = m_private->files.at(m_hoverFile);
         const auto &hunk = file.hunks.at(m_hoverHunk);
 
-        /*if (m_hoverLine < 0)
+        if (m_hoverLine < 0)
         {
             int delta = 0;
+            int balance = 0;
+            int block_balance = 0;
 
             for(const auto &line: hunk.lines)
             {
                 QGitDiffWidgetLine newLine;
+                newLine.origin = line.origin;
 
                 if (line.origin == ' ')
                 {
                     delta = line.new_lineno - line.old_lineno;
+                    block_balance = balance;
                 }
-                else if (line.origin == '+')
+                else if (line.origin == '+') // Done!
                 {
                     newLine.content = line.content;
-                    newLine.new_lineno = line.new_lineno - delta;
+                    newLine.new_lineno = line.new_lineno - delta + block_balance;
                     newLine.old_lineno = -1;
 
-                    newLine.origin = line.origin;
-
                     lines.push_back(newLine);
+                    balance++;
                 }
                 else if (line.origin == '-')
                 {
                     newLine.content = line.content;
                     newLine.new_lineno = -1;
-                    newLine.old_lineno = line.old_lineno;
-
-                    newLine.origin = line.origin;
+                    newLine.old_lineno = line.old_lineno - delta + block_balance;
 
                     lines.push_back(newLine);
+                    balance--;
                 }
             }
         }
-        else*/
+        else
         {
             int last_oldLineNo = 0;
 
