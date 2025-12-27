@@ -24,10 +24,10 @@
       </widget>
      </item>
      <item row="0" column="1" colspan="2">
-      <widget class="QComboBox" name="comboBox"/>
+      <widget class="QComboBox" name="remote_comboBox"/>
      </item>
      <item row="1" column="1" colspan="2">
-      <widget class="QLineEdit" name="lineEdit"/>
+      <widget class="QLineEdit" name="url_lineEdit"/>
      </item>
      <item row="2" column="0">
       <widget class="QLabel" name="label_2">
@@ -37,7 +37,7 @@
       </widget>
      </item>
      <item row="2" column="1">
-      <widget class="QComboBox" name="comboBox_2"/>
+      <widget class="QComboBox" name="branch_comboBox"/>
      </item>
      <item row="2" column="2">
       <widget class="QPushButton" name="pushButton">
@@ -69,28 +69,28 @@
      </property>
      <layout class="QVBoxLayout" name="verticalLayout_2">
       <item>
-       <widget class="QCheckBox" name="checkBox">
+       <widget class="QCheckBox" name="commit_merged_checkBox">
         <property name="text">
          <string>Commit merged changes immediately</string>
         </property>
        </widget>
       </item>
       <item>
-       <widget class="QCheckBox" name="checkBox_2">
+       <widget class="QCheckBox" name="include_messages_checkBox">
         <property name="text">
          <string>Include messages from commits being merged in merge commit</string>
         </property>
        </widget>
       </item>
       <item>
-       <widget class="QCheckBox" name="checkBox_3">
+       <widget class="QCheckBox" name="create_new_commit_checkBox">
         <property name="text">
          <string>Create a new commit even if fast-forward possible</string>
         </property>
        </widget>
       </item>
       <item>
-       <widget class="QCheckBox" name="checkBox_4">
+       <widget class="QCheckBox" name="rebase_checkBox">
         <property name="text">
          <string>Rebase instead of merge (WARNING: make sure you haven't pushed your changes)</string>
         </property>

@@ -11,7 +11,14 @@ QGitPushDialog::QGitPushDialog(QGitRepository *parent)
     QGit *git = static_cast<QGitRepository *>(parent)->git();
 
     auto remotes = git->remotes();
-    ui->remote_comboBox->addItems(remotes);
+    for(const auto &remote: std::as_const(remotes))
+    {
+        const auto name = remote.name;
+        const auto url = remote.url;
+
+        ui->remote_comboBox->addItem(name, url);
+    }
+    ui->remote_comboBox->addItem(tr("custom"));
 
     ui->branches_tableWidget->setColumnCount(1);
 
@@ -106,5 +113,26 @@ void QGitPushDialog::on_selectAllBranches_checkBox_checkStateChanged(const Qt::C
         m_savedBranches.clear();
 
         ui->branches_tableWidget->setEnabled(true);
+    }
+}
+
+void QGitPushDialog::on_remote_comboBox_currentIndexChanged(int index)
+{
+    QString url;
+
+    if (index >= 0)
+    {
+        url = ui->remote_comboBox->itemData(index).toString();
+        ui->url_lineEdit->setText(url);
+    }
+
+    if (!url.isEmpty())
+    {
+        ui->url_lineEdit->setEnabled(false);
+    }
+    else
+    {
+        ui->url_lineEdit->setEnabled(true);
+        ui->url_lineEdit->setFocus();
     }
 }

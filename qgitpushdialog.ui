@@ -30,7 +30,7 @@
       <widget class="QComboBox" name="remote_comboBox"/>
      </item>
      <item>
-      <widget class="QLineEdit" name="lineEdit"/>
+      <widget class="QLineEdit" name="url_lineEdit"/>
      </item>
     </layout>
    </item>

@@ -1,6 +1,5 @@
 #pragma once
 
-
 #include "qgitrepository.h"
 
 #include <QStringList>
@@ -27,6 +26,7 @@ public:
 
 private slots:
     void on_selectAllBranches_checkBox_checkStateChanged(const Qt::CheckState &value);
+    void on_remote_comboBox_currentIndexChanged(int index);
 
 private:
     Ui::QGitPushDialog *ui = nullptr;
