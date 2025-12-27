@@ -344,7 +344,18 @@ void QGitDiffWidget::mousePressEvent(QMouseEvent *event)
     {
         QVector<QGitDiffWidgetLine> lines;
 
+        if (m_hoverFile >= m_private->files.count())
+        {
+            return;
+        }
+
         const auto &file = m_private->files.at(m_hoverFile);
+
+        if (m_hoverHunk >= file.hunks.count())
+        {
+            return;
+        }
+
         const auto &hunk = file.hunks.at(m_hoverHunk);
 
         if (m_hoverLine < 0)
