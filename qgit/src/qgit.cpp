@@ -812,22 +812,22 @@ void QGit::commitDiffContent(QString first, QString second, QList<QString> files
 
         if (!first.isEmpty())
         {
-            git_object *first_obj = nullptr;
-            res = git_revparse_single(&first_obj, repo, first.toUtf8());
+            GitObject first_obj;
+            res = git_revparse_single(first_obj, repo, first.toUtf8());
             if (res)
             {
                 throw QGitError("git_revparse_single(first)", res);
             }
 
-            git_commit *first_commit = nullptr;
-            res = git_commit_lookup(&first_commit, repo, git_object_id(first_obj));
+            GitCommit first_commit;
+            res = git_commit_lookup(first_commit, repo, git_object_id(first_obj));
             if (res)
             {
                 throw QGitError("git_commit_lookup(first)", res);
             }
 
-            git_tree *first_tree = nullptr;
-            res = git_commit_tree(&first_tree, first_commit);
+            GitTree first_tree;
+            res = git_commit_tree(first_tree, first_commit);
             if (res)
             {
                 throw QGitError("git_commit_tree(first)", res);
@@ -862,8 +862,8 @@ void QGit::commitDiffContent(QString first, QString second, QList<QString> files
                 throw QGitError("git_revparse_single(staged)", res);
             }
 
-            git_tree *first_tree = nullptr;
-            res = git_tree_lookup(&first_tree, repo, git_object_id(first_obj));
+            GitTree first_tree;
+            res = git_tree_lookup(first_tree, repo, git_object_id(first_obj));
             if (res)
             {
                 throw QGitError("git_tree_lookup(staged)", res);
@@ -907,15 +907,15 @@ void QGit::commitDiffContent(QString first, QString second, QList<QString> files
                 throw QGitError("git_revparse_single(second)", res);
             }
 
-            git_commit *second_commit = nullptr;
-            res = git_commit_lookup(&second_commit, repo, git_object_id(second_obj));
+            GitCommit second_commit;
+            res = git_commit_lookup(second_commit, repo, git_object_id(second_obj));
             if (res)
             {
                 throw QGitError("git_commit_lookup(second)", res);
             }
 
-            git_tree *second_tree = nullptr;
-            res = git_commit_tree(&second_tree, second_commit);
+            GitTree second_tree;
+            res = git_commit_tree(second_tree, second_commit);
             if (res)
             {
                 throw QGitError("git_commit_tree(second)", res);
@@ -1562,7 +1562,7 @@ void QGit::fetch(bool fetchFromAllRemotes, bool purgeDeletedBranches, bool fetch
                 }
             }
 
-            if (selected.isEmpty() && remotes.value.count > 0)
+            if ((selected.isEmpty())&&(remotes.value.count > 0))
             {
                 selected = QByteArray(remotes.value.strings[0]);
             }

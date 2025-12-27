@@ -368,6 +368,9 @@ void QGitMasterMainWindow::on_tabWidget_tabCloseRequested(int index)
 
 void QGitMasterMainWindow::on_tabWidget_currentChanged(int index)
 {
+    // BUG: Sometimes sends Qt signal with intex=-1 even when no page has been changed.
+    index = ui->tabWidget->currentIndex();
+
     if (index >= 0)
     {
         auto panel = dynamic_cast<QGitRepository *>(ui->tabWidget->currentWidget());
