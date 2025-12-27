@@ -132,6 +132,7 @@ QGitRepository::QGitRepository(const QString &path, QWidget *parent)
     connect(this, &QGitRepository::unstageFileLines, m_git, &QGit::unstageFileLines);
 
     connect(ui->logHistory_commits->verticalScrollBar(), &QScrollBar::sliderMoved, this, &QGitRepository::historyTableSliderMoved);
+    connect(ui->plainTextEdit_commitMessage, &QAdvPlainTextEdit::abort, ui->pushButton_commitCancel, &QPushButton::click);
 
     m_thread.setObjectName("QGit(repo)");
     m_thread.start();

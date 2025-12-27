@@ -10,10 +10,12 @@ public:
     ~QAdvPlainTextEdit() = default;
 
 signals:
+    void abort();
     void focus();
 
 public slots:
 
 protected:
+    void keyPressEvent(QKeyEvent *event) override;
     void focusInEvent(QFocusEvent *event) override;
 };
