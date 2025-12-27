@@ -14,6 +14,7 @@
 #include <QDir>
 #include <QUrl>
 
+
 class QGitDiffWidgetLine
 {
 public:
@@ -21,6 +22,13 @@ public:
     int new_lineno = 0;
     int old_lineno = 0;
     char origin = '\0';
+};
+
+class QGitRemote
+{
+public:
+    QString name;
+    QString url;
 };
 
 class QGit : public QObject
@@ -55,7 +63,7 @@ public:
 
     bool setPath(const QDir &path);
     QDir path();
-    QList<QString> remotes() const;
+    QList<QGitRemote> remotes() const;
     QString localBranch() const;
     QList<QString> localBranches() const;
 

@@ -159,9 +159,9 @@ QDir QGit::path()
     return m_path;
 }
 
-QList<QString> QGit::remotes() const
+QList<QGitRemote> QGit::remotes() const
 {
-    QList<QString> ret;
+    QList<QGitRemote> ret;
 
     GitRepository repo;
     int res = git_repository_open(repo, m_path.absolutePath().toUtf8().constData());
@@ -175,7 +175,23 @@ QList<QString> QGit::remotes() const
 
     for(size_t c = 0; c < remotes.value.count; c++)
     {
-        ret.append(remotes.value.strings[c]);
+        GitRemote remote;
+
+        const char *remote_name = remotes.value.strings[c];
+
+        if (git_remote_lookup(remote, repo, remote_name) < 0)
+        {
+            continue;
+        }
+
+        QGitRemote item;
+
+        const char *remote_url = git_remote_url(remote);
+
+        item.name = QString::fromUtf8(remote_name);
+        item.url = QString::fromUtf8(remote_url);
+
+        ret.append(item);
     }
 
     return ret;
