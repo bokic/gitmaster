@@ -29,6 +29,7 @@ set(PROJECT_HEADERS
     qgitpushdialog.h
     qgitpulldialog.h
     qgitfetchdialog.h
+    qgitbranchdialog.h
 
     qgitrepotreeitemdelegate.h
     qgitrepotreewidget.h
@@ -66,6 +67,7 @@ set(PROJECT_SOURCES
     qgitpushdialog.cpp            qgitpushdialog.ui
     qgitpulldialog.cpp            qgitpulldialog.ui
     qgitfetchdialog.cpp           qgitfetchdialog.ui
+    qgitbranchdialog.cpp          qgitbranchdialog.ui
 
     qgitrepotreeitemdelegate.cpp
     qgitrepotreewidget.cpp

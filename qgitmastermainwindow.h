@@ -43,6 +43,7 @@ private slots:
     void on_tabWidget_tabCloseRequested(int index);
     void on_tabWidget_currentChanged(int index);
     void on_actionStash_triggered();
+    void on_actionBranch_triggered();
 
 private:
     void readSettings();

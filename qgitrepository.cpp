@@ -5,6 +5,7 @@
 #include "qgitfetchdialog.h"
 #include "qgitpulldialog.h"
 #include "qgitpushdialog.h"
+#include "qgitbranchdialog.h"
 
 #include <QCryptographicHash>
 #include <QTableWidgetItem>
@@ -164,6 +165,15 @@ void QGitRepository::refreshData()
 void QGitRepository::stash(const QString &name)
 {
     m_git->stashSave(name);
+}
+
+void QGitRepository::branchDialog()
+{
+    QGitBranchDialog dlg(this);
+
+    if (dlg.exec() == QDialog::Accepted)
+    {
+    }
 }
 
 void QGitRepository::commit()

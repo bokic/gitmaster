@@ -22,6 +22,7 @@ public:
     ~QGitRepository();
     void refreshData();
     void stash(const QString &name);
+    void branchDialog();
     void commit();
     void fetch();
     void pull();

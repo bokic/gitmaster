@@ -435,3 +435,11 @@ void QGitMasterMainWindow::on_actionStash_triggered()
         settings.setValue("theme", name);
     }
 }*/
+
+void QGitMasterMainWindow::on_actionBranch_triggered()
+{
+    auto widget = dynamic_cast<QGitRepository *>(ui->tabWidget->currentWidget());
+    if (widget) {
+        widget->branchDialog();
+    }
+}
