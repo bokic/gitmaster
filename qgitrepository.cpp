@@ -874,48 +874,14 @@ void QGitRepository::historyTableSliderMoved(int pos)
 
 void QGitRepository::selectedLines(QString filename, QVector<QGitDiffWidgetLine> lines)
 {
+    if (lines.isEmpty())
+    {
+        return;
+    }
+
     if (m_stageingFiles)
     {
-        QVector<QGitDiffWidgetLine> stagedLines;
-
-        int delta = 0;
-        int balance = 0;
-        int block_balance = 0;
-
-        for(const auto &line: lines)
-        {
-            QGitDiffWidgetLine newLine;
-            newLine.origin = line.origin;
-
-            if (line.origin == ' ')
-            {
-                delta = line.new_lineno - line.old_lineno;
-                block_balance = balance;
-            }
-            else if (line.origin == '+')
-            {
-                newLine.content = line.content;
-                newLine.new_lineno = line.new_lineno - delta + block_balance;
-                newLine.old_lineno = -1;
-
-                stagedLines.push_back(newLine);
-                balance++;
-            }
-            else if (line.origin == '-')
-            {
-                newLine.content = line.content;
-                newLine.new_lineno = -1;
-                newLine.old_lineno = line.old_lineno - delta + block_balance;
-
-                stagedLines.push_back(newLine);
-                balance--;
-            }
-        }
-
-        if (stagedLines.length() > 0)
-        {
-            emit stageFileLines(filename, stagedLines);
-        }
+        emit stageFileLines(filename, lines);
     }
     else
     {

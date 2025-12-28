@@ -1150,33 +1150,36 @@ void QGit::stageFileLines(QString filename, QVector<QGitDiffWidgetLine> lines)
         QByteArray buffer = QByteArray(blob_content, blob_size);
         auto bufferLines = buffer.split(LINE_END);
         int deltaLine = 0;
+        int added = 0;
+
+        if (lines.first().origin == ' ')
+        {
+            deltaLine = lines.first().new_lineno - lines.first().old_lineno;
+        }
 
         for(const auto &line: lines)
         {
             QByteArray content;
 
-            if (line.origin == ' ')
+            switch (line.origin)
             {
-                deltaLine = 0;
+            case ' ':
                 continue;
-            }
-
-            switch(line.origin)
-            {
             case '-':
-                bufferLines.removeAt(line.old_lineno + deltaLine - 1);
-                deltaLine--;
+                bufferLines.removeAt(line.old_lineno + added - 1);
+                added--;
                 break;
             case '+':
                 content = line.content;
                 content = content.left(content.length() - 1);
-                bufferLines.insert(line.new_lineno - 1, content);
-                deltaLine++;
+                bufferLines.insert(line.new_lineno - deltaLine - 1, content);
+                added++;
                 break;
             default:
                 throw QGitError("Unknown operation", 0);
             }
         }
+
         buffer = bufferLines.join(LINE_END);
 
         res = git_index_add_from_buffer(index, entry, buffer.constData(), buffer.length());
