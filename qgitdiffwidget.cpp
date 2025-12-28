@@ -232,8 +232,6 @@ void QGitDiffWidget::paintEvent(QPaintEvent *event)
     QStylePainter painter(this);
     int fileIndex = 0, hunkIndex = 0, lineIndex = 0;
 
-    fileIndex = 0;
-
     const auto &files = m_private->files;
     for(const auto &file: files)
     {
@@ -335,102 +333,88 @@ void QGitDiffWidget::paintEvent(QPaintEvent *event)
 
 void QGitDiffWidget::mousePressEvent(QMouseEvent *event)
 {
+    QVector<QGitDiffWidgetLine> lines;
+
     if ((m_readonly)||(event->buttons() != Qt::LeftButton))
     {
         return;
     }
 
-    if ((m_hoverFile >= 0)&&(m_hoverHunk >= 0))
+    if ((m_hoverFile < 0)||(m_hoverHunk < 0))
     {
-        QVector<QGitDiffWidgetLine> lines;
+        return;
+    }
 
-        if (m_hoverFile >= m_private->files.count())
+
+    if (m_hoverFile >= m_private->files.count())
+    {
+        return;
+    }
+
+    const auto &file = m_private->files.at(m_hoverFile);
+    if (m_hoverHunk >= file.hunks.count())
+    {
+        return;
+    }
+
+    const auto &hunk = file.hunks.at(m_hoverHunk);
+
+    if (m_hoverLine < 0)
+    {
+        for(const auto &line: hunk.lines)
         {
-            return;
+            QGitDiffWidgetLine newLine;
+
+            newLine.content = line.content;
+            newLine.new_lineno = line.new_lineno;
+            newLine.old_lineno = line.old_lineno;
+            newLine.origin = line.origin;
+
+            lines.push_back(newLine);
         }
+    }
+    else
+    {
+        int old_line_no = 0;
 
-        const auto &file = m_private->files.at(m_hoverFile);
-
-        if (m_hoverHunk >= file.hunks.count())
+        for(int c = 0; c <= m_hoverLine; c++)
         {
-            return;
-        }
+            const auto &line = hunk.lines.at(c);
 
-        const auto &hunk = file.hunks.at(m_hoverHunk);
+            if ((c < m_hoverLine)&&((line.origin == ' ')||(line.origin == '-')))
+            {
+                old_line_no = line.old_lineno;
+            }
 
-        if (m_hoverLine < 0)
-        {
-            int delta = 0;
-            int balance = 0;
-            int block_balance = 0;
-
-            for(const auto &line: hunk.lines)
+            if (c == m_hoverLine)
             {
                 QGitDiffWidgetLine newLine;
-                newLine.origin = line.origin;
 
-                if (line.origin == ' ')
-                {
-                    delta = line.new_lineno - line.old_lineno;
-                    block_balance = balance;
-                }
-                else if (line.origin == '+') // Done!
+                if (line.origin == '+')
                 {
                     newLine.content = line.content;
-                    newLine.new_lineno = line.new_lineno - delta + block_balance;
+                    newLine.new_lineno = old_line_no + 1;
                     newLine.old_lineno = -1;
+                    newLine.origin = line.origin;
 
                     lines.push_back(newLine);
-                    balance++;
                 }
                 else if (line.origin == '-')
                 {
                     newLine.content = line.content;
                     newLine.new_lineno = -1;
-                    newLine.old_lineno = line.old_lineno - delta + block_balance;
+                    newLine.old_lineno = line.old_lineno;
+                    newLine.origin = line.origin;
 
                     lines.push_back(newLine);
-                    balance--;
                 }
             }
         }
-        else
-        {
-            int last_oldLineNo = 0;
+    }
 
-            for(int c = 0; c < m_hoverLine; c++)
-            {
-                const auto &line = hunk.lines.at(c);
-
-                if (line.origin == ' ')
-                {
-                    last_oldLineNo = line.old_lineno;
-                }
-            }
-
-            const auto &line = hunk.lines.at(m_hoverLine);
-            QGitDiffWidgetLine newLine;
-            newLine.content = line.content;
-            newLine.origin = line.origin;
-
-            if (newLine.origin == '+')
-            {
-                newLine.new_lineno = last_oldLineNo + 1;
-                newLine.old_lineno = -1;
-            }
-            else
-            {
-                newLine.new_lineno = -1;
-                newLine.old_lineno = line.old_lineno;
-            }
-
-            lines.push_back(newLine);
-        }
-
-        if (!lines.isEmpty())
-        {
-            emit select(file.new_file.path(), lines);
-        }
+    if (!lines.isEmpty())
+    {
+        emit select(file.new_file.path(), lines);
     }
 }
 
