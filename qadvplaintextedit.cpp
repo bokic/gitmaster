@@ -12,6 +12,8 @@ void QAdvPlainTextEdit::keyPressEvent(QKeyEvent *event)
     {
         emit abort();
     }
+
+    QPlainTextEdit::keyPressEvent(event);
 }
 
 void QAdvPlainTextEdit::focusInEvent(QFocusEvent *event)
