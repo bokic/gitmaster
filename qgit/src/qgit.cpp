@@ -1202,8 +1202,6 @@ void QGit::stageFileLines(QString filename, QVector<QGitDiffWidgetLine> lines)
 
 void QGit::unstageFileLines(QString filename, QVector<QGitDiffWidgetLine> lines)
 {
-    QByteArray buffer;
-
     QGitError error;
 
     try
@@ -1227,8 +1225,7 @@ void QGit::unstageFileLines(QString filename, QVector<QGitDiffWidgetLine> lines)
             throw QGitError("git_repository_index", res);
         }
 
-        const git_index_entry *entry = nullptr;
-        entry = git_index_get_bypath(index, filename.toUtf8().constData(), GIT_INDEX_STAGE_NORMAL);
+        const git_index_entry *entry = git_index_get_bypath(index, filename.toUtf8().constData(), GIT_INDEX_STAGE_NORMAL);
         if (entry == nullptr)
         {
             throw QGitError("git_index_get_bypath", res);
@@ -1243,31 +1240,33 @@ void QGit::unstageFileLines(QString filename, QVector<QGitDiffWidgetLine> lines)
 
         const char *blob_content = static_cast<const char *>(git_blob_rawcontent(blob));
         git_off_t blob_size = git_blob_rawsize(blob);
-        buffer = QByteArray(blob_content, blob_size);
+        QByteArray buffer = QByteArray(blob_content, blob_size);
         auto bufferLines = buffer.split(LINE_END);
         int deltaLine = 0;
+        int added = 0;
+
+        if (lines.first().origin == ' ')
+        {
+            deltaLine = lines.first().new_lineno - lines.first().old_lineno;
+        }
 
         for(const auto &line: lines)
         {
             QByteArray content;
 
-            if (line.origin == ' ')
-            {
-                deltaLine = 0;
-                continue;
-            }
-
             switch(line.origin)
             {
+            case ' ':
+                continue;
             case '+':
-                bufferLines.removeAt(line.new_lineno + deltaLine - 1);
-                deltaLine--;
+                bufferLines.removeAt(line.new_lineno + added - 1);
+                added--;
                 break;
             case '-':
                 content = line.content;
                 content = content.left(content.length() - 1);
                 bufferLines.insert(line.old_lineno + deltaLine - 1, content);
-                deltaLine++;
+                added++;
                 break;
             default:
                 throw QGitError("Unknown operation", 0);
@@ -1307,7 +1306,7 @@ void QGit::commit(QString message, bool withPush)
             throw QGitError("git_repository_open", res);
         }
 
-        /// Check if somthing is staged
+        /// Check if something is staged
         GitTree tree;
         GitObject git_obj;
         res = git_revparse_single(git_obj, repo, "HEAD^{tree}");
