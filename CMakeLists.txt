@@ -143,11 +143,13 @@ IF (WIN32)
     )
 ENDIF()
 
+IF (NOT MSVC)
 add_custom_command(TARGET gitmaster POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_if_different
     ${CMAKE_BINARY_DIR}/compile_commands.json
     ${CMAKE_SOURCE_DIR}/compile_commands.json
 )
+ENDIF()
 
 set_target_properties(gitmaster PROPERTIES
     MACOSX_BUNDLE_GUI_IDENTIFIER my.example.com
