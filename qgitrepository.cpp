@@ -173,6 +173,14 @@ void QGitRepository::branchDialog()
 
     if (dlg.exec() == QDialog::Accepted)
     {
+        if (dlg.operation() == QGitBranchDialog::NewBranchOperation)
+        {
+            auto branchName = dlg.newBranchName();
+            auto commitId = dlg.newBranchCommitId();
+            auto checkout = dlg.newBranchCheckout();
+            m_git->createLocalBranch(branchName, commitId, checkout);
+            emit repositoryBranches();
+        }
     }
 }
 

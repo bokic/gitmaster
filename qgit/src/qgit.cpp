@@ -262,6 +262,26 @@ QList<QString> QGit::localBranches() const
     return ret;
 }
 
+bool QGit::hasCommitId(const QString &commitId) const
+{
+    GitRepository repo;
+    GitObject obj;
+
+    int res = git_repository_open(repo, m_path.absolutePath().toUtf8().constData());
+    if (res)
+    {
+        return false;
+    }
+
+    res = git_revparse_single(obj, repo, commitId.toUtf8().constData());
+    if (res)
+    {
+        return false;
+    }
+
+    return true;
+}
+
 QString QGit::getBranchNameFromPath(const QString &path)
 {
     QString ret;
@@ -363,6 +383,85 @@ void QGit::currentBranch()
     }
 
     emit currentBranchReply(name, error);
+}
+
+void QGit::createLocalBranch(const QString &name, const QString &commit_id, bool checkout, bool force)
+{
+    GitRepository repo;
+    GitReference branch;
+    GitObject target_obj;
+    GitCommit commit_obj;
+    git_oid oid;
+
+    int res = git_repository_init(repo, m_path.absolutePath().toUtf8().constData(), 0);
+    if(res)
+    {
+        throw QGitError("git_repository_init", res);
+    }
+
+    if (commit_id.isEmpty())
+    {
+
+        res = git_reference_name_to_id(&oid, repo, "HEAD");
+        if(res)
+        {
+            throw QGitError("git_reference_name_to_id", res);
+        }
+    }
+    else
+    {
+        res = git_oid_fromstr(&oid, commit_id.toUtf8().constData());
+        if(res)
+        {
+            throw QGitError("git_oid_fromstr", res);
+        }
+
+        res = git_commit_lookup(commit_obj, repo, &oid);
+        if(res)
+        {
+            throw QGitError("git_commit_lookup", res);
+        }
+    }
+
+    res = git_commit_lookup(commit_obj, repo, &oid);
+    if(res)
+    {
+        throw QGitError("git_commit_lookup", res);
+    }
+
+    res = git_branch_create(branch, repo, name.toUtf8().constData(), commit_obj, force);
+    if(res)
+    {
+        throw QGitError("git_branch_create", res);
+    }
+
+    if (checkout)
+    {
+        GitObject treeish;
+        git_checkout_options opts = GIT_CHECKOUT_OPTIONS_INIT;
+
+        opts.checkout_strategy = GIT_CHECKOUT_SAFE;
+
+        QString refName = "refs/heads/" + name;
+
+        res = git_revparse_single(treeish, repo, refName.toUtf8().constData());
+        if(res)
+        {
+            throw QGitError("git_revparse_single", res);
+        }
+
+        res = git_checkout_tree(repo, treeish, &opts);
+        if(res)
+        {
+            throw QGitError("git_checkout_tree", res);
+        }
+
+        res = git_repository_set_head(repo, refName.toUtf8().constData());
+        if(res)
+        {
+            throw QGitError("git_repository_set_head", res);
+        }
+    }
 }
 
 void QGit::init()

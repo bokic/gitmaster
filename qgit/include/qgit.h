@@ -66,6 +66,7 @@ public:
     QList<QGitRemote> remotes() const;
     QString localBranch() const;
     QList<QString> localBranches() const;
+    bool hasCommitId(const QString &commitId) const;
 
     static QString getBranchNameFromPath(const QString &path);
     static int createLocalRepository(const QDir &path);
@@ -76,6 +77,7 @@ public slots:
     void init();
     void signature();
     void currentBranch();
+    void createLocalBranch(const QString &name, const QString &commit_id  = "", bool checkout = false, bool force = false);
     void status();
     void listBranchesAndTags();
     void listStashes();

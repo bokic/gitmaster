@@ -85,7 +85,7 @@
         </widget>
        </item>
        <item row="1" column="1" colspan="2">
-        <widget class="QLineEdit" name="lineEdit"/>
+        <widget class="QLineEdit" name="newBranch_lineEdit"/>
        </item>
        <item row="2" column="1" colspan="2">
         <widget class="QLabel" name="label_2">
@@ -102,21 +102,24 @@
         </widget>
        </item>
        <item row="3" column="1">
-        <widget class="QRadioButton" name="radioButton">
+        <widget class="QRadioButton" name="workingCopy_radioButton">
          <property name="text">
           <string>Working copy parent</string>
+         </property>
+         <property name="checked">
+          <bool>true</bool>
          </property>
         </widget>
        </item>
        <item row="4" column="1">
-        <widget class="QRadioButton" name="radioButton_2">
+        <widget class="QRadioButton" name="specifiedCommit_radioButton">
          <property name="text">
           <string>Specified commit</string>
          </property>
         </widget>
        </item>
        <item row="5" column="1">
-        <widget class="QLineEdit" name="lineEdit_2"/>
+        <widget class="QLineEdit" name="newBranchCommitId_lineEdit"/>
        </item>
        <item row="5" column="2">
         <widget class="QPushButton" name="pushButton">
@@ -126,9 +129,12 @@
         </widget>
        </item>
        <item row="6" column="1" colspan="2">
-        <widget class="QCheckBox" name="checkBox">
+        <widget class="QCheckBox" name="newBranchCheckout_checkBox">
          <property name="text">
           <string>Checkout new branch</string>
+         </property>
+         <property name="checked">
+          <bool>true</bool>
          </property>
         </widget>
        </item>
@@ -168,7 +174,10 @@
           </widget>
          </item>
          <item>
-          <widget class="QPushButton" name="pushButton_2">
+          <widget class="QPushButton" name="createBranch_pushButton">
+           <property name="enabled">
+            <bool>false</bool>
+           </property>
            <property name="styleSheet">
             <string notr="true">background: green</string>
            </property>
@@ -224,6 +233,9 @@
          </item>
          <item>
           <widget class="QPushButton" name="pushButton_4">
+           <property name="enabled">
+            <bool>false</bool>
+           </property>
            <property name="styleSheet">
             <string notr="true">background: red</string>
            </property>
@@ -253,6 +265,87 @@
    </item>
   </layout>
  </widget>
+ <tabstops>
+  <tabstop>newBranch_pushButton</tabstop>
+  <tabstop>deleteBranch_pushButton</tabstop>
+  <tabstop>newBranch_lineEdit</tabstop>
+  <tabstop>workingCopy_radioButton</tabstop>
+  <tabstop>specifiedCommit_radioButton</tabstop>
+  <tabstop>newBranchCommitId_lineEdit</tabstop>
+  <tabstop>pushButton</tabstop>
+  <tabstop>newBranchCheckout_checkBox</tabstop>
+  <tabstop>pushButton_3</tabstop>
+  <tabstop>createBranch_pushButton</tabstop>
+  <tabstop>tableView</tabstop>
+  <tabstop>checkBox_2</tabstop>
+  <tabstop>pushButton_5</tabstop>
+  <tabstop>pushButton_4</tabstop>
+ </tabstops>
  <resources/>
- <connections/>
+ <connections>
+  <connection>
+   <sender>pushButton_3</sender>
+   <signal>clicked()</signal>
+   <receiver>QGitBranchDialog</receiver>
+   <slot>reject()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>417</x>
+     <y>509</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>390</x>
+     <y>534</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>createBranch_pushButton</sender>
+   <signal>clicked()</signal>
+   <receiver>QGitBranchDialog</receiver>
+   <slot>accept()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>524</x>
+     <y>501</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>589</x>
+     <y>508</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>pushButton_5</sender>
+   <signal>clicked()</signal>
+   <receiver>QGitBranchDialog</receiver>
+   <slot>reject()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>403</x>
+     <y>504</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>439</x>
+     <y>532</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>pushButton_4</sender>
+   <signal>clicked()</signal>
+   <receiver>QGitBranchDialog</receiver>
+   <slot>accept()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>556</x>
+     <y>505</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>563</x>
+     <y>530</y>
+    </hint>
+   </hints>
+  </connection>
+ </connections>
 </ui>
