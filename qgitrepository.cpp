@@ -89,8 +89,8 @@ QGitRepository::QGitRepository(const QString &path, QWidget *parent)
     //ui->pushButton_commit->setVisible(false);
     //ui->pushButton_2->setVisible(false);
 
-    ui->logHistory_files->horizontalHeader()->setStretchLastSection(true);
-    ui->logHistory_commits->horizontalHeader()->setStretchLastSection(true);
+    ui->logHistory_files->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
+    ui->logHistory_commits->horizontalHeader()->setSectionResizeMode(1, QHeaderView::Stretch);
 
     activateCommitOperation(false);
 
