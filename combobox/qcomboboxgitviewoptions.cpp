@@ -4,6 +4,8 @@
 #include <QAbstractItemView>
 #include <QStylePainter>
 #include <QApplication>
+#include <QSvgRenderer>
+#include <QFile>
 
 
 enum {
@@ -32,6 +34,8 @@ QComboBoxGitViewOptions::QComboBoxGitViewOptions(QWidget *parent)
     {
         m_showIcons = true;
     }
+
+    updateIconColor();
 
     QStandardItem* item = nullptr;
 
@@ -75,7 +79,7 @@ QComboBoxGitViewOptions::QComboBoxGitViewOptions(QWidget *parent)
 
     view()->setMinimumWidth(view()->sizeHintForColumn(0));
 
-    m_icon = m_iconFlatListSingleColumn;
+    setIcon(0);
 
     connect(this, &QComboBox::activated, this,  &QComboBoxGitViewOptions::activated);
 }
@@ -121,6 +125,18 @@ void QComboBoxGitViewOptions::paintEvent(QPaintEvent *event)
     p.drawControl(QStyle::CE_ComboBoxLabel, opt);
 }
 
+void QComboBoxGitViewOptions::changeEvent(QEvent *event)
+{
+    if (event->type() == QEvent::ThemeChange)
+    {
+        updateIconColor();
+
+        setIcon(m_currentView);
+    }
+
+    QWidget::changeEvent(event);
+}
+
 void QComboBoxGitViewOptions::showPopup()
 {
     view()->selectionModel()->reset();
@@ -154,7 +170,183 @@ void QComboBoxGitViewOptions::activated(int index)
         }
     }
 
-    if (index == 0) m_icon = m_iconFlatListSingleColumn;
-    if (index == 1) m_icon = m_iconFlatListMultipleColumn;
-    if (index == 2) m_icon = m_iconTreeView;
+    setIcon(index);
+}
+
+void QComboBoxGitViewOptions::setIcon(int index)
+{
+    QFile resource;
+
+    switch(index)
+    {
+    case 0:
+        m_currentView = index;
+        resource.setFileName(":/QComboBoxGitViewOptions/flat_list_single_column");
+        break;
+    case 1:
+        m_currentView = index;
+        resource.setFileName(":/QComboBoxGitViewOptions/flat_list_multiple_column");
+        break;
+    case 2:
+        m_currentView = index;
+        resource.setFileName(":/QComboBoxGitViewOptions/tree_view");
+        break;
+    default:
+        return;
+    }
+
+    if (resource.open(QIODeviceBase::ReadOnly))
+    {
+        auto svgContent = resource.readAll();
+
+        QString newColor = palette().color(QPalette::PlaceholderText).name();
+        svgContent.replace("#000000", newColor.toUtf8());
+
+        QSvgRenderer renderer(svgContent);
+        if (renderer.isValid()) {
+            QImage image(iconSize(), QImage::Format_ARGB32_Premultiplied);
+            image.fill(0);
+            QPainter painter(&image);
+            renderer.render(&painter);
+            m_icon = QPixmap::fromImage(image);
+            update();
+        }
+    }
+}
+
+void QComboBoxGitViewOptions::updateIconColor()
+{
+    bool doUpdate = false;
+    QFile resource;
+
+    resource.setFileName(":/QComboBoxGitViewOptions/flat_list_single_column");
+    if (resource.open(QIODeviceBase::ReadOnly))
+    {
+        auto svgContent = resource.readAll();
+
+        QString newColor = palette().color(QPalette::Text).name();
+        svgContent.replace("#000000", newColor.toUtf8());
+
+        QSvgRenderer renderer(svgContent);
+        if (renderer.isValid()) {
+            QImage image(iconSize(), QImage::Format_ARGB32_Premultiplied);
+            image.fill(0);
+            QPainter painter(&image);
+            renderer.render(&painter);
+            m_iconFlatListSingleColumn = QPixmap::fromImage(image);
+            doUpdate = true;
+        }
+
+        resource.close();
+    }
+
+    resource.setFileName(":/QComboBoxGitViewOptions/flat_list_multiple_column");
+    if (resource.open(QIODeviceBase::ReadOnly))
+    {
+        auto svgContent = resource.readAll();
+
+        QString newColor = palette().color(QPalette::Text).name();
+        svgContent.replace("#000000", newColor.toUtf8());
+
+        QSvgRenderer renderer(svgContent);
+        if (renderer.isValid()) {
+            QImage image(iconSize(), QImage::Format_ARGB32_Premultiplied);
+            image.fill(0);
+            QPainter painter(&image);
+            renderer.render(&painter);
+            m_iconFlatListMultipleColumn = QPixmap::fromImage(image);
+            doUpdate = true;
+        }
+
+        resource.close();
+    }
+
+    resource.setFileName(":/QComboBoxGitViewOptions/tree_view");
+    if (resource.open(QIODeviceBase::ReadOnly))
+    {
+        auto svgContent = resource.readAll();
+
+        QString newColor = palette().color(QPalette::Text).name();
+        svgContent.replace("#000000", newColor.toUtf8());
+
+        QSvgRenderer renderer(svgContent);
+        if (renderer.isValid()) {
+            QImage image(iconSize(), QImage::Format_ARGB32_Premultiplied);
+            image.fill(0);
+            QPainter painter(&image);
+            renderer.render(&painter);
+            m_iconTreeView = QPixmap::fromImage(image);
+            doUpdate = true;
+        }
+
+        resource.close();
+    }
+
+    resource.setFileName(":/QComboBoxGitViewOptions/no_staging");
+    if (resource.open(QIODeviceBase::ReadOnly))
+    {
+        auto svgContent = resource.readAll();
+
+        QString newColor = palette().color(QPalette::Text).name();
+        svgContent.replace("#000000", newColor.toUtf8());
+
+        QSvgRenderer renderer(svgContent);
+        if (renderer.isValid()) {
+            QImage image(iconSize(), QImage::Format_ARGB32_Premultiplied);
+            image.fill(0);
+            QPainter painter(&image);
+            renderer.render(&painter);
+            m_iconNoStaging = QPixmap::fromImage(image);
+            doUpdate = true;
+        }
+
+        resource.close();
+    }
+
+    resource.setFileName(":/QComboBoxGitViewOptions/fluid_staging");
+    if (resource.open(QIODeviceBase::ReadOnly))
+    {
+        auto svgContent = resource.readAll();
+
+        QString newColor = palette().color(QPalette::Text).name();
+        svgContent.replace("#000000", newColor.toUtf8());
+
+        QSvgRenderer renderer(svgContent);
+        if (renderer.isValid()) {
+            QImage image(iconSize(), QImage::Format_ARGB32_Premultiplied);
+            image.fill(0);
+            QPainter painter(&image);
+            renderer.render(&painter);
+            m_iconFluidStaging = QPixmap::fromImage(image);
+            doUpdate = true;
+        }
+
+        resource.close();
+    }
+
+    resource.setFileName(":/QComboBoxGitViewOptions/split_view_staging");
+    if (resource.open(QIODeviceBase::ReadOnly))
+    {
+        auto svgContent = resource.readAll();
+
+        QString newColor = palette().color(QPalette::Text).name();
+        svgContent.replace("#000000", newColor.toUtf8());
+
+        QSvgRenderer renderer(svgContent);
+        if (renderer.isValid()) {
+            QImage image(iconSize(), QImage::Format_ARGB32_Premultiplied);
+            image.fill(0);
+            QPainter painter(&image);
+            renderer.render(&painter);
+            m_iconSplitViewStaging = QPixmap::fromImage(image);
+            doUpdate = true;
+        }
+
+        resource.close();
+    }
+
+    if (doUpdate)
+    {
+        update();
+    }
 }

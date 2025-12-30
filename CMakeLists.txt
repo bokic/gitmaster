@@ -19,7 +19,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/bin)
 
-find_package(Qt6 COMPONENTS Gui Widgets Network REQUIRED)
+find_package(Qt6 COMPONENTS Gui Widgets Network Svg REQUIRED)
 
 set(PROJECT_HEADERS
     qgitmastermainwindow.h
@@ -134,6 +134,7 @@ target_link_libraries(gitmaster PRIVATE
     Qt6::Widgets
     Qt6::Gui
     Qt6::Network
+    Qt6::Svg
     git2
 )
 

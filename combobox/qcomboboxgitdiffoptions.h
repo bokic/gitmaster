@@ -17,12 +17,15 @@ public:
 
 protected:
     void paintEvent(QPaintEvent *event) override;
+    void changeEvent(QEvent *event) override;
     void showPopup() override;
 
 private Q_SLOTS:
     void activated(int index);
 
 private:
+    void updateIconColor();
+
     QIcon m_icon;
     QIcon m_iconChecked;
     QIcon m_iconUnchecked;

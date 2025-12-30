@@ -4,6 +4,8 @@
 #include <QAbstractItemView>
 #include <QStylePainter>
 #include <QApplication>
+#include <QSvgRenderer>
+#include <QFile>
 
 
 enum {
@@ -35,6 +37,8 @@ QComboBoxGitDiffOptions::QComboBoxGitDiffOptions(QWidget *parent)
     {
         m_showIcons = true;
     }
+
+    updateIconColor();
 
     QStandardItem* item = nullptr;
 
@@ -153,6 +157,16 @@ void QComboBoxGitDiffOptions::paintEvent(QPaintEvent *event)
     p.drawControl(QStyle::CE_ComboBoxLabel, opt);
 }
 
+void QComboBoxGitDiffOptions::changeEvent(QEvent *event)
+{
+    if (event->type() == QEvent::ThemeChange)
+    {
+        updateIconColor();
+    }
+
+    QWidget::changeEvent(event);
+}
+
 void QComboBoxGitDiffOptions::showPopup()
 {
     view()->selectionModel()->reset();
@@ -202,5 +216,53 @@ void QComboBoxGitDiffOptions::activated(int index)
                 if (m_showIcons) items->item(c, 0)->setIcon(m_iconUnchecked);
             }
         }
+    }
+}
+
+void QComboBoxGitDiffOptions::updateIconColor()
+{
+    bool doUpdate = false;
+
+    QFile checkResource = QFile(":/QCustomComboBox/check");
+    if (checkResource.open(QIODeviceBase::ReadOnly))
+    {
+        auto svgContent = checkResource.readAll();
+
+        QString newColor = palette().color(QPalette::Text).name();
+        svgContent.replace("#000000", newColor.toUtf8());
+
+        QSvgRenderer renderer(svgContent);
+        if (renderer.isValid()) {
+            QImage image(iconSize(), QImage::Format_ARGB32_Premultiplied);
+            image.fill(0);
+            QPainter painter(&image);
+            renderer.render(&painter);
+            m_iconChecked = QPixmap::fromImage(image);
+            doUpdate = true;
+        }
+    }
+
+    QFile gearResource = QFile(":/QComboBoxGitDiffOptions/gear");
+    if (gearResource.open(QIODeviceBase::ReadOnly))
+    {
+        auto svgContent = gearResource.readAll();
+
+        QString newColor = palette().color(QPalette::PlaceholderText).name();
+        svgContent.replace("#000000", newColor.toUtf8());
+
+        QSvgRenderer renderer(svgContent);
+        if (renderer.isValid()) {
+            QImage image(iconSize(), QImage::Format_ARGB32_Premultiplied);
+            image.fill(0);
+            QPainter painter(&image);
+            renderer.render(&painter);
+            m_icon = QPixmap::fromImage(image);
+            doUpdate = true;
+        }
+    }
+
+    if (doUpdate)
+    {
+        update();
     }
 }

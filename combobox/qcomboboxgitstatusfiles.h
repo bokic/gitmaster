@@ -27,12 +27,15 @@ signals:
 
 protected:
     void paintEvent(QPaintEvent *event) override;
+    void changeEvent(QEvent *event) override;
     void showPopup() override;
 
 private Q_SLOTS:
     void activated(int index);
 
 private:
+    void updateIconColor();
+
     QString m_text;
     QIcon m_iconChecked;
     QIcon m_iconUnchecked;

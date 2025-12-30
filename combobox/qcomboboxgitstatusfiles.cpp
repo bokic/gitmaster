@@ -4,6 +4,8 @@
 #include <QAbstractItemView>
 #include <QStylePainter>
 #include <QApplication>
+#include <QSvgRenderer>
+#include <QFile>
 
 
 enum {
@@ -27,7 +29,7 @@ enum {
 
 QComboBoxGitStatusFiles::QComboBoxGitStatusFiles(QWidget *parent)
     : QComboBox(parent)
-    , m_iconChecked(":/QCustomComboBox/check")
+    //, m_iconChecked(":/QCustomComboBox/check")
     , m_iconUnchecked(":/QCustomComboBox/uncheck")
 {
     QStandardItemModel *model = new QStandardItemModel();
@@ -37,6 +39,8 @@ QComboBoxGitStatusFiles::QComboBoxGitStatusFiles(QWidget *parent)
     {
         m_showIcons = true;
     }
+
+    updateIconColor();
 
     QStandardItem* item = nullptr;
 
@@ -180,6 +184,16 @@ void QComboBoxGitStatusFiles::paintEvent(QPaintEvent *event)
 
     p.drawComplexControl(QStyle::CC_ComboBox, opt);
     p.drawControl(QStyle::CE_ComboBoxLabel, opt);
+}
+
+void QComboBoxGitStatusFiles::changeEvent(QEvent *event)
+{
+    if (event->type() == QEvent::ThemeChange)
+    {
+        updateIconColor();
+    }
+
+    QWidget::changeEvent(event);
 }
 
 void QComboBoxGitStatusFiles::showPopup()
@@ -357,4 +371,26 @@ void QComboBoxGitStatusFiles::activated(int index)
     updateText();
 
     emit itemClicked(index);
+}
+
+void QComboBoxGitStatusFiles::updateIconColor()
+{
+    auto resource = QFile(":/QCustomComboBox/check");
+    if (resource.open(QIODeviceBase::ReadOnly))
+    {
+        auto svgContent = resource.readAll();
+
+        QString newColor = palette().color(QPalette::Text).name();
+        svgContent.replace("#000000", newColor.toUtf8());
+
+        QSvgRenderer renderer(svgContent);
+        if (renderer.isValid()) {
+            QImage image(iconSize(), QImage::Format_ARGB32_Premultiplied);
+            image.fill(0);
+            QPainter painter(&image);
+            renderer.render(&painter);
+            m_iconChecked = QPixmap::fromImage(image);
+            update();
+        }
+    }
 }

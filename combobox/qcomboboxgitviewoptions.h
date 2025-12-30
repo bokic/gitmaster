@@ -17,12 +17,16 @@ public:
 
 protected:
     void paintEvent(QPaintEvent *event) override;
+    void changeEvent(QEvent *event) override;
     void showPopup() override;
 
 private Q_SLOTS:
     void activated(int index);
 
 private:
+    void setIcon(int index);
+    void updateIconColor();
+
     QIcon m_icon;
     QIcon m_iconFlatListSingleColumn;
     QIcon m_iconFlatListMultipleColumn;
@@ -30,5 +34,6 @@ private:
     QIcon m_iconNoStaging;
     QIcon m_iconFluidStaging;
     QIcon m_iconSplitViewStaging;
+    int m_currentView = 0;
     bool m_showIcons = false;
 };
