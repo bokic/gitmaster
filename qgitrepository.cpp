@@ -292,7 +292,7 @@ void QGitRepository::repoitoryPushReply(QGitError error)
     QGitMasterMainWindow::instance()->clearStatusBarText();
 }
 
-void QGitRepository::repositoryBranchesAndTagsReply(QList<QGitBranch> branches, QList<QString> tags, QGitError error)
+void QGitRepository::repositoryBranchesAndTagsReply(QList<QGitBranch> branches, QList<QGitTag> tags, QGitError error)
 {
     Q_UNUSED(error)
 
@@ -308,6 +308,10 @@ void QGitRepository::repositoryBranchesAndTagsReply(QList<QGitBranch> branches, 
     itemFileStatus->addChild(itemWorkingCopy);
 
     auto current_branch = QGit::getBranchNameFromPath(m_git->path().path());
+
+    std::sort(branches.begin(), branches.end(), [](const QGitBranch &a, const QGitBranch &b) {
+        return a.time() < b.time();
+    });
 
     for(const auto &branch: branches)
     {
@@ -396,9 +400,13 @@ void QGitRepository::repositoryBranchesAndTagsReply(QList<QGitBranch> branches, 
         }
     }
 
+    std::sort(tags.begin(), tags.end(), [](const QGitTag &a, const QGitTag &b) {
+        return a.time() < b.time();
+    });
+
     for(const auto &tag: tags)
     {
-        QTreeWidgetItem *child = new QTreeWidgetItem(QStringList() << tag);
+        QTreeWidgetItem *child = new QTreeWidgetItem(QStringList() << tag.name());
 
         child->setIcon(0, m_iconTag);
         itemTags->addChild(child);

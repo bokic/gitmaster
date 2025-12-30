@@ -116,6 +116,14 @@ struct GitStrArray {
     git_strarray value = {nullptr, 0};
 };
 
+
+struct GitTag {
+    operator git_tag*() { return value; }
+    operator git_tag**() { return &value; }
+    ~GitTag() {  git_tag_free(value); value = nullptr; }
+    git_tag *value = nullptr;
+};
+
 #define LINE_END '\n'
 
 
@@ -554,8 +562,7 @@ void QGit::status()
 void QGit::listBranchesAndTags()
 {
     QList<QGitBranch> branches;
-
-    QList<QString> tags;
+    QList<QGitTag> tags;
     QGitError error;
 
     try
@@ -587,7 +594,17 @@ void QGit::listBranchesAndTags()
             if (git_reference_type(ref) == GIT_REFERENCE_DIRECT)
             {
                 const char *ref_name = git_reference_name(ref);
-                QGitBranch branch = QGitBranch(ref_name, type);
+
+                GitObject obj;
+                res = git_reference_peel(obj, ref, GIT_OBJ_COMMIT);
+                if (res)
+                {
+                    throw QGitError("git_reference_peel", res);
+                }
+
+                git_time_t commit_time = git_commit_time(reinterpret_cast<const git_commit *>(obj.value));
+
+                QGitBranch branch = QGitBranch(ref_name, commit_time, type);
                 branches.append(branch);
             }
         }
@@ -601,7 +618,31 @@ void QGit::listBranchesAndTags()
 
         for(size_t c = 0; c < tag_names.value.count; c++)
         {
-            tags.append(QString::fromUtf8(tag_names.value.strings[c]));
+            const char *tag_name = tag_names.value.strings[c];
+            git_time_t tag_time = 0;
+            GitReference tag_ref;
+            GitTag tag_obj;
+
+            res = git_reference_lookup(tag_ref, repo, tag_name);
+            if (res)
+            {
+                throw QGitError("git_reference_lookup", res);
+            }
+
+            res = git_tag_lookup(tag_obj, repo, git_reference_target(tag_ref));
+            if (res)
+            {
+                throw QGitError("git_tag_lookup", res);
+            }
+
+            const git_signature *tagger = git_tag_tagger(tag_obj);
+            if (tagger)
+            {
+                tag_time = tagger->when.time;
+            }
+
+            QGitTag tag(QString::fromUtf8(tag_name), tag_time);
+            tags.append(tag);
         }
 
     } catch(const QGitError &ex) {

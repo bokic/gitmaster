@@ -45,6 +45,7 @@ set(PROJECT_HEADERS
 
     qgit/include/qgit.h
     qgit/include/qgitbranch.h
+    qgit/include/qgittag.h
     qgit/include/qgitcommit.h
     qgit/include/qgitcommitdiffparent.h
     qgit/include/qgitdiffbinary.h
@@ -83,6 +84,7 @@ set(PROJECT_SOURCES
 
     qgit/src/qgit.cpp
     qgit/src/qgitbranch.cpp
+    qgit/src/qgittag.cpp
     qgit/src/qgitcommit.cpp
     qgit/src/qgitcommitdiffparent.cpp
     qgit/src/qgitdiffbinary.cpp

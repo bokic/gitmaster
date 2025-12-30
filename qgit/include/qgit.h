@@ -4,6 +4,7 @@
 #include "qgitcommit.h"
 #include "qgitbranch.h"
 #include "qgiterror.h"
+#include "qgittag.h"
 
 #include <QStringList>
 #include <QDateTime>
@@ -102,7 +103,7 @@ signals:
     void signatureReply(QString name, QString email, QGitError error);
     void currentBranchReply(QString name, QGitError error);
     void statusReply(QMap<git_status_t, int> items, QGitError error);
-    void listBranchesAndTagsReply(QList<QGitBranch> branches, QList<QString> tags, QGitError error);
+    void listBranchesAndTagsReply(QList<QGitBranch> branches, QList<QGitTag> tags, QGitError error);
     void stashSaveReply(QGitError error);
     void stashRemoveReply(QGitError error);
     void listStashesReply(QStringList stashes, QGitError error);

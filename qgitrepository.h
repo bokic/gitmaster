@@ -8,6 +8,9 @@
 
 #include "qgit.h"
 #include "qgitcommit.h"
+#include "qgitbranch.h"
+#include "qgittag.h"
+
 
 namespace Ui {
 class QGitRepository;
@@ -52,7 +55,7 @@ private slots:
     void localStashSaveReply(QGitError error);
     void repoitoryFetchReply(QGitError error);
     void repoitoryPushReply(QGitError error);
-    void repositoryBranchesAndTagsReply(QList<QGitBranch> branches, QList<QString> tags, QGitError error);
+    void repositoryBranchesAndTagsReply(QList<QGitBranch> branches, QList<QGitTag> tags, QGitError error);
     void repositoryStashesReply(QStringList stashes, QGitError error);
     void repositoryChangedFilesReply(QMap<QString, git_status_t> files, QGitError error);
     void repositoryStageFilesReply(QGitError error);
