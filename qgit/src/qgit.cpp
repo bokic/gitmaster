@@ -925,30 +925,6 @@ void QGit::commitDiffContent(QString first, QString second, QList<QString> files
             throw QGitError("git_repository_open", res);
         }
 
-        if (!first.isEmpty())
-        {
-            GitObject first_obj;
-            res = git_revparse_single(first_obj, repo, first.toUtf8());
-            if (res)
-            {
-                throw QGitError("git_revparse_single(first)", res);
-            }
-
-            GitCommit first_commit;
-            res = git_commit_lookup(first_commit, repo, git_object_id(first_obj));
-            if (res)
-            {
-                throw QGitError("git_commit_lookup(first)", res);
-            }
-
-            GitTree first_tree;
-            res = git_commit_tree(first_tree, first_commit);
-            if (res)
-            {
-                throw QGitError("git_commit_tree(first)", res);
-            }
-        }
-
         GitStrArray pathspec;
         if (!files.isEmpty())
         {
@@ -1015,6 +991,27 @@ void QGit::commitDiffContent(QString first, QString second, QList<QString> files
         }
         else
         {
+            GitObject first_obj;
+            res = git_revparse_single(first_obj, repo, first.toUtf8());
+            if (res)
+            {
+                throw QGitError("git_revparse_single(first)", res);
+            }
+
+            GitCommit first_commit;
+            res = git_commit_lookup(first_commit, repo, git_object_id(first_obj));
+            if (res)
+            {
+                throw QGitError("git_commit_lookup(first)", res);
+            }
+
+            GitTree first_tree;
+            res = git_commit_tree(first_tree, first_commit);
+            if (res)
+            {
+                throw QGitError("git_commit_tree(first)", res);
+            }
+
             GitObject second_obj;
             res = git_revparse_single(second_obj, repo, second.toUtf8());
             if (res)
@@ -1036,7 +1033,7 @@ void QGit::commitDiffContent(QString first, QString second, QList<QString> files
                 throw QGitError("git_commit_tree(second)", res);
             }
 
-            res = git_diff_tree_to_tree(diff, repo, nullptr, second_tree, nullptr);
+            res = git_diff_tree_to_tree(diff, repo, first_tree, second_tree, nullptr);
             if (res)
             {
                 throw QGitError("git_diff_tree_to_tree", res);
