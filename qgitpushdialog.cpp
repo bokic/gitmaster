@@ -22,14 +22,14 @@ QGitPushDialog::QGitPushDialog(QGitRepository *parent)
 
     ui->branches_tableWidget->setColumnCount(1);
 
-    auto currentBranch = git->localBranch();
+    auto currentBranch = git->currentBranch();
 
-    const auto localBranches = git->localBranches();
+    const auto localBranches = git->branches(GIT_BRANCH_LOCAL);
     for(const auto &localBranch: std::as_const(localBranches))
     {
-        QTableWidgetItem *item = new QTableWidgetItem(localBranch);
+        QTableWidgetItem *item = new QTableWidgetItem(localBranch.name());
         item->setFlags(item->flags() | Qt::ItemIsUserCheckable);
-        if (localBranch == currentBranch)
+        if (localBranch.name() == currentBranch)
         {
             QFont font = item->font();
             font.setBold(true);

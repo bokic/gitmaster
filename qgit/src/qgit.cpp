@@ -205,7 +205,7 @@ QList<QGitRemote> QGit::remotes() const
     return ret;
 }
 
-QString QGit::localBranch() const
+QString QGit::currentBranch() const
 {
     GitRepository repo;
     int res = git_repository_open(repo, m_path.absolutePath().toUtf8().constData());
@@ -231,9 +231,9 @@ QString QGit::localBranch() const
     return branch;
 }
 
-QList<QString> QGit::localBranches() const
+QList<QGitBranch> QGit::branches(git_branch_t type) const
 {
-    QList<QString> ret;
+    QList<QGitBranch> ret;
 
     GitRepository repo;
     int res = git_repository_open(repo, m_path.absolutePath().toUtf8().constData());
@@ -243,15 +243,15 @@ QList<QString> QGit::localBranches() const
     }
 
     GitBranchIterator it;
-    res = git_branch_iterator_new(it, repo, GIT_BRANCH_LOCAL);
+    res = git_branch_iterator_new(it, repo, type);
     if (res)
     {
         return ret;
     }
 
-    while (1)
+    forever
     {
-        git_branch_t type = GIT_BRANCH_LOCAL;
+        git_branch_t type;
 
         GitReference ref;
         if (git_branch_next(ref, &type, it) != 0)
@@ -261,9 +261,26 @@ QList<QString> QGit::localBranches() const
 
         const char *name = nullptr;
         res = git_branch_name(&name, ref);
-        if (res == 0 && name)
+        if (res)
         {
-            ret.append(QString::fromUtf8(name));
+            return ret;
+        }
+
+        if (git_reference_type(ref) == GIT_REFERENCE_DIRECT)
+        {
+            const char *ref_name = git_reference_name(ref);
+
+            GitObject obj;
+            res = git_reference_peel(obj, ref, GIT_OBJ_COMMIT);
+            if (res)
+            {
+                throw QGitError("git_reference_peel", res);
+            }
+
+            git_time_t commit_time = git_commit_time(reinterpret_cast<const git_commit *>(obj.value));
+
+            QGitBranch branch = QGitBranch(name, commit_time, type);
+            ret.append(branch);
         }
     }
 
@@ -354,43 +371,6 @@ bool QGit::gitRepositoryDefaultSignature(const QDir &path, QString &name, QStrin
     email = me.value->email;
 
     return true;
-}
-
-void QGit::currentBranch()
-{
-    QGitError error;
-    QString name;
-
-    try
-    {
-        GitRepository repo;
-        int res = git_repository_open(repo, m_path.absolutePath().toUtf8().constData());
-        if (res)
-        {
-            throw QGitError("git_repository_open", res);
-        }
-
-        GitReference ref;
-        res = git_repository_head(ref, repo);
-        if (res)
-        {
-            throw QGitError("git_repository_head", res);
-        }
-
-        const char *branch = nullptr;
-        res = git_branch_name(&branch, ref);
-        if (res)
-        {
-            throw QGitError("git_branch_name", res);
-        }
-
-        name = branch;
-
-    } catch(const QGitError &ex) {
-        error = ex;
-    }
-
-    emit currentBranchReply(name, error);
 }
 
 void QGit::createLocalBranch(const QString &name, const QString &commit_id, bool checkout, bool force)

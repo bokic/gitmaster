@@ -65,8 +65,8 @@ public:
     bool setPath(const QDir &path);
     QDir path();
     QList<QGitRemote> remotes() const;
-    QString localBranch() const;
-    QList<QString> localBranches() const;
+    QString currentBranch() const;
+    QList<QGitBranch> branches(git_branch_t type) const;
     bool hasCommitId(const QString &commitId) const;
 
     static QString getBranchNameFromPath(const QString &path);
@@ -77,7 +77,6 @@ public:
 public slots:
     void init();
     void signature();
-    void currentBranch();
     void createLocalBranch(const QString &name, const QString &commit_id  = "", bool checkout = false, bool force = false);
     void status();
     void listBranchesAndTags();
@@ -101,7 +100,6 @@ public slots:
 signals:
     void initReply(QGitError error);
     void signatureReply(QString name, QString email, QGitError error);
-    void currentBranchReply(QString name, QGitError error);
     void statusReply(QMap<git_status_t, int> items, QGitError error);
     void listBranchesAndTagsReply(QList<QGitBranch> branches, QList<QGitTag> tags, QGitError error);
     void stashSaveReply(QGitError error);

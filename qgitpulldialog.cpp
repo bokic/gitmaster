@@ -25,16 +25,16 @@ QGitPullDialog::QGitPullDialog(QGitRepository *parent)
     }
     ui->remote_comboBox->addItem(tr("custom"));
 
-    auto branches = git->localBranches();
-    auto currentBranch = git->localBranch();
+    auto branches = git->branches(GIT_BRANCH_LOCAL);
+    auto currentBranch = git->currentBranch();
 
     auto branch_comboBox_model = static_cast<QStandardItemModel *>(ui->branch_comboBox->model());
 
     for(const auto &branch: std::as_const(branches))
     {
-        QStandardItem *item = new QStandardItem(branch);
+        QStandardItem *item = new QStandardItem(branch.name());
 
-        if (branch == currentBranch)
+        if (branch.name() == currentBranch)
         {
             auto font = item->font();
             font.setBold(true);

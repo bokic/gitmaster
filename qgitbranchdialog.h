@@ -1,6 +1,11 @@
 #ifndef QGITBRANCHDIALOG_H
 #define QGITBRANCHDIALOG_H
 
+#include <qgitrepository.h>
+#include <qgitbranch.h>
+#include <qgit.h>
+
+#include <QTableWidgetItem>
 #include <QDialog>
 
 namespace Ui {
@@ -14,7 +19,7 @@ class QGitBranchDialog : public QDialog
 public:
     enum Operation {NewBranchOperation, DeleteBranchesOperation, UnknownOperation};
 
-    explicit QGitBranchDialog(QWidget *parent = nullptr);
+    explicit QGitBranchDialog(QGitRepository *parent = nullptr);
     ~QGitBranchDialog();
 
     Operation operation() const;
@@ -27,12 +32,14 @@ private slots:
     void on_deleteBranch_pushButton_clicked();
     void on_newBranch_lineEdit_textChanged(const QString &text);
     void on_newBranchCommitId_lineEdit_textChanged(const QString &text);
+    void on_deleteBranches_tableWidget_itemChanged(QTableWidgetItem *item);
 
 private:
     void checkForNewBranch();
 
     Ui::QGitBranchDialog *ui;
-    QStringList m_currentBranches;
+    QList<QGitBranch> m_currentBranches;
+    QGit m_git;
 };
 
 #endif // QGITBRANCHDIALOG_H

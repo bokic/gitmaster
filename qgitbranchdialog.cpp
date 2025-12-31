@@ -4,16 +4,21 @@
 #include "qgit.h"
 
 
-QGitBranchDialog::QGitBranchDialog(QWidget *parent)
+QGitBranchDialog::QGitBranchDialog(QGitRepository *parent)
     : QDialog(parent)
     , ui(new Ui::QGitBranchDialog)
 {
     ui->setupUi(this);
 
-    QGit *git = static_cast<QGitRepository *>(parent)->git();
+    m_git.setPath(parent->git()->path());
 
-    ui->currentBranch_label->setText(git->localBranch());
-    m_currentBranches = git->localBranches();
+    ui->deleteBranches_tableWidget->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
+
+    ui->currentBranch_label->setText(m_git.currentBranch());
+    m_currentBranches = m_git.branches(GIT_BRANCH_LOCAL);
+
+    m_git.branches(GIT_BRANCH_LOCAL);
+
     ui->newBranch_lineEdit->setFocus();
 }
 
@@ -67,6 +72,37 @@ void QGitBranchDialog::on_deleteBranch_pushButton_clicked()
     ui->newBranch_pushButton->setChecked(false);
     ui->stackedWidget->setCurrentIndex(1);
     ui->operation_label->setText(tr("Delete Branches"));
+
+
+    auto branches = m_git.branches(GIT_BRANCH_ALL);
+
+    ui->deleteBranches_tableWidget->setRowCount(branches.count());
+
+
+    for(int c = 0; c < branches.count(); c++)
+    {
+        const auto &branch = branches.at(c);
+
+        auto nameItem = new QTableWidgetItem(branch.name());
+        nameItem->setCheckState(Qt::Unchecked);
+        ui->deleteBranches_tableWidget->setItem(c, 0, nameItem);
+
+        auto typeItem = new QTableWidgetItem();
+
+        switch (branch.type())
+        {
+        case GIT_BRANCH_LOCAL:
+            typeItem->setText(tr("Local"));
+            break;
+        case GIT_BRANCH_REMOTE:
+            typeItem->setText(tr("Remote"));
+            break;
+        default:
+            typeItem->setText(tr("Unknown"));
+        }
+
+        ui->deleteBranches_tableWidget->setItem(c, 1, typeItem);
+    }
 }
 
 void QGitBranchDialog::on_newBranch_lineEdit_textChanged(const QString &text)
@@ -90,7 +126,18 @@ void QGitBranchDialog::checkForNewBranch()
     QString newBranch = ui->newBranch_lineEdit->text();
     if (!newBranch.isEmpty())
     {
-        if (m_currentBranches.contains(newBranch))
+        bool alreadyExists = false;
+
+        for(const auto &branch: std::as_const(m_currentBranches))
+        {
+            if (branch.name() == newBranch)
+            {
+                alreadyExists = true;
+                break;
+            }
+        }
+
+        if (alreadyExists)
         {
             ui->newBranch_lineEdit->setStyleSheet("background: red");
             ui->newBranch_lineEdit->setToolTip(tr("Local branch with name [%1] already exists.").arg(newBranch));
@@ -112,9 +159,7 @@ void QGitBranchDialog::checkForNewBranch()
     {
         ui->specifiedCommit_radioButton->setChecked(true);
 
-        QGit *git = static_cast<QGitRepository *>(parent())->git();
-
-        if (git->hasCommitId(commitId))
+        if (m_git.hasCommitId(commitId))
         {
             ui->newBranchCommitId_lineEdit->setStyleSheet("");
         }
@@ -130,4 +175,24 @@ void QGitBranchDialog::checkForNewBranch()
     }
 
     ui->createBranch_pushButton->setEnabled(enable);
+}
+
+void QGitBranchDialog::on_deleteBranches_tableWidget_itemChanged(QTableWidgetItem *item)
+{
+    bool enable = false;
+
+    Q_UNUSED(item);
+
+    int rows = ui->deleteBranches_tableWidget->rowCount();
+    for(int row = 0; row < rows; row++)
+    {
+        const auto *item = ui->deleteBranches_tableWidget->item(row, 0);
+        if ((item)&&(item->checkState() == Qt::Checked))
+        {
+            enable = true;
+            break;
+        }
+    }
+
+    ui->deleteBranches_pushButton->setEnabled(enable);
 }
