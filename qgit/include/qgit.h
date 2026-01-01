@@ -68,6 +68,7 @@ public:
     QString currentBranch() const;
     QList<QGitBranch> branches(git_branch_t type) const;
     bool hasCommitId(const QString &commitId) const;
+    void createLocalBranch(const QString &name, const QString &commit_id  = "", bool checkout = false, bool force = false);
 
     static QString getBranchNameFromPath(const QString &path);
     static int createLocalRepository(const QDir &path);
@@ -77,7 +78,7 @@ public:
 public slots:
     void init();
     void signature();
-    void createLocalBranch(const QString &name, const QString &commit_id  = "", bool checkout = false, bool force = false);
+    void deleteBranches(QList<QGitBranch> branches, bool force);
     void status();
     void listBranchesAndTags();
     void listStashes();
@@ -119,6 +120,7 @@ signals:
     void pushReply(QGitError error);
     void pushProgress(unsigned int current, unsigned int total, size_t bytes);
     void listCommitsReply(QList<QGitCommit> commits, QGitError error);
+    void deleteBranchesReply(QGitError error);
 
 private:
     QDir m_path;

@@ -26,6 +26,8 @@ public:
     QString newBranchName() const;
     QString newBranchCommitId() const;
     bool newBranchCheckout() const;
+    QList<QGitBranch> deleteBranches() const;
+    bool forceDelete() const;
 
 private slots:
     void on_newBranch_pushButton_clicked();

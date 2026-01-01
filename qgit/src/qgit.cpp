@@ -452,6 +452,48 @@ void QGit::createLocalBranch(const QString &name, const QString &commit_id, bool
     }
 }
 
+void QGit::deleteBranches(QList<QGitBranch> branches, bool force)
+{
+    QGitError error;
+
+    try {
+        GitRepository repo;
+        int res = git_repository_init(repo, m_path.absolutePath().toUtf8().constData(), 0);
+        if(res)
+        {
+            throw QGitError("git_repository_init", res);
+        }
+
+        for(const auto &branch: branches)
+        {
+            if (branch.type() == GIT_BRANCH_LOCAL)
+            {
+                GitReference branch_ref;
+                res = git_branch_lookup(branch_ref, repo, branch.name().toUtf8().constData(), GIT_BRANCH_LOCAL);
+                if (res)
+                {
+                    throw QGitError("git_branch_lookup", res);
+                }
+
+                res = git_branch_delete(branch_ref);
+                if (res)
+                {
+                    throw QGitError("git_branch_delete", res);
+                }
+            }
+            else
+            {
+                // TODO: Implement void QGit::deleteBranches(QList<QGitBranch> branches, bool force)
+            }
+        }
+    } catch(const QGitError & ex) {
+        error = ex;
+    }
+
+
+    emit deleteBranchesReply(error);
+}
+
 void QGit::init()
 {
     QGitError error;

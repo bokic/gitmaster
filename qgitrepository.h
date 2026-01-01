@@ -46,6 +46,7 @@ signals:
     void repositoryGetCommitDiff(QString commitId);
     void stageFileLines(QString filename, QVector<QGitDiffWidgetLine> lines);
     void unstageFileLines(QString filename, QVector<QGitDiffWidgetLine> lines);
+    void deleteBranches(QList<QGitBranch> branches, bool force);
 
 protected:
     bool event(QEvent *event) override;
@@ -63,6 +64,7 @@ private slots:
     void repositoryCommitReply(QString commit_id, QGitError error);
     void repositoryGetCommitsReply(QList<QGitCommit> commits, QGitError error);
     void repositoryGetCommitDiffReply(QString commitId, QGitCommit diff, QGitError error);
+    void deleteBranchesReply(QGitError error);
     void historyTableSliderMoved(int pos);
     void selectedLines(QString filename, QVector<QGitDiffWidgetLine> lines);
     void on_repositoryDetail_currentChanged(int index);

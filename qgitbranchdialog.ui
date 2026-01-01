@@ -200,7 +200,7 @@
         </widget>
        </item>
        <item row="2" column="0">
-        <widget class="QCheckBox" name="checkBox_2">
+        <widget class="QCheckBox" name="forcDelete_checkBox">
          <property name="text">
           <string>Force delete regardless of merge status</string>
          </property>
@@ -258,6 +258,15 @@
        </item>
        <item row="1" column="0" colspan="2">
         <widget class="QTableWidget" name="deleteBranches_tableWidget">
+         <property name="alternatingRowColors">
+          <bool>true</bool>
+         </property>
+         <property name="selectionMode">
+          <enum>QAbstractItemView::SelectionMode::SingleSelection</enum>
+         </property>
+         <property name="selectionBehavior">
+          <enum>QAbstractItemView::SelectionBehavior::SelectRows</enum>
+         </property>
          <attribute name="verticalHeaderVisible">
           <bool>false</bool>
          </attribute>
@@ -291,7 +300,7 @@
   <tabstop>pushButton_3</tabstop>
   <tabstop>createBranch_pushButton</tabstop>
   <tabstop>deleteBranches_tableWidget</tabstop>
-  <tabstop>checkBox_2</tabstop>
+  <tabstop>forcDelete_checkBox</tabstop>
   <tabstop>pushButton_5</tabstop>
   <tabstop>deleteBranches_pushButton</tabstop>
  </tabstops>

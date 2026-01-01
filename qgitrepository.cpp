@@ -6,6 +6,7 @@
 #include "qgitpulldialog.h"
 #include "qgitpushdialog.h"
 #include "qgitbranchdialog.h"
+#include <qgitbranch.h>
 
 #include <QCryptographicHash>
 #include <QTableWidgetItem>
@@ -132,6 +133,10 @@ QGitRepository::QGitRepository(const QString &path, QWidget *parent)
     connect(this, &QGitRepository::stageFileLines, m_git, &QGit::stageFileLines);
     connect(this, &QGitRepository::unstageFileLines, m_git, &QGit::unstageFileLines);
 
+    connect(this, &QGitRepository::deleteBranches, m_git, &QGit::deleteBranches);
+    connect(m_git, &QGit::deleteBranchesReply, this, &QGitRepository::deleteBranchesReply);
+
+
     connect(ui->logHistory_commits->verticalScrollBar(), &QScrollBar::valueChanged, this, &QGitRepository::historyTableSliderMoved);
     connect(ui->plainTextEdit_commitMessage, &QAdvPlainTextEdit::abort, ui->pushButton_commitCancel, &QPushButton::click);
 
@@ -180,6 +185,13 @@ void QGitRepository::branchDialog()
             auto checkout = dlg.newBranchCheckout();
             m_git->createLocalBranch(branchName, commitId, checkout);
             emit repositoryBranches();
+        }
+        else if (dlg.operation() == QGitBranchDialog::DeleteBranchesOperation)
+        {
+            auto branches = dlg.deleteBranches();
+            auto forced = dlg.forceDelete();
+
+            emit deleteBranches(branches, forced);
         }
     }
 }
@@ -756,6 +768,12 @@ void QGitRepository::repositoryGetCommitDiffReply(QString commitId, QGitCommit d
             ui->logHistory_files->setCurrentCell(0, 0);
         }
     }
+}
+
+void QGitRepository::deleteBranchesReply(QGitError error)
+{
+    // TODO: Check for errors.
+    emit repositoryBranches();
 }
 
 void QGitRepository::on_repositoryDetail_currentChanged(int index)

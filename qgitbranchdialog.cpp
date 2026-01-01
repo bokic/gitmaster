@@ -78,16 +78,37 @@ void QGitBranchDialog::on_deleteBranch_pushButton_clicked()
 
     ui->deleteBranches_tableWidget->setRowCount(branches.count());
 
+    auto currentBranch = m_git.currentBranch();
+
 
     for(int c = 0; c < branches.count(); c++)
     {
         const auto &branch = branches.at(c);
 
         auto nameItem = new QTableWidgetItem(branch.name());
+        nameItem->setFlags(nameItem->flags() & ~Qt::ItemIsEditable);
         nameItem->setCheckState(Qt::Unchecked);
+
+        if (branch.name() == currentBranch)
+        {
+            auto font = nameItem->font();
+            font.setBold(true);
+            nameItem->setFont(font);
+            nameItem->setData(Qt::ToolTipRole, tr("Can't delete current branch."));
+        }
+
+        if ((branch.name() == currentBranch)||(branch.name() == "master")||(branch.name() == "main"))
+        {
+            nameItem->setFlags(nameItem->flags() & ~Qt::ItemIsEnabled);
+        }
+
+        nameItem->setData(Qt::UserRole, branch.type());
+        nameItem->setData(Qt::UserRole + 1, static_cast<qlonglong>(branch.time()));
+
         ui->deleteBranches_tableWidget->setItem(c, 0, nameItem);
 
         auto typeItem = new QTableWidgetItem();
+        typeItem->setFlags(nameItem->flags() & ~Qt::ItemIsEditable);
 
         switch (branch.type())
         {
@@ -195,4 +216,29 @@ void QGitBranchDialog::on_deleteBranches_tableWidget_itemChanged(QTableWidgetIte
     }
 
     ui->deleteBranches_pushButton->setEnabled(enable);
+}
+
+QList<QGitBranch> QGitBranchDialog::deleteBranches() const
+{
+    QList<QGitBranch> ret;
+
+    for(int c = 0; c < ui->deleteBranches_tableWidget->rowCount(); c++)
+    {
+        if (ui->deleteBranches_tableWidget->item(c, 0)->checkState() == Qt::Checked)
+        {
+            auto name = ui->deleteBranches_tableWidget->item(c, 0)->text();
+            auto time = ui->deleteBranches_tableWidget->item(c, 0)->data(Qt::UserRole + 1).toLongLong();
+            auto type = ui->deleteBranches_tableWidget->item(c, 0)->data(Qt::UserRole).toInt();
+            QGitBranch item(name, time, static_cast<git_branch_t>(type));
+
+            ret.append(item);
+        }
+    }
+
+    return ret;
+}
+
+bool QGitBranchDialog::forceDelete() const
+{
+    return ui->forcDelete_checkBox->isChecked();
 }
