@@ -601,25 +601,25 @@ void QGit::listBranchesAndTags()
             const char *tag_name = tag_names.value.strings[c];
             git_time_t tag_time = 0;
             GitReference tag_ref;
+            GitObject git_obj;
             GitTag tag_obj;
 
-            res = git_reference_lookup(tag_ref, repo, tag_name);
+            QByteArray tagFullName = QByteArray("refs/tags/") + tag_name;
+
+            res = git_reference_lookup(tag_ref, repo, tagFullName.constData());
             if (res)
             {
                 throw QGitError("git_reference_lookup", res);
             }
 
-            res = git_tag_lookup(tag_obj, repo, git_reference_target(tag_ref));
+            //res = git_tag_lookup(tag_obj, repo, git_reference_target(tag_ref));
+            res = git_reference_peel(git_obj, tag_ref, GIT_OBJ_COMMIT);
             if (res)
             {
-                throw QGitError("git_tag_lookup", res);
+                throw QGitError("git_reference_peel", res);
             }
 
-            const git_signature *tagger = git_tag_tagger(tag_obj);
-            if (tagger)
-            {
-                tag_time = tagger->when.time;
-            }
+            tag_time = git_commit_time(reinterpret_cast<const git_commit *>(git_obj.value));
 
             QGitTag tag(QString::fromUtf8(tag_name), tag_time);
             tags.append(tag);

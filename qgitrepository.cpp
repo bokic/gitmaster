@@ -401,7 +401,7 @@ void QGitRepository::repositoryBranchesAndTagsReply(QList<QGitBranch> branches, 
     }
 
     std::sort(tags.begin(), tags.end(), [](const QGitTag &a, const QGitTag &b) {
-        return a.time() < b.time();
+        return a.time() > b.time();
     });
 
     for(const auto &tag: tags)
