@@ -268,8 +268,6 @@ QList<QGitBranch> QGit::branches(git_branch_t type) const
 
         if (git_reference_type(ref) == GIT_REFERENCE_DIRECT)
         {
-            const char *ref_name = git_reference_name(ref);
-
             GitObject obj;
             res = git_reference_peel(obj, ref, GIT_OBJ_COMMIT);
             if (res)
@@ -489,7 +487,6 @@ void QGit::deleteBranches(QList<QGitBranch> branches, bool force)
     } catch(const QGitError & ex) {
         error = ex;
     }
-
 
     emit deleteBranchesReply(error);
 }
