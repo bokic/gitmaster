@@ -11,7 +11,6 @@
         <file>images/file_ok.svg</file>
         <file>images/checkout.svg</file>
         <file>images/commit.svg</file>
-        <file>images/discard.svg</file>
         <file>images/stash.svg</file>
         <file>images/file_add.svg</file>
         <file>images/file_remove.svg</file>
@@ -39,14 +38,12 @@
     </qresource>
     <qresource prefix="/toolbar">
         <file alias="commit">images/toolbar/commit.png</file>
-        <file alias="discard">images/toolbar/discard.png</file>
         <file alias="stash">images/toolbar/stash.png</file>
         <file alias="terminal">images/toolbar/terminal.png</file>
         <file alias="settings">images/toolbar/settings.png</file>
         <file alias="branch">images/toolbar/branch.svg</file>
         <file alias="merge">images/toolbar/merge.svg</file>
         <file alias="git_flow">images/toolbar/git_flow.svg</file>
-        <file alias="tag">images/toolbar/tag.svg</file>
         <file alias="fetch">images/toolbar/fetch.svg</file>
         <file alias="pull">images/toolbar/pull.svg</file>
         <file alias="push">images/toolbar/push.svg</file>

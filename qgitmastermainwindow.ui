@@ -181,8 +181,6 @@
    <addaction name="separator"/>
    <addaction name="actionStash"/>
    <addaction name="separator"/>
-   <addaction name="actionDiscard"/>
-   <addaction name="actionTag"/>
    <addaction name="actionGit_Flow"/>
    <addaction name="actionTerminal"/>
    <addaction name="actionSettings"/>
@@ -195,15 +193,6 @@
    </property>
    <property name="text">
     <string>Commit</string>
-   </property>
-  </action>
-  <action name="actionDiscard">
-   <property name="icon">
-    <iconset resource="resource.qrc">
-     <normaloff>:/toolbar/discard</normaloff>:/toolbar/discard</iconset>
-   </property>
-   <property name="text">
-    <string>Discard</string>
    </property>
   </action>
   <action name="actionStash">
@@ -258,15 +247,6 @@
    </property>
    <property name="text">
     <string>Merge</string>
-   </property>
-  </action>
-  <action name="actionTag">
-   <property name="icon">
-    <iconset resource="resource.qrc">
-     <normaloff>:/toolbar/tag</normaloff>:/toolbar/tag</iconset>
-   </property>
-   <property name="text">
-    <string>Tag</string>
    </property>
   </action>
   <action name="actionGit_Flow">

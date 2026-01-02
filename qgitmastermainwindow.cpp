@@ -386,8 +386,6 @@ void QGitMasterMainWindow::on_tabWidget_currentChanged(int index)
         ui->actionBranch->setEnabled(true);
         ui->actionMerge->setEnabled(true);
         ui->actionStash->setEnabled(true);
-        ui->actionDiscard->setEnabled(true);
-        ui->actionTag->setEnabled(true);
         ui->actionGit_Flow->setEnabled(true);
         ui->actionTerminal->setEnabled(true);
     }
@@ -400,8 +398,6 @@ void QGitMasterMainWindow::on_tabWidget_currentChanged(int index)
         ui->actionBranch->setEnabled(false);
         ui->actionMerge->setEnabled(false);
         ui->actionStash->setEnabled(false);
-        ui->actionDiscard->setEnabled(false);
-        ui->actionTag->setEnabled(false);
         ui->actionGit_Flow->setEnabled(false);
         ui->actionTerminal->setEnabled(false);
     }
