@@ -1,6 +1,6 @@
 @echo off
 
-SET LIBGIT2_VERSION=1.8.2
+SET LIBGIT2_VERSION=1.9.2
 
 rmdir /s /q libgit2
 rmdir /s /q build
@@ -23,3 +23,4 @@ xcopy /y /e build\Release\git2.lib ..\bin
 
 rmdir /s /q libgit2
 rmdir /s /q build
+
