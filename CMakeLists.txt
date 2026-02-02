@@ -4,7 +4,53 @@ cmake_minimum_required(VERSION 3.12)
 #add_compile_options(-fsanitize=address)
 #add_link_options(-fsanitize=address)
 
-project(gitmaster VERSION 0.4 LANGUAGES CXX)
+SET(GITMASTER_VERSION_TAG CACHE STRING "")
+SET(GITMASTER_VERSION_REVISION CACHE STRING "0")
+
+if(NOT GITMASTER_VERSION_TAG)
+    find_package(Git QUIET)
+
+    set(GIT_DIR_PATH "${CMAKE_CURRENT_SOURCE_DIR}/.git")
+    if(EXISTS ${GIT_DIR_PATH})
+        if(Git_FOUND)
+            execute_process(
+                COMMAND ${GIT_EXECUTABLE} describe --tags --abbrev=0
+                WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+                OUTPUT_VARIABLE GITMASTER_VERSION_TAG
+                OUTPUT_STRIP_TRAILING_WHITESPACE # Removes trailing newline/whitespace
+                RESULT_VARIABLE GIT_DESCRIBE_RESULT
+                ERROR_QUIET
+            )
+            execute_process(
+                COMMAND ${GIT_EXECUTABLE} rev-list ${GITMASTER_VERSION_TAG}..HEAD --count
+                WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+                OUTPUT_VARIABLE GITMASTER_VERSION_REVISION
+                OUTPUT_STRIP_TRAILING_WHITESPACE # Removes trailing newline/whitespace
+                RESULT_VARIABLE GIT_REV_LIST_RESULT
+                ERROR_QUIET
+            )
+            execute_process(
+                COMMAND ${GIT_EXECUTABLE} describe --tags --dirty
+                WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+                OUTPUT_VARIABLE GITMASTER_VERSION_COMMIT_NAME
+                OUTPUT_STRIP_TRAILING_WHITESPACE # Removes trailing newline/whitespace
+                RESULT_VARIABLE GIT_DESCRIBE_RESULT
+                ERROR_QUIET
+            )
+        endif()
+    endif()
+endif()
+
+if(NOT GITMASTER_VERSION_TAG MATCHES "^[0-9]+\\.[0-9]+\\.[0-9]+$")
+    message(FATAL_ERROR "Git last tag '${GITMASTER_VERSION_TAG}' is not in format X.Y.Z")
+endif()
+
+string(REGEX REPLACE "^([0-9]+\\.[0-9]+)\\..*$" "\\1" GITMASTER_VERSION_TAG_SHORT ${GITMASTER_VERSION_TAG})
+string(REGEX REPLACE "^([0-9]+)\\..*$" "\\1" GITMASTER_VERSION_MAJOR ${GITMASTER_VERSION_TAG})
+string(REGEX REPLACE "^[0-9]+\\.(.*)\\..*$" "\\1" GITMASTER_VERSION_MINOR ${GITMASTER_VERSION_TAG})
+string(REGEX REPLACE "^[0-9]+\\.[0-9]+\\.(.*)$" "\\1" GITMASTER_VERSION_PATCH ${GITMASTER_VERSION_TAG})
+
+project(gitmaster VERSION ${GITMASTER_VERSION_TAG} LANGUAGES CXX)
 
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
@@ -106,31 +152,38 @@ qt_add_executable(gitmaster
     ${PROJECT_SOURCES}
 )
 
-IF (WIN32)
-    target_sources(gitmaster PRIVATE resource.rc)
-ENDIF()
+if (WIN32)
+    if("${PROJECT_VERSION_PATCH}" STREQUAL "")
+        set(PROJECT_VERSION_PATCH 0)
+    endif()
+    if("${PROJECT_VERSION_TWEAK}" STREQUAL "")
+        set(PROJECT_VERSION_TWEAK 0)
+    endif()
+    configure_file(resource.rc.in resource.rc @ONLY)
+    target_sources(gitmaster PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/resource.rc)
+endif()
 
 if (CMAKE_BUILD_TYPE STREQUAL "Release")
     target_precompile_headers(gitmaster PRIVATE
         ${PROJECT_HEADERS}
     )
-ENDIF()
+endif()
 
 target_include_directories(gitmaster PRIVATE combobox qgit/include)
 
-IF (WIN32)
+if (WIN32)
     target_include_directories(gitmaster PRIVATE include)
-ENDIF()
+endif()
 
-IF (CMAKE_BUILD_TYPE STREQUAL "Debug")
+if (CMAKE_BUILD_TYPE STREQUAL "Debug")
     set_target_properties(gitmaster PROPERTIES OUTPUT_NAME "gitmaster_d")
-ELSE()
+else()
     set_target_properties(gitmaster PROPERTIES OUTPUT_NAME "gitmaster")
-ENDIF()
+endif()
 
 if (APPLE)
     target_link_libraries(gitmaster PRIVATE -L/opt/homebrew/lib)
-ENDIF()
+endif()
 
 target_link_libraries(gitmaster PRIVATE
     Qt6::Widgets
@@ -140,19 +193,19 @@ target_link_libraries(gitmaster PRIVATE
     git2
 )
 
-IF (WIN32)
+if (WIN32)
     target_link_directories(gitmaster PRIVATE
         bin
     )
-ENDIF()
+endif()
 
-IF (NOT MSVC)
+if (NOT MSVC)
 add_custom_command(TARGET gitmaster POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_if_different
     ${CMAKE_BINARY_DIR}/compile_commands.json
     ${CMAKE_SOURCE_DIR}/compile_commands.json
 )
-ENDIF()
+endif()
 
 set_target_properties(gitmaster PROPERTIES
     MACOSX_BUNDLE_GUI_IDENTIFIER my.example.com

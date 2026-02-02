@@ -25,9 +25,9 @@ LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 // Version
 //
 
-VS_VERSION_INFO VERSIONINFO
- FILEVERSION 0,4,0,0
- PRODUCTVERSION 0,4,0,0
+ VS_VERSION_INFO VERSIONINFO
+ FILEVERSION @GITMASTER_VERSION_MAJOR@,@GITMASTER_VERSION_MINOR@,@GITMASTER_VERSION_PATCH@,@GITMASTER_VERSION_REVISION@
+ PRODUCTVERSION @GITMASTER_VERSION_MAJOR@,@GITMASTER_VERSION_MINOR@,@GITMASTER_VERSION_PATCH@,@GITMASTER_VERSION_REVISION@
  FILEFLAGSMASK 0x17L
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -42,15 +42,15 @@ BEGIN
     BEGIN
         BLOCK "000904b0"
         BEGIN
-            VALUE "Comments", "Git commit hash xxx"
+            VALUE "Comments", "Git commit: @GITMASTER_VERSION_COMMIT_NAME@"
             VALUE "CompanyName", ""
             VALUE "FileDescription", "Best git GUI client"
-            VALUE "FileVersion", "0, 4"
+            VALUE "FileVersion", "@GITMASTER_VERSION_MAJOR@, @GITMASTER_VERSION_MINOR@, @GITMASTER_VERSION_PATCH@, @GITMASTER_VERSION_REVISION@"
             VALUE "InternalName", "GitMaster"
             VALUE "LegalCopyright", "Copyright (C) 2017"
             VALUE "OriginalFilename", "gitmaster.exe"
             VALUE "ProductName", "GitMaster"
-            VALUE "ProductVersion", "0, 4"
+            VALUE "ProductVersion", "@GITMASTER_VERSION_MAJOR@, @GITMASTER_VERSION_MINOR@, @GITMASTER_VERSION_PATCH@, @GITMASTER_VERSION_REVISION@"
         END
     END
     BLOCK "VarFileInfo"
