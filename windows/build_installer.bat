@@ -9,7 +9,8 @@ for /f "delims=" %%i in ('git describe --tags --dirty') do set git_describe=%%i
 	echo description = "Git GUI client(#%git_hash%)"
 )
 
-IF EXIST "C:\Qt\6.10.1" (set QT_PATH=C:\Qt\6.10.1) ELSE (set QT_PATH=C:\Qt\6.10.0)
+IF EXIST "C:\Qt\6.11.0" (set QT_PATH=C:\Qt\6.11.0) ELSE (set QT_PATH=C:\Qt\6.10.0)
+
 set OPENSSL_PATH=C:\Qt\Tools\OpenSSLv3\Win_x64
 set QT_KIT=msvc2022_64
 
