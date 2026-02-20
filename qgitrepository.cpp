@@ -99,10 +99,10 @@ QGitRepository::QGitRepository(const QString &path, QWidget *parent)
     connect(m_git, &QGit::stashSaveReply, this, &QGitRepository::localStashSaveReply);
 
     connect(this, &QGitRepository::repositoryFetch, m_git, &QGit::fetch);
-    connect(m_git, &QGit::fetchReply, this, &QGitRepository::repoitoryFetchReply);
+    connect(m_git, &QGit::fetchReply, this, &QGitRepository::repositoryFetchReply);
 
     connect(this, &QGitRepository::repositoryPush, m_git, &QGit::push);
-    connect(m_git, &QGit::pushReply, this, &QGitRepository::repoitoryPushReply);
+    connect(m_git, &QGit::pushReply, this, &QGitRepository::repositoryPushReply);
 
     connect(this, &QGitRepository::repositoryBranches, m_git, &QGit::listBranchesAndTags);
     connect(m_git, &QGit::listBranchesAndTagsReply, this, &QGitRepository::repositoryBranchesAndTagsReply);
@@ -289,7 +289,7 @@ void QGitRepository::localStashSaveReply(QGitError error)
     }
 }
 
-void QGitRepository::repoitoryFetchReply(QGitError error)
+void QGitRepository::repositoryFetchReply(QGitError error)
 {
     if (error.errorCode())
     {
@@ -301,7 +301,7 @@ void QGitRepository::repoitoryFetchReply(QGitError error)
     }
 }
 
-void QGitRepository::repoitoryPushReply(QGitError error)
+void QGitRepository::repositoryPushReply(QGitError error)
 {
     QGitMasterMainWindow::instance()->clearStatusBarText();
 }

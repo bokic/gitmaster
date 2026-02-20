@@ -54,8 +54,8 @@ protected:
 private slots:
     void gravatarImageDownloadFinished(QNetworkReply *reply);
     void localStashSaveReply(QGitError error);
-    void repoitoryFetchReply(QGitError error);
-    void repoitoryPushReply(QGitError error);
+    void repositoryFetchReply(QGitError error);
+    void repositoryPushReply(QGitError error);
     void repositoryBranchesAndTagsReply(QList<QGitBranch> branches, QList<QGitTag> tags, QGitError error);
     void repositoryStashesReply(QStringList stashes, QGitError error);
     void repositoryChangedFilesReply(QMap<QString, git_status_t> files, QGitError error);
