@@ -17,8 +17,6 @@ QGitBranchDialog::QGitBranchDialog(QGitRepository *parent)
     ui->currentBranch_label->setText(m_git.currentBranch());
     m_currentBranches = m_git.branches(GIT_BRANCH_LOCAL);
 
-    m_git.branches(GIT_BRANCH_LOCAL);
-
     ui->newBranch_lineEdit->setFocus();
 }
 
