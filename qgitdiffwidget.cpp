@@ -45,7 +45,7 @@ public:
     QRect rect;
 };
 
-class QGitDiffWidgetPrivate : private QObject
+class QGitDiffWidgetPrivate : public QObject
 {
 public:
     explicit QGitDiffWidgetPrivate(QObject *parent = nullptr): QObject(parent)
