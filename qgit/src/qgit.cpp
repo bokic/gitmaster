@@ -559,7 +559,7 @@ void QGit::deleteBranches(QList<QGitBranch> branches, bool force)
                     
                     GitStrArray refspecs;
                     refspecs.value.count = 1;
-                    refspecs.value.strings = new char*[1];
+                    refspecs.value.strings = (char **)malloc(sizeof(char *) * 1);
                     QByteArray refspec = ":refs/heads/" + branchName.toUtf8();
                     refspecs.value.strings[0] = strdup(refspec.constData());
                     
