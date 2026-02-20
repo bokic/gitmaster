@@ -14,10 +14,13 @@
 #include <QSettings>
 
 
+QGitMasterMainWindow *QGitMasterMainWindow::s_instance = nullptr;
+
 QGitMasterMainWindow::QGitMasterMainWindow(QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::QGitMasterMainWindow)
 {
+    s_instance = this;
     ui->setupUi(this);
 
     QCoreApplication::setOrganizationName("BorisBarbulovski");
@@ -73,21 +76,12 @@ QGitMasterMainWindow::QGitMasterMainWindow(QWidget *parent)
 QGitMasterMainWindow::~QGitMasterMainWindow()
 {
     delete ui;
+    s_instance = nullptr;
 }
 
 QGitMasterMainWindow *QGitMasterMainWindow::instance()
 {
-    const auto &topLevelWidgets = QApplication::topLevelWidgets();
-    for(const auto &widget: topLevelWidgets)
-    {
-        auto mainWindow = dynamic_cast<QGitMasterMainWindow *>(widget);
-        if (mainWindow)
-        {
-            return mainWindow;
-        }
-    }
-
-    return nullptr;
+    return s_instance;
 }
 
 bool QGitMasterMainWindow::event(QEvent *event)

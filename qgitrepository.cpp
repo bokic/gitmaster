@@ -718,7 +718,18 @@ void QGitRepository::repositoryGetCommitDiffReply(QString commitId, QGitCommit d
 
         ui->logHistory_files->clearContents();
 
-        auto files = m_commitDiff.parents().at(0).files(); // TODO: For now from first parent commit only!
+        QMap<QString, QGitDiffFile> uniqueFiles;
+        for (int i = 0; i < m_commitDiff.parents().count(); i++) {
+            auto parentFiles = m_commitDiff.parents().at(i).files();
+            for (const auto &f : parentFiles) {
+                QString path = f.new_file().path();
+                if (!uniqueFiles.contains(path)) {
+                    uniqueFiles.insert(path, f);
+                }
+            }
+        }
+        
+        QList<QGitDiffFile> files = uniqueFiles.values();
         ui->logHistory_files->setRowCount(files.count());
 
         for(int c = 0; c < files.count(); c++)

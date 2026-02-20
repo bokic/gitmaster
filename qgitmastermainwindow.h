@@ -50,4 +50,5 @@ private:
 
     Ui::QGitMasterMainWindow *ui = nullptr;
     QString m_appTheme;
+    static QGitMasterMainWindow *s_instance;
 };
