@@ -544,7 +544,67 @@ void QGit::deleteBranches(QList<QGitBranch> branches, bool force)
             }
             else
             {
-                // TODO: Implement void QGit::deleteBranches(QList<QGitBranch> branches, bool force)
+                QStringList parts = branch.name().split('/');
+                if (parts.size() >= 4 && parts[0] == "refs" && parts[1] == "remotes")
+                {
+                    QString remoteName = parts[2];
+                    QString branchName = parts.mid(3).join('/');
+                    
+                    GitRemote remote;
+                    res = git_remote_lookup(remote, repo, remoteName.toUtf8().constData());
+                    if (res)
+                    {
+                        throw QGitError("git_remote_lookup", res);
+                    }
+                    
+                    GitStrArray refspecs;
+                    refspecs.value.count = 1;
+                    refspecs.value.strings = new char*[1];
+                    QByteArray refspec = ":refs/heads/" + branchName.toUtf8();
+                    refspecs.value.strings[0] = strdup(refspec.constData());
+                    
+                    git_push_options push_opts = GIT_PUSH_OPTIONS_INIT;
+                    push_opts.callbacks.payload = this;
+                    push_opts.callbacks.push_transfer_progress = [](unsigned int current, unsigned int total, size_t bytes, void *payload)->int
+                    {
+                        QGit *_this = static_cast<QGit *>(payload);
+                        emit _this->pushProgress(current, total, bytes);
+                        return 0;
+                    };
+                    
+                    push_opts.callbacks.credentials = [](git_credential **out, const char *url, const char *username_from_url, unsigned int allowed_types, void *payload)
+                    {
+                        if (allowed_types & GIT_CREDENTIAL_SSH_KEY) {
+                            QString pass;
+                            QMetaObject::invokeMethod(QGitMasterMainWindow::instance(), &QGitMasterMainWindow::getPassword, Qt::BlockingQueuedConnection, Q_RETURN_ARG(QString, pass));
+
+                            if (!pass.isEmpty())
+                            {
+                                QString sshDir = QDir::homePath() + "/.ssh";
+                                auto keys = QDir(sshDir).entryInfoList({"*.pub"});
+                                if (keys.size() == 1)
+                                {
+                                    QFileInfo pubkeyFileInfo = keys.first();
+                                    QFileInfo privkeyFileInfo(pubkeyFileInfo.dir(), pubkeyFileInfo.completeBaseName());
+
+                                    auto pubkeyPathname = pubkeyFileInfo.absoluteFilePath().toUtf8();
+                                    auto privkeyPathname = privkeyFileInfo.absoluteFilePath().toUtf8();
+
+                                    git_credential_ssh_key_new(out, username_from_url, pubkeyPathname, privkeyPathname, pass.toUtf8().constData());
+
+                                    return 0;
+                                }
+                            }
+                        }
+                        return -1;
+                    };
+                    
+                    res = git_remote_push(remote, &refspecs.value, &push_opts);
+                    if (res)
+                    {
+                        throw QGitError("git_remote_push", res);
+                    }
+                }
             }
         }
     } catch(const QGitError & ex) {
