@@ -12,6 +12,11 @@
 
 
 struct GitRepository {
+    GitRepository() = default;
+    GitRepository(const GitRepository&) = delete;
+    GitRepository& operator=(const GitRepository&) = delete;
+    GitRepository(GitRepository&&) = delete;
+    GitRepository& operator=(GitRepository&&) = delete;
     operator git_repository*() { return value; }
     operator git_repository**() { return &value; }
     ~GitRepository() { if (value) { git_repository_free(value); value = nullptr; }}
@@ -19,6 +24,11 @@ struct GitRepository {
 };
 
 struct GitReference {
+    GitReference() = default;
+    GitReference(const GitReference&) = delete;
+    GitReference& operator=(const GitReference&) = delete;
+    GitReference(GitReference&&) = delete;
+    GitReference& operator=(GitReference&&) = delete;
     operator git_reference*() { return value; }
     operator git_reference**() { return &value; }
     ~GitReference() { if (value) { git_reference_free(value); value = nullptr; }}
@@ -26,6 +36,11 @@ struct GitReference {
 };
 
 struct GitSignature {
+    GitSignature() = default;
+    GitSignature(const GitSignature&) = delete;
+    GitSignature& operator=(const GitSignature&) = delete;
+    GitSignature(GitSignature&&) = delete;
+    GitSignature& operator=(GitSignature&&) = delete;
     operator git_signature*() { return value; }
     operator git_signature**() { return &value; }
     ~GitSignature() { if (value) { git_signature_free(value); value = nullptr; }}
@@ -33,6 +48,11 @@ struct GitSignature {
 };
 
 struct GitStatusList {
+    GitStatusList() = default;
+    GitStatusList(const GitStatusList&) = delete;
+    GitStatusList& operator=(const GitStatusList&) = delete;
+    GitStatusList(GitStatusList&&) = delete;
+    GitStatusList& operator=(GitStatusList&&) = delete;
     operator git_status_list*() { return value; }
     operator git_status_list**() { return &value; }
     ~GitStatusList() { if (value) { git_status_list_free(value); value = nullptr; }}
@@ -40,6 +60,11 @@ struct GitStatusList {
 };
 
 struct GitBranchIterator {
+    GitBranchIterator() = default;
+    GitBranchIterator(const GitBranchIterator&) = delete;
+    GitBranchIterator& operator=(const GitBranchIterator&) = delete;
+    GitBranchIterator(GitBranchIterator&&) = delete;
+    GitBranchIterator& operator=(GitBranchIterator&&) = delete;
     operator git_branch_iterator*() { return value; }
     operator git_branch_iterator**() { return &value; }
     ~GitBranchIterator() { if (value) { git_branch_iterator_free(value); value = nullptr; }}
@@ -47,6 +72,11 @@ struct GitBranchIterator {
 };
 
 struct GitTree {
+    GitTree() = default;
+    GitTree(const GitTree&) = delete;
+    GitTree& operator=(const GitTree&) = delete;
+    GitTree(GitTree&&) = delete;
+    GitTree& operator=(GitTree&&) = delete;
     operator git_tree*() { return value; }
     operator git_tree**() { return &value; }
     ~GitTree() { if (value) { git_tree_free(value); value = nullptr; }}
@@ -54,6 +84,11 @@ struct GitTree {
 };
 
 struct GitCommit {
+    GitCommit() = default;
+    GitCommit(const GitCommit&) = delete;
+    GitCommit& operator=(const GitCommit&) = delete;
+    GitCommit(GitCommit&&) = delete;
+    GitCommit& operator=(GitCommit&&) = delete;
     operator git_commit*() { return value; }
     operator git_commit**() { return &value; }
     ~GitCommit() { if (value) { git_commit_free(value); value = nullptr; }}
@@ -61,6 +96,11 @@ struct GitCommit {
 };
 
 struct GitDiff {
+    GitDiff() = default;
+    GitDiff(const GitDiff&) = delete;
+    GitDiff& operator=(const GitDiff&) = delete;
+    GitDiff(GitDiff&&) = delete;
+    GitDiff& operator=(GitDiff&&) = delete;
     operator git_diff*() { return value; }
     operator git_diff**() { return &value; }
     ~GitDiff() { if (value) { git_diff_free(value); value = nullptr; }}
@@ -68,6 +108,11 @@ struct GitDiff {
 };
 
 struct GitRemote {
+    GitRemote() = default;
+    GitRemote(const GitRemote&) = delete;
+    GitRemote& operator=(const GitRemote&) = delete;
+    GitRemote(GitRemote&&) = delete;
+    GitRemote& operator=(GitRemote&&) = delete;
     operator git_remote*() { return value; }
     operator git_remote**() { return &value; }
     ~GitRemote() { if (value) { git_remote_free(value); value = nullptr; }}
@@ -75,6 +120,11 @@ struct GitRemote {
 };
 
 struct GitObject {
+    GitObject() = default;
+    GitObject(const GitObject&) = delete;
+    GitObject& operator=(const GitObject&) = delete;
+    GitObject(GitObject&&) = delete;
+    GitObject& operator=(GitObject&&) = delete;
     operator git_object*() { return value; }
     operator git_object**() { return &value; }
     ~GitObject() { if (value) { git_object_free(value); value = nullptr; }}
@@ -82,6 +132,11 @@ struct GitObject {
 };
 
 struct GitPatch {
+    GitPatch() = default;
+    GitPatch(const GitPatch&) = delete;
+    GitPatch& operator=(const GitPatch&) = delete;
+    GitPatch(GitPatch&&) = delete;
+    GitPatch& operator=(GitPatch&&) = delete;
     operator git_patch*() { return value; }
     operator git_patch**() { return &value; }
     ~GitPatch() { if (value) { git_patch_free(value); value = nullptr; }}
@@ -89,6 +144,11 @@ struct GitPatch {
 };
 
 struct GitIndex {
+    GitIndex() = default;
+    GitIndex(const GitIndex&) = delete;
+    GitIndex& operator=(const GitIndex&) = delete;
+    GitIndex(GitIndex&&) = delete;
+    GitIndex& operator=(GitIndex&&) = delete;
     operator git_index*() { return value; }
     operator git_index**() { return &value; }
     ~GitIndex() { if (value) { git_index_free(value); value = nullptr; }}
@@ -96,6 +156,11 @@ struct GitIndex {
 };
 
 struct GitBlob {
+    GitBlob() = default;
+    GitBlob(const GitBlob&) = delete;
+    GitBlob& operator=(const GitBlob&) = delete;
+    GitBlob(GitBlob&&) = delete;
+    GitBlob& operator=(GitBlob&&) = delete;
     operator git_blob*() { return value; }
     operator git_blob**() { return &value; }
     ~GitBlob() { if (value) { git_blob_free(value); value = nullptr; }}
@@ -103,6 +168,11 @@ struct GitBlob {
 };
 
 struct GitRevWalk {
+    GitRevWalk() = default;
+    GitRevWalk(const GitRevWalk&) = delete;
+    GitRevWalk& operator=(const GitRevWalk&) = delete;
+    GitRevWalk(GitRevWalk&&) = delete;
+    GitRevWalk& operator=(GitRevWalk&&) = delete;
     operator git_revwalk*() { return value; }
     operator git_revwalk**() { return &value; }
     ~GitRevWalk() { if (value) { git_revwalk_free(value); value = nullptr; }}
@@ -110,6 +180,11 @@ struct GitRevWalk {
 };
 
 struct GitStrArray {
+    GitStrArray() = default;
+    GitStrArray(const GitStrArray&) = delete;
+    GitStrArray& operator=(const GitStrArray&) = delete;
+    GitStrArray(GitStrArray&&) = delete;
+    GitStrArray& operator=(GitStrArray&&) = delete;
     operator git_strarray&() { return value; }
     operator git_strarray*() { return &value; }
     ~GitStrArray() {  git_strarray_dispose(&value); value = {nullptr, 0}; }
@@ -118,6 +193,11 @@ struct GitStrArray {
 
 
 struct GitTag {
+    GitTag() = default;
+    GitTag(const GitTag&) = delete;
+    GitTag& operator=(const GitTag&) = delete;
+    GitTag(GitTag&&) = delete;
+    GitTag& operator=(GitTag&&) = delete;
     operator git_tag*() { return value; }
     operator git_tag**() { return &value; }
     ~GitTag() {  git_tag_free(value); value = nullptr; }
