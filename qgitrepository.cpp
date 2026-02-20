@@ -150,12 +150,14 @@ QGitRepository::~QGitRepository()
 {
     QAbstractItemDelegate *delegate = nullptr;
 
+    m_git->deleteLater();
+
     m_thread.quit();
     m_thread.wait();
 
     delegate = ui->logHistory_commits->itemDelegate();
 
-    delete m_git; m_git = nullptr;
+    m_git = nullptr;
 
     delete ui;
 
