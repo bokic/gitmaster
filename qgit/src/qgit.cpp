@@ -138,23 +138,6 @@ QGit::QGit(QObject *parent)
 {
 }
 
-QGit::QGit(QGit&& other)
-{
-    std::swap(m_path, other.m_path);
-}
-
-QGit& QGit::operator=(const QGit &other)
-{
-    m_path = other.m_path;
-    return *this;
-}
-
-QGit& QGit::operator=(QGit &&other)
-{
-    std::swap(m_path, other.m_path);
-    return *this;
-}
-
 bool QGit::setPath(const QDir &path)
 {
     m_path = path;
