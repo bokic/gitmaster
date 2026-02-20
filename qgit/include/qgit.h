@@ -103,7 +103,7 @@ signals:
     void stashSaveReply(QGitError error);
     void stashRemoveReply(QGitError error);
     void listStashesReply(QStringList stashes, QGitError error);
-    void listChangedFilesReply(QMap<QString,git_status_t> files, QGitError error);
+    void listChangedFilesReply(QList<QPair<QString, git_status_t>> files, QGitError error);
     void commitDiffReply(QString commit_id, QGitCommit diff, QGitError error);
     void commitDiffContentReply(QString first, QString second, QList<QGitDiffFile> files, QGitError error);
     void stageFilesReply(QGitError error);

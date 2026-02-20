@@ -455,7 +455,7 @@ void QGitRepository::repositoryStashesReply(QStringList stashes, QGitError error
     }
 }
 
-void QGitRepository::repositoryChangedFilesReply(QMap<QString, git_status_t> files, QGitError error)
+void QGitRepository::repositoryChangedFilesReply(QList<QPair<QString, git_status_t>> files, QGitError error)
 {
     int stagedCnt = 0;
     int unstagedCnt = 0;
@@ -465,12 +465,10 @@ void QGitRepository::repositoryChangedFilesReply(QMap<QString, git_status_t> fil
     ui->listWidget_staged->setEnabled(true);
     ui->listWidget_unstaged->setEnabled(true);
 
-    const auto &keys = files.keys();
-
-    for(int c = 0; c < keys.count(); c++)
+    for(int c = 0; c < files.count(); c++)
     {
-        auto file = keys.at(c);
-        auto status = files[file];
+        const auto &file = files.at(c).first;
+        auto status = files.at(c).second;
 
         if (status & (GIT_STATUS_INDEX_NEW | GIT_STATUS_INDEX_MODIFIED | GIT_STATUS_INDEX_DELETED | GIT_STATUS_INDEX_RENAMED | GIT_STATUS_INDEX_TYPECHANGE))
         {

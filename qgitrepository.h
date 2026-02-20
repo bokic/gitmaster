@@ -58,7 +58,7 @@ private slots:
     void repositoryPushReply(QGitError error);
     void repositoryBranchesAndTagsReply(QList<QGitBranch> branches, QList<QGitTag> tags, QGitError error);
     void repositoryStashesReply(QStringList stashes, QGitError error);
-    void repositoryChangedFilesReply(QMap<QString, git_status_t> files, QGitError error);
+    void repositoryChangedFilesReply(QList<QPair<QString, git_status_t>> files, QGitError error);
     void repositoryStageFilesReply(QGitError error);
     void repositoryUnstageFilesReply(QGitError error);
     void repositoryCommitReply(QString commit_id, QGitError error);

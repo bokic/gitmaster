@@ -923,7 +923,7 @@ void QGit::listStashes()
 
 void QGit::listChangedFiles(int show, int sort, bool reversed)
 {
-    QMap<QString,git_status_t> items;
+    QList<QPair<QString, git_status_t>> items;
     QGitError error;
 
     try
@@ -990,25 +990,41 @@ void QGit::listChangedFiles(int show, int sort, bool reversed)
                     )
                 )
             {
-                items.insert(QString::fromUtf8(item->index_to_workdir->new_file.path), status);
+                items.append({QString::fromUtf8(item->index_to_workdir->new_file.path), status});
             }
 
             if ((item->head_to_index)&&(item->head_to_index->status != GIT_DELTA_UNMODIFIED)&&(status))
             {
-                items.insert(QString::fromUtf8(item->head_to_index->new_file.path), status);
+                items.append({QString::fromUtf8(item->head_to_index->new_file.path), status});
             }
 
             index++;
         }
 
-        if (sort != QGIT_SORT_UNSORTED)
+        switch (sort)
         {
-            // TODO: Implement sort
+        case QGIT_SORT_FILEPATH:
+            std::sort(items.begin(), items.end(), [](const auto &a, const auto &b) {
+                return a.first < b.first;
+            });
+            break;
+        case QGIT_SORT_FILENAME:
+            std::sort(items.begin(), items.end(), [](const auto &a, const auto &b) {
+                return QFileInfo(a.first).fileName() < QFileInfo(b.first).fileName();
+            });
+            break;
+        case QGIT_SORT_STATUS:
+            std::sort(items.begin(), items.end(), [](const auto &a, const auto &b) {
+                return a.second < b.second;
+            });
+            break;
+        default:
+            break;
+        }
 
-            if (reversed)
-            {
-                // TODO: Implement reversed
-            }
+        if (reversed)
+        {
+            std::reverse(items.begin(), items.end());
         }
 
     } catch(const QGitError &ex) {
