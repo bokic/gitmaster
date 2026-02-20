@@ -582,6 +582,8 @@ void QGit::deleteBranches(QList<QGitBranch> branches, bool force)
                             {
                                 QString sshDir = QDir::homePath() + "/.ssh";
                                 auto keys = QDir(sshDir).entryInfoList({"*.pub"});
+
+                                // TODO: Hardcoded only one key. Use this list QStringList preferredKeys = {"id_ed25519", "id_rsa", "id_ecdsa", "id_dsa"};
                                 if (keys.size() == 1)
                                 {
                                     QFileInfo pubkeyFileInfo = keys.first();
