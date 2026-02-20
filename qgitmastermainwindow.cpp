@@ -20,8 +20,6 @@ QGitMasterMainWindow::QGitMasterMainWindow(QWidget *parent)
 {
     ui->setupUi(this);
 
-    git_libgit2_init();
-
     QCoreApplication::setOrganizationName("BorisBarbulovski");
     QCoreApplication::setApplicationName("GitMaster");
 
@@ -74,8 +72,6 @@ QGitMasterMainWindow::QGitMasterMainWindow(QWidget *parent)
 
 QGitMasterMainWindow::~QGitMasterMainWindow()
 {
-    git_libgit2_shutdown();
-
     delete ui;
 }
 
