@@ -958,6 +958,11 @@ void QGitRepository::on_logHistory_commits_currentCellChanged(int currentRow, in
     QString commit_id;
     int rows = 0;
 
+    if (currentRow < 0)
+    {
+        return;
+    }
+
     commit_id = ui->logHistory_commits->item(currentRow, 4)->data(Qt::UserRole).toString();
 
     if (!commit_id.isEmpty())
@@ -1026,6 +1031,11 @@ void QGitRepository::on_logHistory_files_itemSelectionChanged()
 
     const auto &selected = ui->logHistory_files->selectedItems();
     int parent = 0; // TODO: Parent is hardcoded.
+
+    if (m_commitDiff.parents().size() <= parent)
+    {
+        return;
+    }
 
     for(auto cell: selected) {
         if (cell->column() == 0)
