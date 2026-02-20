@@ -833,7 +833,55 @@ void QGit::stashSave(QString name)
 
 void QGit::stashRemove(QString name)
 {
-    Q_UNUSED(name)
+    QGitError error;
+
+    try
+    {
+        GitRepository repo;
+        int res = git_repository_open(repo, m_path.absolutePath().toUtf8().constData());
+        if (res)
+        {
+            throw QGitError("git_repository_open", res);
+        }
+
+        struct StashSearchContext {
+            QString targetName;
+            size_t foundIndex = 0;
+            bool found = false;
+        } ctx;
+        ctx.targetName = name;
+
+        res = git_stash_foreach(repo, [](size_t index, const char *message, const git_oid *stash_id, void *payload) -> int {
+                Q_UNUSED(stash_id)
+
+                auto ctx = static_cast<StashSearchContext *>(payload);
+
+                if (QString::fromUtf8(message) == ctx->targetName)
+                {
+                    ctx->foundIndex = index;
+                    ctx->found = true;
+                    return 1; // Stop iterating.
+                }
+
+                return 0;
+            }, &ctx);
+
+        if (!ctx.found)
+        {
+            throw QGitError("stash not found", -1);
+        }
+
+        res = git_stash_drop(repo, ctx.foundIndex);
+        if (res)
+        {
+            throw QGitError("git_stash_drop", res);
+        }
+
+    } catch(const QGitError &ex) {
+        error = ex;
+    }
+
+    emit stashRemoveReply(error);
 }
 
 void QGit::listStashes()
