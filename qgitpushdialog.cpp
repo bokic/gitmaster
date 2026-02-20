@@ -62,7 +62,7 @@ QStringList QGitPushDialog::branches() const
     {
         auto item = ui->branches_tableWidget->item(row, 0);
 
-        if (item->isSelected())
+        if (item->checkState() == Qt::Checked)
         {
             ret.append(item->text());
         }
