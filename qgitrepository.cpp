@@ -185,8 +185,12 @@ void QGitRepository::branchDialog()
             auto branchName = dlg.newBranchName();
             auto commitId = dlg.newBranchCommitId();
             auto checkout = dlg.newBranchCheckout();
-            m_git->createLocalBranch(branchName, commitId, checkout);
-            emit repositoryBranches();
+            try {
+                m_git->createLocalBranch(branchName, commitId, checkout);
+                emit repositoryBranches();
+            } catch (const QGitError &error) {
+                QMessageBox::critical(this, tr("Error creating branch"), error.errorString());
+            }
         }
         else if (dlg.operation() == QGitBranchDialog::DeleteBranchesOperation)
         {
@@ -303,7 +307,14 @@ void QGitRepository::repositoryFetchReply(QGitError error)
 
 void QGitRepository::repositoryPushReply(QGitError error)
 {
-    QGitMasterMainWindow::instance()->clearStatusBarText();
+    if (!error.errorString().isEmpty())
+    {
+        QGitMasterMainWindow::instance()->updateStatusBarText(error.errorString());
+    }
+    else
+    {
+        QGitMasterMainWindow::instance()->clearStatusBarText();
+    }
 }
 
 void QGitRepository::repositoryBranchesAndTagsReply(QList<QGitBranch> branches, QList<QGitTag> tags, QGitError error)
