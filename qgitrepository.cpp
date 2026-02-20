@@ -687,6 +687,11 @@ void QGitRepository::repositoryGetCommitDiffReply(QString commitId, QGitCommit d
 
         int currentRow = ui->logHistory_commits->currentRow();
 
+        if (currentRow < 0)
+        {
+            return;
+        }
+
         const QString commit_id = ui->logHistory_commits->item(currentRow, 4)->data(Qt::UserRole).toString();
         const QString email = ui->logHistory_commits->item(currentRow, 3)->data(Qt::UserRole + 1).toString();
 
