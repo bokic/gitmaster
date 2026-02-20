@@ -442,10 +442,10 @@ void QGit::createLocalBranch(const QString &name, const QString &commit_id, bool
     GitCommit commit_obj;
     git_oid oid;
 
-    int res = git_repository_init(repo, m_path.absolutePath().toUtf8().constData(), 0);
+    int res = git_repository_open(repo, m_path.absolutePath().toUtf8().constData());
     if(res)
     {
-        throw QGitError("git_repository_init", res);
+        throw QGitError("git_repository_open", res);
     }
 
     if (commit_id.isEmpty())
@@ -519,10 +519,10 @@ void QGit::deleteBranches(QList<QGitBranch> branches, bool force)
 
     try {
         GitRepository repo;
-        int res = git_repository_init(repo, m_path.absolutePath().toUtf8().constData(), 0);
+        int res = git_repository_open(repo, m_path.absolutePath().toUtf8().constData());
         if(res)
         {
-            throw QGitError("git_repository_init", res);
+            throw QGitError("git_repository_open", res);
         }
 
         for(const auto &branch: branches)
