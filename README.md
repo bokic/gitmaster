@@ -1,4 +1,4 @@
-# gitmaster
+# gitmaster [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/bokic/gitmaster)
 Git GUI client
 
 # screenshot
