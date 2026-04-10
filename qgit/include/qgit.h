@@ -96,6 +96,10 @@ public slots:
     void fetch(bool fetchFromAllRemotes, bool purgeDeletedBranches, bool fetchAllTags);
     void push(QString remote, QStringList branches, bool tags, bool force);
     void listCommits(QString object, int length);
+    void checkoutBranch(QString name);
+    void renameBranch(QString oldName, QString newName);
+    void setUpstream(QString branchName, QString upstreamBranchName);
+    void merge(QString branchName);
 
 signals:
     void initReply(QGitError error);
@@ -122,6 +126,10 @@ signals:
     void pushProgress(unsigned int current, unsigned int total, size_t bytes);
     void listCommitsReply(QList<QGitCommit> commits, QGitError error);
     void deleteBranchesReply(QGitError error);
+    void checkoutBranchReply(QGitError error);
+    void renameBranchReply(QGitError error);
+    void setUpstreamReply(QGitError error);
+    void mergeReply(QGitError error);
 
 private:
     QDir m_path;
