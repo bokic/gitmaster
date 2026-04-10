@@ -921,6 +921,108 @@ void QGit::listStashes()
     emit listStashesReply(stashes, error);
 }
 
+void QGit::stashApply(QString name)
+{
+    QGitError error;
+
+    try
+    {
+        GitRepository repo;
+        int res = git_repository_open(repo, m_path.absolutePath().toUtf8().constData());
+        if (res)
+        {
+            throw QGitError("git_repository_open", res);
+        }
+
+        struct StashSearchContext {
+            QString targetName;
+            size_t foundIndex = 0;
+            bool found = false;
+        } ctx;
+        ctx.targetName = name;
+
+        res = git_stash_foreach(repo, [](size_t index, const char *message, const git_oid *stash_id, void *payload) -> int {
+            Q_UNUSED(stash_id)
+            auto ctx = static_cast<StashSearchContext *>(payload);
+            if (QString::fromUtf8(message) == ctx->targetName)
+            {
+                ctx->foundIndex = index;
+                ctx->found = true;
+                return 1;
+            }
+            return 0;
+        }, &ctx);
+
+        if (!ctx.found)
+        {
+            throw QGitError("Stash not found", -1);
+        }
+
+        git_stash_apply_options opts = GIT_STASH_APPLY_OPTIONS_INIT;
+        res = git_stash_apply(repo, ctx.foundIndex, &opts);
+        if (res)
+        {
+            throw QGitError("git_stash_apply", res);
+        }
+
+    } catch(const QGitError &ex) {
+        error = ex;
+    }
+
+    emit stashApplyReply(error);
+}
+
+void QGit::stashPop(QString name)
+{
+    QGitError error;
+
+    try
+    {
+        GitRepository repo;
+        int res = git_repository_open(repo, m_path.absolutePath().toUtf8().constData());
+        if (res)
+        {
+            throw QGitError("git_repository_open", res);
+        }
+
+        struct StashSearchContext {
+            QString targetName;
+            size_t foundIndex = 0;
+            bool found = false;
+        } ctx;
+        ctx.targetName = name;
+
+        res = git_stash_foreach(repo, [](size_t index, const char *message, const git_oid *stash_id, void *payload) -> int {
+            Q_UNUSED(stash_id)
+            auto ctx = static_cast<StashSearchContext *>(payload);
+            if (QString::fromUtf8(message) == ctx->targetName)
+            {
+                ctx->foundIndex = index;
+                ctx->found = true;
+                return 1;
+            }
+            return 0;
+        }, &ctx);
+
+        if (!ctx.found)
+        {
+            throw QGitError("Stash not found", -1);
+        }
+
+        git_stash_apply_options opts = GIT_STASH_APPLY_OPTIONS_INIT;
+        res = git_stash_pop(repo, ctx.foundIndex, &opts);
+        if (res)
+        {
+            throw QGitError("git_stash_pop", res);
+        }
+
+    } catch(const QGitError &ex) {
+        error = ex;
+    }
+
+    emit stashPopReply(error);
+}
+
 void QGit::listChangedFiles(int show, int sort, bool reversed)
 {
     QList<QPair<QString, git_status_t>> items;

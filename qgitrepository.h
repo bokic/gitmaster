@@ -54,6 +54,7 @@ protected:
 private slots:
     void gravatarImageDownloadFinished(QNetworkReply *reply);
     void localStashSaveReply(QGitError error);
+    void localStashRemoveReply(QGitError error);
     void repositoryFetchReply(QGitError error);
     void repositoryPushReply(QGitError error);
     void repositoryBranchesAndTagsReply(QList<QGitBranch> branches, QList<QGitTag> tags, QGitError error);
@@ -79,6 +80,9 @@ private slots:
     void on_logHistory_files_itemSelectionChanged();
     void on_listWidget_staged_itemSelectionChanged();
     void on_listWidget_unstaged_itemSelectionChanged();
+    void on_branchesTreeView_customContextMenuRequested(const QPoint &pos);
+    void stashApplyReply(QGitError error);
+    void stashPopReply(QGitError error);
     void on_comboBox_gitStatusFiles_itemClicked(int index);
 
 private:

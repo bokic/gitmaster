@@ -81,6 +81,8 @@ public slots:
     void listStashes();
     void stashSave(QString name);
     void stashRemove(QString name);
+    void stashApply(QString name);
+    void stashPop(QString name);
     void listChangedFiles(int show, int sort, bool reversed);
     void commitDiff(QString commitId);
     void commitDiffContent(QString first, QString second, QList<QString> files, uint32_t context_lines);
@@ -102,6 +104,8 @@ signals:
     void listBranchesAndTagsReply(QList<QGitBranch> branches, QList<QGitTag> tags, QGitError error);
     void stashSaveReply(QGitError error);
     void stashRemoveReply(QGitError error);
+    void stashApplyReply(QGitError error);
+    void stashPopReply(QGitError error);
     void listStashesReply(QStringList stashes, QGitError error);
     void listChangedFilesReply(QList<QPair<QString, git_status_t>> files, QGitError error);
     void commitDiffReply(QString commit_id, QGitCommit diff, QGitError error);

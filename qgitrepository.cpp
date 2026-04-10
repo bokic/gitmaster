@@ -16,6 +16,8 @@
 #include <QMessageBox>
 #include <QScrollBar>
 #include <QWindow>
+#include <QMenu>
+#include <QAction>
 #include <QList>
 
 #define COMMIT_COUNT_TO_LOAD 100
@@ -97,6 +99,7 @@ QGitRepository::QGitRepository(const QString &path, QWidget *parent)
 
     connect(this, &QGitRepository::localStash, m_git, &QGit::stashSave);
     connect(m_git, &QGit::stashSaveReply, this, &QGitRepository::localStashSaveReply);
+    connect(m_git, &QGit::stashRemoveReply, this, &QGitRepository::localStashRemoveReply);
 
     connect(this, &QGitRepository::repositoryFetch, m_git, &QGit::fetch);
     connect(m_git, &QGit::fetchReply, this, &QGitRepository::repositoryFetchReply);
@@ -140,6 +143,11 @@ QGitRepository::QGitRepository(const QString &path, QWidget *parent)
     connect(ui->logHistory_commits->verticalScrollBar(), &QScrollBar::valueChanged, this, &QGitRepository::historyTableSliderMoved);
     connect(ui->plainTextEdit_commitMessage, &QAdvPlainTextEdit::abort, ui->pushButton_commitCancel, &QPushButton::click);
 
+    connect(m_git, &QGit::stashApplyReply, this, &QGitRepository::stashApplyReply);
+    connect(m_git, &QGit::stashPopReply, this, &QGitRepository::stashPopReply);
+
+    ui->branchesTreeView->setContextMenuPolicy(Qt::CustomContextMenu);
+
     m_thread.setObjectName("QGit(repo)");
     m_thread.start();
 
@@ -167,6 +175,9 @@ QGitRepository::~QGitRepository()
 void QGitRepository::refreshData()
 {
     on_repositoryDetail_currentChanged(ui->repositoryDetail->currentIndex());
+
+    emit repositoryBranches();
+    emit repositoryStashes();
 }
 
 void QGitRepository::stash(const QString &name)
@@ -291,9 +302,18 @@ void QGitRepository::gravatarImageDownloadFinished(QNetworkReply *reply)
 void QGitRepository::localStashSaveReply(QGitError error)
 {
     if (error.errorCode()) {
-
+        QMessageBox::critical(this, tr("Error saving stash"), error.errorString());
     } else {
-        emit repositoryStashes();
+        refreshData();
+    }
+}
+
+void QGitRepository::localStashRemoveReply(QGitError error)
+{
+    if (error.errorCode()) {
+        QMessageBox::critical(this, tr("Error dropping stash"), error.errorString());
+    } else {
+        refreshData();
     }
 }
 
@@ -469,19 +489,38 @@ void QGitRepository::repositoryStashesReply(QStringList stashes, QGitError error
 {
     Q_UNUSED(error)
 
-    if (!stashes.isEmpty())
-    {
-        QTreeWidgetItem *item = new QTreeWidgetItem(QStringList() << tr("Stashes"));
-
-        for(const auto &stash: stashes)
-        {
-            item->addChild(new QTreeWidgetItem(QStringList() << stash));
+    QTreeWidgetItem *stashGroupItem = nullptr;
+    for (int i = 0; i < ui->branchesTreeView->topLevelItemCount(); ++i) {
+        if (ui->branchesTreeView->topLevelItem(i)->text(0) == tr("Stashes")) {
+            stashGroupItem = ui->branchesTreeView->topLevelItem(i);
+            break;
         }
-
-        ui->branchesTreeView->addTopLevelItem(item);
-
-        ui->branchesTreeView->expandAll();
     }
+
+    if (stashes.isEmpty())
+    {
+        if (stashGroupItem) {
+            delete ui->branchesTreeView->takeTopLevelItem(ui->branchesTreeView->indexOfTopLevelItem(stashGroupItem));
+        }
+        return;
+    }
+
+    if (!stashGroupItem)
+    {
+        stashGroupItem = new QTreeWidgetItem(QStringList() << tr("Stashes"));
+        ui->branchesTreeView->addTopLevelItem(stashGroupItem);
+    }
+    else
+    {
+        stashGroupItem->takeChildren();
+    }
+
+    for(const auto &stash: stashes)
+    {
+        stashGroupItem->addChild(new QTreeWidgetItem(QStringList() << stash));
+    }
+
+    ui->branchesTreeView->expandAll();
 }
 
 void QGitRepository::repositoryChangedFilesReply(QList<QPair<QString, git_status_t>> files, QGitError error)
@@ -817,8 +856,84 @@ void QGitRepository::repositoryGetCommitDiffReply(QString commitId, QGitCommit d
 
 void QGitRepository::deleteBranchesReply(QGitError error)
 {
-    // TODO: Check for errors.
+    if (error.errorCode())
+    {
+        QMessageBox::critical(this, tr("Error deleting branches"), error.errorString());
+    }
     emit repositoryBranches();
+}
+
+void QGitRepository::on_branchesTreeView_customContextMenuRequested(const QPoint &pos)
+{
+    QTreeWidgetItem *item = ui->branchesTreeView->itemAt(pos);
+    if (!item)
+        return;
+
+    // Detect if this is a stash item (child of "Stashes" top-level item)
+    if (item->parent() && item->parent()->text(0) == tr("Stashes"))
+    {
+        QString stashName = item->text(0);
+        QMenu menu(this);
+
+        QAction *applyAction = menu.addAction(tr("Apply Stash"));
+        QAction *popAction = menu.addAction(tr("Pop Stash"));
+        menu.addSeparator();
+        QAction *dropAction = menu.addAction(tr("Drop Stash"));
+
+        QAction *selectedAction = menu.exec(ui->branchesTreeView->viewport()->mapToGlobal(pos));
+
+        if (selectedAction == applyAction)
+        {
+            QGitMasterMainWindow::instance()->updateStatusBarText(tr("Applying stash %1...").arg(stashName));
+            m_git->stashApply(stashName);
+        }
+        else if (selectedAction == popAction)
+        {
+            QGitMasterMainWindow::instance()->updateStatusBarText(tr("Popping stash %1...").arg(stashName));
+            m_git->stashPop(stashName);
+        }
+        else if (selectedAction == dropAction)
+        {
+            auto res = QMessageBox::question(this, tr("Drop Stash"), 
+                                             tr("Are you sure you want to drop stash '%1'?").arg(stashName),
+                                             QMessageBox::Yes | QMessageBox::No);
+            if (res == QMessageBox::Yes)
+            {
+                QGitMasterMainWindow::instance()->updateStatusBarText(tr("Dropping stash %1...").arg(stashName));
+                m_git->stashRemove(stashName);
+            }
+        }
+    }
+}
+
+void QGitRepository::stashApplyReply(QGitError error)
+{
+    if (error.errorCode())
+    {
+        QMessageBox::critical(this, tr("Stash Apply Error"), 
+                              tr("Could not apply stash. This might be due to merge conflicts or local changes.\n\nDetails: %1").arg(error.errorString()));
+        QGitMasterMainWindow::instance()->updateStatusBarText(tr("Stash apply failed."));
+    }
+    else
+    {
+        QGitMasterMainWindow::instance()->updateStatusBarText(tr("Stash applied successfully."));
+        refreshData();
+    }
+}
+
+void QGitRepository::stashPopReply(QGitError error)
+{
+    if (error.errorCode())
+    {
+        QMessageBox::critical(this, tr("Stash Pop Error"), 
+                              tr("Could not pop stash. Changes might have conflicts with your working copy.\n\nDetails: %1").arg(error.errorString()));
+        QGitMasterMainWindow::instance()->updateStatusBarText(tr("Stash pop failed."));
+    }
+    else
+    {
+        QGitMasterMainWindow::instance()->updateStatusBarText(tr("Stash popped successfully."));
+        refreshData();
+    }
 }
 
 void QGitRepository::on_repositoryDetail_currentChanged(int index)
