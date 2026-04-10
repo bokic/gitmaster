@@ -106,22 +106,13 @@ void QGitDiffWidget::setIgnoreWhitespace(bool ignore)
 void QGitDiffWidget::setLinesOfContent(int lines)
 {
     m_linesOfContent = lines;
-
-    if (m_linesOfContent <= 1)
-    {
-        emit requestGitDiff(m_requestedFirst, m_requestedSecond, m_requestedFiles, 1, m_ignoreWhitespace);
-    }
-    else
-    {
-        emit requestGitDiff(m_requestedFirst, m_requestedSecond, m_requestedFiles, m_linesOfContent, m_ignoreWhitespace);
-    }
 }
 
 void QGitDiffWidget::refresh()
 {
     if (!m_requestedFiles.isEmpty())
     {
-        emit requestGitDiff(m_requestedFirst, m_requestedSecond, m_requestedFiles, 3, m_ignoreWhitespace);
+        emit requestGitDiff(m_requestedFirst, m_requestedSecond, m_requestedFiles, m_linesOfContent, m_ignoreWhitespace);
     }
 }
 

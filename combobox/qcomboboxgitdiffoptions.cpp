@@ -232,7 +232,7 @@ int QComboBoxGitDiffOptions::linesOfContent() const
 {
     QStandardItemModel *items = static_cast<QStandardItemModel *>(model());
 
-    for(int c = ITEM_SHOW_2_LINE; c <= ITEM_SHOW_100_LINE; c++)
+    for(int c = ITEM_SHOW_1_LINE; c <= ITEM_SHOW_100_LINE; c++)
     {
         if (items->data(items->index(c, 0), Qt::CheckStateRole).toInt() == Qt::Checked)
         {

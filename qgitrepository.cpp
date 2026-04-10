@@ -1349,25 +1349,18 @@ void QGitRepository::on_logHistory_files_itemSelectionChanged()
 void QGitRepository::on_comboBox_gitDiffOptions_optionsChanged()
 {
     bool ignoreWhitespace = ui->comboBox_gitDiffOptions->ignoreWhitespace();
+    int lines = ui->comboBox_gitDiffOptions->linesOfContent();
 
     ui->logHistory_diff->setIgnoreWhitespace(ignoreWhitespace);
+    ui->logHistory_diff->setLinesOfContent(lines);
+
     ui->commit_diff->setIgnoreWhitespace(ignoreWhitespace);
+    ui->commit_diff->setLinesOfContent(lines);
 
     if (ui->repositoryDetail->currentWidget() == ui->tabLogHistory) {
         ui->logHistory_diff->refresh();
     } else if (ui->repositoryDetail->currentWidget() == ui->tabFileStatus) {
         ui->commit_diff->refresh();
-    }
-
-    int lines = ui->comboBox_gitDiffOptions->linesOfContent();
-
-    if (lines == 0)
-    {
-        ui->commit_diff->setLinesOfContent(0);
-    }
-    else
-    {
-        ui->commit_diff->setLinesOfContent(lines);
     }
 }
 
