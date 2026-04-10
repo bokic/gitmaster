@@ -83,6 +83,9 @@ private slots:
     void on_branchesTreeView_customContextMenuRequested(const QPoint &pos);
     void stashApplyReply(QGitError error);
     void stashPopReply(QGitError error);
+    void checkoutBranchReply(QGitError error);
+    void renameBranchReply(QGitError error);
+    void setUpstreamReply(QGitError error);
     void on_comboBox_gitStatusFiles_itemClicked(int index);
 
 private:

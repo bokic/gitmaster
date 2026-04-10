@@ -92,7 +92,7 @@ public slots:
     void unstageFileLines(QString filename, QVector<QGitDiffWidgetLine> lines);
     void commit(QString message, bool withPush);
     void clone(QUrl url);
-    void pull();
+    void pull(bool rebase);
     void fetch(bool fetchFromAllRemotes, bool purgeDeletedBranches, bool fetchAllTags);
     void push(QString remote, QStringList branches, bool tags, bool force);
     void listCommits(QString object, int length);

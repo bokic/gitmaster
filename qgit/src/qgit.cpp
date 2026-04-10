@@ -2005,9 +2005,16 @@ void QGit::clone(QUrl url)
     emit cloneReply(error);
 }
 
-void QGit::pull()
+void QGit::pull(bool rebase)
 {
     QGitError error;
+
+    if (rebase) {
+        // TODO: Implement rebase
+        error = QGitError("Rebase is not implemented yet.", -1);
+        emit pullReply(error);
+        return;
+    }
 
     try
     {

@@ -18,6 +18,7 @@
 #include <QWindow>
 #include <QMenu>
 #include <QAction>
+#include <QInputDialog>
 #include <QList>
 
 #define COMMIT_COUNT_TO_LOAD 100
@@ -146,6 +147,10 @@ QGitRepository::QGitRepository(const QString &path, QWidget *parent)
     connect(m_git, &QGit::stashApplyReply, this, &QGitRepository::stashApplyReply);
     connect(m_git, &QGit::stashPopReply, this, &QGitRepository::stashPopReply);
 
+    connect(m_git, &QGit::checkoutBranchReply, this, &QGitRepository::checkoutBranchReply);
+    connect(m_git, &QGit::renameBranchReply, this, &QGitRepository::renameBranchReply);
+    connect(m_git, &QGit::setUpstreamReply, this, &QGitRepository::setUpstreamReply);
+
     ui->branchesTreeView->setContextMenuPolicy(Qt::CustomContextMenu);
 
     m_thread.setObjectName("QGit(repo)");
@@ -241,8 +246,9 @@ void QGitRepository::pull()
 
     if (dlg.exec() == QDialog::Accepted)
     {
+        bool rebase = dlg.rebase();
         QGitMasterMainWindow::instance()->updateStatusBarText("Pulling...");
-        m_git->pull();
+        m_git->pull(rebase);
     }
 }
 
@@ -904,6 +910,86 @@ void QGitRepository::on_branchesTreeView_customContextMenuRequested(const QPoint
             }
         }
     }
+    // Detect if this is a branch item (child of "Branches" top-level item)
+    else if (item->parent() && item->parent()->text(0) == tr("Branches"))
+    {
+        QString branchName = item->text(0);
+        QMenu menu(this);
+
+        QAction *checkoutAction = menu.addAction(tr("Checkout Branch"));
+        QAction *renameAction = menu.addAction(tr("Rename Branch..."));
+        QAction *setUpstreamAction = menu.addAction(tr("Set Upstream..."));
+        menu.addSeparator();
+        QAction *deleteAction = menu.addAction(tr("Delete Branch"));
+
+        // Disable checkout if already on this branch
+        if (item->font(0).bold()) {
+            checkoutAction->setEnabled(false);
+            deleteAction->setEnabled(false);
+        }
+
+        QAction *selectedAction = menu.exec(ui->branchesTreeView->viewport()->mapToGlobal(pos));
+
+        if (selectedAction == checkoutAction)
+        {
+            QGitMasterMainWindow::instance()->updateStatusBarText(tr("Checking out branch %1...").arg(branchName));
+            m_git->checkoutBranch(branchName);
+        }
+        else if (selectedAction == renameAction)
+        {
+            QString newName = QInputDialog::getText(this, tr("Rename Branch"), tr("Enter new name for branch %1:").arg(branchName), QLineEdit::Normal, branchName);
+            if (!newName.isEmpty() && newName != branchName) {
+                QGitMasterMainWindow::instance()->updateStatusBarText(tr("Renaming branch %1 to %2...").arg(branchName, newName));
+                m_git->renameBranch(branchName, newName);
+            }
+        }
+        else if (selectedAction == setUpstreamAction)
+        {
+            QString upstream = QInputDialog::getText(this, tr("Set Upstream"), tr("Enter upstream for branch %1 (e.g. origin/master):").arg(branchName));
+            if (!upstream.isEmpty()) {
+                QGitMasterMainWindow::instance()->updateStatusBarText(tr("Setting upstream for %1 to %2...").arg(branchName, upstream));
+                m_git->setUpstream(branchName, upstream);
+            }
+        }
+        else if (selectedAction == deleteAction)
+        {
+            auto res = QMessageBox::question(this, tr("Delete Branch"), 
+                                             tr("Are you sure you want to delete branch '%1'?").arg(branchName),
+                                             QMessageBox::Yes | QMessageBox::No);
+            if (res == QMessageBox::Yes) {
+                QList<QGitBranch> toDelete;
+                toDelete << QGitBranch(branchName, 0, GIT_BRANCH_LOCAL);
+                m_git->deleteBranches(toDelete, false);
+            }
+        }
+    }
+}
+
+void QGitRepository::checkoutBranchReply(QGitError error)
+{
+    if (error.errorCode())
+    {
+        QMessageBox::critical(this, tr("Checkout Error"), error.errorString());
+    }
+    refreshData();
+}
+
+void QGitRepository::renameBranchReply(QGitError error)
+{
+    if (error.errorCode())
+    {
+        QMessageBox::critical(this, tr("Rename Error"), error.errorString());
+    }
+    refreshData();
+}
+
+void QGitRepository::setUpstreamReply(QGitError error)
+{
+    if (error.errorCode())
+    {
+        QMessageBox::critical(this, tr("Set Upstream Error"), error.errorString());
+    }
+    refreshData();
 }
 
 void QGitRepository::stashApplyReply(QGitError error)
