@@ -26,6 +26,8 @@ QGitMasterMainWindow::QGitMasterMainWindow(QWidget *parent)
     QCoreApplication::setOrganizationName("BorisBarbulovski");
     QCoreApplication::setApplicationName("GitMaster");
 
+    setWindowTitle(tr("GitMaster %1").arg(GITMASTER_VERSION));
+
 
     QWidget *spacer = new QWidget();
     spacer->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);

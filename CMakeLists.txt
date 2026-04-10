@@ -170,6 +170,7 @@ if (CMAKE_BUILD_TYPE STREQUAL "Release")
 endif()
 
 target_include_directories(gitmaster PRIVATE combobox qgit/include)
+target_compile_definitions(gitmaster PRIVATE GITMASTER_VERSION="${PROJECT_VERSION}")
 
 if (WIN32)
     target_include_directories(gitmaster PRIVATE include)
