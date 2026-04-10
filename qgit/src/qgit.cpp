@@ -577,6 +577,23 @@ void QGit::renameBranch(QString oldName, QString newName)
     emit renameBranchReply(error);
 }
 
+void QGit::deleteTag(QString name)
+{
+    QGitError error;
+    try {
+        GitRepository repo;
+        int res = git_repository_open(repo, m_path.absolutePath().toUtf8().constData());
+        if(res) throw QGitError("git_repository_open", res);
+
+        res = git_tag_delete(repo, name.toUtf8().constData());
+        if(res) throw QGitError("git_tag_delete", res);
+
+    } catch(const QGitError &ex) {
+        error = ex;
+    }
+    emit deleteTagReply(error);
+}
+
 void QGit::setUpstream(QString branchName, QString upstreamBranchName)
 {
     QGitError error;

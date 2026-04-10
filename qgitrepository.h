@@ -50,6 +50,7 @@ signals:
     void deleteBranches(QList<QGitBranch> branches, bool force);
 
 protected:
+    void keyPressEvent(QKeyEvent *event) override;
     bool event(QEvent *event) override;
 
 private slots:
@@ -88,6 +89,7 @@ private slots:
     void checkoutBranchReply(QGitError error);
     void renameBranchReply(QGitError error);
     void setUpstreamReply(QGitError error);
+    void deleteTagReply(QGitError error);
     void on_comboBox_gitStatusFiles_itemClicked(int index);
 
 private:

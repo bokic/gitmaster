@@ -14,6 +14,8 @@
 #include <QNetworkRequest>
 #include <QNetworkReply>
 #include <QMessageBox>
+#include <QInputDialog>
+#include <QKeyEvent>
 #include <QScrollBar>
 #include <QWindow>
 #include <QMenu>
@@ -151,6 +153,7 @@ QGitRepository::QGitRepository(const QString &path, QWidget *parent)
     connect(m_git, &QGit::checkoutBranchReply, this, &QGitRepository::checkoutBranchReply);
     connect(m_git, &QGit::renameBranchReply, this, &QGitRepository::renameBranchReply);
     connect(m_git, &QGit::setUpstreamReply, this, &QGitRepository::setUpstreamReply);
+    connect(m_git, &QGit::deleteTagReply, this, &QGitRepository::deleteTagReply);
 
     ui->branchesTreeView->setContextMenuPolicy(Qt::CustomContextMenu);
 
@@ -1381,6 +1384,57 @@ void QGitRepository::on_listWidget_unstaged_itemSelectionChanged()
     }
 
     m_stageingFiles = true;
+}
+
+void QGitRepository::deleteTagReply(QGitError error)
+{
+    if (error.errorCode() != 0) {
+        QMessageBox::critical(this, tr("Delete Tag Error"), error.errorString());
+    } else {
+        refreshData();
+    }
+}
+
+void QGitRepository::keyPressEvent(QKeyEvent *event)
+{
+    if (event->key() == Qt::Key_Delete && ui->branchesTreeView->hasFocus()) {
+        QTreeWidgetItem *item = ui->branchesTreeView->currentItem();
+        if (!item) return;
+
+        QString type = item->data(0, Qt::UserRole + 2).toString();
+        QString fullName = item->data(0, Qt::UserRole + 1).toString();
+
+        if (type == "LocalBranch") {
+            if (item->font(0).bold()) {
+                QMessageBox::information(this, tr("Delete Branch"), tr("Cannot delete the current branch."));
+                return;
+            }
+            auto res = QMessageBox::question(this, tr("Delete Branch"), 
+                                             tr("Are you sure you want to delete branch '%1'?").arg(fullName),
+                                             QMessageBox::Yes | QMessageBox::No);
+            if (res == QMessageBox::Yes) {
+                QList<QGitBranch> toDelete;
+                toDelete << QGitBranch(fullName, "", 0, GIT_BRANCH_LOCAL);
+                m_git->deleteBranches(toDelete, false);
+            }
+        } else if (type == "Stash") {
+            auto res = QMessageBox::question(this, tr("Drop Stash"), 
+                                             tr("Are you sure you want to drop stash '%1'?").arg(fullName),
+                                             QMessageBox::Yes | QMessageBox::No);
+            if (res == QMessageBox::Yes) {
+                QGitMasterMainWindow::instance()->updateStatusBarText(tr("Dropping stash %1...").arg(fullName));
+                m_git->stashRemove(fullName);
+            }
+        } else if (type == "Tag") {
+            auto res = QMessageBox::question(this, tr("Delete Tag"), 
+                                             tr("Are you sure you want to delete tag '%1'?").arg(fullName),
+                                             QMessageBox::Yes | QMessageBox::No);
+            if (res == QMessageBox::Yes) {
+                m_git->deleteTag(fullName);
+            }
+        }
+    }
+    QWidget::keyPressEvent(event);
 }
 
 void QGitRepository::on_comboBox_gitStatusFiles_itemClicked(int index)
