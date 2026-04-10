@@ -22,11 +22,12 @@ public:
 
     void setGitDiff(const QString &first, const QString &second, const QList<QString> &files);
     void setReadonly(bool readonly = true);
+    void setIgnoreWhitespace(bool ignore);
     void refresh();
     bool readonly() const;
 
 signals:
-    void requestGitDiff(QString first, QString second, QList<QString> files, uint32_t context_lines);
+    void requestGitDiff(QString first, QString second, QList<QString> files, uint32_t context_lines, bool ignoreWhitespace);
     void select(QString file, QVector<QGitDiffWidgetLine> lines);
 
 public slots:
@@ -53,4 +54,5 @@ private:
     int m_hoverHunk = -1;
     int m_hoverLine = -1;
     bool m_readonly = false;
+    bool m_ignoreWhitespace = false;
 };

@@ -1242,7 +1242,7 @@ void QGit::listChangedFiles(int show, int sort, bool reversed)
     emit listChangedFilesReply(items, error);
 }
 
-void QGit::commitDiff(QString commitId)
+void QGit::commitDiff(QString commitId, bool ignoreWhitespace)
 {
     QList<QGitCommitDiffParent> parents;
     QGitSignature commitAuthor, commitCommiter;
@@ -1301,8 +1301,13 @@ void QGit::commitDiff(QString commitId)
         {
             QGitCommitDiffParent item;
 
+            git_diff_options options;
+            memset(&options, 0, sizeof(options));
+            options.version = GIT_DIFF_OPTIONS_VERSION;
+            if (ignoreWhitespace) options.flags |= GIT_DIFF_IGNORE_WHITESPACE;
+
             GitDiff diff;
-            res = git_diff_tree_to_tree(diff, repo, nullptr, commit_tree, nullptr);
+            res = git_diff_tree_to_tree(diff, repo, nullptr, commit_tree, &options);
             if (res)
             {
                 throw QGitError("git_diff_tree_to_tree", res);
@@ -1341,8 +1346,13 @@ void QGit::commitDiff(QString commitId)
                     throw QGitError("git_commit_tree", res);
                 }
 
+                git_diff_options options;
+                memset(&options, 0, sizeof(options));
+                options.version = GIT_DIFF_OPTIONS_VERSION;
+                if (ignoreWhitespace) options.flags |= GIT_DIFF_IGNORE_WHITESPACE;
+
                 GitDiff diff;
-                res = git_diff_tree_to_tree(diff, repo, parent_tree, commit_tree, nullptr);
+                res = git_diff_tree_to_tree(diff, repo, parent_tree, commit_tree, &options);
                 if (res)
                 {
                     throw QGitError("git_diff_tree_to_tree", res);
@@ -1368,7 +1378,7 @@ void QGit::commitDiff(QString commitId)
     emit commitDiffReply(commitId, commitDiff, error);
 }
 
-void QGit::commitDiffContent(QString first, QString second, QList<QString> files, uint32_t context_lines)
+void QGit::commitDiffContent(QString first, QString second, QList<QString> files, uint32_t context_lines, bool ignoreWhitespace)
 {
     QList<QGitDiffFile> items;
     QGitError error;
@@ -1421,6 +1431,7 @@ void QGit::commitDiffContent(QString first, QString second, QList<QString> files
             memset(&options, 0, sizeof(options));
             options.version = GIT_DIFF_OPTIONS_VERSION;
             options.flags = GIT_DIFF_INCLUDE_UNTRACKED | GIT_DIFF_SHOW_UNTRACKED_CONTENT;
+            if (ignoreWhitespace) options.flags |= GIT_DIFF_IGNORE_WHITESPACE;
             options.context_lines = context_lines;
             options.pathspec = pathspec;
 
@@ -1437,6 +1448,7 @@ void QGit::commitDiffContent(QString first, QString second, QList<QString> files
             memset(&options, 0, sizeof(options));
             options.version = GIT_DIFF_OPTIONS_VERSION;
             options.flags = GIT_DIFF_INCLUDE_UNTRACKED | GIT_DIFF_RECURSE_UNTRACKED_DIRS | GIT_DIFF_SHOW_UNTRACKED_CONTENT;
+            if (ignoreWhitespace) options.flags |= GIT_DIFF_IGNORE_WHITESPACE;
             options.context_lines = context_lines;
             options.pathspec = pathspec;
 

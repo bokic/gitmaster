@@ -44,7 +44,7 @@ signals:
     void repositoryUnstageFiles(QStringList items);
     void repositoryCommit(QString message, bool withPush);
     void repositoryGetCommits(QString object, int length);
-    void repositoryGetCommitDiff(QString commitId);
+    void repositoryGetCommitDiff(QString commitId, bool ignoreWhitespace = false);
     void stageFileLines(QString filename, QVector<QGitDiffWidgetLine> lines);
     void unstageFileLines(QString filename, QVector<QGitDiffWidgetLine> lines);
     void deleteBranches(QList<QGitBranch> branches, bool force);
@@ -91,6 +91,7 @@ private slots:
     void setUpstreamReply(QGitError error);
     void deleteTagReply(QGitError error);
     void on_comboBox_gitStatusFiles_itemClicked(int index);
+    void on_comboBox_gitDiffOptions_optionsChanged();
 
 private:
     void fetchCommits();

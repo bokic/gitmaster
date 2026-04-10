@@ -161,6 +161,8 @@ QGitRepository::QGitRepository(const QString &path, QWidget *parent)
     m_thread.start();
 
     m_git->setPath(QDir(m_path));
+
+    connect(ui->comboBox_gitDiffOptions, &QComboBoxGitDiffOptions::optionsChanged, this, &QGitRepository::on_comboBox_gitDiffOptions_optionsChanged);
 }
 
 QGitRepository::~QGitRepository()
@@ -798,12 +800,10 @@ void QGitRepository::repositoryGetCommitDiffReply(QString commitId, QGitCommit d
     {
         m_commitDiff = diff;
 
-        int currentRow = ui->logHistory_commits->currentRow();
+        bool ignoreWhitespace = ui->comboBox_gitDiffOptions->ignoreWhitespace();
 
-        if (currentRow < 0)
-        {
-            return;
-        }
+        int currentRow = ui->logHistory_commits->currentRow();
+        if (currentRow < 0) return;
 
         const QString commit_id = ui->logHistory_commits->item(currentRow, 4)->data(Qt::UserRole).toString();
         const QString email = ui->logHistory_commits->item(currentRow, 3)->data(Qt::UserRole + 1).toString();
@@ -858,19 +858,6 @@ void QGitRepository::repositoryGetCommitDiffReply(QString commitId, QGitCommit d
 
             QIcon item_icon;
 
-            /*GIT_DELTA_UNMODIFIED = 0,
-            GIT_DELTA_ADDED = 1,
-            GIT_DELTA_DELETED = 2,
-            GIT_DELTA_MODIFIED = 3,
-            GIT_DELTA_RENAMED = 4,
-            GIT_DELTA_COPIED = 5,
-            GIT_DELTA_IGNORED = 6,
-            GIT_DELTA_UNTRACKED = 7,
-            GIT_DELTA_TYPECHANGE = 8,
-            GIT_DELTA_UNREADABLE = 9,
-            GIT_DELTA_CONFLICTED = 10,*/
-
-
             switch(files.at(c).status()) {
             case GIT_DELTA_ADDED:
                 item_icon = m_iconFileNew;
@@ -882,7 +869,7 @@ void QGitRepository::repositoryGetCommitDiffReply(QString commitId, QGitCommit d
                 item_icon = m_iconFileModified;
                 break;
             default:
-                item_icon = m_iconFileUnknown; // TODO: Add icons for other statuses.
+                item_icon = m_iconFileUnknown;
                 break;
             }
 
@@ -897,6 +884,9 @@ void QGitRepository::repositoryGetCommitDiffReply(QString commitId, QGitCommit d
         if (ui->logHistory_files->rowCount() > 0)
         {
             ui->logHistory_files->setCurrentCell(0, 0);
+
+            ui->logHistory_diff->setIgnoreWhitespace(ignoreWhitespace);
+            ui->logHistory_diff->setGitDiff(m_commitDiff.parents().at(0).commitHash(), m_commitDiff.id(), {ui->logHistory_files->item(0, 0)->data(Qt::UserRole).toString()});
         }
     }
 }
@@ -1286,7 +1276,7 @@ void QGitRepository::on_logHistory_commits_currentCellChanged(int currentRow, in
 
     if (!commit_id.isEmpty())
     {
-        emit repositoryGetCommitDiff(commit_id);
+        emit repositoryGetCommitDiff(commit_id, ui->comboBox_gitDiffOptions->ignoreWhitespace());
     }
 
     rows = ui->logHistory_commits->rowCount();
@@ -1346,24 +1336,28 @@ void QGitRepository::activateCommitOperation(bool activate)
 
 void QGitRepository::on_logHistory_files_itemSelectionChanged()
 {
-    QList<QString> files;
+    bool ignoreWhitespace = ui->comboBox_gitDiffOptions->ignoreWhitespace();
+    QTableWidgetItem *item = ui->logHistory_files->currentItem();
 
-    const auto &selected = ui->logHistory_files->selectedItems();
-    int parent = 0; // TODO: Parent is hardcoded.
-
-    if (m_commitDiff.parents().size() <= parent)
+    if (item && item->column() == 0)
     {
-        return;
+        ui->logHistory_diff->setIgnoreWhitespace(ignoreWhitespace);
+        ui->logHistory_diff->setGitDiff(m_commitDiff.parents().at(0).commitHash(), m_commitDiff.id(), {item->data(Qt::UserRole).toString()});
     }
+}
 
-    for(auto cell: selected) {
-        if (cell->column() == 0)
-        {
-            files << cell->data(Qt::UserRole).toString();
-        }
+void QGitRepository::on_comboBox_gitDiffOptions_optionsChanged()
+{
+    bool ignoreWhitespace = ui->comboBox_gitDiffOptions->ignoreWhitespace();
+
+    ui->logHistory_diff->setIgnoreWhitespace(ignoreWhitespace);
+    ui->commit_diff->setIgnoreWhitespace(ignoreWhitespace);
+
+    if (ui->repositoryDetail->currentWidget() == ui->tabLogHistory) {
+        ui->logHistory_diff->refresh();
+    } else if (ui->repositoryDetail->currentWidget() == ui->tabFileStatus) {
+        ui->commit_diff->refresh();
     }
-
-    ui->logHistory_diff->setGitDiff(m_commitDiff.parents().at(parent).commitHash(), m_commitDiff.id(), files);
 }
 
 void QGitRepository::on_listWidget_staged_itemSelectionChanged()
@@ -1403,7 +1397,7 @@ void QGitRepository::on_listWidget_unstaged_itemSelectionChanged()
         ui->commit_diff->setGitDiff("", "unstaged", files);
 
         const auto &staged = ui->listWidget_staged->selectedItems();
-        for(const auto &item: staged)
+        for(auto item: staged)
         {
             item->setSelected(false);
         }

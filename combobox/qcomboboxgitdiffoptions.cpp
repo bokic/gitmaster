@@ -217,6 +217,15 @@ void QComboBoxGitDiffOptions::activated(int index)
             }
         }
     }
+
+    emit optionsChanged();
+}
+
+bool QComboBoxGitDiffOptions::ignoreWhitespace() const
+{
+    QStandardItemModel *items = static_cast<QStandardItemModel *>(model());
+
+    return items->data(items->index(ITEM_IGNORE_WHITESPACE, 0), Qt::CheckStateRole).toInt() == Qt::Checked;
 }
 
 void QComboBoxGitDiffOptions::updateIconColor()

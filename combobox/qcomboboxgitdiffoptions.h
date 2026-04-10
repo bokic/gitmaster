@@ -15,6 +15,11 @@ public:
     QSize sizeHint() const override;
     QSize minimumSizeHint() const override;
 
+    bool ignoreWhitespace() const;
+
+signals:
+    void optionsChanged();
+
 protected:
     void paintEvent(QPaintEvent *event) override;
     void changeEvent(QEvent *event) override;
