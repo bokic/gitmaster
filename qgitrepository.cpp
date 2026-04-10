@@ -752,7 +752,27 @@ void QGitRepository::repositoryGetCommitsReply(QList<QGitCommit> commits, QGitEr
         m_allCommitsLoaded = true;
     }
 
-    QGitMasterMainWindow::instance()->clearStatusBarText();
+    if (!m_searchingCommitHash.isEmpty())
+    {
+        if (ui->logHistory_commits->selectCommit(m_searchingCommitHash)) {
+            m_searchingCommitHash = "";
+            QGitMasterMainWindow::instance()->clearStatusBarText();
+        } else {
+            if (m_allCommitsLoaded) {
+                QMessageBox::information(this, tr("Commit not found"), 
+                                         tr("The commit [%1] was not found in the repository history.").arg(m_searchingCommitHash.left(10)));
+                m_searchingCommitHash = "";
+                QGitMasterMainWindow::instance()->clearStatusBarText();
+            } else {
+                fetchCommits();
+                QGitMasterMainWindow::instance()->updateStatusBarText(tr("Searching for commit %1...").arg(m_searchingCommitHash.left(10)));
+            }
+        }
+    }
+    else
+    {
+        QGitMasterMainWindow::instance()->clearStatusBarText();
+    }
 }
 
 void QGitRepository::repositoryGetCommitDiffReply(QString commitId, QGitCommit diff, QGitError error)
@@ -901,8 +921,14 @@ void QGitRepository::on_branchesTreeView_itemDoubleClicked(QTreeWidgetItem *item
         ui->repositoryDetail->setCurrentWidget(ui->tabLogHistory);
         if (!ui->logHistory_commits->selectCommit(hash))
         {
-            QMessageBox::information(this, tr("Commit not found"), 
-                                     tr("The commit [%1] was not found in the currently loaded history. Try scrolling down to load more commits.").arg(hash.left(10)));
+            if (m_allCommitsLoaded) {
+                 QMessageBox::information(this, tr("Commit not found"), 
+                                          tr("The commit [%1] was not found in the repository history.").arg(hash.left(10)));
+            } else {
+                m_searchingCommitHash = hash;
+                fetchCommits();
+                QGitMasterMainWindow::instance()->updateStatusBarText(tr("Searching for commit %1...").arg(hash.left(10)));
+            }
         }
     }
 }

@@ -117,6 +117,7 @@ private:
     QIcon m_iconRemote;
     QIcon m_iconStash;
     QIcon m_iconRemoteBranch;
+    QString m_searchingCommitHash;
     bool m_stageingFiles = true;
     QString m_lastRemote;
     QStringList m_lastBranches;
