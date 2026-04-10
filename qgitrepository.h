@@ -113,6 +113,7 @@ private:
     QIcon m_iconCurrentBranch;
     QIcon m_iconBranch;
     QIcon m_iconRemote;
+    QIcon m_iconStash;
     QIcon m_iconRemoteBranch;
     bool m_stageingFiles = true;
     QString m_lastRemote;

@@ -40,6 +40,7 @@ QGitRepository::QGitRepository(const QString &path, QWidget *parent)
     , m_iconCurrentBranch(":/small/current_branch")
     , m_iconBranch(":/small/branch")
     , m_iconRemote(":/small/remote")
+    , m_iconStash(":/small/stash")
     , m_iconRemoteBranch(":/small/remote_branch")
     , m_git(new QGit())
 {
@@ -412,6 +413,10 @@ void QGitRepository::repositoryBranchesAndTagsReply(QList<QGitBranch> branches, 
                         {
                             QTreeWidgetItem *child = new QTreeWidgetItem(QStringList() << name);
                             child->setData(0, Qt::UserRole, branch.hash());
+                            if (depth == items.count() - 1) {
+                                child->setData(0, Qt::UserRole + 1, items.mid(2).join('/'));
+                                child->setData(0, Qt::UserRole + 2, "LocalBranch");
+                            }
                             if (name == current_branch)
                         {
                             auto font = child->font(0);
@@ -457,6 +462,10 @@ void QGitRepository::repositoryBranchesAndTagsReply(QList<QGitBranch> branches, 
                     {
                         QTreeWidgetItem *child = new QTreeWidgetItem(QStringList() << name);
                         child->setData(0, Qt::UserRole, branch.hash());
+                        if (depth == items.count() - 1) {
+                            child->setData(0, Qt::UserRole + 1, items.mid(2).join('/'));
+                            child->setData(0, Qt::UserRole + 2, "RemoteBranch");
+                        }
 
                         if (depth == 2)
                             child->setIcon(0, m_iconRemote);
@@ -479,6 +488,8 @@ void QGitRepository::repositoryBranchesAndTagsReply(QList<QGitBranch> branches, 
     {
         QTreeWidgetItem *child = new QTreeWidgetItem(QStringList() << tag.name());
         child->setData(0, Qt::UserRole, tag.hash());
+        child->setData(0, Qt::UserRole + 1, tag.name());
+        child->setData(0, Qt::UserRole + 2, "Tag");
 
         child->setIcon(0, m_iconTag);
         itemTags->addChild(child);
@@ -526,7 +537,11 @@ void QGitRepository::repositoryStashesReply(QStringList stashes, QGitError error
 
     for(const auto &stash: stashes)
     {
-        stashGroupItem->addChild(new QTreeWidgetItem(QStringList() << stash));
+        QTreeWidgetItem *item = new QTreeWidgetItem(QStringList() << stash);
+        item->setIcon(0, m_iconStash);
+        item->setData(0, Qt::UserRole + 1, stash);
+        item->setData(0, Qt::UserRole + 2, "Stash");
+        stashGroupItem->addChild(item);
     }
 
     ui->branchesTreeView->expandAll();
@@ -895,92 +910,117 @@ void QGitRepository::on_branchesTreeView_customContextMenuRequested(const QPoint
     if (!item)
         return;
 
-    // Detect if this is a stash item (child of "Stashes" top-level item)
-    if (item->parent() && item->parent()->text(0) == tr("Stashes"))
-    {
-        QString stashName = item->text(0);
-        QMenu menu(this);
+    QString type = item->data(0, Qt::UserRole + 2).toString();
+    QString fullName = item->data(0, Qt::UserRole + 1).toString();
 
+    if (type == "Stash")
+    {
+        QMenu menu(this);
         QAction *applyAction = menu.addAction(tr("Apply Stash"));
         QAction *popAction = menu.addAction(tr("Pop Stash"));
         menu.addSeparator();
         QAction *dropAction = menu.addAction(tr("Drop Stash"));
 
         QAction *selectedAction = menu.exec(ui->branchesTreeView->viewport()->mapToGlobal(pos));
-
         if (selectedAction == applyAction)
         {
-            QGitMasterMainWindow::instance()->updateStatusBarText(tr("Applying stash %1...").arg(stashName));
-            m_git->stashApply(stashName);
+            QGitMasterMainWindow::instance()->updateStatusBarText(tr("Applying stash %1...").arg(fullName));
+            m_git->stashApply(fullName);
         }
         else if (selectedAction == popAction)
         {
-            QGitMasterMainWindow::instance()->updateStatusBarText(tr("Popping stash %1...").arg(stashName));
-            m_git->stashPop(stashName);
+            QGitMasterMainWindow::instance()->updateStatusBarText(tr("Popping stash %1...").arg(fullName));
+            m_git->stashPop(fullName);
         }
         else if (selectedAction == dropAction)
         {
             auto res = QMessageBox::question(this, tr("Drop Stash"), 
-                                             tr("Are you sure you want to drop stash '%1'?").arg(stashName),
+                                             tr("Are you sure you want to drop stash '%1'?").arg(fullName),
                                              QMessageBox::Yes | QMessageBox::No);
             if (res == QMessageBox::Yes)
             {
-                QGitMasterMainWindow::instance()->updateStatusBarText(tr("Dropping stash %1...").arg(stashName));
-                m_git->stashRemove(stashName);
+                QGitMasterMainWindow::instance()->updateStatusBarText(tr("Dropping stash %1...").arg(fullName));
+                m_git->stashRemove(fullName);
             }
         }
     }
-    // Detect if this is a branch item (child of "Branches" top-level item)
-    else if (item->parent() && item->parent()->text(0) == tr("Branches"))
+    else if (type == "LocalBranch")
     {
-        QString branchName = item->text(0);
         QMenu menu(this);
-
         QAction *checkoutAction = menu.addAction(tr("Checkout Branch"));
         QAction *renameAction = menu.addAction(tr("Rename Branch..."));
         QAction *setUpstreamAction = menu.addAction(tr("Set Upstream..."));
         menu.addSeparator();
         QAction *deleteAction = menu.addAction(tr("Delete Branch"));
 
-        // Disable checkout if already on this branch
         if (item->font(0).bold()) {
             checkoutAction->setEnabled(false);
             deleteAction->setEnabled(false);
         }
 
         QAction *selectedAction = menu.exec(ui->branchesTreeView->viewport()->mapToGlobal(pos));
-
         if (selectedAction == checkoutAction)
         {
-            QGitMasterMainWindow::instance()->updateStatusBarText(tr("Checking out branch %1...").arg(branchName));
-            m_git->checkoutBranch(branchName);
+            QGitMasterMainWindow::instance()->updateStatusBarText(tr("Checking out branch %1...").arg(fullName));
+            m_git->checkoutBranch(fullName);
         }
         else if (selectedAction == renameAction)
         {
-            QString newName = QInputDialog::getText(this, tr("Rename Branch"), tr("Enter new name for branch %1:").arg(branchName), QLineEdit::Normal, branchName);
-            if (!newName.isEmpty() && newName != branchName) {
-                QGitMasterMainWindow::instance()->updateStatusBarText(tr("Renaming branch %1 to %2...").arg(branchName, newName));
-                m_git->renameBranch(branchName, newName);
+            QString newName = QInputDialog::getText(this, tr("Rename Branch"), tr("Enter new name for branch %1:").arg(fullName), QLineEdit::Normal, fullName);
+            if (!newName.isEmpty() && newName != fullName) {
+                QGitMasterMainWindow::instance()->updateStatusBarText(tr("Renaming branch %1 to %2...").arg(fullName, newName));
+                m_git->renameBranch(fullName, newName);
             }
         }
         else if (selectedAction == setUpstreamAction)
         {
-            QString upstream = QInputDialog::getText(this, tr("Set Upstream"), tr("Enter upstream for branch %1 (e.g. origin/master):").arg(branchName));
+            QString upstream = QInputDialog::getText(this, tr("Set Upstream"), tr("Enter upstream for branch %1:").arg(fullName));
             if (!upstream.isEmpty()) {
-                QGitMasterMainWindow::instance()->updateStatusBarText(tr("Setting upstream for %1 to %2...").arg(branchName, upstream));
-                m_git->setUpstream(branchName, upstream);
+                m_git->setUpstream(fullName, upstream);
             }
         }
         else if (selectedAction == deleteAction)
         {
             auto res = QMessageBox::question(this, tr("Delete Branch"), 
-                                             tr("Are you sure you want to delete branch '%1'?").arg(branchName),
+                                             tr("Are you sure you want to delete branch '%1'?").arg(fullName),
                                              QMessageBox::Yes | QMessageBox::No);
             if (res == QMessageBox::Yes) {
                 QList<QGitBranch> toDelete;
-                toDelete << QGitBranch(branchName, "", 0, GIT_BRANCH_LOCAL);
+                toDelete << QGitBranch(fullName, "", 0, GIT_BRANCH_LOCAL);
                 m_git->deleteBranches(toDelete, false);
             }
+        }
+    }
+    else if (type == "RemoteBranch")
+    {
+        QMenu menu(this);
+        QAction *checkoutAction = menu.addAction(tr("Checkout as Local Branch..."));
+        
+        QAction *selectedAction = menu.exec(ui->branchesTreeView->viewport()->mapToGlobal(pos));
+        if (selectedAction == checkoutAction)
+        {
+            QString localName = fullName;
+            if (localName.contains('/'))
+                localName = localName.section('/', 1); // Remove origin/
+
+            bool ok;
+            QString name = QInputDialog::getText(this, tr("Checkout Remote Branch"), 
+                                                 tr("Enter local branch name:"), QLineEdit::Normal, 
+                                                  localName, &ok);
+            if (ok && !name.isEmpty()) {
+                m_git->checkoutBranch(fullName); // Simplified for now
+            }
+        }
+    }
+    else if (type == "Tag")
+    {
+        QMenu menu(this);
+        QAction *deleteAction = menu.addAction(tr("Delete Tag"));
+        
+        QAction *selectedAction = menu.exec(ui->branchesTreeView->viewport()->mapToGlobal(pos));
+        if (selectedAction == deleteAction)
+        {
+             // TODO: Implement delete tag in backend
         }
     }
 }

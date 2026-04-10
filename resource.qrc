@@ -82,7 +82,7 @@
         <file>images/small/renamed.png</file>
         <file>images/small/resolved.png</file>
         <file alias="remote">images/small/server-network16x16.png</file>
-        <file>images/small/stash_16x16.png</file>
+        <file alias="stash">images/small/stash_16x16.png</file>
         <file>images/small/svn_16x16.png</file>
         <file>images/small/tag-label-blue16x16.png</file>
         <file alias="tag">images/small/tag-label-blue-shadowless16x16.png</file>
