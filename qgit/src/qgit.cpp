@@ -2012,10 +2012,21 @@ void QGit::push(QString remote, QStringList branches, bool tags, bool force)
         }
 
         GitRemote libgit2_remote;
-        res = git_remote_lookup(libgit2_remote, repo, remote.toUtf8().constData());
-        if (res)
+        if (remote.contains(QStringLiteral("://")) || remote.contains(QStringLiteral("@")))
         {
-            throw QGitError("git_remote_lookup", res);
+            res = git_remote_create_anonymous(libgit2_remote, repo, remote.toUtf8().constData());
+            if (res)
+            {
+                throw QGitError("git_remote_create_anonymous", res);
+            }
+        }
+        else
+        {
+            res = git_remote_lookup(libgit2_remote, repo, remote.toUtf8().constData());
+            if (res)
+            {
+                throw QGitError("git_remote_lookup", res);
+            }
         }
 
         for(const auto &branch: branches)
@@ -2080,6 +2091,16 @@ void QGit::push(QString remote, QStringList branches, bool tags, bool force)
             }
 
             return -1;
+        };
+
+        push_opts.callbacks.push_update_reference = [](const char *refname, const char *status, void *payload) -> int
+        {
+            Q_UNUSED(payload);
+            if (status) {
+                fprintf(stderr, "Push rejected for %s: %s\n", refname, status);
+                return -1; // Returning non-zero will fail the push operation locally as well
+            }
+            return 0;
         };
 
         res = git_remote_push(libgit2_remote, &refspecs.value, &push_opts);

@@ -246,7 +246,11 @@ void QGitRepository::push()
         bool tags = dlg.tags();
         bool force = dlg.force();
 
-        QGitMasterMainWindow::instance()->updateStatusBarText("Pushing...");
+        m_lastRemote = remote;
+        m_lastBranches = branches;
+        m_lastTags = tags;
+
+        QGitMasterMainWindow::instance()->updateStatusBarText(tr("Pushing..."));
         emit repositoryPush(remote, branches, tags, force);
     }
 }
@@ -307,9 +311,23 @@ void QGitRepository::repositoryFetchReply(QGitError error)
 
 void QGitRepository::repositoryPushReply(QGitError error)
 {
-    if (!error.errorString().isEmpty())
+    if (error.errorCode())
     {
-        QGitMasterMainWindow::instance()->updateStatusBarText(error.errorString());
+        QString errStr = error.errorString();
+        QGitMasterMainWindow::instance()->updateStatusBarText(errStr);
+
+        if (errStr.contains(QStringLiteral("rejected"), Qt::CaseInsensitive) || errStr.contains(QStringLiteral("non-fast-forward"), Qt::CaseInsensitive))
+        {
+            auto res = QMessageBox::question(this, tr("Push Rejected"), 
+                                             tr("Push was rejected by the remote (likely non-fast-forward). Do you want to force push?"),
+                                             QMessageBox::Yes | QMessageBox::No);
+            if (res == QMessageBox::Yes)
+            {
+                QGitMasterMainWindow::instance()->updateStatusBarText(tr("Force Pushing..."));
+                emit repositoryPush(m_lastRemote, m_lastBranches, m_lastTags, true);
+                return;
+            }
+        }
     }
     else
     {

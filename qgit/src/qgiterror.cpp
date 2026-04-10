@@ -3,15 +3,25 @@
 
 
 QGitError::QGitError()
-    : m_errorString(git_error_last()->message)
 {
+    const git_error *err = git_error_last();
+    if (err) {
+        m_errorString = QString::fromUtf8(err->message);
+    } else {
+        m_errorString = QStringLiteral("Unknown Git error");
+    }
 }
 
 QGitError::QGitError(const QString &functionName, int errorCode)
     : m_functionName(functionName)
-    , m_errorString(git_error_last()->message)
     , m_errorCode(errorCode)
 {
+    const git_error *err = git_error_last();
+    if (err) {
+        m_errorString = QString::fromUtf8(err->message);
+    } else {
+        m_errorString = QStringLiteral("Unknown Git error");
+    }
 }
 
 QGitError::QGitError(QGitError &&other) noexcept

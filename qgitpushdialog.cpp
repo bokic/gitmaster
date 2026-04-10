@@ -51,7 +51,12 @@ QGitPushDialog::~QGitPushDialog()
 
 QString QGitPushDialog::remote() const
 {
-    return ui->remote_comboBox->currentText();
+    QString current = ui->remote_comboBox->currentText();
+    if (current == tr("custom"))
+    {
+        return ui->url_lineEdit->text();
+    }
+    return current;
 }
 
 QStringList QGitPushDialog::branches() const

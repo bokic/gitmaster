@@ -106,5 +106,8 @@ private:
     QIcon m_iconRemote;
     QIcon m_iconRemoteBranch;
     bool m_stageingFiles = true;
+    QString m_lastRemote;
+    QStringList m_lastBranches;
+    bool m_lastTags;
     QGit *m_git = nullptr;
 };
