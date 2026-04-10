@@ -351,8 +351,10 @@ QList<QGitBranch> QGit::branches(git_branch_t type) const
             }
 
             git_time_t commit_time = git_commit_time(reinterpret_cast<const git_commit *>(obj.value));
+            char oid_str[GIT_OID_HEXSZ + 1];
+            git_oid_tostr(oid_str, sizeof(oid_str), git_object_id(obj));
 
-            QGitBranch branch = QGitBranch(name, commit_time, type);
+            QGitBranch branch = QGitBranch(name, QString::fromLatin1(oid_str), commit_time, type);
             ret.append(branch);
         }
     }
@@ -830,8 +832,10 @@ void QGit::listBranchesAndTags()
                 }
 
                 git_time_t commit_time = git_commit_time(reinterpret_cast<const git_commit *>(obj.value));
+                char oid_str[GIT_OID_HEXSZ + 1];
+                git_oid_tostr(oid_str, sizeof(oid_str), git_object_id(obj));
 
-                QGitBranch branch = QGitBranch(ref_name, commit_time, type);
+                QGitBranch branch = QGitBranch(ref_name, QString::fromLatin1(oid_str), commit_time, type);
                 branches.append(branch);
             }
         }
@@ -867,8 +871,10 @@ void QGit::listBranchesAndTags()
             }
 
             tag_time = git_commit_time(reinterpret_cast<const git_commit *>(git_obj.value));
+            char oid_str[GIT_OID_HEXSZ + 1];
+            git_oid_tostr(oid_str, sizeof(oid_str), git_object_id(git_obj));
 
-            QGitTag tag(QString::fromUtf8(tag_name), tag_time);
+            QGitTag tag(QString::fromUtf8(tag_name), QString::fromLatin1(oid_str), tag_time);
             tags.append(tag);
         }
 
@@ -1306,9 +1312,9 @@ void QGit::commitDiff(QString commitId)
                     throw QGitError("git_commit_parent", res);
                 }
 
-                char commit_id[41] = {0, };
+                char commit_id[GIT_OID_HEXSZ + 1] = {0, };
                 const git_oid *oid = git_commit_id(parent);
-                git_oid_tostr(commit_id, 41, oid);
+                git_oid_tostr(commit_id, sizeof(commit_id), oid);
                 QGitCommitDiffParent item(commit_id);
 
                 GitTree parent_tree;

@@ -408,10 +408,11 @@ void QGitRepository::repositoryBranchesAndTagsReply(QList<QGitBranch> branches, 
                         }
                     }
 
-                    if (!found)
-                    {
-                        QTreeWidgetItem *child = new QTreeWidgetItem(QStringList() << name);
-                        if (name == current_branch)
+                        if (!found)
+                        {
+                            QTreeWidgetItem *child = new QTreeWidgetItem(QStringList() << name);
+                            child->setData(0, Qt::UserRole, branch.hash());
+                            if (name == current_branch)
                         {
                             auto font = child->font(0);
                             font.setBold(true);
@@ -455,6 +456,7 @@ void QGitRepository::repositoryBranchesAndTagsReply(QList<QGitBranch> branches, 
                     if (!found)
                     {
                         QTreeWidgetItem *child = new QTreeWidgetItem(QStringList() << name);
+                        child->setData(0, Qt::UserRole, branch.hash());
 
                         if (depth == 2)
                             child->setIcon(0, m_iconRemote);
@@ -476,6 +478,7 @@ void QGitRepository::repositoryBranchesAndTagsReply(QList<QGitBranch> branches, 
     for(const auto &tag: tags)
     {
         QTreeWidgetItem *child = new QTreeWidgetItem(QStringList() << tag.name());
+        child->setData(0, Qt::UserRole, tag.hash());
 
         child->setIcon(0, m_iconTag);
         itemTags->addChild(child);
@@ -869,6 +872,23 @@ void QGitRepository::deleteBranchesReply(QGitError error)
     emit repositoryBranches();
 }
 
+void QGitRepository::on_branchesTreeView_itemDoubleClicked(QTreeWidgetItem *item, int column)
+{
+    Q_UNUSED(column)
+    if (!item) return;
+
+    QString hash = item->data(0, Qt::UserRole).toString();
+    if (!hash.isEmpty())
+    {
+        ui->repositoryDetail->setCurrentWidget(ui->tabLogHistory);
+        if (!ui->logHistory_commits->selectCommit(hash))
+        {
+            QMessageBox::information(this, tr("Commit not found"), 
+                                     tr("The commit [%1] was not found in the currently loaded history. Try scrolling down to load more commits.").arg(hash.left(10)));
+        }
+    }
+}
+
 void QGitRepository::on_branchesTreeView_customContextMenuRequested(const QPoint &pos)
 {
     QTreeWidgetItem *item = ui->branchesTreeView->itemAt(pos);
@@ -958,7 +978,7 @@ void QGitRepository::on_branchesTreeView_customContextMenuRequested(const QPoint
                                              QMessageBox::Yes | QMessageBox::No);
             if (res == QMessageBox::Yes) {
                 QList<QGitBranch> toDelete;
-                toDelete << QGitBranch(branchName, 0, GIT_BRANCH_LOCAL);
+                toDelete << QGitBranch(branchName, "", 0, GIT_BRANCH_LOCAL);
                 m_git->deleteBranches(toDelete, false);
             }
         }

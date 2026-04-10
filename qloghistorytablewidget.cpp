@@ -73,3 +73,18 @@ void QLogHistoryTableWidget::addCommit(const QGitCommit &commit)
     item->setData(Qt::UserRole, commit.id());
     setItem(row, 4, item);
 }
+
+bool QLogHistoryTableWidget::selectCommit(const QString &hash)
+{
+    for (int row = 0; row < rowCount(); ++row)
+    {
+        QTableWidgetItem *item = this->item(row, 4);
+        if (item && item->data(Qt::UserRole).toString().compare(hash, Qt::CaseInsensitive) == 0)
+        {
+            this->selectRow(row);
+            this->scrollToItem(item);
+            return true;
+        }
+    }
+    return false;
+}

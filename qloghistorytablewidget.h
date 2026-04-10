@@ -13,6 +13,7 @@ public:
     explicit QLogHistoryTableWidget(QWidget *parent = nullptr);
 
     void addCommit(const QGitCommit &commit);
+    bool selectCommit(const QString &hash);
 
 private:
     QList<QString> m_hashIndex;

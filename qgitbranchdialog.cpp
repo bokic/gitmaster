@@ -227,7 +227,7 @@ QList<QGitBranch> QGitBranchDialog::deleteBranches() const
             auto name = ui->deleteBranches_tableWidget->item(c, 0)->text();
             auto time = ui->deleteBranches_tableWidget->item(c, 0)->data(Qt::UserRole + 1).toLongLong();
             auto type = ui->deleteBranches_tableWidget->item(c, 0)->data(Qt::UserRole).toInt();
-            QGitBranch item(name, time, static_cast<git_branch_t>(type));
+            QGitBranch item(name, "", time, static_cast<git_branch_t>(type));
 
             ret.append(item);
         }

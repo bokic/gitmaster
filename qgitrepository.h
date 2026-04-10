@@ -2,6 +2,7 @@
 
 #include <QNetworkAccessManager>
 #include <QListWidgetItem>
+#include <QTreeWidgetItem>
 #include <QThread>
 #include <QWidget>
 #include <QIcon>
@@ -80,6 +81,7 @@ private slots:
     void on_logHistory_files_itemSelectionChanged();
     void on_listWidget_staged_itemSelectionChanged();
     void on_listWidget_unstaged_itemSelectionChanged();
+    void on_branchesTreeView_itemDoubleClicked(QTreeWidgetItem *item, int column);
     void on_branchesTreeView_customContextMenuRequested(const QPoint &pos);
     void stashApplyReply(QGitError error);
     void stashPopReply(QGitError error);
