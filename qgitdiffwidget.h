@@ -23,6 +23,7 @@ public:
     void setGitDiff(const QString &first, const QString &second, const QList<QString> &files);
     void setReadonly(bool readonly = true);
     void setIgnoreWhitespace(bool ignore);
+    void setLinesOfContent(int lines);
     void refresh();
     bool readonly() const;
 
@@ -54,5 +55,6 @@ private:
     int m_hoverHunk = -1;
     int m_hoverLine = -1;
     bool m_readonly = false;
+    int m_linesOfContent = 3;
     bool m_ignoreWhitespace = false;
 };

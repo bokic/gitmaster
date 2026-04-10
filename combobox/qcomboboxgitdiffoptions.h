@@ -16,6 +16,7 @@ public:
     QSize minimumSizeHint() const override;
 
     bool ignoreWhitespace() const;
+    int linesOfContent() const;
 
 signals:
     void optionsChanged();

@@ -1358,6 +1358,17 @@ void QGitRepository::on_comboBox_gitDiffOptions_optionsChanged()
     } else if (ui->repositoryDetail->currentWidget() == ui->tabFileStatus) {
         ui->commit_diff->refresh();
     }
+
+    int lines = ui->comboBox_gitDiffOptions->linesOfContent();
+
+    if (lines == 0)
+    {
+        ui->commit_diff->setLinesOfContent(0);
+    }
+    else
+    {
+        ui->commit_diff->setLinesOfContent(lines);
+    }
 }
 
 void QGitRepository::on_listWidget_staged_itemSelectionChanged()

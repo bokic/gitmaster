@@ -228,6 +228,21 @@ bool QComboBoxGitDiffOptions::ignoreWhitespace() const
     return items->data(items->index(ITEM_IGNORE_WHITESPACE, 0), Qt::CheckStateRole).toInt() == Qt::Checked;
 }
 
+int QComboBoxGitDiffOptions::linesOfContent() const
+{
+    QStandardItemModel *items = static_cast<QStandardItemModel *>(model());
+
+    for(int c = ITEM_SHOW_2_LINE; c <= ITEM_SHOW_100_LINE; c++)
+    {
+        if (items->data(items->index(c, 0), Qt::CheckStateRole).toInt() == Qt::Checked)
+        {
+            return items->item(c, 0)->text().toInt();
+        }
+    }
+
+    return 1;
+}
+
 void QComboBoxGitDiffOptions::updateIconColor()
 {
     bool doUpdate = false;
