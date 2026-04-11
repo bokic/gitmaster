@@ -47,6 +47,8 @@ signals:
     void repositoryGetCommitDiff(QString commitId, bool ignoreWhitespace = false);
     void stageFileLines(QString filename, QVector<QGitDiffWidgetLine> lines);
     void unstageFileLines(QString filename, QVector<QGitDiffWidgetLine> lines);
+    void repositoryDiscardFiles(QStringList items);
+    void repositoryDiscardFileLines(QString filename, QVector<QGitDiffWidgetLine> lines);
     void deleteBranches(QList<QGitBranch> branches, bool force);
 
 protected:
@@ -64,6 +66,7 @@ private slots:
     void repositoryChangedFilesReply(QList<QPair<QString, git_status_t>> files, QGitError error);
     void repositoryStageFilesReply(QGitError error);
     void repositoryUnstageFilesReply(QGitError error);
+    void repositoryDiscardFilesReply(QGitError error);
     void repositoryCommitReply(QString commit_id, QGitError error);
     void repositoryGetCommitsReply(QList<QGitCommit> commits, QGitError error);
     void repositoryGetCommitDiffReply(QString commitId, QGitCommit diff, QGitError error);
@@ -82,6 +85,7 @@ private slots:
     void on_logHistory_files_itemSelectionChanged();
     void on_listWidget_staged_itemSelectionChanged();
     void on_listWidget_unstaged_itemSelectionChanged();
+    void on_listWidget_unstaged_customContextMenuRequested(const QPoint &pos);
     void on_branchesTreeView_itemDoubleClicked(QTreeWidgetItem *item, int column);
     void on_branchesTreeView_customContextMenuRequested(const QPoint &pos);
     void stashApplyReply(QGitError error);
@@ -92,6 +96,7 @@ private slots:
     void deleteTagReply(QGitError error);
     void on_comboBox_gitStatusFiles_itemClicked(int index);
     void on_comboBox_gitDiffOptions_optionsChanged();
+    void on_commit_diff_customContextMenuRequested(const QPoint &pos);
 
 private:
     void fetchCommits();
@@ -109,6 +114,8 @@ private:
     QIcon m_iconFileClean;
     QIcon m_iconFileModified;
     QIcon m_iconFileRemoved;
+    QIcon m_iconFileRenamed;
+    QIcon m_iconFileConflict;
     QIcon m_iconFileIgnored;
     QIcon m_iconFileUnknown;
     QIcon m_iconTag;

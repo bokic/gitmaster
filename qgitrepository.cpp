@@ -35,6 +35,8 @@ QGitRepository::QGitRepository(const QString &path, QWidget *parent)
     , m_iconFileClean(":/small/clean")
     , m_iconFileModified(":/small/modified")
     , m_iconFileRemoved(":/small/deleted")
+    , m_iconFileRenamed(":/small/images/small/renamed.png")
+    , m_iconFileConflict(":/small/images/small/conflict.png")
     , m_iconFileIgnored(":/small/ignored")
     , m_iconFileUnknown(":/small/unknown")
     , m_iconTag(":/small/tag")
@@ -126,6 +128,9 @@ QGitRepository::QGitRepository(const QString &path, QWidget *parent)
     connect(this, &QGitRepository::repositoryUnstageFiles, m_git, &QGit::unstageFiles);
     connect(m_git, &QGit::unstageFilesReply, this, &QGitRepository::repositoryUnstageFilesReply);
 
+    connect(this, &QGitRepository::repositoryDiscardFiles, m_git, &QGit::discardFiles);
+    connect(m_git, &QGit::discardFilesReply, this, &QGitRepository::repositoryDiscardFilesReply);
+
     connect(this, &QGitRepository::repositoryCommit, m_git, &QGit::commit);
     connect(m_git, &QGit::commitReply, this, &QGitRepository::repositoryCommitReply);
 
@@ -137,8 +142,12 @@ QGitRepository::QGitRepository(const QString &path, QWidget *parent)
 
     connect(ui->commit_diff, &QGitDiffWidget::select, this, &QGitRepository::selectedLines);
 
+    ui->listWidget_unstaged->setContextMenuPolicy(Qt::CustomContextMenu);
+    ui->commit_diff->setContextMenuPolicy(Qt::CustomContextMenu);
+
     connect(this, &QGitRepository::stageFileLines, m_git, &QGit::stageFileLines);
     connect(this, &QGitRepository::unstageFileLines, m_git, &QGit::unstageFileLines);
+    connect(this, &QGitRepository::repositoryDiscardFileLines, m_git, &QGit::discardFileLines);
 
     connect(this, &QGitRepository::deleteBranches, m_git, &QGit::deleteBranches);
     connect(m_git, &QGit::deleteBranchesReply, this, &QGitRepository::deleteBranchesReply);
@@ -554,140 +563,80 @@ void QGitRepository::repositoryStashesReply(QStringList stashes, QGitError error
 
 void QGitRepository::repositoryChangedFilesReply(QList<QPair<QString, git_status_t>> files, QGitError error)
 {
+    Q_UNUSED(error)
     int stagedCnt = 0;
     int unstagedCnt = 0;
 
-    Q_UNUSED(error)
+    ui->listWidget_staged->blockSignals(true);
+    ui->listWidget_unstaged->blockSignals(true);
 
     ui->listWidget_staged->setEnabled(true);
     ui->listWidget_unstaged->setEnabled(true);
 
     for(int c = 0; c < files.count(); c++)
     {
-        const auto &file = files.at(c).first;
-        auto status = files.at(c).second;
+        const QString &file = files.at(c).first;
+        git_status_t status = files.at(c).second;
 
+        // --- Staged Reconciliation ---
         if (status & (GIT_STATUS_INDEX_NEW | GIT_STATUS_INDEX_MODIFIED | GIT_STATUS_INDEX_DELETED | GIT_STATUS_INDEX_RENAMED | GIT_STATUS_INDEX_TYPECHANGE))
         {
             QListWidgetItem *item = nullptr;
-
-            // UI item already on same row
-            if ((ui->listWidget_staged->count() > stagedCnt)&&(ui->listWidget_staged->item(stagedCnt)->text() == file))
-            {
-                item = ui->listWidget_staged->item(stagedCnt);
-            }
-
-            // Check if UI item is further in the list
-            if (!item)
-            {
-                for(int c2 = stagedCnt + 1; c2 < ui->listWidget_staged->count(); c2++)
-                {
-                    if (ui->listWidget_staged->item(c2)->text() == file)
-                    {
-                        int deleteCnt = c2 - c;
-                        for(int c3 = 0; c3 < deleteCnt; c3++)
-                        {
-                            ui->listWidget_staged->takeItem(c3);
-                        }
-                        item = ui->listWidget_staged->item(stagedCnt);
-                        break;
+            for (int i = stagedCnt; i < ui->listWidget_staged->count(); ++i) {
+                if (ui->listWidget_staged->item(i)->text() == file) {
+                    while (stagedCnt < i) {
+                        delete ui->listWidget_staged->takeItem(stagedCnt);
+                        i--;
                     }
+                    item = ui->listWidget_staged->item(stagedCnt);
+                    break;
                 }
             }
-
-            // Add as new UI item
-            if (!item)
-            {
+            if (!item) {
                 item = new QListWidgetItem(file);
-
                 item->setFlags(item->flags() | Qt::ItemIsUserCheckable);
                 item->setCheckState(Qt::Checked);
-
-                if (stagedCnt < ui->listWidget_staged->count())
-                    ui->listWidget_staged->insertItem(stagedCnt, item);
-                else
-                    ui->listWidget_staged->addItem(item);
+                ui->listWidget_staged->insertItem(stagedCnt, item);
             }
 
-            switch(status & (GIT_STATUS_INDEX_NEW | GIT_STATUS_INDEX_MODIFIED | GIT_STATUS_INDEX_DELETED | GIT_STATUS_INDEX_RENAMED | GIT_STATUS_INDEX_TYPECHANGE))
-            {
-            case GIT_STATUS_INDEX_NEW:
-                item->setIcon(m_iconFileNew);
-                break;
-            case GIT_STATUS_INDEX_DELETED:
-                item->setIcon(m_iconFileRemoved);
-                break;
-            default:
-                item->setIcon(m_iconFileModified);
-                break;
-            }
+            if (status & GIT_STATUS_INDEX_NEW) item->setIcon(m_iconFileNew);
+            else if (status & GIT_STATUS_INDEX_DELETED) item->setIcon(m_iconFileRemoved);
+            else if (status & GIT_STATUS_INDEX_RENAMED) item->setIcon(m_iconFileRenamed);
+            else item->setIcon(m_iconFileModified);
 
             stagedCnt++;
         }
 
-        if ((status == GIT_STATUS_CURRENT)||(status & (GIT_STATUS_WT_NEW | GIT_STATUS_WT_MODIFIED | GIT_STATUS_WT_DELETED | GIT_STATUS_WT_TYPECHANGE | GIT_STATUS_WT_RENAMED | GIT_STATUS_WT_UNREADABLE | GIT_STATUS_IGNORED | GIT_STATUS_CONFLICTED)))
+        // --- Unstaged Reconciliation ---
+        if ((status == GIT_STATUS_CURRENT) || (status & (GIT_STATUS_WT_NEW | GIT_STATUS_WT_MODIFIED | GIT_STATUS_WT_DELETED | GIT_STATUS_WT_TYPECHANGE | GIT_STATUS_WT_RENAMED | GIT_STATUS_WT_UNREADABLE | GIT_STATUS_IGNORED | GIT_STATUS_CONFLICTED)))
         {
             QListWidgetItem *item = nullptr;
-
-            // UI item already on same row
-            if ((ui->listWidget_unstaged->count() > unstagedCnt)&&(ui->listWidget_unstaged->item(unstagedCnt)->text() == file))
-            {
-                item = ui->listWidget_unstaged->item(unstagedCnt);
-            }
-
-            // Check if UI item is further in the list
-            if (!item)
-            {
-                for(int c2 = unstagedCnt + 1; c2 < ui->listWidget_unstaged->count(); c2++)
-                {
-                    if (ui->listWidget_unstaged->item(c2)->text() == file)
-                    {
-                        int deleteCnt = c2 - c;
-                        for(int c3 = 0; c3 < deleteCnt; c3++)
-                        {
-                            ui->listWidget_unstaged->takeItem(c3);
-                        }
-                        item = ui->listWidget_unstaged->item(unstagedCnt);
-                        break;
+            for (int i = unstagedCnt; i < ui->listWidget_unstaged->count(); ++i) {
+                if (ui->listWidget_unstaged->item(i)->text() == file) {
+                    while (unstagedCnt < i) {
+                        delete ui->listWidget_unstaged->takeItem(unstagedCnt);
+                        i--;
                     }
+                    item = ui->listWidget_unstaged->item(unstagedCnt);
+                    break;
                 }
             }
-
-            // Add as new UI item
-            if (!item)
-            {
+            if (!item) {
                 item = new QListWidgetItem(file);
-
                 item->setFlags(item->flags() | Qt::ItemIsUserCheckable);
                 item->setCheckState(Qt::Unchecked);
-
-                if (unstagedCnt < ui->listWidget_unstaged->count())
-                    ui->listWidget_unstaged->insertItem(unstagedCnt, item);
-                else
-                    ui->listWidget_unstaged->addItem(item);
+                ui->listWidget_unstaged->insertItem(unstagedCnt, item);
             }
 
-            switch(status & (GIT_STATUS_CURRENT | GIT_STATUS_WT_NEW | GIT_STATUS_WT_MODIFIED | GIT_STATUS_WT_DELETED | GIT_STATUS_IGNORED | GIT_STATUS_CONFLICTED))
-            {
-            case GIT_STATUS_CURRENT:
-                item->setIcon(m_iconFileClean);
-                break;
-            case GIT_STATUS_WT_NEW:
-                item->setIcon(m_iconFileNew);
-                break;
-            case GIT_STATUS_WT_MODIFIED:
-                item->setIcon(m_iconFileModified);
-                break;
-            case GIT_STATUS_WT_DELETED:
-                item->setIcon(m_iconFileRemoved);
-                break;
-            case GIT_STATUS_IGNORED:
-                item->setIcon(m_iconFileIgnored);
-                break;
-            default:
-                item->setIcon(m_iconFileUnknown);
-                break;
-            }
+            uint32_t wt_status = status & (GIT_STATUS_CURRENT | GIT_STATUS_WT_NEW | GIT_STATUS_WT_MODIFIED | GIT_STATUS_WT_DELETED | GIT_STATUS_IGNORED | GIT_STATUS_CONFLICTED | GIT_STATUS_WT_RENAMED);
+            if (wt_status == GIT_STATUS_CURRENT) item->setIcon(m_iconFileClean);
+            else if (wt_status & GIT_STATUS_WT_NEW) item->setIcon(m_iconFileNew);
+            else if (wt_status & GIT_STATUS_WT_MODIFIED) item->setIcon(m_iconFileModified);
+            else if (wt_status & GIT_STATUS_WT_DELETED) item->setIcon(m_iconFileRemoved);
+            else if (wt_status & GIT_STATUS_WT_RENAMED) item->setIcon(m_iconFileRenamed);
+            else if (wt_status & GIT_STATUS_IGNORED) item->setIcon(m_iconFileIgnored);
+            else if (wt_status & GIT_STATUS_CONFLICTED) item->setIcon(m_iconFileConflict);
+            else item->setIcon(m_iconFileUnknown);
 
             unstagedCnt++;
         }
@@ -695,12 +644,15 @@ void QGitRepository::repositoryChangedFilesReply(QList<QPair<QString, git_status
 
     while(ui->listWidget_staged->count() > stagedCnt)
     {
-        delete ui->listWidget_staged->takeItem(ui->listWidget_staged->count() - 1);
+        delete ui->listWidget_staged->takeItem(stagedCnt);
     }
     while(ui->listWidget_unstaged->count() > unstagedCnt)
     {
-        delete ui->listWidget_unstaged->takeItem(ui->listWidget_unstaged->count() - 1);
+        delete ui->listWidget_unstaged->takeItem(unstagedCnt);
     }
+
+    ui->listWidget_staged->blockSignals(false);
+    ui->listWidget_unstaged->blockSignals(false);
 
     ui->commit_diff->refresh();
 
@@ -725,6 +677,14 @@ void QGitRepository::repositoryUnstageFilesReply(QGitError error)
 {
     Q_UNUSED(error)
 
+    fetchRepositoryChangedFiles();
+}
+
+void QGitRepository::repositoryDiscardFilesReply(QGitError error)
+{
+    if (error.errorCode() != 0) {
+        QMessageBox::critical(this, tr("Discard Error"), error.errorString());
+    }
     fetchRepositoryChangedFiles();
 }
 
@@ -1408,6 +1368,57 @@ void QGitRepository::on_listWidget_unstaged_itemSelectionChanged()
     }
 
     m_stageingFiles = true;
+}
+
+void QGitRepository::on_listWidget_unstaged_customContextMenuRequested(const QPoint &pos)
+{
+    const auto &selected = ui->listWidget_unstaged->selectedItems();
+    if (selected.isEmpty()) return;
+
+    QMenu menu(this);
+    QAction *discardAction = menu.addAction(tr("Discard changes"));
+
+    QAction *res = menu.exec(ui->listWidget_unstaged->mapToGlobal(pos));
+    if (res == discardAction) {
+        auto confirm = QMessageBox::question(this, tr("Discard changes"),
+                                             tr("Are you sure you want to discard changes in the selected files? This operation cannot be undone."),
+                                             QMessageBox::Yes | QMessageBox::No);
+        if (confirm == QMessageBox::Yes) {
+            QStringList files;
+            for (auto item : selected) {
+                files << item->text();
+            }
+            emit repositoryDiscardFiles(files);
+        }
+    }
+}
+
+void QGitRepository::on_commit_diff_customContextMenuRequested(const QPoint &pos)
+{
+    if (!m_stageingFiles) return;
+
+    QString fileName;
+    int hoverFile = ui->commit_diff->hoverFile();
+    int hoverHunk = ui->commit_diff->hoverHunk();
+    int hoverLine = ui->commit_diff->hoverLine();
+
+    QVector<QGitDiffWidgetLine> lines = ui->commit_diff->linesAt(hoverFile, hoverHunk, hoverLine, fileName);
+    if (lines.isEmpty()) return;
+
+    QMenu menu(this);
+    QString actionText = (hoverLine >= 0) ? tr("Discard line") : tr("Discard hunk");
+    QAction *discardAction = menu.addAction(actionText);
+
+    QAction *res = menu.exec(ui->commit_diff->mapToGlobal(pos));
+    if (res == discardAction) {
+        auto confirm = QMessageBox::question(this, tr("Discard changes"),
+                                             tr("Are you sure you want to discard this %1? This operation cannot be undone.")
+                                             .arg((hoverLine >= 0) ? tr("line") : tr("hunk")),
+                                             QMessageBox::Yes | QMessageBox::No);
+        if (confirm == QMessageBox::Yes) {
+            emit repositoryDiscardFileLines(fileName, lines);
+        }
+    }
 }
 
 void QGitRepository::deleteTagReply(QGitError error)

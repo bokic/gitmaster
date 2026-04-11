@@ -1174,6 +1174,7 @@ void QGit::listChangedFiles(int show, int sort, bool reversed)
                 throw QGitError("unknown scenario", res);
             }
 
+            QString path1;
             if (
                     (item->index_to_workdir)
                     &&
@@ -1198,12 +1199,16 @@ void QGit::listChangedFiles(int show, int sort, bool reversed)
                     )
                 )
             {
-                items.append({QString::fromUtf8(item->index_to_workdir->new_file.path), status});
+                path1 = QString::fromUtf8(item->index_to_workdir->new_file.path);
+                items.append({path1, status});
             }
 
             if ((item->head_to_index)&&(item->head_to_index->status != GIT_DELTA_UNMODIFIED)&&(status))
             {
-                items.append({QString::fromUtf8(item->head_to_index->new_file.path), status});
+                QString path2 = QString::fromUtf8(item->head_to_index->new_file.path);
+                if (path1 != path2) {
+                    items.append({path2, status});
+                }
             }
 
             index++;
@@ -1714,13 +1719,7 @@ void QGit::stageFileLines(QString filename, QVector<QGitDiffWidgetLine> lines)
         git_off_t blob_size = git_blob_rawsize(blob);
         QByteArray buffer = QByteArray(blob_content, blob_size);
         auto bufferLines = buffer.split(LINE_END);
-        int deltaLine = 0;
         int added = 0;
-
-        if (lines.first().origin == ' ')
-        {
-            deltaLine = lines.first().new_lineno - lines.first().old_lineno;
-        }
 
         for(const auto &line: lines)
         {
@@ -1729,16 +1728,46 @@ void QGit::stageFileLines(QString filename, QVector<QGitDiffWidgetLine> lines)
             switch (line.origin)
             {
             case ' ':
+            case '=':
+            case '>':
+            case '<':
                 continue;
             case '-':
-                bufferLines.removeAt(line.old_lineno + added - 1);
-                added--;
+                {
+                    int pos = line.old_lineno + added - 1;
+                    bool wasLast = (pos == bufferLines.size() - 1);
+                    bufferLines.removeAt(pos);
+                    if (wasLast && !bufferLines.isEmpty()) {
+                        bufferLines.append("");
+                    }
+                    added--;
+                }
                 break;
             case '+':
-                content = line.content;
-                content = content.left(content.length() - 1);
-                bufferLines.insert(line.new_lineno - deltaLine - 1, content);
-                added++;
+                {
+                    content = line.content;
+                    bool endsWithNL = content.endsWith(LINE_END);
+                    if (endsWithNL) content.chop(1);
+
+                    int pos = line.old_lineno + added - 1;
+                    qDebug() << "  Inserting '+' at" << pos << "(added:" << added << ", endsWithNL:" << endsWithNL << "):" << content;
+                    bufferLines.insert(pos, content);
+                    if (endsWithNL)
+                    {
+                        if (pos == bufferLines.size() - 1)
+                        {
+                            bufferLines.append("");
+                        }
+                    }
+                    else
+                    {
+                        if (pos == bufferLines.size() - 2 && bufferLines.last() == "")
+                        {
+                            bufferLines.removeLast();
+                        }
+                    }
+                    added++;
+                }
                 break;
             default:
                 throw QGitError("Unknown operation", 0);
@@ -1807,13 +1836,7 @@ void QGit::unstageFileLines(QString filename, QVector<QGitDiffWidgetLine> lines)
         git_off_t blob_size = git_blob_rawsize(blob);
         QByteArray buffer = QByteArray(blob_content, blob_size);
         auto bufferLines = buffer.split(LINE_END);
-        int deltaLine = 0;
         int added = 0;
-
-        if (lines.first().origin == ' ')
-        {
-            deltaLine = lines.first().new_lineno - lines.first().old_lineno;
-        }
 
         for(const auto &line: lines)
         {
@@ -1822,16 +1845,46 @@ void QGit::unstageFileLines(QString filename, QVector<QGitDiffWidgetLine> lines)
             switch(line.origin)
             {
             case ' ':
+            case '=':
+            case '>':
+            case '<':
                 continue;
             case '+':
-                bufferLines.removeAt(line.new_lineno + added - 1);
-                added--;
+                {
+                    int pos = line.new_lineno + added - 1;
+                    bool wasLast = (pos == bufferLines.size() - 1);
+                    bufferLines.removeAt(pos);
+                    if (wasLast && !bufferLines.isEmpty()) {
+                        bufferLines.append("");
+                    }
+                    added--;
+                }
                 break;
             case '-':
-                content = line.content;
-                content = content.left(content.length() - 1);
-                bufferLines.insert(line.old_lineno + deltaLine - 1, content);
-                added++;
+                {
+                    content = line.content;
+                    bool endsWithNL = content.endsWith(LINE_END);
+                    if (endsWithNL) content.chop(1);
+
+                    int pos = line.new_lineno + added - 1;
+                    qDebug() << "  Inserting '-' at" << pos << "(added:" << added << ", endsWithNL:" << endsWithNL << "):" << content;
+                    bufferLines.insert(pos, content);
+                    if (endsWithNL)
+                    {
+                        if (pos == bufferLines.size() - 1)
+                        {
+                            bufferLines.append("");
+                        }
+                    }
+                    else
+                    {
+                        if (pos == bufferLines.size() - 2 && bufferLines.last() == "")
+                        {
+                            bufferLines.removeLast();
+                        }
+                    }
+                    added++;
+                }
                 break;
             default:
                 throw QGitError("Unknown operation", 0);
@@ -1855,6 +1908,147 @@ void QGit::unstageFileLines(QString filename, QVector<QGitDiffWidgetLine> lines)
     }
 
     emit unstageFilesReply(error);
+}
+
+void QGit::discardFiles(QStringList items)
+{
+    QGitError error;
+
+    try
+    {
+        if (items.count() == 0)
+        {
+            throw QGitError();
+        }
+
+        GitRepository repo;
+        int res = git_repository_open(repo, m_path.absolutePath().toUtf8().constData());
+        if (res)
+        {
+            throw QGitError("git_repository_open", res);
+        }
+
+        GitStrArray paths;
+        paths.value.count = static_cast<size_t>(items.count());
+        paths.value.strings = static_cast<char **>(malloc(sizeof(char *) * paths.value.count));
+        if (paths.value.strings == nullptr)
+        {
+            throw QGitError("malloc", 0);
+        }
+
+        for(int c = 0; c < items.count(); c++)
+        {
+            paths.value.strings[c] = strdup(items.at(c).toUtf8().constData());
+        }
+
+        git_checkout_options opts = GIT_CHECKOUT_OPTIONS_INIT;
+        opts.checkout_strategy = GIT_CHECKOUT_FORCE;
+        opts.paths = paths.value;
+
+        res = git_checkout_index(repo, nullptr, &opts);
+        if (res)
+        {
+            throw QGitError("git_checkout_index", res);
+        }
+
+    } catch(const QGitError &ex) {
+        error = ex;
+    }
+
+    emit discardFilesReply(error);
+}
+
+void QGit::discardFileLines(QString filename, QVector<QGitDiffWidgetLine> lines)
+{
+    QGitError error;
+
+    try
+    {
+        if (lines.count() == 0)
+        {
+            throw QGitError();
+        }
+
+        QString filePath = m_path.absoluteFilePath(filename);
+        QFile file(filePath);
+        if (!file.open(QIODevice::ReadOnly))
+        {
+            throw QGitError("QFile::open(ReadOnly)", 0);
+        }
+
+        QByteArray buffer = file.readAll();
+        file.close();
+
+        auto bufferLines = buffer.split(LINE_END);
+        int added = 0;
+
+        for (const auto &line: lines)
+        {
+            QByteArray content;
+
+            switch(line.origin)
+            {
+            case ' ':
+            case '=':
+            case '>':
+            case '<':
+                continue;
+            case '+':
+                {
+                    int pos = line.new_lineno + added - 1;
+                    bool wasLast = (pos == bufferLines.size() - 1);
+                    bufferLines.removeAt(pos);
+                    if (wasLast && !bufferLines.isEmpty()) {
+                        bufferLines.append("");
+                    }
+                    added--;
+                }
+                break;
+            case '-':
+                {
+                    content = line.content;
+                    bool endsWithNL = content.endsWith(LINE_END);
+                    if (endsWithNL) content.chop(1);
+
+                    int pos = line.new_lineno + added - 1;
+                    bufferLines.insert(pos, content);
+                    if (endsWithNL)
+                    {
+                        if (pos == bufferLines.size() - 1)
+                        {
+                            bufferLines.append("");
+                        }
+                    }
+                    else
+                    {
+                        if (pos == bufferLines.size() - 2 && bufferLines.last() == "")
+                        {
+                            bufferLines.removeLast();
+                        }
+                    }
+                    added++;
+                }
+                break;
+            default:
+                throw QGitError("Unknown operation", 0);
+            }
+        }
+
+        buffer = bufferLines.join(LINE_END);
+
+        if (!file.open(QIODevice::WriteOnly | QIODevice::Truncate))
+        {
+            throw QGitError("QFile::open(WriteOnly)", 0);
+        }
+
+        file.write(buffer);
+        file.close();
+
+    } catch(const QGitError &ex) {
+        error = ex;
+    }
+
+    emit discardFilesReply(error);
 }
 
 void QGit::commit(QString message, bool withPush)

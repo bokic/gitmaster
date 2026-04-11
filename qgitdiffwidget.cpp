@@ -121,6 +121,103 @@ bool QGitDiffWidget::readonly() const
     return m_readonly;
 }
 
+int QGitDiffWidget::hoverFile() const
+{
+    return m_hoverFile;
+}
+
+int QGitDiffWidget::hoverHunk() const
+{
+    return m_hoverHunk;
+}
+
+int QGitDiffWidget::hoverLine() const
+{
+    return m_hoverLine;
+}
+
+QVector<QGitDiffWidgetLine> QGitDiffWidget::linesAt(int fileIdx, int hunkIdx, int lineIdx, QString &fileName) const
+{
+    QVector<QGitDiffWidgetLine> lines;
+
+    if (fileIdx < 0 || fileIdx >= m_private->files.count()) return lines;
+    const auto &file = m_private->files.at(fileIdx);
+    fileName = file.new_file.path();
+
+    if (hunkIdx < 0 || hunkIdx >= file.hunks.count()) return lines;
+    const auto &hunk = file.hunks.at(hunkIdx);
+
+    if (lineIdx < 0) {
+        // Collect whole hunk
+        int v_old = hunk.lines.first().old_lineno - 1;
+        int v_new = hunk.lines.first().new_lineno - 1;
+        if (v_old < 0) v_old = hunk.old_start - 1;
+        if (v_new < 0) v_new = hunk.new_start - 1;
+
+        for (const auto &line : hunk.lines) {
+            if (line.origin == ' ') {
+                v_old = line.old_lineno;
+                v_new = line.new_lineno;
+            } else if (line.origin == '-') {
+                v_old = line.old_lineno;
+                v_new++;
+            } else if (line.origin == '+') {
+                v_new = line.new_lineno;
+                v_old++;
+            }
+
+            QGitDiffWidgetLine newLine;
+            newLine.content = line.content;
+            newLine.new_lineno = v_new;
+            newLine.old_lineno = v_old;
+            newLine.hunk_new_start = hunk.new_start;
+            newLine.hunk_old_start = hunk.old_start;
+            newLine.origin = line.origin;
+            lines.push_back(newLine);
+        }
+    } else {
+        // Collect single line
+        if (lineIdx >= hunk.lines.count()) return lines;
+        
+        int v_old = hunk.lines.first().old_lineno - 1;
+        int v_new = hunk.lines.first().new_lineno - 1;
+        if (v_old < 0) v_old = hunk.old_start - 1;
+        if (v_new < 0) v_new = hunk.new_start - 1;
+        
+        int target_v_old = 0, target_v_new = 0;
+        for (int c = 0; c <= lineIdx; c++) {
+            const auto &line = hunk.lines.at(c);
+            if (line.origin == ' ') {
+                v_old = line.old_lineno;
+                v_new = line.new_lineno;
+            } else if (line.origin == '-') {
+                v_old = line.old_lineno;
+                v_new++;
+            } else if (line.origin == '+') {
+                v_new = line.new_lineno;
+                v_old++;
+            }
+            if (c == lineIdx) {
+                target_v_old = v_old;
+                target_v_new = v_new;
+            }
+        }
+        
+        const auto &line = hunk.lines.at(lineIdx);
+        if (line.origin == '+' || line.origin == '-') {
+            QGitDiffWidgetLine newLine;
+            newLine.content = line.content;
+            newLine.new_lineno = target_v_new;
+            newLine.old_lineno = target_v_old;
+            newLine.hunk_new_start = hunk.new_start;
+            newLine.hunk_old_start = hunk.old_start;
+            newLine.origin = line.origin;
+            lines.push_back(newLine);
+        }
+    }
+    return lines;
+}
+
 void QGitDiffWidget::responseGitDiff(QString first, QString second, QList<QGitDiffFile> diff, QGitError error)
 {
     int y = 0, file_h = 0, lineMax = 0;
@@ -343,88 +440,17 @@ void QGitDiffWidget::paintEvent(QPaintEvent *event)
 
 void QGitDiffWidget::mousePressEvent(QMouseEvent *event)
 {
-    QVector<QGitDiffWidgetLine> lines;
-
     if ((m_readonly)||(event->buttons() != Qt::LeftButton))
     {
         return;
     }
 
-    if ((m_hoverFile < 0)||(m_hoverHunk < 0))
-    {
-        return;
-    }
-
-
-    if (m_hoverFile >= m_private->files.count())
-    {
-        return;
-    }
-
-    const auto &file = m_private->files.at(m_hoverFile);
-    if (m_hoverHunk >= file.hunks.count())
-    {
-        return;
-    }
-
-    const auto &hunk = file.hunks.at(m_hoverHunk);
-
-    if (m_hoverLine < 0)
-    {
-        for(const auto &line: hunk.lines)
-        {
-            QGitDiffWidgetLine newLine;
-
-            newLine.content = line.content;
-            newLine.new_lineno = line.new_lineno;
-            newLine.old_lineno = line.old_lineno;
-            newLine.origin = line.origin;
-
-            lines.push_back(newLine);
-        }
-    }
-    else
-    {
-        int old_line_no = 0;
-
-        for(int c = 0; c <= m_hoverLine; c++)
-        {
-            const auto &line = hunk.lines.at(c);
-
-            if ((c < m_hoverLine)&&((line.origin == ' ')||(line.origin == '-')))
-            {
-                old_line_no = line.old_lineno;
-            }
-
-            if (c == m_hoverLine)
-            {
-                QGitDiffWidgetLine newLine;
-
-                if (line.origin == '+')
-                {
-                    newLine.content = line.content;
-                    newLine.new_lineno = old_line_no + 1;
-                    newLine.old_lineno = -1;
-                    newLine.origin = line.origin;
-
-                    lines.push_back(newLine);
-                }
-                else if (line.origin == '-')
-                {
-                    newLine.content = line.content;
-                    newLine.new_lineno = -1;
-                    newLine.old_lineno = line.old_lineno;
-                    newLine.origin = line.origin;
-
-                    lines.push_back(newLine);
-                }
-            }
-        }
-    }
+    QString fileName;
+    QVector<QGitDiffWidgetLine> lines = linesAt(m_hoverFile, m_hoverHunk, m_hoverLine, fileName);
 
     if (!lines.isEmpty())
     {
-        emit select(file.new_file.path(), lines);
+        emit select(fileName, lines);
     }
 }
 

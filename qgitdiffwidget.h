@@ -27,6 +27,11 @@ public:
     void refresh();
     bool readonly() const;
 
+    int hoverFile() const;
+    int hoverHunk() const;
+    int hoverLine() const;
+    QVector<QGitDiffWidgetLine> linesAt(int fileIdx, int hunkIdx, int lineIdx, QString &fileName) const;
+
 signals:
     void requestGitDiff(QString first, QString second, QList<QString> files, uint32_t context_lines, bool ignoreWhitespace);
     void select(QString file, QVector<QGitDiffWidgetLine> lines);

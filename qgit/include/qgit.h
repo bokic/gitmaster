@@ -22,6 +22,8 @@ public:
     QByteArray content;
     int new_lineno = 0;
     int old_lineno = 0;
+    int hunk_new_start = 0;
+    int hunk_old_start = 0;
     char origin = '\0';
 };
 
@@ -90,6 +92,8 @@ public slots:
     void unstageFiles(QStringList items);
     void stageFileLines(QString filename, QVector<QGitDiffWidgetLine> lines);
     void unstageFileLines(QString filename, QVector<QGitDiffWidgetLine> lines);
+    void discardFiles(QStringList items);
+    void discardFileLines(QString filename, QVector<QGitDiffWidgetLine> lines);
     void commit(QString message, bool withPush);
     void clone(QUrl url);
     void pull(bool rebase);
@@ -117,6 +121,7 @@ signals:
     void commitDiffContentReply(QString first, QString second, QList<QGitDiffFile> files, QGitError error);
     void stageFilesReply(QGitError error);
     void unstageFilesReply(QGitError error);
+    void discardFilesReply(QGitError error);
     void commitReply(QString commit_id, QGitError error);
     void cloneReply(QGitError error);
     void cloneProgressReply(QString path, size_t completed_steps, size_t total_steps);
