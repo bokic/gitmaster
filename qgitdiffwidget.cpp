@@ -155,24 +155,27 @@ QVector<QGitDiffWidgetLine> QGitDiffWidget::linesAt(int fileIdx, int hunkIdx, in
         if (v_new < 0) v_new = hunk.new_start - 1;
 
         for (const auto &line : hunk.lines) {
-            if (line.origin == ' ') {
-                v_old = line.old_lineno;
-                v_new = line.new_lineno;
-            } else if (line.origin == '-') {
-                v_old = line.old_lineno;
-                v_new++;
-            } else if (line.origin == '+') {
-                v_new = line.new_lineno;
-                v_old++;
-            }
-
             QGitDiffWidgetLine newLine;
             newLine.content = line.content;
-            newLine.new_lineno = v_new;
-            newLine.old_lineno = v_old;
             newLine.hunk_new_start = hunk.new_start;
             newLine.hunk_old_start = hunk.old_start;
             newLine.origin = line.origin;
+
+            if (line.origin == ' ') {
+                v_old = line.old_lineno;
+                v_new = line.new_lineno;
+                newLine.old_lineno = v_old;
+                newLine.new_lineno = v_new;
+            } else if (line.origin == '-') {
+                v_old = line.old_lineno;
+                newLine.old_lineno = v_old;
+                newLine.new_lineno = v_new + 1;
+            } else if (line.origin == '+') {
+                v_new = line.new_lineno;
+                newLine.new_lineno = v_new;
+                newLine.old_lineno = v_old + 1;
+            }
+
             lines.push_back(newLine);
         }
     } else {
@@ -190,15 +193,15 @@ QVector<QGitDiffWidgetLine> QGitDiffWidget::linesAt(int fileIdx, int hunkIdx, in
             if (line.origin == ' ') {
                 v_old = line.old_lineno;
                 v_new = line.new_lineno;
+                target_v_old = v_old;
+                target_v_new = v_new;
             } else if (line.origin == '-') {
                 v_old = line.old_lineno;
-                v_new++;
+                target_v_old = v_old;
+                target_v_new = v_new + 1;
             } else if (line.origin == '+') {
                 v_new = line.new_lineno;
-                v_old++;
-            }
-            if (c == lineIdx) {
-                target_v_old = v_old;
+                target_v_old = v_old + 1;
                 target_v_new = v_new;
             }
         }
