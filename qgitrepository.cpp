@@ -6,6 +6,7 @@
 #include "qgitpulldialog.h"
 #include "qgitpushdialog.h"
 #include "qgitbranchdialog.h"
+#include "qgitmergedialog.h"
 #include <qgitbranch.h>
 
 #include <QCryptographicHash>
@@ -163,6 +164,8 @@ QGitRepository::QGitRepository(const QString &path, QWidget *parent)
     connect(m_git, &QGit::renameBranchReply, this, &QGitRepository::renameBranchReply);
     connect(m_git, &QGit::setUpstreamReply, this, &QGitRepository::setUpstreamReply);
     connect(m_git, &QGit::deleteTagReply, this, &QGitRepository::deleteTagReply);
+    connect(this, &QGitRepository::repositoryMerge, m_git, &QGit::merge);
+    connect(m_git, &QGit::mergeReply, this, &QGitRepository::repositoryMergeReply);
 
     ui->branchesTreeView->setContextMenuPolicy(Qt::CustomContextMenu);
 
@@ -284,6 +287,33 @@ void QGitRepository::push()
 
         QGitMasterMainWindow::instance()->updateStatusBarText(tr("Pushing..."));
         emit repositoryPush(remote, branches, tags, force);
+    }
+}
+
+void QGitRepository::merge()
+{
+    QGitMergeDialog dlg(m_git->path(), this);
+
+    if (dlg.exec() == QDialog::Accepted)
+    {
+        QString branchName = dlg.selectedBranch();
+        if (!branchName.isEmpty()) {
+            QGitMasterMainWindow::instance()->updateStatusBarText(tr("Merging branch %1...").arg(branchName));
+            emit repositoryMerge(branchName);
+        }
+    }
+}
+
+void QGitRepository::repositoryMergeReply(QGitError error)
+{
+    QGitMasterMainWindow::instance()->clearStatusBarText();
+
+    if (error.errorCode()) {
+        QMessageBox::critical(this, tr("Merge Error"), 
+                              tr("Could not merge the selected branch. Details: %1").arg(error.errorString()));
+    } else {
+        QMessageBox::information(this, tr("Merge Successful"), tr("Successfully merged selected branch."));
+        refreshData();
     }
 }
 

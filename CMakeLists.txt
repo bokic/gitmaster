@@ -94,6 +94,7 @@ set(PROJECT_HEADERS
     qgit/include/qgittag.h
     qgit/include/qgitcommit.h
     qgit/include/qgitcommitdiffparent.h
+    qgitmergedialog.h
     qgit/include/qgitdiffbinary.h
     qgit/include/qgitdiffbinaryfile.h
     qgit/include/qgitdifffile.h
@@ -115,6 +116,7 @@ set(PROJECT_SOURCES
     qgitpulldialog.cpp            qgitpulldialog.ui
     qgitfetchdialog.cpp           qgitfetchdialog.ui
     qgitbranchdialog.cpp          qgitbranchdialog.ui
+    qgitmergedialog.cpp           qgitmergedialog.ui
 
     qgitrepotreeitemdelegate.cpp
     qgitrepotreewidget.cpp

@@ -31,6 +31,7 @@ public:
     void fetch();
     void pull();
     void push();
+    void merge();
     QGit *git() const;
 
 signals:
@@ -50,6 +51,7 @@ signals:
     void repositoryDiscardFiles(QStringList items);
     void repositoryDiscardFileLines(QString filename, QVector<QGitDiffWidgetLine> lines);
     void deleteBranches(QList<QGitBranch> branches, bool force);
+    void repositoryMerge(QString branchName);
 
 protected:
     void keyPressEvent(QKeyEvent *event) override;
@@ -94,6 +96,7 @@ private slots:
     void renameBranchReply(QGitError error);
     void setUpstreamReply(QGitError error);
     void deleteTagReply(QGitError error);
+    void repositoryMergeReply(QGitError error);
     void on_comboBox_gitStatusFiles_itemClicked(int index);
     void on_comboBox_gitDiffOptions_optionsChanged();
     void on_commit_diff_customContextMenuRequested(const QPoint &pos);

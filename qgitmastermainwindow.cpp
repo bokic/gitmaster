@@ -431,3 +431,11 @@ void QGitMasterMainWindow::on_actionBranch_triggered()
         widget->branchDialog();
     }
 }
+
+void QGitMasterMainWindow::on_actionMerge_triggered()
+{
+    auto widget = dynamic_cast<QGitRepository *>(ui->tabWidget->currentWidget());
+    if (widget) {
+        widget->merge();
+    }
+}

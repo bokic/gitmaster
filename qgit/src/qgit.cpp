@@ -2152,7 +2152,21 @@ void QGit::commit(QString message, bool withPush)
                 throw QGitError("git_commit_lookup", res);
             }
 
-            res = git_commit_create_v(
+            GitCommit parent2;
+            int parent_count = 1;
+            const git_commit *commit_parents[2] = { parent.value, nullptr };
+
+            if (git_repository_state(repo) == GIT_REPOSITORY_STATE_MERGE) {
+                git_oid merge_head_id;
+                if (git_reference_name_to_id(&merge_head_id, repo, "MERGE_HEAD") == 0) {
+                    if (git_commit_lookup(parent2, repo, &merge_head_id) == 0) {
+                        commit_parents[1] = parent2.value;
+                        parent_count = 2;
+                    }
+                }
+            }
+
+            res = git_commit_create(
               &new_commit_id,
               repo,
               "HEAD",                        /* name of ref to update */
@@ -2161,11 +2175,15 @@ void QGit::commit(QString message, bool withPush)
               nullptr,                       /* nullptr = UTF-8 message encoding */
               message.toUtf8().constData(),  /* message */
               tree,                          /* root tree */
-              1,                             /* parent count */
-              parent.value);                 /* parent */
+              parent_count,                  /* parent count */
+              commit_parents);               /* parents */
             if (res)
             {
-                throw QGitError("git_commit_create_v", res);
+                throw QGitError("git_commit_create", res);
+            }
+
+            if (parent_count > 1) {
+                git_repository_state_cleanup(repo);
             }
         }
 
@@ -2376,11 +2394,50 @@ void QGit::merge(QString branchName)
                 throw QGitError("Merge conflicts detected. Please resolve them manually.", -1);
             }
 
-            // Create merge commit? 
-            // The UI might expect us to commit if there are no conflicts.
-            // For now, let's just leave it in merge state if that's what's expected, 
-            // but usually 'merge' implies creating a commit if possible.
-            // I'll leave the commit creation as a separate step or Implement it here if desired.
+            // Create merge commit
+            git_oid tree_id;
+            res = git_index_write_tree(&tree_id, index);
+            if (res) throw QGitError("git_index_write_tree", res);
+
+            GitTree tree;
+            res = git_tree_lookup(tree, repo, &tree_id);
+            if (res) throw QGitError("git_tree_lookup", res);
+
+            GitSignature sig;
+            res = git_signature_default(sig, repo);
+            if (res) throw QGitError("git_signature_default", res);
+
+            GitReference head_ref;
+            res = git_repository_head(head_ref, repo);
+            if (res) throw QGitError("git_repository_head", res);
+
+            GitCommit parent1; // HEAD
+            res = git_commit_lookup(parent1, repo, git_reference_target(head_ref));
+            if (res) throw QGitError("git_commit_lookup (HEAD)", res);
+
+            GitCommit parent2; // MERGED branch
+            res = git_commit_lookup(parent2, repo, git_annotated_commit_id(annotated));
+            if (res) throw QGitError("git_commit_lookup (MERGE)", res);
+
+            QString msg = QString("Merge branch '%1'").arg(branchName);
+
+            git_oid new_commit_id;
+            const git_commit *parents[] = { parent1.value, parent2.value };
+            res = git_commit_create(
+                &new_commit_id,
+                repo,
+                "HEAD",
+                sig,
+                sig,
+                nullptr,
+                msg.toUtf8().constData(),
+                tree,
+                2,
+                parents
+            );
+            if (res) throw QGitError("git_commit_create", res);
+
+            git_repository_state_cleanup(repo);
         }
 
     } catch(const QGitError &ex) {
