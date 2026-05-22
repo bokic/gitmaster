@@ -12,6 +12,8 @@
 #include <QActionGroup>
 #include <QMessageBox>
 #include <QSettings>
+#include <QProcess>
+#include <QStandardPaths>
 
 
 QGitMasterMainWindow *QGitMasterMainWindow::s_instance = nullptr;
@@ -437,5 +439,59 @@ void QGitMasterMainWindow::on_actionMerge_triggered()
     auto widget = dynamic_cast<QGitRepository *>(ui->tabWidget->currentWidget());
     if (widget) {
         widget->merge();
+    }
+}
+
+void QGitMasterMainWindow::on_actionTerminal_triggered()
+{
+    auto widget = dynamic_cast<QGitRepository *>(ui->tabWidget->currentWidget());
+    if (widget && widget->git()) {
+        QString absolutePath = widget->git()->path().absolutePath();
+        bool launched = false;
+
+#if defined(Q_OS_WIN)
+        // On Windows, try Windows Terminal (wt) first, then PowerShell, and fallback to cmd
+        QStringList terminals = { "wt", "powershell", "cmd" };
+        for (const QString &term : terminals) {
+            QString path = QStandardPaths::findExecutable(term);
+            if (!path.isEmpty()) {
+                launched = QProcess::startDetached(path, QStringList(), absolutePath);
+                if (launched) {
+                    break;
+                }
+            }
+        }
+#elif defined(Q_OS_MAC)
+        // On macOS, launch Terminal.app targeting the repository directory via the system 'open' tool
+        launched = QProcess::startDetached("open", QStringList() << "-a" << "Terminal" << absolutePath);
+        if (!launched) {
+            launched = QProcess::startDetached("open", QStringList() << absolutePath);
+        }
+#else
+        // On Linux/Unix, search for popular terminal emulators
+        QStringList terminals = {
+            "gnome-terminal",
+            "konsole",
+            "xfce4-terminal",
+            "mate-terminal",
+            "kitty",
+            "alacritty",
+            "xterm"
+        };
+        for (const QString &term : terminals) {
+            QString path = QStandardPaths::findExecutable(term);
+            if (!path.isEmpty()) {
+                launched = QProcess::startDetached(path, QStringList(), absolutePath);
+                if (launched) {
+                    break;
+                }
+            }
+        }
+#endif
+
+        if (!launched) {
+            QMessageBox::warning(this, tr("Terminal Error"),
+                                 tr("Could not find or launch a system terminal. Please make sure a terminal emulator is installed."));
+        }
     }
 }
