@@ -56,7 +56,7 @@ QGitRepository::QGitRepository(const QString &path, QWidget *parent)
 
     ui->commit_diff->setContentsMargins(10, 10, 10, 10);
 
-    ui->logHistory_commits->setItemDelegate(new QLogHistoryItemDelegate());
+    ui->logHistory_commits->setItemDelegate(new QLogHistoryItemDelegate(ui->logHistory_commits));
 
     m_git->moveToThread(&m_thread);
 
@@ -547,6 +547,8 @@ void QGitRepository::repositoryBranchesAndTagsReply(QList<QGitBranch> branches, 
     ui->branchesTreeView->clear();
     ui->branchesTreeView->addTopLevelItems(items);
     ui->branchesTreeView->expandAll();
+
+    ui->logHistory_commits->setReferences(branches, tags, current_branch);
 }
 
 void QGitRepository::repositoryStashesReply(QStringList stashes, QGitError error)

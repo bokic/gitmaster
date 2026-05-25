@@ -59,6 +59,7 @@ void QLogHistoryTableWidget::addCommit(const QGitCommit &commit)
 
     item = new QTableWidgetItem(commit.message().split('\n').first());
     item->setData(Qt::UserRole, commit.message());
+    item->setData(Qt::UserRole + 1, commit.id());
     setItem(row, 1, item);
 
     item = new QTableWidgetItem(commit.time().toString());
@@ -88,3 +89,66 @@ bool QLogHistoryTableWidget::selectCommit(const QString &hash)
     }
     return false;
 }
+
+void QLogHistoryTableWidget::setReferences(const QList<QGitBranch> &branches, const QList<QGitTag> &tags, const QString &currentBranch)
+{
+    m_refMap.clear();
+
+    for (const auto &branch : branches)
+    {
+        QString refName = branch.name();
+        QGitRef::Type refType = QGitRef::LocalBranch;
+
+        if (branch.type() & GIT_BRANCH_LOCAL)
+        {
+            if (refName.startsWith(QStringLiteral("refs/heads/")))
+            {
+                refName = refName.mid(11);
+            }
+            if (refName == currentBranch)
+            {
+                refType = QGitRef::CurrentBranch;
+            }
+            else
+            {
+                refType = QGitRef::LocalBranch;
+            }
+        }
+        else if (branch.type() & GIT_BRANCH_REMOTE)
+        {
+            if (refName.startsWith(QStringLiteral("refs/remotes/")))
+            {
+                refName = refName.mid(13);
+            }
+            refType = QGitRef::RemoteBranch;
+        }
+
+        QGitRef refObj{refName, refType};
+        m_refMap[branch.hash().toUpper()].append(refObj);
+        m_refMap[branch.hash().toLower()].append(refObj);
+    }
+
+    for (const auto &tag : tags)
+    {
+        QString refName = tag.name();
+        if (refName.startsWith(QStringLiteral("refs/tags/")))
+        {
+            refName = refName.mid(10);
+        }
+        QGitRef refObj{refName, QGitRef::Tag};
+        m_refMap[tag.hash().toUpper()].append(refObj);
+        m_refMap[tag.hash().toLower()].append(refObj);
+    }
+
+    viewport()->update();
+}
+
+QList<QGitRef> QLogHistoryTableWidget::getReferences(const QString &sha) const
+{
+    if (m_refMap.contains(sha.toUpper()))
+    {
+        return m_refMap.value(sha.toUpper());
+    }
+    return m_refMap.value(sha.toLower());
+}
+
