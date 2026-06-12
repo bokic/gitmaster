@@ -12,6 +12,32 @@ QLogHistoryTableWidget::QLogHistoryTableWidget(QWidget *parent)
 
 void QLogHistoryTableWidget::addCommit(const QGitCommit &commit)
 {
+    if (columnCount() == 4)
+    {
+        int row = rowCount();
+        insertRow(row);
+
+        QTableWidgetItem *item = nullptr;
+
+        item = new QTableWidgetItem(commit.message().split('\n').first());
+        item->setData(Qt::UserRole, commit.message());
+        item->setData(Qt::UserRole + 1, commit.id());
+        setItem(row, 0, item);
+
+        item = new QTableWidgetItem(commit.time().toString());
+        setItem(row, 1, item);
+
+        item = new QTableWidgetItem(QString("%1 <%2>").arg(commit.author().name(), commit.author().email()));
+        item->setData(Qt::UserRole, commit.author().name());
+        item->setData(Qt::UserRole + 1, commit.author().email());
+        setItem(row, 2, item);
+
+        item = new QTableWidgetItem(commit.id().left(7));
+        item->setData(Qt::UserRole, commit.id());
+        setItem(row, 3, item);
+        return;
+    }
+
     QString commitId = commit.id().toLower();
     int row = rowCount();    
 
@@ -222,7 +248,8 @@ bool QLogHistoryTableWidget::selectCommit(const QString &hash)
 {
     for (int row = 0; row < rowCount(); ++row)
     {
-        QTableWidgetItem *item = this->item(row, 4);
+        int col = (columnCount() == 4) ? 3 : 4;
+        QTableWidgetItem *item = this->item(row, col);
         if (item && item->data(Qt::UserRole).toString().compare(hash, Qt::CaseInsensitive) == 0)
         {
             this->selectRow(row);

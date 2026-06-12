@@ -45,6 +45,8 @@ signals:
     void repositoryUnstageFiles(QStringList items);
     void repositoryCommit(QString message, bool withPush);
     void repositoryGetCommits(QString object, int length);
+    void repositorySearchCommits(QString text, QString type);
+    void repositoryAbortSearch();
     void repositoryGetCommitDiff(QString commitId, bool ignoreWhitespace = false);
     void stageFileLines(QString filename, QVector<QGitDiffWidgetLine> lines);
     void unstageFileLines(QString filename, QVector<QGitDiffWidgetLine> lines);
@@ -100,6 +102,11 @@ private slots:
     void on_comboBox_gitStatusFiles_itemClicked(int index);
     void on_comboBox_gitDiffOptions_optionsChanged();
     void on_commit_diff_customContextMenuRequested(const QPoint &pos);
+    void on_lineEdit_search_returnPressed();
+    void on_search_commits_currentCellChanged(int currentRow, int currentColumn, int previousRow, int previousColumn);
+    void on_search_files_itemSelectionChanged();
+    void onCommitFound(QGitCommit commit);
+    void onSearchFinished();
 
 private:
     void fetchCommits();
@@ -130,6 +137,7 @@ private:
     QIcon m_iconRemoteBranch;
     QString m_searchingCommitHash;
     bool m_stageingFiles = true;
+    bool m_searchingCommits = false;
     QString m_lastRemote;
     QStringList m_lastBranches;
     bool m_lastTags;

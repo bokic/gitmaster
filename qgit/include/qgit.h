@@ -14,6 +14,7 @@
 #include <QMap>
 #include <QDir>
 #include <QUrl>
+#include <atomic>
 
 
 class QGitDiffWidgetLine
@@ -100,6 +101,8 @@ public slots:
     void fetch(bool fetchFromAllRemotes, bool purgeDeletedBranches, bool fetchAllTags);
     void push(QString remote, QStringList branches, bool tags, bool force);
     void listCommits(QString object, int length);
+    void searchCommits(QString text, QString type);
+    void abortSearch();
     void checkoutBranch(QString name);
     void renameBranch(QString oldName, QString newName);
     void deleteTag(QString name);
@@ -131,6 +134,8 @@ signals:
     void pushReply(QGitError error);
     void pushProgress(unsigned int current, unsigned int total, size_t bytes);
     void listCommitsReply(QList<QGitCommit> commits, QGitError error);
+    void commitFound(QGitCommit commit);
+    void searchFinished();
     void deleteBranchesReply(QGitError error);
     void checkoutBranchReply(QGitError error);
     void renameBranchReply(QGitError error);
@@ -140,4 +145,5 @@ signals:
 
 private:
     QDir m_path;
+    std::atomic<bool> m_abortSearch{false};
 };

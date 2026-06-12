@@ -1750,7 +1750,6 @@ void QGit::stageFileLines(QString filename, QVector<QGitDiffWidgetLine> lines)
                     if (endsWithNL) content.chop(1);
 
                     int pos = line.old_lineno + added - 1;
-                    qDebug() << "  Inserting '+' at" << pos << "(added:" << added << ", endsWithNL:" << endsWithNL << "):" << content;
                     bufferLines.insert(pos, content);
                     if (endsWithNL)
                     {
@@ -1867,7 +1866,6 @@ void QGit::unstageFileLines(QString filename, QVector<QGitDiffWidgetLine> lines)
                     if (endsWithNL) content.chop(1);
 
                     int pos = line.new_lineno + added - 1;
-                    qDebug() << "  Inserting '-' at" << pos << "(added:" << added << ", endsWithNL:" << endsWithNL << "):" << content;
                     bufferLines.insert(pos, content);
                     if (endsWithNL)
                     {
@@ -2801,4 +2799,205 @@ void QGit::listCommits(QString object, int length)
     }
 
     emit listCommitsReply(commits, error);
+}
+
+void QGit::abortSearch()
+{
+    m_abortSearch = true;
+}
+
+void QGit::searchCommits(QString text, QString type)
+{
+    m_abortSearch = false;
+    QGitError error;
+
+    try
+    {
+        GitRepository repo;
+        int res = git_repository_open(repo, m_path.absolutePath().toUtf8().constData());
+        if (res)
+        {
+            throw QGitError("git_repository_open", res);
+        }
+
+        GitRevWalk walker;
+        res = git_revwalk_new(walker, repo);
+        if (res)
+        {
+            throw QGitError("git_revwalk_new", res);
+        }
+
+        res = git_revwalk_push_head(walker);
+        if (res)
+        {
+            emit searchFinished();
+            return;
+        }
+
+        git_revwalk_sorting(walker, GIT_SORT_TIME);
+
+        git_oid oid;
+        while (!git_revwalk_next(&oid, walker)) {
+            if (m_abortSearch)
+            {
+                break;
+            }
+            GitCommit commit;
+            res = git_commit_lookup(commit, repo, &oid);
+            if (res)
+            {
+                continue;
+            }
+
+            bool matched = false;
+            if (type == "message")
+            {
+                QString commit_message = QString::fromUtf8(git_commit_message(commit));
+                if (commit_message.contains(text, Qt::CaseInsensitive))
+                {
+                    matched = true;
+                }
+            }
+            else if (type == "author")
+            {
+                const git_signature *author = git_commit_author(commit);
+                if (author)
+                {
+                    QString author_name = QString::fromUtf8(author->name);
+                    QString author_email = QString::fromUtf8(author->email);
+                    if (author_name.contains(text, Qt::CaseInsensitive) ||
+                        author_email.contains(text, Qt::CaseInsensitive))
+                    {
+                        matched = true;
+                    }
+                }
+            }
+            else if (type == "files")
+            {
+                GitTree commit_tree;
+                res = git_commit_tree(commit_tree, commit);
+                if (res == 0)
+                {
+                    unsigned int parentCount = git_commit_parentcount(commit);
+                    if (parentCount == 0)
+                    {
+                        git_diff_options options;
+                        memset(&options, 0, sizeof(options));
+                        options.version = GIT_DIFF_OPTIONS_VERSION;
+
+                        GitDiff diff;
+                        res = git_diff_tree_to_tree(diff, repo, nullptr, commit_tree, &options);
+                        if (res == 0)
+                        {
+                            size_t _count = git_diff_num_deltas(diff);
+                            for (size_t c = 0; c < _count; c++)
+                            {
+                                const git_diff_delta *delta = git_diff_get_delta(diff, c);
+                                if (delta)
+                                {
+                                    if ((delta->old_file.path && QString::fromUtf8(delta->old_file.path).contains(text, Qt::CaseInsensitive)) ||
+                                        (delta->new_file.path && QString::fromUtf8(delta->new_file.path).contains(text, Qt::CaseInsensitive)))
+                                    {
+                                        matched = true;
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    else
+                    {
+                        for (unsigned int c = 0; c < parentCount; c++)
+                        {
+                            GitCommit parent;
+                            res = git_commit_parent(parent, commit, c);
+                            if (res == 0)
+                            {
+                                GitTree parent_tree;
+                                res = git_commit_tree(parent_tree, parent);
+                                if (res == 0)
+                                {
+                                    git_diff_options options;
+                                    memset(&options, 0, sizeof(options));
+                                    options.version = GIT_DIFF_OPTIONS_VERSION;
+
+                                    GitDiff diff;
+                                    res = git_diff_tree_to_tree(diff, repo, parent_tree, commit_tree, &options);
+                                    if (res == 0)
+                                    {
+                                        size_t _count = git_diff_num_deltas(diff);
+                                        for (size_t c2 = 0; c2 < _count; c2++)
+                                        {
+                                            const git_diff_delta *delta = git_diff_get_delta(diff, c2);
+                                            if (delta)
+                                            {
+                                                if ((delta->old_file.path && QString::fromUtf8(delta->old_file.path).contains(text, Qt::CaseInsensitive)) ||
+                                                    (delta->new_file.path && QString::fromUtf8(delta->new_file.path).contains(text, Qt::CaseInsensitive)))
+                                                {
+                                                    matched = true;
+                                                    break;
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                            if (matched)
+                            {
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+
+            if (matched)
+            {
+                QString commit_id = QString::fromUtf8(git_oid_tostr_s(&oid));
+                QList<QGitCommitDiffParent> commit_parents;
+                unsigned int parents = git_commit_parentcount(commit);
+                for (unsigned int index = 0; index < parents; index++)
+                {
+                    GitCommit parent;
+                    res = git_commit_parent(parent, commit, index);
+                    if (res == 0)
+                    {
+                        const git_oid *parent_oid = git_commit_id(parent);
+                        QByteArray parentStr = QByteArray(git_oid_tostr_s(parent_oid));
+                        commit_parents.append(QGitCommitDiffParent(parentStr));
+                    }
+                }
+
+                auto time = git_commit_time(commit);
+                auto timeOffset = git_commit_time_offset(commit);
+                QDateTime commit_time = QDateTime::fromMSecsSinceEpoch(time * 1000);
+                commit_time.setTimeZone(QTimeZone(timeOffset * 60));
+
+                QString author_name = QString::fromUtf8(git_commit_author(commit)->name);
+                QString author_email = QString::fromUtf8(git_commit_author(commit)->email);
+                QDateTime author_when = QDateTime::fromMSecsSinceEpoch(git_commit_author(commit)->when.time * 1000);
+                author_when.setTimeZone(QTimeZone(git_commit_author(commit)->when.offset * 60));
+                QGitSignature commit_author(author_name, author_email, author_when);
+
+                QString commiter_name = QString::fromUtf8(git_commit_committer(commit)->name);
+                QString commiter_email = QString::fromUtf8(git_commit_committer(commit)->email);
+                QDateTime commiter_when = QDateTime::fromMSecsSinceEpoch(git_commit_committer(commit)->when.time * 1000);
+                commiter_when.setTimeZone(QTimeZone(git_commit_committer(commit)->when.offset * 60));
+                QGitSignature commit_commiter(commiter_name, commiter_email, commiter_when);
+
+                QString commit_message = QString::fromUtf8(git_commit_message(commit));
+
+                QGitCommit item(commit_id, commit_parents, commit_time, commit_author, commit_commiter, commit_message);
+
+                emit commitFound(item);
+            }
+        }
+
+    }
+    catch (const QGitError &ex)
+    {
+        error = ex;
+    }
+
+    emit searchFinished();
 }

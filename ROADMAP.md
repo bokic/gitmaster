@@ -28,7 +28,7 @@ Development plan and upcoming features for GitMaster.
 - [ ] **Combo Functionality**: Complete the implementation of all remaining filtering and view options in the status combos.
 
 ### Search
-- [ ] **Global Search Suite**: Full implementation of commit message, author, and file content searching.
+- [x] **Global Search Suite**: Full implementation of commit message, author, and file content searching.
 
 ---
 

@@ -69,6 +69,8 @@ QGitRepository::QGitRepository(const QString &path, QWidget *parent)
     ui->logHistory_splitter_2->setStretchFactor(0, 0);
     ui->logHistory_splitter_2->setStretchFactor(1, 1);
 
+    ui->splitter_5->setSizes(QList<int>() << 100 << 100);
+
 
     if (QGit::gitRepositoryDefaultSignature(m_path, name, email))
     {
@@ -100,7 +102,9 @@ QGitRepository::QGitRepository(const QString &path, QWidget *parent)
     //ui->pushButton_2->setVisible(false);
 
     ui->logHistory_files->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
+    ui->search_files->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
     ui->logHistory_commits->horizontalHeader()->setSectionResizeMode(1, QHeaderView::Stretch);
+    ui->search_commits->horizontalHeader()->setSectionResizeMode(0, QHeaderView::Stretch);
 
     activateCommitOperation(false);
 
@@ -137,6 +141,11 @@ QGitRepository::QGitRepository(const QString &path, QWidget *parent)
 
     connect(this, &QGitRepository::repositoryGetCommits, m_git, &QGit::listCommits);
     connect(m_git, &QGit::listCommitsReply, this, &QGitRepository::repositoryGetCommitsReply);
+
+    connect(this, &QGitRepository::repositorySearchCommits, m_git, &QGit::searchCommits);
+    connect(this, &QGitRepository::repositoryAbortSearch, m_git, &QGit::abortSearch);
+    connect(m_git, &QGit::commitFound, this, &QGitRepository::onCommitFound);
+    connect(m_git, &QGit::searchFinished, this, &QGitRepository::onSearchFinished);
 
     connect(this, &QGitRepository::repositoryGetCommitDiff, m_git, &QGit::commitDiff);
     connect(m_git, &QGit::commitDiffReply, this, &QGitRepository::repositoryGetCommitDiffReply);
@@ -794,91 +803,183 @@ void QGitRepository::repositoryGetCommitDiffReply(QString commitId, QGitCommit d
 
         bool ignoreWhitespace = ui->comboBox_gitDiffOptions->ignoreWhitespace();
 
-        int currentRow = ui->logHistory_commits->currentRow();
-        if (currentRow < 0) return;
-
-        const QString commit_id = ui->logHistory_commits->item(currentRow, 4)->data(Qt::UserRole).toString();
-        const QString email = ui->logHistory_commits->item(currentRow, 3)->data(Qt::UserRole + 1).toString();
-
-        QString html;
-        QStringList parentsHtml;
-        QStringList labelsHtml;
-
-        for (int i = 0; i < m_commitDiff.parents().count(); i++)
+        if (ui->repositoryDetail->currentIndex() == 2)
         {
-            parentsHtml << QStringLiteral("<a href = \"") + m_commitDiff.parents().at(i).commitHash() + QStringLiteral("\">") + m_commitDiff.parents().at(i).commitHash().left(10) + QStringLiteral("</a>");
-        }
+            int currentRow = ui->search_commits->currentRow();
+            if (currentRow < 0) return;
 
-        html += QStringLiteral("<div>");
-        html += QStringLiteral("<img src=\"https://www.gravatar.com/avatar/") + QCryptographicHash::hash(email.trimmed().toUtf8(), QCryptographicHash::Md5).toHex() + QStringLiteral("?s=32\" width=\"32\" height=\"32\" style=\"float: right\" />");
-        html += QStringLiteral("</div>");
-        html += QStringLiteral("<b>Commit:</b> ") + commit_id + QStringLiteral("<br />");
-        html += (parentsHtml.count() > 1? QStringLiteral("<b>Parents:</b>"): QStringLiteral("<b>Parent:</b>")) + parentsHtml.join(", ") + QStringLiteral("<br />");
-        html += QStringLiteral("<b>Date:</b> ") + m_commitDiff.time().toString() + QStringLiteral("<br />");
-        html += QStringLiteral("<b>Labels:</b> ") + labelsHtml.join(", ") + QStringLiteral("<br />");
-        html += QStringLiteral("<br />");
-        html += m_commitDiff.message();
+            const QString commit_id = ui->search_commits->item(currentRow, 3)->data(Qt::UserRole).toString();
+            const QString email = ui->search_commits->item(currentRow, 2)->data(Qt::UserRole + 1).toString();
 
-        ui->logHistory_info->setHtml(html);
+            QString html;
+            QStringList parentsHtml;
+            QStringList labelsHtml;
 
-        ui->logHistory_files->clearContents();
+            for (int i = 0; i < m_commitDiff.parents().count(); i++)
+            {
+                parentsHtml << QStringLiteral("<a href = \"") + m_commitDiff.parents().at(i).commitHash() + QStringLiteral("\">") + m_commitDiff.parents().at(i).commitHash().left(10) + QStringLiteral("</a>");
+            }
 
-        QMap<QString, QGitDiffFile> uniqueFiles;
-        for (int i = 0; i < m_commitDiff.parents().count(); i++) {
-            auto parentFiles = m_commitDiff.parents().at(i).files();
-            for (const auto &f : parentFiles) {
-                QString path = f.new_file().path();
-                if (!uniqueFiles.contains(path)) {
-                    uniqueFiles.insert(path, f);
+            html += QStringLiteral("<div>");
+            html += QStringLiteral("<img src=\"https://www.gravatar.com/avatar/") + QCryptographicHash::hash(email.trimmed().toUtf8(), QCryptographicHash::Md5).toHex() + QStringLiteral("?s=32\" width=\"32\" height=\"32\" style=\"float: right\" />");
+            html += QStringLiteral("</div>");
+            html += QStringLiteral("<b>Commit:</b> ") + commit_id + QStringLiteral("<br />");
+            html += (parentsHtml.count() > 1? QStringLiteral("<b>Parents:</b>"): QStringLiteral("<b>Parent:</b>")) + parentsHtml.join(", ") + QStringLiteral("<br />");
+            html += QStringLiteral("<b>Date:</b> ") + m_commitDiff.time().toString() + QStringLiteral("<br />");
+            html += QStringLiteral("<b>Labels:</b> ") + labelsHtml.join(", ") + QStringLiteral("<br />");
+            html += QStringLiteral("<br />");
+            html += m_commitDiff.message();
+
+            ui->search_info->setHtml(html);
+
+            ui->search_files->clearContents();
+
+            QMap<QString, QGitDiffFile> uniqueFiles;
+            for (int i = 0; i < m_commitDiff.parents().count(); i++) {
+                auto parentFiles = m_commitDiff.parents().at(i).files();
+                for (const auto &f : parentFiles) {
+                    QString path = f.new_file().path();
+                    if (!uniqueFiles.contains(path)) {
+                        uniqueFiles.insert(path, f);
+                    }
                 }
             }
-        }
-        
-        QList<QGitDiffFile> files = uniqueFiles.values();
-        ui->logHistory_files->setRowCount(files.count());
 
-        for(int c = 0; c < files.count(); c++)
-        {
-            QString path = files.at(c).new_file().path();
+            QList<QGitDiffFile> files = uniqueFiles.values();
+            ui->search_files->setRowCount(files.count());
 
-            QString filename = QFileInfo(path).fileName();
-            QString pathname = path.left(path.length() - filename.length());
-            if ((pathname.endsWith('/'))||(pathname.endsWith('\\')))
+            for(int c = 0; c < files.count(); c++)
             {
-                pathname.resize(pathname.length() - 1);
+                QString path = files.at(c).new_file().path();
+
+                QString filename = QFileInfo(path).fileName();
+                QString pathname = path.left(path.length() - filename.length());
+                if ((pathname.endsWith('/'))||(pathname.endsWith('\\')))
+                {
+                    pathname.resize(pathname.length() - 1);
+                }
+
+                QIcon item_icon;
+
+                switch(files.at(c).status()) {
+                case GIT_DELTA_ADDED:
+                    item_icon = m_iconFileNew;
+                    break;
+                case GIT_DELTA_DELETED:
+                    item_icon = m_iconFileRemoved;
+                    break;
+                case GIT_DELTA_MODIFIED:
+                    item_icon = m_iconFileModified;
+                    break;
+                default:
+                    item_icon = m_iconFileUnknown;
+                    break;
+                }
+
+                QTableWidgetItem *item = new QTableWidgetItem(item_icon, filename);
+                item->setData(Qt::UserRole, path);
+                ui->search_files->setItem(c, 0, item);
+
+                item = new QTableWidgetItem(pathname);
+                ui->search_files->setItem(c, 1, item);
             }
 
-            QIcon item_icon;
+            if (ui->search_files->rowCount() > 0)
+            {
+                ui->search_files->setCurrentCell(0, 0);
 
-            switch(files.at(c).status()) {
-            case GIT_DELTA_ADDED:
-                item_icon = m_iconFileNew;
-                break;
-            case GIT_DELTA_DELETED:
-                item_icon = m_iconFileRemoved;
-                break;
-            case GIT_DELTA_MODIFIED:
-                item_icon = m_iconFileModified;
-                break;
-            default:
-                item_icon = m_iconFileUnknown;
-                break;
+                ui->search_diff->setIgnoreWhitespace(ignoreWhitespace);
+                ui->search_diff->setGitDiff(m_commitDiff.parents().at(0).commitHash(), m_commitDiff.id(), {ui->search_files->item(0, 0)->data(Qt::UserRole).toString()});
             }
-
-            QTableWidgetItem *item = new QTableWidgetItem(item_icon, filename);
-            item->setData(Qt::UserRole, path);
-            ui->logHistory_files->setItem(c, 0, item);
-
-            item = new QTableWidgetItem(pathname);
-            ui->logHistory_files->setItem(c, 1, item);
         }
-
-        if (ui->logHistory_files->rowCount() > 0)
+        else
         {
-            ui->logHistory_files->setCurrentCell(0, 0);
+            int currentRow = ui->logHistory_commits->currentRow();
+            if (currentRow < 0) return;
 
-            ui->logHistory_diff->setIgnoreWhitespace(ignoreWhitespace);
-            ui->logHistory_diff->setGitDiff(m_commitDiff.parents().at(0).commitHash(), m_commitDiff.id(), {ui->logHistory_files->item(0, 0)->data(Qt::UserRole).toString()});
+            const QString commit_id = ui->logHistory_commits->item(currentRow, 4)->data(Qt::UserRole).toString();
+            const QString email = ui->logHistory_commits->item(currentRow, 3)->data(Qt::UserRole + 1).toString();
+
+            QString html;
+            QStringList parentsHtml;
+            QStringList labelsHtml;
+
+            for (int i = 0; i < m_commitDiff.parents().count(); i++)
+            {
+                parentsHtml << QStringLiteral("<a href = \"") + m_commitDiff.parents().at(i).commitHash() + QStringLiteral("\">") + m_commitDiff.parents().at(i).commitHash().left(10) + QStringLiteral("</a>");
+            }
+
+            html += QStringLiteral("<div>");
+            html += QStringLiteral("<img src=\"https://www.gravatar.com/avatar/") + QCryptographicHash::hash(email.trimmed().toUtf8(), QCryptographicHash::Md5).toHex() + QStringLiteral("?s=32\" width=\"32\" height=\"32\" style=\"float: right\" />");
+            html += QStringLiteral("</div>");
+            html += QStringLiteral("<b>Commit:</b> ") + commit_id + QStringLiteral("<br />");
+            html += (parentsHtml.count() > 1? QStringLiteral("<b>Parents:</b>"): QStringLiteral("<b>Parent:</b>")) + parentsHtml.join(", ") + QStringLiteral("<br />");
+            html += QStringLiteral("<b>Date:</b> ") + m_commitDiff.time().toString() + QStringLiteral("<br />");
+            html += QStringLiteral("<b>Labels:</b> ") + labelsHtml.join(", ") + QStringLiteral("<br />");
+            html += QStringLiteral("<br />");
+            html += m_commitDiff.message();
+
+            ui->logHistory_info->setHtml(html);
+
+            ui->logHistory_files->clearContents();
+
+            QMap<QString, QGitDiffFile> uniqueFiles;
+            for (int i = 0; i < m_commitDiff.parents().count(); i++) {
+                auto parentFiles = m_commitDiff.parents().at(i).files();
+                for (const auto &f : parentFiles) {
+                    QString path = f.new_file().path();
+                    if (!uniqueFiles.contains(path)) {
+                        uniqueFiles.insert(path, f);
+                    }
+                }
+            }
+
+            QList<QGitDiffFile> files = uniqueFiles.values();
+            ui->logHistory_files->setRowCount(files.count());
+
+            for(int c = 0; c < files.count(); c++)
+            {
+                QString path = files.at(c).new_file().path();
+
+                QString filename = QFileInfo(path).fileName();
+                QString pathname = path.left(path.length() - filename.length());
+                if ((pathname.endsWith('/'))||(pathname.endsWith('\\')))
+                {
+                    pathname.resize(pathname.length() - 1);
+                }
+
+                QIcon item_icon;
+
+                switch(files.at(c).status()) {
+                case GIT_DELTA_ADDED:
+                    item_icon = m_iconFileNew;
+                    break;
+                case GIT_DELTA_DELETED:
+                    item_icon = m_iconFileRemoved;
+                    break;
+                case GIT_DELTA_MODIFIED:
+                    item_icon = m_iconFileModified;
+                    break;
+                default:
+                    item_icon = m_iconFileUnknown;
+                    break;
+                }
+
+                QTableWidgetItem *item = new QTableWidgetItem(item_icon, filename);
+                item->setData(Qt::UserRole, path);
+                ui->logHistory_files->setItem(c, 0, item);
+
+                item = new QTableWidgetItem(pathname);
+                ui->logHistory_files->setItem(c, 1, item);
+            }
+
+            if (ui->logHistory_files->rowCount() > 0)
+            {
+                ui->logHistory_files->setCurrentCell(0, 0);
+
+                ui->logHistory_diff->setIgnoreWhitespace(ignoreWhitespace);
+                ui->logHistory_diff->setGitDiff(m_commitDiff.parents().at(0).commitHash(), m_commitDiff.id(), {ui->logHistory_files->item(0, 0)->data(Qt::UserRole).toString()});
+            }
         }
     }
 }
@@ -1095,27 +1196,31 @@ void QGitRepository::stashPopReply(QGitError error)
 
 void QGitRepository::on_repositoryDetail_currentChanged(int index)
 {
+    disconnect(ui->commit_diff, &QGitDiffWidget::requestGitDiff, m_git, &QGit::commitDiffContent);
+    disconnect(m_git, &QGit::commitDiffContentReply, ui->commit_diff, &QGitDiffWidget::responseGitDiff);
+
+    disconnect(ui->logHistory_diff, &QGitDiffWidget::requestGitDiff, m_git, &QGit::commitDiffContent);
+    disconnect(m_git, &QGit::commitDiffContentReply, ui->logHistory_diff, &QGitDiffWidget::responseGitDiff);
+
+    disconnect(ui->search_diff, &QGitDiffWidget::requestGitDiff, m_git, &QGit::commitDiffContent);
+    disconnect(m_git, &QGit::commitDiffContentReply, ui->search_diff, &QGitDiffWidget::responseGitDiff);
+
     switch(index) {
     case 0:
-        disconnect(ui->logHistory_diff, &QGitDiffWidget::requestGitDiff, m_git, &QGit::commitDiffContent);
-        disconnect(m_git, &QGit::commitDiffContentReply, ui->logHistory_diff, &QGitDiffWidget::responseGitDiff);
-
         connect(ui->commit_diff, &QGitDiffWidget::requestGitDiff, m_git, &QGit::commitDiffContent);
         connect(m_git, &QGit::commitDiffContentReply, ui->commit_diff, &QGitDiffWidget::responseGitDiff);
 
         fetchRepositoryChangedFiles();
         break;
     case 1:
-        disconnect(ui->commit_diff, &QGitDiffWidget::requestGitDiff, m_git, &QGit::commitDiffContent);
-        disconnect(m_git, &QGit::commitDiffContentReply, ui->commit_diff, &QGitDiffWidget::responseGitDiff);
-
         connect(ui->logHistory_diff, &QGitDiffWidget::requestGitDiff, m_git, &QGit::commitDiffContent);
         connect(m_git, &QGit::commitDiffContentReply, ui->logHistory_diff, &QGitDiffWidget::responseGitDiff);
 
         fetchCommits();
         break;
     case 2:
-        Q_UNIMPLEMENTED();
+        connect(ui->search_diff, &QGitDiffWidget::requestGitDiff, m_git, &QGit::commitDiffContent);
+        connect(m_git, &QGit::commitDiffContentReply, ui->search_diff, &QGitDiffWidget::responseGitDiff);
         break;
     default:
         Q_UNIMPLEMENTED();
@@ -1464,6 +1569,12 @@ void QGitRepository::deleteTagReply(QGitError error)
 
 void QGitRepository::keyPressEvent(QKeyEvent *event)
 {
+    if (event->key() == Qt::Key_Escape && m_searchingCommits) {
+        emit repositoryAbortSearch();
+        event->accept();
+        return;
+    }
+
     if (event->key() == Qt::Key_Delete && ui->branchesTreeView->hasFocus()) {
         QTreeWidgetItem *item = ui->branchesTreeView->currentItem();
         if (!item) return;
@@ -1568,4 +1679,76 @@ void QGitRepository::fetchRepositoryChangedFiles()
     ui->listWidget_staged->setEnabled(false);
     ui->listWidget_unstaged->setEnabled(false);
     emit repositoryChangedFiles(show, sort, reversed);
+}
+
+void QGitRepository::on_lineEdit_search_returnPressed()
+{
+    QString text = ui->lineEdit_search->text();
+    if (text.length() >= 3)
+    {
+        m_searchingCommits = true;
+        ui->lineEdit_search->setEnabled(false);
+        ui->search_commits->setRowCount(0);
+
+        QString type;
+        int index = ui->comboBox_searchType->currentIndex();
+        if (index == 0)
+        {
+            type = "message";
+        }
+        else if (index == 1)
+        {
+            type = "files";
+        }
+        else if (index == 2)
+        {
+            type = "author";
+        }
+
+        QGitMasterMainWindow::instance()->updateStatusBarText(tr("Searching commits..."));
+        emit repositorySearchCommits(text, type);
+    }
+}
+
+void QGitRepository::onCommitFound(QGitCommit commit)
+{
+    ui->search_commits->addCommit(commit);
+}
+
+void QGitRepository::onSearchFinished()
+{
+    m_searchingCommits = false;
+    QGitMasterMainWindow::instance()->clearStatusBarText();
+    ui->lineEdit_search->setEnabled(true);
+    ui->lineEdit_search->setFocus();
+}
+
+void QGitRepository::on_search_commits_currentCellChanged(int currentRow, int currentColumn, int previousRow, int previousColumn)
+{
+    Q_UNUSED(currentColumn)
+    Q_UNUSED(previousRow)
+    Q_UNUSED(previousColumn)
+
+    if (currentRow < 0)
+    {
+        return;
+    }
+
+    QString commit_id = ui->search_commits->item(currentRow, 3)->data(Qt::UserRole).toString();
+
+    if (!commit_id.isEmpty())
+    {
+        emit repositoryGetCommitDiff(commit_id, ui->comboBox_gitDiffOptions->ignoreWhitespace());
+    }
+}
+
+void QGitRepository::on_search_files_itemSelectionChanged()
+{
+    int row = ui->search_files->currentRow();
+    if (row < 0) return;
+
+    bool ignoreWhitespace = ui->comboBox_gitDiffOptions->ignoreWhitespace();
+
+    ui->search_diff->setIgnoreWhitespace(ignoreWhitespace);
+    ui->search_diff->setGitDiff(m_commitDiff.parents().at(0).commitHash(), m_commitDiff.id(), {ui->search_files->item(row, 0)->data(Qt::UserRole).toString()});
 }
