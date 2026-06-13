@@ -10,6 +10,7 @@ tar -xf libgit2.zip
 del libgit2.zip
 ren libgit2-%LIBGIT2_VERSION% libgit2
 
+call "C:\Program Files\Microsoft Visual Studio\18\Community\VC\Auxiliary\Build\vcvarsall.bat" x64
 cmake.exe -S libgit2 -B build -DBUILD_TESTS=OFF -DCMAKE_BUILD_TYPE=Release -G Ninja
 cmake.exe --build build --target libgit2package --config Release  --verbose
 
