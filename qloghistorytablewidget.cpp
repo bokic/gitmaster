@@ -4,10 +4,6 @@
 QLogHistoryTableWidget::QLogHistoryTableWidget(QWidget *parent)
     : QTableWidget(parent)
 {
-    QPalette p = palette();
-    p.setColor(QPalette::Inactive, QPalette::Highlight, p.color(QPalette::Active, QPalette::Highlight));
-    p.setColor(QPalette::Active, QPalette::HighlightedText, p.color(QPalette::Inactive, QPalette::HighlightedText));
-    setPalette(p);
 }
 
 void QLogHistoryTableWidget::addCommit(const QGitCommit &commit)

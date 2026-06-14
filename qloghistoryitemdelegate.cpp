@@ -280,33 +280,25 @@ void QLogHistoryItemDelegate::paint(QPainter *painter, const QStyleOptionViewIte
             }
         }
 
-        // Draw commit message text
-        painter->save();
-        QColor textColor;
-        if (option.state & QStyle::State_Selected)
-        {
-            textColor = option.palette.color(QPalette::HighlightedText);
-        }
-        else
-        {
-            textColor = option.palette.color(QPalette::Text);
-        }
-        painter->setPen(textColor);
-
-        if (isCurrentCommit)
-        {
-            QFont boldF = painter->font();
-            boldF.setBold(true);
-            painter->setFont(boldF);
-        }
-
         QRect textRect = option.rect;
         textRect.setLeft(startX + 2);
 
         QString msg = index.data(Qt::DisplayRole).toString();
         QString elidedMsg = painter->fontMetrics().elidedText(msg, Qt::ElideRight, textRect.width());
-        painter->drawText(textRect, Qt::AlignVCenter | Qt::AlignLeft, elidedMsg);
-        painter->restore();
+
+        // Draw commit message text using the style to ensure native text colors
+        QStyleOptionViewItem textOpt = option;
+        initStyleOption(&textOpt, index);
+        textOpt.rect = textRect;
+        textOpt.text = elidedMsg;
+        textOpt.icon = QIcon();
+        textOpt.features = QStyleOptionViewItem::HasDisplay;
+        if (isCurrentCommit)
+        {
+            textOpt.font.setBold(true);
+        }
+
+        style->drawControl(QStyle::CE_ItemViewItem, &textOpt, painter, widget);
     }
     else
     {
