@@ -22,6 +22,7 @@ public:
     bool hasRepositoryWithName(const QString &name);
     void updateStatusBarText(const QString &text);
     void clearStatusBarText();
+    void setStashEnabled(class QGitRepository *panel, bool enabled);
 
 public slots:
     QString getPassword();

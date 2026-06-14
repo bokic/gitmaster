@@ -208,6 +208,11 @@ void QGitRepository::refreshData()
 {
     on_repositoryDetail_currentChanged(ui->repositoryDetail->currentIndex());
 
+    if (ui->repositoryDetail->currentIndex() != 0)
+    {
+        fetchRepositoryChangedFiles();
+    }
+
     emit repositoryBranches();
     emit repositoryStashes();
 }
@@ -705,6 +710,28 @@ void QGitRepository::repositoryChangedFilesReply(QList<QPair<QString, git_status
     {
         ui->pushButton_commit->setEnabled(false);
     }
+
+    // Update stash button state: check if there are any staged or unstaged changes
+    bool hasStashableChanges = false;
+    for (const auto &filePair : files)
+    {
+        git_status_t status = filePair.second;
+        if (status & (GIT_STATUS_INDEX_NEW | GIT_STATUS_INDEX_MODIFIED | GIT_STATUS_INDEX_DELETED | 
+                      GIT_STATUS_INDEX_RENAMED | GIT_STATUS_INDEX_TYPECHANGE | 
+                      GIT_STATUS_WT_MODIFIED | GIT_STATUS_WT_DELETED | 
+                      GIT_STATUS_WT_RENAMED | GIT_STATUS_WT_TYPECHANGE | 
+                      GIT_STATUS_CONFLICTED))
+        {
+            hasStashableChanges = true;
+            break;
+        }
+    }
+
+    auto *mainWindow = QGitMasterMainWindow::instance();
+    if (mainWindow)
+    {
+        mainWindow->setStashEnabled(this, hasStashableChanges);
+    }
 }
 
 void QGitRepository::repositoryStageFilesReply(QGitError error)
@@ -738,7 +765,7 @@ void QGitRepository::repositoryCommitReply(QString commit_id, QGitError error)
 	ui->plainTextEdit_commitMessage->setEnabled(true);
 	ui->pushButton_commit->setEnabled(true);
 
-    on_repositoryDetail_currentChanged(ui->repositoryDetail->currentIndex());
+    refreshData();
 }
 
 void QGitRepository::repositoryGetCommitsReply(QList<QGitCommit> commits, QGitError error)

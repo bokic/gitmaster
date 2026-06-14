@@ -379,7 +379,7 @@ void QGitMasterMainWindow::on_tabWidget_currentChanged(int index)
         ui->actionPush->setEnabled(true);
         ui->actionBranch->setEnabled(true);
         ui->actionMerge->setEnabled(true);
-        ui->actionStash->setEnabled(true);
+        ui->actionStash->setEnabled(false);
         ui->actionGit_Flow->setEnabled(true);
         ui->actionTerminal->setEnabled(true);
     }
@@ -394,6 +394,14 @@ void QGitMasterMainWindow::on_tabWidget_currentChanged(int index)
         ui->actionStash->setEnabled(false);
         ui->actionGit_Flow->setEnabled(false);
         ui->actionTerminal->setEnabled(false);
+    }
+}
+
+void QGitMasterMainWindow::setStashEnabled(QGitRepository *panel, bool enabled)
+{
+    if (ui->tabWidget->currentWidget() == panel)
+    {
+        ui->actionStash->setEnabled(enabled);
     }
 }
 
