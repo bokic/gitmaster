@@ -65,6 +65,7 @@ public:
     bool setPath(const QDir &path);
     QDir path();
     QList<QGitRemote> remotes() const;
+    bool hasCommitsToPush() const;
     QString currentBranch() const;
     QList<QGitBranch> branches(git_branch_t type) const;
     bool hasCommitId(const QString &commitId) const;

@@ -410,7 +410,7 @@ void QGitMasterMainWindow::updateRemoteActions(QGitRepository *panel)
         bool hasRemotes = panel && panel->git() && !panel->git()->remotes().isEmpty();
         ui->actionPull->setEnabled(hasRemotes);
         ui->actionFetch->setEnabled(hasRemotes);
-        ui->actionPush->setEnabled(hasRemotes);
+        ui->actionPush->setEnabled(hasRemotes && panel->git()->hasCommitsToPush());
     }
 }
 

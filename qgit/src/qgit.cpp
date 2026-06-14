@@ -344,6 +344,77 @@ QList<QGitRemote> QGit::remotes() const
     return ret;
 }
 
+bool QGit::hasCommitsToPush() const
+{
+    if (m_path.absolutePath().isEmpty())
+        return false;
+
+    GitRepository repo;
+    int res = git_repository_open(repo, m_path.absolutePath().toUtf8().constData());
+    if (res)
+    {
+        return false;
+    }
+
+    GitBranchIterator it;
+    res = git_branch_iterator_new(it, repo, GIT_BRANCH_LOCAL);
+    if (res)
+    {
+        return false;
+    }
+
+    bool hasCommits = false;
+    git_branch_t type;
+
+    forever
+    {
+        GitReference ref;
+        if (git_branch_next(ref, &type, it) != 0)
+        {
+            break;
+        }
+
+        const git_oid *local_oid = git_reference_target(ref);
+        if (!local_oid)
+        {
+            continue;
+        }
+
+        GitReference upstream;
+        res = git_branch_upstream(upstream, ref);
+        if (res == GIT_ENOTFOUND || res < 0)
+        {
+            int unborn = git_repository_head_unborn(repo);
+            if (unborn == 0)
+            {
+                hasCommits = true;
+                break;
+            }
+            continue;
+        }
+
+        const git_oid *upstream_oid = git_reference_target(upstream);
+        if (upstream_oid)
+        {
+            size_t ahead = 0;
+            size_t behind = 0;
+            res = git_graph_ahead_behind(&ahead, &behind, repo, local_oid, upstream_oid);
+            if (res == 0 && ahead > 0)
+            {
+                hasCommits = true;
+                break;
+            }
+        }
+        else
+        {
+            hasCommits = true;
+            break;
+        }
+    }
+
+    return hasCommits;
+}
+
 QString QGit::currentBranch() const
 {
     GitRepository repo;
