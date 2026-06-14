@@ -9,6 +9,7 @@
 #include <QString>
 #include <QVector>
 #include <QDir>
+#include <QFile>
 
 
 struct GitRepository {
@@ -1962,27 +1963,74 @@ void QGit::discardFiles(QStringList items)
             throw QGitError("git_repository_open", res);
         }
 
-        GitStrArray paths;
-        paths.value.count = static_cast<size_t>(items.count());
-        paths.value.strings = static_cast<char **>(malloc(sizeof(char *) * paths.value.count));
-        if (paths.value.strings == nullptr)
-        {
-            throw QGitError("malloc", 0);
-        }
-
-        for(int c = 0; c < items.count(); c++)
-        {
-            paths.value.strings[c] = strdup(items.at(c).toUtf8().constData());
-        }
-
-        git_checkout_options opts = GIT_CHECKOUT_OPTIONS_INIT;
-        opts.checkout_strategy = GIT_CHECKOUT_FORCE;
-        opts.paths = paths.value;
-
-        res = git_checkout_index(repo, nullptr, &opts);
+        GitIndex index;
+        res = git_repository_index(index, repo);
         if (res)
         {
-            throw QGitError("git_checkout_index", res);
+            throw QGitError("git_repository_index", res);
+        }
+
+        QStringList filesToCheckout;
+        bool indexChanged = false;
+
+        for (const QString &item : items)
+        {
+            unsigned int status_flags = 0;
+            int status_res = git_status_file(&status_flags, repo, item.toUtf8().constData());
+
+            if (status_res == 0 && ((status_flags & GIT_STATUS_WT_NEW) || (status_flags & GIT_STATUS_INDEX_NEW)))
+            {
+                QString absolutePath = m_path.absoluteFilePath(item);
+                QFile::remove(absolutePath);
+
+                if (status_flags & GIT_STATUS_INDEX_NEW)
+                {
+                    res = git_index_remove_bypath(index, item.toUtf8().constData());
+                    if (res == 0)
+                    {
+                        indexChanged = true;
+                    }
+                }
+            }
+            else
+            {
+                filesToCheckout.append(item);
+            }
+        }
+
+        if (indexChanged)
+        {
+            res = git_index_write(index);
+            if (res)
+            {
+                throw QGitError("git_index_write", res);
+            }
+        }
+
+        if (!filesToCheckout.isEmpty())
+        {
+            GitStrArray paths;
+            paths.value.count = static_cast<size_t>(filesToCheckout.count());
+            paths.value.strings = static_cast<char **>(malloc(sizeof(char *) * paths.value.count));
+            if (paths.value.strings == nullptr)
+            {
+                throw QGitError("malloc", 0);
+            }
+
+            for(int c = 0; c < filesToCheckout.count(); c++)
+            {
+                paths.value.strings[c] = strdup(filesToCheckout.at(c).toUtf8().constData());
+            }
+
+            git_checkout_options opts = GIT_CHECKOUT_OPTIONS_INIT;
+            opts.checkout_strategy = GIT_CHECKOUT_FORCE;
+            opts.paths = paths.value;
+
+            res = git_checkout_index(repo, nullptr, &opts);
+            if (res)
+            {
+                throw QGitError("git_checkout_index", res);
+            }
         }
 
     } catch(const QGitError &ex) {
