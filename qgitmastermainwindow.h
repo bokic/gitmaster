@@ -23,6 +23,7 @@ public:
     void updateStatusBarText(const QString &text);
     void clearStatusBarText();
     void setStashEnabled(class QGitRepository *panel, bool enabled);
+    void refreshRepositoryTree();
 
 public slots:
     QString getPassword();

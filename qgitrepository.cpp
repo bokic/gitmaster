@@ -731,6 +731,7 @@ void QGitRepository::repositoryChangedFilesReply(QList<QPair<QString, git_status
     if (mainWindow)
     {
         mainWindow->setStashEnabled(this, hasStashableChanges);
+        mainWindow->refreshRepositoryTree();
     }
 }
 

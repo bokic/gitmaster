@@ -405,6 +405,11 @@ void QGitMasterMainWindow::setStashEnabled(QGitRepository *panel, bool enabled)
     }
 }
 
+void QGitMasterMainWindow::refreshRepositoryTree()
+{
+    ui->treeWidget->refreshItems();
+}
+
 void QGitMasterMainWindow::on_actionStash_triggered()
 {
     auto widget = dynamic_cast<QGitRepository *>(ui->tabWidget->currentWidget());
