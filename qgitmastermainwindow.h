@@ -23,6 +23,7 @@ public:
     void updateStatusBarText(const QString &text);
     void clearStatusBarText();
     void setStashEnabled(class QGitRepository *panel, bool enabled);
+    void updateRemoteActions(class QGitRepository *panel);
     void refreshRepositoryTree();
 
 public slots:

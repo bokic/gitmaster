@@ -374,9 +374,7 @@ void QGitMasterMainWindow::on_tabWidget_currentChanged(int index)
         }
 
         ui->actionCommit->setEnabled(true);
-        ui->actionPull->setEnabled(true);
-        ui->actionFetch->setEnabled(true);
-        ui->actionPush->setEnabled(true);
+        updateRemoteActions(panel);
         ui->actionBranch->setEnabled(true);
         ui->actionMerge->setEnabled(true);
         ui->actionStash->setEnabled(false);
@@ -402,6 +400,17 @@ void QGitMasterMainWindow::setStashEnabled(QGitRepository *panel, bool enabled)
     if (ui->tabWidget->currentWidget() == panel)
     {
         ui->actionStash->setEnabled(enabled);
+    }
+}
+
+void QGitMasterMainWindow::updateRemoteActions(QGitRepository *panel)
+{
+    if (ui->tabWidget->currentWidget() == panel)
+    {
+        bool hasRemotes = panel && panel->git() && !panel->git()->remotes().isEmpty();
+        ui->actionPull->setEnabled(hasRemotes);
+        ui->actionFetch->setEnabled(hasRemotes);
+        ui->actionPush->setEnabled(hasRemotes);
     }
 }
 

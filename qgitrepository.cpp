@@ -215,6 +215,12 @@ void QGitRepository::refreshData()
 
     emit repositoryBranches();
     emit repositoryStashes();
+
+    auto *mainWindow = QGitMasterMainWindow::instance();
+    if (mainWindow)
+    {
+        mainWindow->updateRemoteActions(this);
+    }
 }
 
 void QGitRepository::stash(const QString &name)
