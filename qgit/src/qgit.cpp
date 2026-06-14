@@ -219,6 +219,69 @@ struct GitTag {
 #define LINE_END '\n'
 
 
+static int sshKeyCredentialCallback(
+    git_credential **out, 
+    const char *url, 
+    const char *username_from_url, 
+    unsigned int allowed_types, 
+    void *payload)
+{
+    Q_UNUSED(url);
+    Q_UNUSED(payload);
+
+    if (allowed_types & GIT_CREDENTIAL_SSH_KEY) {
+        QString pass;
+        QMetaObject::invokeMethod(QGitMasterMainWindow::instance(), &QGitMasterMainWindow::getPassword, 
+                                  Qt::BlockingQueuedConnection, Q_RETURN_ARG(QString, pass));
+
+        if (!pass.isEmpty())
+        {
+            QString sshDir = QDir::homePath() + "/.ssh";
+            QDir dir(sshDir);
+            
+            QStringList preferredKeys = {"id_ed25519", "id_rsa", "id_ecdsa", "id_dsa"};
+            QFileInfo pubkeyFileInfo;
+            QFileInfo privkeyFileInfo;
+            bool found = false;
+
+            for (const QString &keyName : preferredKeys) {
+                QFileInfo privKey(dir, keyName);
+                QFileInfo pubKey(dir, keyName + ".pub");
+                if (privKey.exists() && pubKey.exists()) {
+                    pubkeyFileInfo = pubKey;
+                    privkeyFileInfo = privKey;
+                    found = true;
+                    break;
+                }
+            }
+
+            if (!found) {
+                auto keys = dir.entryInfoList({"*.pub"});
+                if (keys.size() == 1)
+                {
+                    pubkeyFileInfo = keys.first();
+                    privkeyFileInfo = QFileInfo(pubkeyFileInfo.dir(), pubkeyFileInfo.completeBaseName());
+                    if (privkeyFileInfo.exists()) {
+                        found = true;
+                    }
+                }
+            }
+
+            if (found)
+            {
+                auto pubkeyPathname = pubkeyFileInfo.absoluteFilePath().toUtf8();
+                auto privkeyPathname = privkeyFileInfo.absoluteFilePath().toUtf8();
+
+                git_credential_ssh_key_new(out, username_from_url, pubkeyPathname, privkeyPathname, pass.toUtf8().constData());
+                return 0;
+            }
+        }
+    }
+
+    return -1;
+}
+
+
 QGit::QGit(const QDir &path, QObject *parent)
     : QObject(parent)
     , m_path(path)
@@ -674,34 +737,7 @@ void QGit::deleteBranches(QList<QGitBranch> branches, bool force)
                         return 0;
                     };
                     
-                    push_opts.callbacks.credentials = [](git_credential **out, const char *url, const char *username_from_url, unsigned int allowed_types, void *payload)
-                    {
-                        if (allowed_types & GIT_CREDENTIAL_SSH_KEY) {
-                            QString pass;
-                            QMetaObject::invokeMethod(QGitMasterMainWindow::instance(), &QGitMasterMainWindow::getPassword, Qt::BlockingQueuedConnection, Q_RETURN_ARG(QString, pass));
-
-                            if (!pass.isEmpty())
-                            {
-                                QString sshDir = QDir::homePath() + "/.ssh";
-                                auto keys = QDir(sshDir).entryInfoList({"*.pub"});
-
-                                // TODO: Hardcoded only one key. Use this list QStringList preferredKeys = {"id_ed25519", "id_rsa", "id_ecdsa", "id_dsa"};
-                                if (keys.size() == 1)
-                                {
-                                    QFileInfo pubkeyFileInfo = keys.first();
-                                    QFileInfo privkeyFileInfo(pubkeyFileInfo.dir(), pubkeyFileInfo.completeBaseName());
-
-                                    auto pubkeyPathname = pubkeyFileInfo.absoluteFilePath().toUtf8();
-                                    auto privkeyPathname = privkeyFileInfo.absoluteFilePath().toUtf8();
-
-                                    git_credential_ssh_key_new(out, username_from_url, pubkeyPathname, privkeyPathname, pass.toUtf8().constData());
-
-                                    return 0;
-                                }
-                            }
-                        }
-                        return -1;
-                    };
+                    push_opts.callbacks.credentials = sshKeyCredentialCallback;
                     
                     res = git_remote_push(remote, &refspecs.value, &push_opts);
                     if (res)
@@ -2279,33 +2315,7 @@ void QGit::pull(bool rebase)
 
         git_fetch_options fetch_opts = GIT_FETCH_OPTIONS_INIT;
 
-        fetch_opts.callbacks.credentials = [](git_credential **out, const char *url, const char *username_from_url, unsigned int allowed_types, void *payload)
-        {
-            if (allowed_types & GIT_CREDENTIAL_SSH_KEY) {
-                QString pass;
-                QMetaObject::invokeMethod(QGitMasterMainWindow::instance(), &QGitMasterMainWindow::getPassword, Qt::BlockingQueuedConnection, Q_RETURN_ARG(QString, pass));
-
-                if (!pass.isEmpty())
-                {
-                    QString sshDir = QDir::homePath() + QDir::separator() + ".ssh"; 
-                    auto keys = QDir(sshDir).entryInfoList({"*.pub"});
-                    if (keys.size() == 1)
-                    {
-                        QFileInfo pubkeyFileInfo = keys.first();
-                        QFileInfo privkeyFileInfo(pubkeyFileInfo.dir(), pubkeyFileInfo.completeBaseName());
-
-                        auto pubkeyPathname = pubkeyFileInfo.absoluteFilePath().toUtf8();
-                        auto privkeyPathname = privkeyFileInfo.absoluteFilePath().toUtf8();
-
-                        git_credential_ssh_key_new(out, username_from_url, pubkeyPathname, privkeyPathname, pass.toUtf8().constData());
-
-                        return 0;
-                    }
-                }
-            }
-
-            return -1;
-        };
+        fetch_opts.callbacks.credentials = sshKeyCredentialCallback;
 
         res = git_remote_fetch(remote, nullptr, &fetch_opts, "pull");
         if (res)
@@ -2504,33 +2514,7 @@ void QGit::fetch(bool fetchFromAllRemotes, bool purgeDeletedBranches, bool fetch
 
         git_fetch_options fetch_opts = GIT_FETCH_OPTIONS_INIT;
 
-        fetch_opts.callbacks.credentials = [](git_credential **out, const char *url, const char *username_from_url, unsigned int allowed_types, void *payload)
-        {
-            if (allowed_types & GIT_CREDENTIAL_SSH_KEY) {
-                QString pass;
-                QMetaObject::invokeMethod(QGitMasterMainWindow::instance(), &QGitMasterMainWindow::getPassword, Qt::BlockingQueuedConnection, Q_RETURN_ARG(QString, pass));
-
-                if (!pass.isEmpty())
-                {
-                    QString sshDir = QDir::homePath() + "/.ssh";
-                    auto keys = QDir(sshDir).entryInfoList({"*.pub"});
-                    if (keys.size() == 1)
-                    {
-                        QFileInfo pubkeyFileInfo = keys.first();
-                        QFileInfo privkeyFileInfo(pubkeyFileInfo.dir(), pubkeyFileInfo.completeBaseName());
-
-                        auto pubkeyPathname = pubkeyFileInfo.absoluteFilePath().toUtf8();
-                        auto privkeyPathname = privkeyFileInfo.absoluteFilePath().toUtf8();
-
-                        git_credential_ssh_key_new(out, username_from_url, pubkeyPathname, privkeyPathname, pass.toUtf8().constData());
-
-                        return 0;
-                    }
-                }
-            }
-
-            return -1;
-        };
+        fetch_opts.callbacks.credentials = sshKeyCredentialCallback;
 
         fetch_opts.prune = purgeDeletedBranches ? GIT_FETCH_PRUNE : GIT_FETCH_NO_PRUNE;
         fetch_opts.download_tags = fetchAllTags ? GIT_REMOTE_DOWNLOAD_TAGS_ALL : GIT_REMOTE_DOWNLOAD_TAGS_AUTO;
@@ -2626,33 +2610,7 @@ void QGit::push(QString remote, QStringList branches, bool tags, bool force)
             return 0;
         };
 
-        push_opts.callbacks.credentials = [](git_credential **out, const char *url, const char *username_from_url, unsigned int allowed_types, void *payload)
-        {
-            if (allowed_types & GIT_CREDENTIAL_SSH_KEY) {
-                QString pass;
-                QMetaObject::invokeMethod(QGitMasterMainWindow::instance(), &QGitMasterMainWindow::getPassword, Qt::BlockingQueuedConnection, Q_RETURN_ARG(QString, pass));
-
-                if (!pass.isEmpty())
-                {
-                    QString sshDir = QDir::homePath() + "/.ssh";
-                    auto keys = QDir(sshDir).entryInfoList({"*.pub"});
-                    if (keys.size() == 1)
-                    {
-                        QFileInfo pubkeyFileInfo = keys.first();
-                        QFileInfo privkeyFileInfo(pubkeyFileInfo.dir(), pubkeyFileInfo.completeBaseName());
-
-                        auto pubkeyPathname = pubkeyFileInfo.absoluteFilePath().toUtf8();
-                        auto privkeyPathname = privkeyFileInfo.absoluteFilePath().toUtf8();
-
-                        git_credential_ssh_key_new(out, username_from_url, pubkeyPathname, privkeyPathname, pass.toUtf8().constData());
-
-                        return 0;
-                    }
-                }
-            }
-
-            return -1;
-        };
+        push_opts.callbacks.credentials = sshKeyCredentialCallback;
 
         push_opts.callbacks.push_update_reference = [](const char *refname, const char *status, void *payload) -> int
         {
