@@ -2696,7 +2696,7 @@ void QGit::push(QString remote, QStringList branches, bool tags, bool force)
         for(const auto &branch: branches)
         {
             GitReference ref;
-            res = git_reference_lookup(ref, repo, branch.toUtf8().constData());
+            res = git_branch_lookup(ref, repo, branch.toUtf8().constData(), GIT_BRANCH_LOCAL);
             if (res)
             {
                 throw QGitError("Local branch not found!", res);
