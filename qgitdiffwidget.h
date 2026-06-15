@@ -7,6 +7,7 @@
 #include <QString>
 #include <QRect>
 #include <QList>
+#include <QMap>
 
 
 class QGitDiffWidgetPrivate;
@@ -20,7 +21,7 @@ public:
     explicit QGitDiffWidget(QWidget *parent = nullptr);
     ~QGitDiffWidget() = default;
 
-    void setGitDiff(const QString &first, const QString &second, const QList<QString> &files);
+    void setGitDiff(const QString &first, const QString &second, const QList<QString> &files, const QMap<QString, git_status_t> &statuses = QMap<QString, git_status_t>());
     void setReadonly(bool readonly = true);
     void setIgnoreWhitespace(bool ignore);
     void setLinesOfContent(int lines);
@@ -53,6 +54,7 @@ private:
     QString m_requestedFirst;
     QString m_requestedSecond;
     QList<QString> m_requestedFiles;
+    QMap<QString, git_status_t> m_fileStatuses;
     QFont m_font;
     int m_fontHeight = 0;
     int m_fontAscent = 0;

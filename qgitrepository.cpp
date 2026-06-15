@@ -680,6 +680,8 @@ void QGitRepository::repositoryChangedFilesReply(QList<QPair<QString, git_status
                 ui->listWidget_staged->insertItem(stagedCnt, item);
             }
 
+            item->setData(Qt::UserRole, (int)status);
+
             if (status & GIT_STATUS_INDEX_NEW) item->setIcon(m_iconFileNew);
             else if (status & GIT_STATUS_INDEX_DELETED) item->setIcon(m_iconFileRemoved);
             else if (status & GIT_STATUS_INDEX_RENAMED) item->setIcon(m_iconFileRenamed);
@@ -708,6 +710,8 @@ void QGitRepository::repositoryChangedFilesReply(QList<QPair<QString, git_status
                 item->setCheckState(Qt::Unchecked);
                 ui->listWidget_unstaged->insertItem(unstagedCnt, item);
             }
+
+            item->setData(Qt::UserRole, (int)status);
 
             uint32_t wt_status = status & (GIT_STATUS_CURRENT | GIT_STATUS_WT_NEW | GIT_STATUS_WT_MODIFIED | GIT_STATUS_WT_DELETED | GIT_STATUS_IGNORED | GIT_STATUS_CONFLICTED | GIT_STATUS_WT_RENAMED);
             if (wt_status == GIT_STATUS_CURRENT) item->setIcon(m_iconFileClean);
@@ -1542,15 +1546,17 @@ void QGitRepository::on_comboBox_gitDiffOptions_optionsChanged()
 void QGitRepository::on_listWidget_staged_itemSelectionChanged()
 {
     QList<QString> files;
+    QMap<QString, git_status_t> statuses;
 
     if (ui->listWidget_staged->isActiveWindow())
     {
         const auto &staged = ui->listWidget_staged->selectedItems();
         for(auto row: staged) {
             files << row->text();
+            statuses.insert(row->text(), (git_status_t)row->data(Qt::UserRole).toInt());
         }
 
-        ui->commit_diff->setGitDiff("", "staged", files);
+        ui->commit_diff->setGitDiff("", "staged", files, statuses);
 
         const auto &unstaged = ui->listWidget_unstaged->selectedItems();
         for(auto item: unstaged)
@@ -1565,15 +1571,17 @@ void QGitRepository::on_listWidget_staged_itemSelectionChanged()
 void QGitRepository::on_listWidget_unstaged_itemSelectionChanged()
 {
     QList<QString> files;
+    QMap<QString, git_status_t> statuses;
 
     if (ui->listWidget_unstaged->isActiveWindow())
     {
         const auto &unstaged = ui->listWidget_unstaged->selectedItems();
         for(const auto &row: unstaged) {
             files << row->text();
+            statuses.insert(row->text(), (git_status_t)row->data(Qt::UserRole).toInt());
         }
 
-        ui->commit_diff->setGitDiff("", "unstaged", files);
+        ui->commit_diff->setGitDiff("", "unstaged", files, statuses);
 
         const auto &staged = ui->listWidget_staged->selectedItems();
         for(auto item: staged)

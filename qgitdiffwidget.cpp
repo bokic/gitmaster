@@ -73,13 +73,14 @@ QGitDiffWidget::QGitDiffWidget(QWidget *parent)
     setMouseTracking(true);
 }
 
-void QGitDiffWidget::setGitDiff(const QString &first, const QString &second, const QList<QString> &files)
+void QGitDiffWidget::setGitDiff(const QString &first, const QString &second, const QList<QString> &files, const QMap<QString, git_status_t> &statuses)
 {
     m_private->clear();
 
     m_requestedFirst = first;
     m_requestedSecond = second;
     m_requestedFiles = files;
+    m_fileStatuses = statuses;
 
     emit requestGitDiff(first, second, files, m_linesOfContent, m_ignoreWhitespace);
 
@@ -487,6 +488,20 @@ void QGitDiffWidget::updatePosition()
     {
         if (file.rect.contains(point))
         {
+            QString filePath = file.new_file.path();
+            if (filePath.isEmpty()) {
+                filePath = file.old_file.path();
+            }
+
+            if (m_fileStatuses.contains(filePath))
+            {
+                git_status_t status = m_fileStatuses.value(filePath);
+                if (status & (GIT_STATUS_WT_NEW | GIT_STATUS_INDEX_NEW | GIT_STATUS_WT_DELETED | GIT_STATUS_INDEX_DELETED))
+                {
+                    break;
+                }
+            }
+
             l_hoverFile = file_index;
 
             int hunk_index = 0;
