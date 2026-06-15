@@ -106,6 +106,7 @@ public slots:
     void abortSearch();
     void checkoutBranch(QString name);
     void renameBranch(QString oldName, QString newName);
+    void renameTag(QString oldName, QString newName);
     void deleteTag(QString name);
     void setUpstream(QString branchName, QString upstreamBranchName);
     void merge(QString branchName);
@@ -140,6 +141,7 @@ signals:
     void deleteBranchesReply(QGitError error);
     void checkoutBranchReply(QGitError error);
     void renameBranchReply(QGitError error);
+    void renameTagReply(QGitError error);
     void setUpstreamReply(QGitError error);
     void deleteTagReply(QGitError error);
     void mergeReply(QGitError error);

@@ -178,8 +178,12 @@ QGitRepository::QGitRepository(const QString &path, QWidget *parent)
     connect(m_git, &QGit::deleteTagReply, this, &QGitRepository::deleteTagReply);
     connect(this, &QGitRepository::repositoryMerge, m_git, &QGit::merge);
     connect(m_git, &QGit::mergeReply, this, &QGitRepository::repositoryMergeReply);
+    connect(this, &QGitRepository::repositoryRenameBranch, m_git, &QGit::renameBranch);
+    connect(this, &QGitRepository::repositoryRenameTag, m_git, &QGit::renameTag);
+    connect(m_git, &QGit::renameTagReply, this, &QGitRepository::renameTagReply);
 
     ui->branchesTreeView->setContextMenuPolicy(Qt::CustomContextMenu);
+    ui->branchesTreeView->setEditTriggers(QAbstractItemView::NoEditTriggers);
 
     m_thread.setObjectName("QGit(repo)");
     m_thread.start();
@@ -503,6 +507,7 @@ void QGitRepository::repositoryBranchesAndTagsReply(QList<QGitBranch> branches, 
                             if (depth == items.count() - 1) {
                                 child->setData(0, Qt::UserRole + 1, items.mid(2).join('/'));
                                 child->setData(0, Qt::UserRole + 2, "LocalBranch");
+                                child->setFlags(child->flags() | Qt::ItemIsEditable);
                             }
                             if (name == current_branch)
                         {
@@ -577,6 +582,7 @@ void QGitRepository::repositoryBranchesAndTagsReply(QList<QGitBranch> branches, 
         child->setData(0, Qt::UserRole, tag.hash());
         child->setData(0, Qt::UserRole + 1, tag.name());
         child->setData(0, Qt::UserRole + 2, "Tag");
+        child->setFlags(child->flags() | Qt::ItemIsEditable);
 
         child->setIcon(0, m_iconTag);
         itemTags->addChild(child);
@@ -1135,11 +1141,7 @@ void QGitRepository::on_branchesTreeView_customContextMenuRequested(const QPoint
         }
         else if (selectedAction == renameAction)
         {
-            QString newName = QInputDialog::getText(this, tr("Rename Branch"), tr("Enter new name for branch %1:").arg(fullName), QLineEdit::Normal, fullName);
-            if (!newName.isEmpty() && newName != fullName) {
-                QGitMasterMainWindow::instance()->updateStatusBarText(tr("Renaming branch %1 to %2...").arg(fullName, newName));
-                m_git->renameBranch(fullName, newName);
-            }
+            ui->branchesTreeView->editItem(item, 0);
         }
         else if (selectedAction == setUpstreamAction)
         {
@@ -1184,12 +1186,22 @@ void QGitRepository::on_branchesTreeView_customContextMenuRequested(const QPoint
     else if (type == "Tag")
     {
         QMenu menu(this);
+        QAction *renameAction = menu.addAction(tr("Rename Tag"));
         QAction *deleteAction = menu.addAction(tr("Delete Tag"));
         
         QAction *selectedAction = menu.exec(ui->branchesTreeView->viewport()->mapToGlobal(pos));
-        if (selectedAction == deleteAction)
+        if (selectedAction == renameAction)
         {
-             // TODO: Implement delete tag in backend
+            ui->branchesTreeView->editItem(item, 0);
+        }
+        else if (selectedAction == deleteAction)
+        {
+            auto res = QMessageBox::question(this, tr("Delete Tag"), 
+                                             tr("Are you sure you want to delete tag '%1'?").arg(fullName),
+                                             QMessageBox::Yes | QMessageBox::No);
+            if (res == QMessageBox::Yes) {
+                m_git->deleteTag(fullName);
+            }
         }
     }
 }
@@ -1208,6 +1220,15 @@ void QGitRepository::renameBranchReply(QGitError error)
     if (error.errorCode())
     {
         QMessageBox::critical(this, tr("Rename Error"), error.errorString());
+    }
+    refreshData();
+}
+
+void QGitRepository::renameTagReply(QGitError error)
+{
+    if (error.errorCode())
+    {
+        QMessageBox::critical(this, tr("Rename Tag Error"), error.errorString());
     }
     refreshData();
 }
@@ -1626,6 +1647,18 @@ void QGitRepository::deleteTagReply(QGitError error)
 
 void QGitRepository::keyPressEvent(QKeyEvent *event)
 {
+    if (event->key() == Qt::Key_F2 && ui->branchesTreeView->hasFocus()) {
+        QTreeWidgetItem *item = ui->branchesTreeView->currentItem();
+        if (item) {
+            QString type = item->data(0, Qt::UserRole + 2).toString();
+            if (type == "LocalBranch" || type == "Tag") {
+                ui->branchesTreeView->editItem(item, 0);
+                event->accept();
+                return;
+            }
+        }
+    }
+
     if (event->key() == Qt::Key_Escape && m_searchingCommits) {
         emit repositoryAbortSearch();
         event->accept();
@@ -1808,4 +1841,50 @@ void QGitRepository::on_search_files_itemSelectionChanged()
 
     ui->search_diff->setIgnoreWhitespace(ignoreWhitespace);
     ui->search_diff->setGitDiff(m_commitDiff.parents().at(0).commitHash(), m_commitDiff.id(), {ui->search_files->item(row, 0)->data(Qt::UserRole).toString()});
+}
+
+void QGitRepository::on_branchesTreeView_itemChanged(QTreeWidgetItem *item, int column)
+{
+    Q_UNUSED(column)
+
+    ui->branchesTreeView->blockSignals(true);
+
+    QString type = item->data(0, Qt::UserRole + 2).toString();
+    QString oldFullName = item->data(0, Qt::UserRole + 1).toString();
+    QString newText = item->text(0).trimmed();
+
+    if (newText.isEmpty())
+    {
+        QMessageBox::critical(this, tr("Rename Error"), tr("Name cannot be empty."));
+        item->setText(0, oldFullName.split('/').last());
+        ui->branchesTreeView->blockSignals(false);
+        return;
+    }
+
+    QStringList parts = oldFullName.split('/');
+    if (!parts.isEmpty()) {
+        parts.last() = newText;
+    }
+    QString newFullName = parts.join('/');
+
+    if (newFullName == oldFullName)
+    {
+        ui->branchesTreeView->blockSignals(false);
+        return;
+    }
+
+    // Revert text temporarily, it will be updated by refreshData() once the backend operation finishes.
+    item->setText(0, oldFullName.split('/').last());
+    ui->branchesTreeView->blockSignals(false);
+
+    if (type == "LocalBranch")
+    {
+        QGitMasterMainWindow::instance()->updateStatusBarText(tr("Renaming branch %1 to %2...").arg(oldFullName, newFullName));
+        emit repositoryRenameBranch(oldFullName, newFullName);
+    }
+    else if (type == "Tag")
+    {
+        QGitMasterMainWindow::instance()->updateStatusBarText(tr("Renaming tag %1 to %2...").arg(oldFullName, newFullName));
+        emit repositoryRenameTag(oldFullName, newFullName);
+    }
 }

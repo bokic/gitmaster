@@ -55,6 +55,8 @@ signals:
     void repositoryDiscardFileLines(QString filename, QVector<QGitDiffWidgetLine> lines);
     void deleteBranches(QList<QGitBranch> branches, bool force);
     void repositoryMerge(QString branchName);
+    void repositoryRenameBranch(QString oldName, QString newName);
+    void repositoryRenameTag(QString oldName, QString newName);
 
 protected:
     void keyPressEvent(QKeyEvent *event) override;
@@ -98,9 +100,11 @@ private slots:
     void stashPopReply(QGitError error);
     void checkoutBranchReply(QGitError error);
     void renameBranchReply(QGitError error);
+    void renameTagReply(QGitError error);
     void setUpstreamReply(QGitError error);
     void deleteTagReply(QGitError error);
     void repositoryMergeReply(QGitError error);
+    void on_branchesTreeView_itemChanged(QTreeWidgetItem *item, int column);
     void on_comboBox_gitStatusFiles_itemClicked(int index);
     void on_comboBox_gitDiffOptions_optionsChanged();
     void on_commit_diff_customContextMenuRequested(const QPoint &pos);

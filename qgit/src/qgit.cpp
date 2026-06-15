@@ -703,18 +703,89 @@ void QGit::renameBranch(QString oldName, QString newName)
         int res = git_repository_open(repo, m_path.absolutePath().toUtf8().constData());
         if(res) throw QGitError("git_repository_open", res);
 
+        // 1. Check if name is already present
+        GitReference existing_branch;
+        res = git_branch_lookup(existing_branch, repo, newName.toUtf8().constData(), GIT_BRANCH_LOCAL);
+        if (res == 0) {
+            throw QGitError(tr("Branch '%1' already exists.").arg(newName), -1);
+        }
+
+        // 2. Lookup old branch
         GitReference branch;
         res = git_branch_lookup(branch, repo, oldName.toUtf8().constData(), GIT_BRANCH_LOCAL);
         if(res) throw QGitError("git_branch_lookup", res);
 
+        int is_head = git_branch_is_head(branch);
+
+        // 3. Create new branch on same commit
+        git_object *target_obj = nullptr;
+        res = git_reference_peel(&target_obj, branch, GIT_OBJ_COMMIT);
+        if (res) throw QGitError("git_reference_peel", res);
+
+        git_commit *commit = (git_commit *)target_obj;
+
         GitReference new_branch;
-        res = git_branch_move(new_branch, branch, newName.toUtf8().constData(), 0);
-        if(res) throw QGitError("git_branch_move", res);
+        res = git_branch_create(new_branch, repo, newName.toUtf8().constData(), commit, 0);
+        git_object_free(target_obj);
+        if (res) throw QGitError("git_branch_create", res);
+
+        // 4. Update HEAD if we renamed current branch
+        if (is_head == 1) {
+            res = git_repository_set_head(repo, git_reference_name(new_branch));
+            if (res) throw QGitError("git_repository_set_head", res);
+        }
+
+        // 5. Delete old branch
+        res = git_branch_delete(branch);
+        if (res) throw QGitError("git_branch_delete", res);
 
     } catch(const QGitError &ex) {
         error = ex;
     }
     emit renameBranchReply(error);
+}
+
+void QGit::renameTag(QString oldName, QString newName)
+{
+    QGitError error;
+    try {
+        GitRepository repo;
+        int res = git_repository_open(repo, m_path.absolutePath().toUtf8().constData());
+        if(res) throw QGitError("git_repository_open", res);
+
+        // 1. Check if tag name is already present
+        GitReference existing_tag;
+        QString newTagFullName = "refs/tags/" + newName;
+        res = git_reference_lookup(existing_tag, repo, newTagFullName.toUtf8().constData());
+        if (res == 0) {
+            throw QGitError(tr("Tag '%1' already exists.").arg(newName), -1);
+        }
+
+        // 2. Lookup old tag reference
+        GitReference tag_ref;
+        QString oldTagFullName = "refs/tags/" + oldName;
+        res = git_reference_lookup(tag_ref, repo, oldTagFullName.toUtf8().constData());
+        if (res) throw QGitError("git_reference_lookup", res);
+
+        // 3. Get target object of old tag
+        git_object *target_obj = nullptr;
+        res = git_reference_peel(&target_obj, tag_ref, GIT_OBJ_ANY);
+        if (res) throw QGitError("git_reference_peel", res);
+
+        // 4. Create new tag pointing to same target object
+        git_oid new_tag_oid;
+        res = git_tag_create_lightweight(&new_tag_oid, repo, newName.toUtf8().constData(), target_obj, 0);
+        git_object_free(target_obj);
+        if (res) throw QGitError("git_tag_create_lightweight", res);
+
+        // 5. Delete old tag
+        res = git_tag_delete(repo, oldName.toUtf8().constData());
+        if (res) throw QGitError("git_tag_delete", res);
+
+    } catch(const QGitError &ex) {
+        error = ex;
+    }
+    emit renameTagReply(error);
 }
 
 void QGit::deleteTag(QString name)
