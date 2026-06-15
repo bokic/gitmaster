@@ -98,7 +98,7 @@ public slots:
     void discardFileLines(QString filename, QVector<QGitDiffWidgetLine> lines);
     void commit(QString message, bool withPush);
     void clone(QUrl url);
-    void pull(bool rebase);
+    void pull(QString remote, QString branch, bool rebase);
     void fetch(bool fetchFromAllRemotes, bool purgeDeletedBranches, bool fetchAllTags);
     void push(QString remote, QStringList branches, bool tags, bool force);
     void listCommits(QString object, int length);

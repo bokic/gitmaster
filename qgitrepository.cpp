@@ -115,6 +115,9 @@ QGitRepository::QGitRepository(const QString &path, QWidget *parent)
     connect(this, &QGitRepository::repositoryFetch, m_git, &QGit::fetch);
     connect(m_git, &QGit::fetchReply, this, &QGitRepository::repositoryFetchReply);
 
+    connect(this, &QGitRepository::repositoryPull, m_git, &QGit::pull);
+    connect(m_git, &QGit::pullReply, this, &QGitRepository::repositoryPullReply);
+
     connect(this, &QGitRepository::repositoryPush, m_git, &QGit::push);
     connect(m_git, &QGit::pushReply, this, &QGitRepository::repositoryPushReply);
 
@@ -284,9 +287,16 @@ void QGitRepository::pull()
 
     if (dlg.exec() == QDialog::Accepted)
     {
+        QString remoteName = dlg.remote().name;
+        if (remoteName == tr("custom"))
+        {
+            remoteName = dlg.remote().url;
+        }
+        QString branchName = dlg.branch();
         bool rebase = dlg.rebase();
-        QGitMasterMainWindow::instance()->updateStatusBarText("Pulling...");
-        m_git->pull(rebase);
+
+        QGitMasterMainWindow::instance()->updateStatusBarText(tr("Pulling..."));
+        emit repositoryPull(remoteName, branchName, rebase);
     }
 }
 
@@ -332,7 +342,6 @@ void QGitRepository::repositoryMergeReply(QGitError error)
         QMessageBox::critical(this, tr("Merge Error"), 
                               tr("Could not merge the selected branch. Details: %1").arg(error.errorString()));
     } else {
-        QMessageBox::information(this, tr("Merge Successful"), tr("Successfully merged selected branch."));
         refreshData();
     }
 }
@@ -397,6 +406,20 @@ void QGitRepository::repositoryFetchReply(QGitError error)
     else
     {
         QGitMasterMainWindow::instance()->clearStatusBarText();
+    }
+}
+
+void QGitRepository::repositoryPullReply(QGitError error)
+{
+    if (error.errorCode())
+    {
+        QGitMasterMainWindow::instance()->updateStatusBarText(error.errorString());
+        QMessageBox::critical(this, tr("Pull Error"), error.errorString());
+    }
+    else
+    {
+        QGitMasterMainWindow::instance()->clearStatusBarText();
+        refreshData();
     }
 }
 

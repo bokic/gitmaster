@@ -231,6 +231,11 @@ static int sshKeyCredentialCallback(
     Q_UNUSED(payload);
 
     if (allowed_types & GIT_CREDENTIAL_SSH_KEY) {
+        int agent_res = git_credential_ssh_key_from_agent(out, username_from_url);
+        if (agent_res == 0) {
+            return 0;
+        }
+
         QString pass;
         QMetaObject::invokeMethod(QGitMasterMainWindow::instance(), &QGitMasterMainWindow::getPassword, 
                                   Qt::BlockingQueuedConnection, Q_RETURN_ARG(QString, pass));
@@ -2405,7 +2410,7 @@ void QGit::clone(QUrl url)
     emit cloneReply(error);
 }
 
-void QGit::pull(bool rebase)
+void QGit::pull(QString remote, QString branch, bool rebase)
 {
     QGitError error;
 
@@ -2425,35 +2430,41 @@ void QGit::pull(bool rebase)
             throw QGitError("git_repository_open", res);
         }
 
-        GitRemote remote;
-        res = git_remote_lookup(remote, repo, "origin");
-        if (res)
+        GitRemote libgit2_remote;
+        bool is_anonymous = false;
+        if (remote.contains(QStringLiteral("://")) || remote.contains(QStringLiteral("@")))
         {
-            throw QGitError("git_remote_lookup", res);
+            res = git_remote_create_anonymous(libgit2_remote, repo, remote.toUtf8().constData());
+            if (res)
+            {
+                throw QGitError("git_remote_create_anonymous", res);
+            }
+            is_anonymous = true;
+        }
+        else
+        {
+            res = git_remote_lookup(libgit2_remote, repo, remote.toUtf8().constData());
+            if (res)
+            {
+                throw QGitError("git_remote_lookup", res);
+            }
         }
 
         git_fetch_options fetch_opts = GIT_FETCH_OPTIONS_INIT;
-
         fetch_opts.callbacks.credentials = sshKeyCredentialCallback;
 
-        res = git_remote_fetch(remote, nullptr, &fetch_opts, "pull");
+        res = git_remote_fetch(libgit2_remote, nullptr, &fetch_opts, "pull");
         if (res)
         {
             throw QGitError("git_remote_fetch", res);
         }
 
         // After fetch, perform merge
-        QString current = currentBranch();
-        GitReference head_ref;
-        res = git_repository_head(head_ref, repo);
-        if (res) throw QGitError("git_repository_head", res);
-
-        GitReference upstream_ref;
-        res = git_branch_upstream(upstream_ref, head_ref);
-        if (res == 0) {
-            const char *upstream_name = nullptr;
-            git_branch_name(&upstream_name, upstream_ref);
-            merge(QString::fromUtf8(upstream_name));
+        if (is_anonymous) {
+            merge(QStringLiteral("FETCH_HEAD"));
+        } else {
+            QString remoteBranchName = remote + "/" + branch;
+            merge(remoteBranchName);
         }
 
     } catch(const QGitError &ex) {

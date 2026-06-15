@@ -37,6 +37,7 @@ public:
 signals:
     void localStash(QString name);
     void repositoryPush(QString remote, QStringList branches, bool tags, bool force);
+    void repositoryPull(QString remote, QString branch, bool rebase);
     void repositoryFetch(bool fetchFromAllRemotes, bool purgeDeletedBranches, bool fetchAllTags);
     void repositoryBranches();
     void repositoryStashes();
@@ -64,6 +65,7 @@ private slots:
     void localStashSaveReply(QGitError error);
     void localStashRemoveReply(QGitError error);
     void repositoryFetchReply(QGitError error);
+    void repositoryPullReply(QGitError error);
     void repositoryPushReply(QGitError error);
     void repositoryBranchesAndTagsReply(QList<QGitBranch> branches, QList<QGitTag> tags, QGitError error);
     void repositoryStashesReply(QStringList stashes, QGitError error);
