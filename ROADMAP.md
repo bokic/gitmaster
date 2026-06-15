@@ -17,8 +17,12 @@ Development plan and upcoming features for GitMaster.
 
 ---
 
-## 🌍 Version 0.8 - Localization & Branding
-*Focusing on data visualization and repository history clarity.*
+## 🌍 Version 0.8 - Finalizing work & Branding
+*Focusing on new features, data visualization and repository history clarity.*
+
+### New git operations
+- [ ] **Rebase**: Implement rebasing with a toolbar button.
+- [ ] **Cherry-pick**: Extend context menu to cherry-pick the selected commit to other local branches.
 
 ### Log History
 - [ ] **Rich Metadata Rendering**: Draw tags and branch names directly within the commit graph.
@@ -32,7 +36,7 @@ Development plan and upcoming features for GitMaster.
 
 ---
 
-## 📦 Version 0.9 - Distribution & Platform Support
+## 📦 Version 0.9 - Localization, Distribution & Platform Support
 *Preparing for a global audience and professional aesthetic.*
 
 ### Translation (String Freeze)
