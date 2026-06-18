@@ -186,6 +186,10 @@ endif()
 
 if (APPLE)
     target_link_libraries(gitmaster PRIVATE -L/opt/homebrew/lib)
+    target_sources(gitmaster PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/macos/gitmaster.icns)
+    set_source_files_properties(${CMAKE_CURRENT_SOURCE_DIR}/macos/gitmaster.icns PROPERTIES
+        MACOSX_PACKAGE_LOCATION "Resources"
+    )
 endif()
 
 target_link_libraries(gitmaster PRIVATE
@@ -217,6 +221,12 @@ set_target_properties(gitmaster PROPERTIES
     MACOSX_BUNDLE TRUE
     WIN32_EXECUTABLE TRUE
 )
+
+if (APPLE)
+    set_target_properties(gitmaster PROPERTIES
+        MACOSX_BUNDLE_ICON_FILE gitmaster.icns
+    )
+endif()
 
 if (CMAKE_BUILD_TYPE STREQUAL "Release")
     message("release mode")
