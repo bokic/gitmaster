@@ -179,6 +179,18 @@ struct GitBuf {
     git_buf value = GIT_BUF_INIT;
 };
 
+struct GitIndexConflictIterator {
+    GitIndexConflictIterator() = default;
+    GitIndexConflictIterator(const GitIndexConflictIterator&) = delete;
+    GitIndexConflictIterator& operator=(const GitIndexConflictIterator&) = delete;
+    GitIndexConflictIterator(GitIndexConflictIterator&&) = delete;
+    GitIndexConflictIterator& operator=(GitIndexConflictIterator&&) = delete;
+    operator git_index_conflict_iterator*() { return value; }
+    operator git_index_conflict_iterator**() { return &value; }
+    ~GitIndexConflictIterator() { if (value) { git_index_conflict_iterator_free(value); value = nullptr; }}
+    git_index_conflict_iterator *value = nullptr;
+};
+
 struct GitAnnotatedCommit {
     GitAnnotatedCommit() = default;
     GitAnnotatedCommit(const GitAnnotatedCommit&) = delete;
@@ -1132,6 +1144,132 @@ QMap<QString, QString> QGit::configEntries() const
         git_config_foreach(cfg, configForeachCallback, &entries);
     }
     return entries;
+}
+
+bool QGit::hasConflicts() const
+{
+    GitRepository repo;
+    int res = git_repository_open(repo, m_path.absolutePath().toUtf8().constData());
+    if (res) return false;
+
+    GitIndex index;
+    res = git_repository_index(index, repo);
+    if (res) return false;
+
+    return git_index_has_conflicts(index) != 0;
+}
+
+QList<QString> QGit::conflictedFiles() const
+{
+    QList<QString> files;
+    GitRepository repo;
+    int res = git_repository_open(repo, m_path.absolutePath().toUtf8().constData());
+    if (res) return files;
+
+    GitIndex index;
+    res = git_repository_index(index, repo);
+    if (res) return files;
+
+    GitIndexConflictIterator iter;
+    res = git_index_conflict_iterator_new(iter, index);
+    if (res) return files;
+
+    const git_index_entry *ancestor = nullptr;
+    const git_index_entry *our = nullptr;
+    const git_index_entry *their = nullptr;
+
+    while (git_index_conflict_next(&ancestor, &our, &their, iter) == 0)
+    {
+        const git_index_entry *valid = ancestor ? ancestor : (our ? our : their);
+        if (valid)
+        {
+            QString p = QString::fromUtf8(valid->path);
+            if (!files.contains(p))
+            {
+                files.append(p);
+            }
+        }
+    }
+
+    return files;
+}
+
+bool QGit::conflictContents(const QString &path, QString &ancestor, QString &ours, QString &theirs) const
+{
+    ancestor.clear();
+    ours.clear();
+    theirs.clear();
+
+    GitRepository repo;
+    int res = git_repository_open(repo, m_path.absolutePath().toUtf8().constData());
+    if (res) throw QGitError("git_repository_open", res);
+
+    GitIndex index;
+    res = git_repository_index(index, repo);
+    if (res) throw QGitError("git_repository_index", res);
+
+    const git_index_entry *ancestor_entry = nullptr;
+    const git_index_entry *our_entry = nullptr;
+    const git_index_entry *their_entry = nullptr;
+
+    res = git_index_conflict_get(&ancestor_entry, &our_entry, &their_entry, index, path.toUtf8().constData());
+    if (res == GIT_ENOTFOUND)
+    {
+        return false;
+    }
+    if (res)
+    {
+        throw QGitError("git_index_conflict_get", res);
+    }
+
+    auto readBlob = [&](const git_index_entry *entry, QString &outText) {
+        if (!entry) return;
+        git_blob *blob = nullptr;
+        int r = git_blob_lookup(&blob, repo, &entry->id);
+        if (r == 0)
+        {
+            outText = QString::fromUtf8((const char *)git_blob_rawcontent(blob), git_blob_rawsize(blob));
+            git_blob_free(blob);
+        }
+    };
+
+    readBlob(ancestor_entry, ancestor);
+    readBlob(our_entry, ours);
+    readBlob(their_entry, theirs);
+
+    return true;
+}
+
+void QGit::resolveConflict(const QString &path, const QString &resolvedContent)
+{
+    // 1. Write the resolved content to working directory file
+    QString fullPath = m_path.absoluteFilePath(path);
+    QFile file(fullPath);
+    if (!file.open(QIODevice::WriteOnly | QIODevice::Text))
+    {
+        throw QGitError("Could not open file to write resolved content: " + fullPath, -1);
+    }
+    QTextStream out(&file);
+    out << resolvedContent;
+    file.close();
+
+    // 2. Clear conflict stages and stage resolved file in the Git index
+    GitRepository repo;
+    int res = git_repository_open(repo, m_path.absolutePath().toUtf8().constData());
+    if (res) throw QGitError("git_repository_open", res);
+
+    GitIndex index;
+    res = git_repository_index(index, repo);
+    if (res) throw QGitError("git_repository_index", res);
+
+    res = git_index_conflict_remove(index, path.toUtf8().constData());
+    if (res && res != GIT_ENOTFOUND) throw QGitError("git_index_conflict_remove", res);
+
+    res = git_index_add_bypath(index, path.toUtf8().constData());
+    if (res) throw QGitError("git_index_add_bypath", res);
+
+    res = git_index_write(index);
+    if (res) throw QGitError("git_index_write", res);
 }
 
 void QGit::checkoutBranch(QString name)

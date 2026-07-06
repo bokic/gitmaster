@@ -7,6 +7,7 @@
 #include "qgitpushdialog.h"
 #include "qgitbranchdialog.h"
 #include "qgitmergedialog.h"
+#include "qgitconflictresolverdialog.h"
 #include <qgitbranch.h>
 
 #include <QCryptographicHash>
@@ -1615,11 +1616,23 @@ void QGitRepository::on_listWidget_unstaged_customContextMenuRequested(const QPo
     const auto &selected = ui->listWidget_unstaged->selectedItems();
     if (selected.isEmpty()) return;
 
+    uint32_t status = selected.first()->data(Qt::UserRole).toUInt();
+    bool hasConflict = (status & GIT_STATUS_CONFLICTED);
+
     QMenu menu(this);
+    QAction *resolveAction = nullptr;
+    if (hasConflict) {
+        resolveAction = menu.addAction(tr("Resolve Conflicts..."));
+    }
     QAction *discardAction = menu.addAction(tr("Discard changes"));
 
     QAction *res = menu.exec(ui->listWidget_unstaged->mapToGlobal(pos));
-    if (res == discardAction) {
+    if (resolveAction && res == resolveAction) {
+        QGitConflictResolverDialog dlg(m_git, selected.first()->text(), this);
+        if (dlg.exec() == QDialog::Accepted) {
+            refreshData();
+        }
+    } else if (res == discardAction) {
         auto confirm = QMessageBox::question(this, tr("Discard changes"),
                                              tr("Are you sure you want to discard changes in the selected files? This operation cannot be undone."),
                                              QMessageBox::Yes | QMessageBox::No);

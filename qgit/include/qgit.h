@@ -79,6 +79,10 @@ public:
     void setConfigString(const QString &key, const QString &value, bool global = false);
     void deleteConfigEntry(const QString &key, bool global = false);
     QMap<QString, QString> configEntries() const;
+    bool hasConflicts() const;
+    QList<QString> conflictedFiles() const;
+    bool conflictContents(const QString &path, QString &ancestor, QString &ours, QString &theirs) const;
+    void resolveConflict(const QString &path, const QString &resolvedContent);
 
     static QString getBranchNameFromPath(const QString &path);
     static int createLocalRepository(const QDir &path);

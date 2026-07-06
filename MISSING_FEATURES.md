@@ -8,7 +8,6 @@ A comprehensive reanalysis of `libgit2` features for integration into GitMaster,
 
 | Feature Area | Current Status | Relevant libgit2 Headers | Priority |
 | :--- | :--- | :--- | :--- |
-| **3-Way Conflict Resolution API** | Partial (merge check only) | `git2/index.h`, `git2/merge.h` | High |
 | **Submodule Management** | Unimplemented | `git2/submodule.h` | Medium |
 | **Code Blaming (Line Annotations)** | Unimplemented | `git2/blame.h` | Medium |
 | **Worktree Support** | Unimplemented | `git2/worktree.h` | Medium |
@@ -62,38 +61,34 @@ A comprehensive reanalysis of `libgit2` features for integration into GitMaster,
 * **libgit2 APIs**: `git_graph_ahead_behind`, `git_graph_descendant_of`
 * **Status**: **Partial**. Ancestry checks (`git_graph_descendant_of`) have been wrapped in `QGit::isAncestor` and hooked into the log context menu to prevent invalid/redundant rebases. Branch sync counters (ahead/behind indicators in repository trees) remain unimplemented.
 
-### 9. 3-Way Conflict Resolution & Staged Conflict Removal (`git2/index.h` & `git2/merge.h`)
-* **libgit2 APIs**: `git_index_conflict_get`, `git_index_conflict_remove`, `git_index_add_from_buffer`
-* **Description**: **Conflict Resolution UI**. Extract ancestor, ours, and theirs stages from libgit2 index during merge/rebase conflicts to render a 3-way side-by-side conflict solver.
-
-### 10. Commit Amending & GPG/SSH Signature Signing (`git2/commit.h` & `git2/sys/commit.h`)
+### 9. Commit Amending & GPG/SSH Signature Signing (`git2/commit.h` & `git2/sys/commit.h`)
 * **libgit2 APIs**: `git_commit_amend`, `git_commit_create_with_signature`
 * **Description**: **Amend & Signed Commits**. Allow users to amend the last commit message or staged files, and optionally sign commits using GPG or SSH keys.
 
-### 11. Stash Advanced Options & Patch Inspection (`git2/stash.h`)
+### 10. Stash Advanced Options & Patch Inspection (`git2/stash.h`)
 * **libgit2 APIs**: `git_stash_save2` (`GIT_STASH_INCLUDE_UNTRACKED`, `GIT_STASH_KEEP_INDEX`), `git_stash_apply`
 * **Description**: **Advanced Stash Options**. Allow users to include untracked/ignored files in stashes, view diffs of individual stashes before applying, or apply specific stash elements.
 
-### 12. Git Describe (`git2/describe.h`)
+### 11. Git Describe (`git2/describe.h`)
 * **libgit2 APIs**: `git_describe_commit`, `git_describe_format`
 * **Description**: **Describe Hash**. Display tags relative to a commit (e.g., `v1.2.0-4-g8c41174`) inside the commit description panel.
 
-### 13. Ignore Rules Integration (`git2/ignore.h`)
+### 12. Ignore Rules Integration (`git2/ignore.h`)
 * **libgit2 APIs**: `git_ignore_add_rule`, `git_ignore_path_is_ignored`
 * **Description**: **Context-Menu .gitignore Addition**. Allow users to right-click an untracked file in the changed files list and choose to ignore the file pattern (appending rules directly to `.gitignore`).
 
-### 14. Git Notes Management (`git2/note.h`)
+### 13. Git Notes Management (`git2/note.h`)
 * **libgit2 APIs**: `git_note_create`, `git_note_read`, `git_note_remove`
 * **Description**: **Commit Notes**. View and attach metadata notes to commits without modifying commit hashes.
 
-### 15. Revision Parsing Engine (`git2/revparse.h`)
+### 14. Revision Parsing Engine (`git2/revparse.h`)
 * **libgit2 APIs**: `git_revparse_single`, `git_revparse_ext`
 * **Description**: **Git Revision Query**. Support parsing expressions like `HEAD~3`, `main@{1}`, or `HEAD^2` in search inputs or checkout dialogs.
 
-### 16. Clean Workspace (`git clean`) (`git2/status.h`)
+### 15. Clean Workspace (`git clean`) (`git2/status.h`)
 * **libgit2 APIs**: Status filtering + `git_status_byindex`
 * **Description**: **Clean Untracked Files**. Provide a "Clean Working Directory" action to batch-remove untracked files or ignored build artifacts with prompt confirmations.
 
-### 17. Mailmap Support (`git2/mailmap.h`)
+### 16. Mailmap Support (`git2/mailmap.h`)
 * **libgit2 APIs**: `git_mailmap_new`, `git_mailmap_resolve`
 * **Description**: **Author Identity Normalization**. Resolve author and committer names/emails according to repository `.mailmap` rules when generating commit log tables.
