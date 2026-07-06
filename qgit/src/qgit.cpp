@@ -944,6 +944,44 @@ void QGit::revert(const QString &commitId)
     git_repository_state_cleanup(repo);
 }
 
+void QGit::reset(const QString &commitId, git_reset_t type)
+{
+    GitRepository repo;
+    int res = git_repository_open(repo, m_path.absolutePath().toUtf8().constData());
+    if (res)
+    {
+        throw QGitError("git_repository_open", res);
+    }
+
+    git_oid oid;
+    res = git_oid_fromstr(&oid, commitId.toUtf8().constData());
+    if (res)
+    {
+        throw QGitError("git_oid_fromstr", res);
+    }
+
+    GitObject obj;
+    res = git_object_lookup(obj, repo, &oid, GIT_OBJECT_COMMIT);
+    if (res)
+    {
+        throw QGitError("git_object_lookup", res);
+    }
+
+    git_checkout_options opts = GIT_CHECKOUT_OPTIONS_INIT;
+    opts.checkout_strategy = GIT_CHECKOUT_SAFE;
+
+    res = git_reset(repo, obj, type, &opts);
+    if (res)
+    {
+        throw QGitError("git_reset", res);
+    }
+
+    if (type == GIT_RESET_HARD || type == GIT_RESET_MIXED)
+    {
+        git_repository_state_cleanup(repo);
+    }
+}
+
 void QGit::checkoutBranch(QString name)
 {
     QGitError error;

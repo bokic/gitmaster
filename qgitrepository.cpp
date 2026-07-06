@@ -1717,6 +1717,12 @@ void QGitRepository::on_logHistory_commits_customContextMenuRequested(const QPoi
 
     revertAction = menu.addAction(tr("Revert commit '%1'").arg(selectedHash.left(7)));
 
+    QMenu *resetMenu = new QMenu(tr("Reset current branch to '%1'").arg(selectedHash.left(7)), &menu);
+    QAction *softResetAction = resetMenu->addAction(tr("Soft (keep changes staged)"));
+    QAction *mixedResetAction = resetMenu->addAction(tr("Mixed (keep changes unstaged)"));
+    QAction *hardResetAction = resetMenu->addAction(tr("Hard (discard all changes)"));
+    menu.addMenu(resetMenu);
+
     QAction *res = menu.exec(ui->logHistory_commits->viewport()->mapToGlobal(pos));
     if (res) {
         if (res == rebaseAction) {
@@ -1753,6 +1759,51 @@ void QGitRepository::on_logHistory_commits_customContextMenuRequested(const QPoi
                     QMessageBox::information(this, tr("Revert"), tr("Commit '%1' reverted successfully.").arg(selectedHash.left(7)));
                 } catch (const QGitError &error) {
                     QMessageBox::warning(this, tr("Revert"), error.errorString());
+                }
+                QGitMasterMainWindow::instance()->updateStatusBarText(tr("Ready"));
+                refreshData();
+            }
+        } else if (res == softResetAction) {
+            auto confirm = QMessageBox::question(this, tr("Soft Reset"),
+                                                 tr("Are you sure you want to perform a soft reset to '%1'?\n\nThis will move the branch pointer, but keep all modifications staged.").arg(selectedHash.left(7)),
+                                                 QMessageBox::Yes | QMessageBox::No);
+            if (confirm == QMessageBox::Yes) {
+                QGitMasterMainWindow::instance()->updateStatusBarText(tr("Resetting current branch (soft)..."));
+                try {
+                    m_git->reset(selectedHash, GIT_RESET_SOFT);
+                    QMessageBox::information(this, tr("Reset"), tr("Branch reset to '%1' successfully (soft).").arg(selectedHash.left(7)));
+                } catch (const QGitError &error) {
+                    QMessageBox::critical(this, tr("Reset Error"), error.errorString());
+                }
+                QGitMasterMainWindow::instance()->updateStatusBarText(tr("Ready"));
+                refreshData();
+            }
+        } else if (res == mixedResetAction) {
+            auto confirm = QMessageBox::question(this, tr("Mixed Reset"),
+                                                 tr("Are you sure you want to perform a mixed reset to '%1'?\n\nThis will move the branch pointer and unstage changes, but keep them in your working directory.").arg(selectedHash.left(7)),
+                                                 QMessageBox::Yes | QMessageBox::No);
+            if (confirm == QMessageBox::Yes) {
+                QGitMasterMainWindow::instance()->updateStatusBarText(tr("Resetting current branch (mixed)..."));
+                try {
+                    m_git->reset(selectedHash, GIT_RESET_MIXED);
+                    QMessageBox::information(this, tr("Reset"), tr("Branch reset to '%1' successfully (mixed).").arg(selectedHash.left(7)));
+                } catch (const QGitError &error) {
+                    QMessageBox::critical(this, tr("Reset Error"), error.errorString());
+                }
+                QGitMasterMainWindow::instance()->updateStatusBarText(tr("Ready"));
+                refreshData();
+            }
+        } else if (res == hardResetAction) {
+            auto confirm = QMessageBox::question(this, tr("Hard Reset"),
+                                                 tr("WARNING: Are you sure you want to perform a hard reset to '%1'?\n\nThis will move the branch pointer and discard ALL staged and unstaged changes. This cannot be undone!").arg(selectedHash.left(7)),
+                                                 QMessageBox::Yes | QMessageBox::No);
+            if (confirm == QMessageBox::Yes) {
+                QGitMasterMainWindow::instance()->updateStatusBarText(tr("Resetting current branch (hard)..."));
+                try {
+                    m_git->reset(selectedHash, GIT_RESET_HARD);
+                    QMessageBox::information(this, tr("Reset"), tr("Branch reset to '%1' successfully (hard).").arg(selectedHash.left(7)));
+                } catch (const QGitError &error) {
+                    QMessageBox::critical(this, tr("Reset Error"), error.errorString());
                 }
                 QGitMasterMainWindow::instance()->updateStatusBarText(tr("Ready"));
                 refreshData();

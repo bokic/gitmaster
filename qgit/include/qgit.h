@@ -74,6 +74,7 @@ public:
     void createLocalBranch(const QString &name, const QString &commit_id  = "", bool checkout = false, bool force = false);
     void cherrypick(const QString &commitId);
     void revert(const QString &commitId);
+    void reset(const QString &commitId, git_reset_t type);
 
     static QString getBranchNameFromPath(const QString &path);
     static int createLocalRepository(const QDir &path);
