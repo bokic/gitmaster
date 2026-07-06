@@ -25,8 +25,8 @@ Development plan and upcoming features for GitMaster.
 - [ ] **Cherry-pick**: Extend context menu to cherry-pick the selected commit to other local branches.
 
 ### Log History
-- [ ] **Rich Metadata Rendering**: Draw tags and branch names directly within the commit graph.
-- [ ] **Advanced Graphing**: Implement smooth, multi-color graph lines for complex branching history.
+- [x] **Rich Metadata Rendering**: Draw tags and branch names directly within the commit graph.
+- [x] **Advanced Graphing**: Implement smooth, multi-color graph lines for complex branching history.
 
 ### File Status
 - [ ] **Combo Functionality**: Complete the implementation of all remaining filtering and view options in the status combos.
@@ -51,7 +51,7 @@ Development plan and upcoming features for GitMaster.
 *Ensuring seamless installation across all major operating systems.*
 
 ### MacOS Support
-- [ ] **App Bundling**: Create a `.app` bundle for macOS users.
+- [x] **App Bundling**: Create a `.app` bundle for macOS users.
 
 ### Linux Distribution
 - [ ] **RPM Support**: Native package for Fedora/RHEL/openSUSE.
