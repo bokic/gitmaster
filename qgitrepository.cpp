@@ -8,6 +8,7 @@
 #include "qgitbranchdialog.h"
 #include "qgitmergedialog.h"
 #include "qgitconflictresolverdialog.h"
+#include "qgitcreatetagdialog.h"
 #include <qgitbranch.h>
 
 #include <QCryptographicHash>
@@ -188,6 +189,8 @@ QGitRepository::QGitRepository(const QString &path, QWidget *parent)
     connect(this, &QGitRepository::repositoryRenameBranch, m_git, &QGit::renameBranch);
     connect(this, &QGitRepository::repositoryRenameTag, m_git, &QGit::renameTag);
     connect(m_git, &QGit::renameTagReply, this, &QGitRepository::renameTagReply);
+    connect(this, &QGitRepository::repositoryCreateTag, m_git, &QGit::createTag);
+    connect(m_git, &QGit::createTagReply, this, &QGitRepository::createTagReply);
 
     ui->branchesTreeView->setContextMenuPolicy(Qt::CustomContextMenu);
     ui->branchesTreeView->setEditTriggers(QAbstractItemView::NoEditTriggers);
@@ -1839,6 +1842,9 @@ void QGitRepository::on_logHistory_commits_customContextMenuRequested(const QPoi
     QAction *hardResetAction = resetMenu->addAction(tr("Hard (discard all changes)"));
     menu.addMenu(resetMenu);
 
+    menu.addSeparator();
+    QAction *createTagAction = menu.addAction(tr("Create Tag at '%1'...").arg(selectedHash.left(7)));
+
     QAction *res = menu.exec(ui->logHistory_commits->viewport()->mapToGlobal(pos));
     if (res) {
         if (res == rebaseAction) {
@@ -1924,6 +1930,12 @@ void QGitRepository::on_logHistory_commits_customContextMenuRequested(const QPoi
                 QGitMasterMainWindow::instance()->updateStatusBarText(tr("Ready"));
                 refreshData();
             }
+        } else if (res == createTagAction) {
+            QGitCreateTagDialog dlg(selectedHash, this);
+            if (dlg.exec() == QDialog::Accepted) {
+                QGitMasterMainWindow::instance()->updateStatusBarText(tr("Creating tag..."));
+                emit repositoryCreateTag(dlg.tagName(), selectedHash, dlg.tagMessage(), dlg.forceCreate());
+            }
         }
     }
 }
@@ -1933,6 +1945,17 @@ void QGitRepository::deleteTagReply(QGitError error)
     if (error.errorCode() != 0) {
         QMessageBox::critical(this, tr("Delete Tag Error"), error.errorString());
     } else {
+        refreshData();
+    }
+}
+
+void QGitRepository::createTagReply(QGitError error)
+{
+    QGitMasterMainWindow::instance()->updateStatusBarText(tr("Ready"));
+    if (error.errorCode() != 0) {
+        QMessageBox::critical(this, tr("Create Tag Error"), error.errorString());
+    } else {
+        QMessageBox::information(this, tr("Tag Created"), tr("Tag created successfully."));
         refreshData();
     }
 }

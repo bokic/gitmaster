@@ -140,6 +140,7 @@ public slots:
     void setUpstream(QString branchName, QString upstreamBranchName);
     void merge(QString branchName);
     void rebase(QString upstream, QString branch = "", QString onto = "");
+    void createTag(QString name, QString targetObjectId, QString message, bool force);
 
 signals:
     void initReply(QGitError error);
@@ -173,6 +174,7 @@ signals:
     void checkoutBranchReply(QGitError error);
     void renameBranchReply(QGitError error);
     void renameTagReply(QGitError error);
+    void createTagReply(QGitError error);
     void setUpstreamReply(QGitError error);
     void deleteTagReply(QGitError error);
     void mergeReply(QGitError error);

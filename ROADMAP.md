@@ -24,6 +24,7 @@ Development plan and upcoming features for GitMaster.
 - [*] **Rebase**: Implement rebasing with a toolbar button.
 - [x] **Cherry-pick**: Extend context menu to cherry-pick the selected commit onto the current branch.
 - [x] **Submodules**: Fully integrated support for Git Submodules (listing, statuses, init, update, sync, and tabbed sub-repository opening).
+- [x] **Tag Creation**: Create lightweight and annotated tags from the log history context menu, with optional message and force-overwrite support.
 
 ### Log History
 - [x] **Rich Metadata Rendering**: Draw tags and branch names directly within the commit graph.

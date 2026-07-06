@@ -1518,6 +1518,45 @@ void QGit::deleteTag(QString name)
     emit deleteTagReply(error);
 }
 
+void QGit::createTag(QString name, QString targetObjectId, QString message, bool force)
+{
+    QGitError error;
+    try {
+        GitRepository repo;
+        int res = git_repository_open(repo, m_path.absolutePath().toUtf8().constData());
+        if (res) throw QGitError("git_repository_open", res);
+
+        // Resolve the target OID from the commit hash string
+        git_oid target_oid;
+        res = git_oid_fromstr(&target_oid, targetObjectId.toUtf8().constData());
+        if (res) throw QGitError("git_oid_fromstr", res);
+
+        // Look up the target git object (commit)
+        GitObject target_obj;
+        res = git_object_lookup(target_obj, repo, &target_oid, GIT_OBJECT_ANY);
+        if (res) throw QGitError("git_object_lookup", res);
+
+        git_oid tag_oid;
+        if (message.isEmpty()) {
+            // Create a lightweight tag
+            res = git_tag_create_lightweight(&tag_oid, repo, name.toUtf8().constData(), target_obj, force ? 1 : 0);
+            if (res) throw QGitError("git_tag_create_lightweight", res);
+        } else {
+            // Create an annotated tag (requires a tagger signature)
+            GitSignature tagger;
+            res = git_signature_default(tagger, repo);
+            if (res) throw QGitError("git_signature_default", res);
+
+            res = git_tag_create(&tag_oid, repo, name.toUtf8().constData(), target_obj, tagger, message.toUtf8().constData(), force ? 1 : 0);
+            if (res) throw QGitError("git_tag_create", res);
+        }
+
+    } catch (const QGitError &ex) {
+        error = ex;
+    }
+    emit createTagReply(error);
+}
+
 void QGit::setUpstream(QString branchName, QString upstreamBranchName)
 {
     QGitError error;

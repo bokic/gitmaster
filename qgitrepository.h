@@ -58,6 +58,7 @@ signals:
     void repositoryRebase(QString upstream, QString branch = "", QString onto = "");
     void repositoryRenameBranch(QString oldName, QString newName);
     void repositoryRenameTag(QString oldName, QString newName);
+    void repositoryCreateTag(QString name, QString targetObjectId, QString message, bool force);
     void repositoryUpdateSubmodule(QString name);
 
 protected:
@@ -106,6 +107,7 @@ private slots:
     void checkoutBranchReply(QGitError error);
     void renameBranchReply(QGitError error);
     void renameTagReply(QGitError error);
+    void createTagReply(QGitError error);
     void setUpstreamReply(QGitError error);
     void deleteTagReply(QGitError error);
     void on_branchesTreeView_itemChanged(QTreeWidgetItem *item, int column);

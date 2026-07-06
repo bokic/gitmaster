@@ -9,7 +9,7 @@ GitMaster is a powerful, lightweight Git GUI client built with C++, **Qt6**, and
 ## Features
 
 - **Repository Management**: Initialize new repositories, clone existing ones, and manage your local projects.
-- **Branching & Tagging**: Create, switch, and manage branches and tags with ease.
+- **Branching & Tagging**: Create, switch, rename, and delete branches and tags. Create lightweight and annotated tags directly from any commit in the history log.
 - **Remote Operations**: Seamlessly Fetch, Pull, and Push to remote servers.
 - **History Visualization**: Browse commit history with a clear and detailed log table.
 - **Integrated Diff Viewer**: View line-by-line changes with integrated diff highlighting.
