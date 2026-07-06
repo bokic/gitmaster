@@ -48,6 +48,7 @@ QGitRepository::QGitRepository(const QString &path, QWidget *parent)
     , m_iconRemote(":/small/remote")
     , m_iconStash(":/small/stash")
     , m_iconRemoteBranch(":/small/remote_branch")
+    , m_iconSubmodule(":/small/submodule")
     , m_git(new QGit())
 {
     QString name;
@@ -118,6 +119,9 @@ QGitRepository::QGitRepository(const QString &path, QWidget *parent)
 
     connect(this, &QGitRepository::repositoryPull, m_git, &QGit::pull);
     connect(m_git, &QGit::pullReply, this, &QGitRepository::repositoryPullReply);
+
+    connect(this, &QGitRepository::repositoryUpdateSubmodule, m_git, &QGit::updateSubmodule);
+    connect(m_git, &QGit::updateSubmoduleReply, this, &QGitRepository::repositoryUpdateSubmoduleReply);
 
     connect(this, &QGitRepository::repositoryPush, m_git, &QGit::push);
     connect(m_git, &QGit::pushReply, this, &QGitRepository::repositoryPushReply);
@@ -445,6 +449,21 @@ void QGitRepository::repositoryPullReply(QGitError error)
     }
 }
 
+void QGitRepository::repositoryUpdateSubmoduleReply(QGitError error)
+{
+    if (error.errorCode())
+    {
+        QGitMasterMainWindow::instance()->updateStatusBarText(error.errorString());
+        QMessageBox::critical(this, tr("Submodule Update Error"), error.errorString());
+    }
+    else
+    {
+        QGitMasterMainWindow::instance()->clearStatusBarText();
+        refreshData();
+        QMessageBox::information(this, tr("Submodule Updated"), tr("Submodule updated successfully."));
+    }
+}
+
 void QGitRepository::repositoryPushReply(QGitError error)
 {
     if (error.errorCode())
@@ -606,10 +625,40 @@ void QGitRepository::repositoryBranchesAndTagsReply(QList<QGitBranch> branches, 
         itemTags->addChild(child);
     }
 
+    QList<QGitSubmodule> submods;
+    try {
+        submods = m_git->submodules();
+    } catch (...) {}
+
+    QTreeWidgetItem *itemSubmodules = new QTreeWidgetItem(QStringList() << tr("Submodules"));
+    for (const auto &sub : submods) {
+        QString label = sub.name;
+        QString statusText;
+        if (sub.status & GIT_SUBMODULE_STATUS_WD_UNINITIALIZED) {
+            statusText = tr(" [Uninitialized]");
+        } else if (sub.status & (GIT_SUBMODULE_STATUS_WD_ADDED | GIT_SUBMODULE_STATUS_WD_DELETED | 
+                                 GIT_SUBMODULE_STATUS_WD_MODIFIED | GIT_SUBMODULE_STATUS_WD_INDEX_MODIFIED | 
+                                 GIT_SUBMODULE_STATUS_WD_WD_MODIFIED)) {
+            statusText = tr(" [Dirty]");
+        }
+
+        QTreeWidgetItem *child = new QTreeWidgetItem(QStringList() << (label + statusText));
+        child->setData(0, Qt::UserRole, sub.name);
+        child->setData(0, Qt::UserRole + 1, sub.path);
+        child->setData(0, Qt::UserRole + 2, QStringLiteral("Submodule"));
+        child->setIcon(0, m_iconSubmodule);
+        itemSubmodules->addChild(child);
+    }
+
     items.append(itemFileStatus);
     items.append(itemLocalBranches);
     items.append(itemTags);
     items.append(itemRemoteBranches);
+    if (itemSubmodules->childCount() > 0) {
+        items.append(itemSubmodules);
+    } else {
+        delete itemSubmodules;
+    }
 
     ui->branchesTreeView->clear();
     ui->branchesTreeView->addTopLevelItems(items);
@@ -1083,6 +1132,15 @@ void QGitRepository::on_branchesTreeView_itemDoubleClicked(QTreeWidgetItem *item
     Q_UNUSED(column)
     if (!item) return;
 
+    QString type = item->data(0, Qt::UserRole + 2).toString();
+    if (type == "Submodule")
+    {
+        QString subPath = item->data(0, Qt::UserRole + 1).toString();
+        QString fullSubPath = m_git->path().absoluteFilePath(subPath);
+        QGitMasterMainWindow::instance()->openRepository(fullSubPath);
+        return;
+    }
+
     QString hash = item->data(0, Qt::UserRole).toString();
     if (!hash.isEmpty())
     {
@@ -1109,6 +1167,51 @@ void QGitRepository::on_branchesTreeView_customContextMenuRequested(const QPoint
 
     QString type = item->data(0, Qt::UserRole + 2).toString();
     QString fullName = item->data(0, Qt::UserRole + 1).toString();
+
+    if (type == "Submodule")
+    {
+        QString subName = item->data(0, Qt::UserRole).toString();
+        QString subPath = item->data(0, Qt::UserRole + 1).toString();
+
+        QMenu menu(this);
+        QAction *openAction = menu.addAction(tr("Open Submodule Repository"));
+        menu.addSeparator();
+        QAction *updateAction = menu.addAction(tr("Update Submodule"));
+        QAction *initAction = menu.addAction(tr("Initialize Submodule"));
+        QAction *syncAction = menu.addAction(tr("Sync URL"));
+
+        QAction *selectedAction = menu.exec(ui->branchesTreeView->viewport()->mapToGlobal(pos));
+        if (selectedAction == openAction)
+        {
+            QString fullSubPath = m_git->path().absoluteFilePath(subPath);
+            QGitMasterMainWindow::instance()->openRepository(fullSubPath);
+        }
+        else if (selectedAction == updateAction)
+        {
+            QGitMasterMainWindow::instance()->updateStatusBarText(tr("Updating submodule %1...").arg(subName));
+            emit repositoryUpdateSubmodule(subName);
+        }
+        else if (selectedAction == initAction)
+        {
+            try {
+                m_git->initSubmodule(subName);
+                refreshData();
+                QMessageBox::information(this, tr("Submodule Initialized"), tr("Submodule '%1' initialized successfully.").arg(subName));
+            } catch (const QGitError &error) {
+                QMessageBox::critical(this, tr("Error"), error.errorString());
+            }
+        }
+        else if (selectedAction == syncAction)
+        {
+            try {
+                m_git->syncSubmodule(subName);
+                QMessageBox::information(this, tr("Submodule Synced"), tr("Submodule '%1' URL synchronized successfully.").arg(subName));
+            } catch (const QGitError &error) {
+                QMessageBox::critical(this, tr("Error"), error.errorString());
+            }
+        }
+        return;
+    }
 
     if (type == "Stash")
     {

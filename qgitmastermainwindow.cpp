@@ -334,6 +334,26 @@ void QGitMasterMainWindow::on_actionPush_triggered()
     }
 }
 
+void QGitMasterMainWindow::openRepository(const QString &repositoryPath)
+{
+    QDir dir(repositoryPath);
+    QString repositoryName = dir.dirName();
+
+    for(int index = 0; index < ui->tabWidget->count(); index++)
+    {
+        auto repoWidget = dynamic_cast<QGitRepository *>(ui->tabWidget->widget(index));
+        if (repoWidget && repoWidget->git() && QDir(repoWidget->git()->path().absolutePath()) == QDir(dir.absolutePath()))
+        {
+            ui->tabWidget->setCurrentIndex(index);
+            return;
+        }
+    }
+
+    auto widget = new QGitRepository(repositoryPath, this);
+    ui->tabWidget->addTab(widget, repositoryName);
+    ui->tabWidget->setCurrentWidget(widget);
+}
+
 void QGitMasterMainWindow::on_treeWidget_itemDoubleClicked(QTreeWidgetItem *item, int column)
 {
     QString repositoryName = item->data(column, Qt::DisplayRole).toString();

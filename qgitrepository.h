@@ -58,6 +58,7 @@ signals:
     void repositoryRebase(QString upstream, QString branch = "", QString onto = "");
     void repositoryRenameBranch(QString oldName, QString newName);
     void repositoryRenameTag(QString oldName, QString newName);
+    void repositoryUpdateSubmodule(QString name);
 
 protected:
     void keyPressEvent(QKeyEvent *event) override;
@@ -72,6 +73,7 @@ private slots:
     void repositoryPushReply(QGitError error);
     void repositoryMergeReply(QGitError error);
     void repositoryRebaseReply(QGitError error);
+    void repositoryUpdateSubmoduleReply(QGitError error);
     void repositoryBranchesAndTagsReply(QList<QGitBranch> branches, QList<QGitTag> tags, QGitError error);
     void repositoryStashesReply(QStringList stashes, QGitError error);
     void repositoryChangedFilesReply(QList<QPair<QString, git_status_t>> files, QGitError error);
@@ -144,6 +146,7 @@ private:
     QIcon m_iconRemote;
     QIcon m_iconStash;
     QIcon m_iconRemoteBranch;
+    QIcon m_iconSubmodule;
     QString m_searchingCommitHash;
     bool m_stageingFiles = true;
     bool m_searchingCommits = false;

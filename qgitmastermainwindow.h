@@ -25,6 +25,7 @@ public:
     void setStashEnabled(class QGitRepository *panel, bool enabled);
     void updateRemoteActions(class QGitRepository *panel);
     void refreshRepositoryTree();
+    void openRepository(const QString &path);
 
 public slots:
     QString getPassword();

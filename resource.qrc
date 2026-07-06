@@ -78,6 +78,7 @@
         <file>images/small/missing.png</file>
         <file alias="modified">images/small/modified.png</file>
         <file alias="remote_branch">images/small/remote-branch16x16.png</file>
+        <file alias="submodule">images/small/submodule16x16.png</file>
         <file>images/small/remote-branch-shadowless16x16.png</file>
         <file>images/small/renamed.png</file>
         <file>images/small/resolved.png</file>

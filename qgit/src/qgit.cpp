@@ -191,6 +191,18 @@ struct GitIndexConflictIterator {
     git_index_conflict_iterator *value = nullptr;
 };
 
+struct GitSubmodule {
+    GitSubmodule() = default;
+    GitSubmodule(const GitSubmodule&) = delete;
+    GitSubmodule& operator=(const GitSubmodule&) = delete;
+    GitSubmodule(GitSubmodule&&) = delete;
+    GitSubmodule& operator=(GitSubmodule&&) = delete;
+    operator git_submodule*() { return value; }
+    operator git_submodule**() { return &value; }
+    ~GitSubmodule() { if (value) { git_submodule_free(value); value = nullptr; }}
+    git_submodule *value = nullptr;
+};
+
 struct GitAnnotatedCommit {
     GitAnnotatedCommit() = default;
     GitAnnotatedCommit(const GitAnnotatedCommit&) = delete;
@@ -1270,6 +1282,102 @@ void QGit::resolveConflict(const QString &path, const QString &resolvedContent)
 
     res = git_index_write(index);
     if (res) throw QGitError("git_index_write", res);
+}
+
+static int submoduleForeachCallback(git_submodule *sm, const char *name, void *payload)
+{
+    QList<QGitSubmodule> *list = static_cast<QList<QGitSubmodule>*>(payload);
+    QGitSubmodule sub;
+    sub.name = QString::fromUtf8(git_submodule_name(sm));
+    sub.path = QString::fromUtf8(git_submodule_path(sm));
+
+    const char *url = git_submodule_url(sm);
+    if (url) sub.url = QString::fromUtf8(url);
+
+    auto formatOid = [](const git_oid *oid) {
+        if (!oid || git_oid_is_zero(oid)) return QString();
+        char buf[GIT_OID_HEXSZ + 1];
+        git_oid_tostr(buf, sizeof(buf), oid);
+        return QString::fromLatin1(buf);
+    };
+
+    sub.headId = formatOid(git_submodule_head_id(sm));
+    sub.indexId = formatOid(git_submodule_index_id(sm));
+    sub.wdId = formatOid(git_submodule_wd_id(sm));
+
+    git_repository *repo = git_submodule_owner(sm);
+    unsigned int status = 0;
+    if (git_submodule_status(&status, repo, name, GIT_SUBMODULE_IGNORE_UNSPECIFIED) == 0) {
+        sub.status = status;
+    }
+
+    list->append(sub);
+    return 0;
+}
+
+QList<QGitSubmodule> QGit::submodules() const
+{
+    QList<QGitSubmodule> list;
+    GitRepository repo;
+    int res = git_repository_open(repo, m_path.absolutePath().toUtf8().constData());
+    if (res == 0)
+    {
+        git_submodule_foreach(repo, submoduleForeachCallback, &list);
+    }
+    return list;
+}
+
+void QGit::initSubmodule(const QString &name)
+{
+    GitRepository repo;
+    int res = git_repository_open(repo, m_path.absolutePath().toUtf8().constData());
+    if (res) throw QGitError("git_repository_open", res);
+
+    GitSubmodule sm;
+    res = git_submodule_lookup(sm, repo, name.toUtf8().constData());
+    if (res) throw QGitError("git_submodule_lookup", res);
+
+    res = git_submodule_init(sm, 0);
+    if (res) throw QGitError("git_submodule_init", res);
+}
+
+void QGit::syncSubmodule(const QString &name)
+{
+    GitRepository repo;
+    int res = git_repository_open(repo, m_path.absolutePath().toUtf8().constData());
+    if (res) throw QGitError("git_repository_open", res);
+
+    GitSubmodule sm;
+    res = git_submodule_lookup(sm, repo, name.toUtf8().constData());
+    if (res) throw QGitError("git_submodule_lookup", res);
+
+    res = git_submodule_sync(sm);
+    if (res) throw QGitError("git_submodule_sync", res);
+}
+
+void QGit::updateSubmodule(QString name)
+{
+    QGitError error;
+    try {
+        GitRepository repo;
+        int res = git_repository_open(repo, m_path.absolutePath().toUtf8().constData());
+        if (res) throw QGitError("git_repository_open", res);
+
+        GitSubmodule sm;
+        res = git_submodule_lookup(sm, repo, name.toUtf8().constData());
+        if (res) throw QGitError("git_submodule_lookup", res);
+
+        git_submodule_update_options opts = GIT_SUBMODULE_UPDATE_OPTIONS_INIT;
+        opts.checkout_opts.checkout_strategy = GIT_CHECKOUT_SAFE;
+        opts.fetch_opts.callbacks.credentials = sshKeyCredentialCallback;
+
+        res = git_submodule_update(sm, 1, &opts);
+        if (res) throw QGitError("git_submodule_update", res);
+
+    } catch (const QGitError &ex) {
+        error = ex;
+    }
+    emit updateSubmoduleReply(error);
 }
 
 void QGit::checkoutBranch(QString name)
