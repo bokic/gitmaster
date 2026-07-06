@@ -67,6 +67,8 @@ public:
     QList<QGitRemote> remotes() const;
     bool hasCommitsToPush() const;
     QString currentBranch() const;
+    QString headCommitId() const;
+    bool isAncestor(const QString &ancestor, const QString &descendant) const;
     QList<QGitBranch> branches(git_branch_t type) const;
     bool hasCommitId(const QString &commitId) const;
     void createLocalBranch(const QString &name, const QString &commit_id  = "", bool checkout = false, bool force = false);

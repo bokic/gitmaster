@@ -21,7 +21,7 @@ Development plan and upcoming features for GitMaster.
 *Focusing on new features, data visualization and repository history clarity.*
 
 ### New git operations
-- [ ] **Rebase**: Implement rebasing with a toolbar button.
+- [*] **Rebase**: Implement rebasing with a toolbar button.
 - [ ] **Cherry-pick**: Extend context menu to cherry-pick the selected commit to other local branches.
 
 ### Log History

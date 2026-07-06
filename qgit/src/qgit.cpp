@@ -446,6 +446,49 @@ QString QGit::currentBranch() const
     return branch;
 }
 
+QString QGit::headCommitId() const
+{
+    GitRepository repo;
+    int res = git_repository_open(repo, m_path.absolutePath().toUtf8().constData());
+    if (res)
+    {
+        return QString();
+    }
+
+    GitReference ref;
+    res = git_repository_head(ref, repo);
+    if (res)
+    {
+        return QString();
+    }
+
+    const git_oid *oid = git_reference_target(ref);
+    if (oid)
+    {
+        return QString::fromUtf8(git_oid_tostr_s(oid));
+    }
+    return QString();
+}
+
+bool QGit::isAncestor(const QString &ancestor, const QString &descendant) const
+{
+    GitRepository repo;
+    int res = git_repository_open(repo, m_path.absolutePath().toUtf8().constData());
+    if (res)
+    {
+        return false;
+    }
+
+    git_oid ancestor_oid, descendant_oid;
+    res = git_oid_fromstr(&ancestor_oid, ancestor.toUtf8().constData());
+    if (res) return false;
+    res = git_oid_fromstr(&descendant_oid, descendant.toUtf8().constData());
+    if (res) return false;
+
+    // Returns 1 if descendant is a descendant of ancestor (meaning ancestor is an ancestor of descendant)
+    return git_graph_descendant_of(repo, &descendant_oid, &ancestor_oid) == 1;
+}
+
 QList<QGitBranch> QGit::branches(git_branch_t type) const
 {
     QList<QGitBranch> ret;

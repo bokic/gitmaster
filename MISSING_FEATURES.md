@@ -8,7 +8,7 @@ A comprehensive reanalysis of `libgit2` features for integration into GitMaster,
 
 | Feature Area | Current Status | Relevant libgit2 Headers | Priority |
 | :--- | :--- | :--- | :--- |
-| **Rebase Operations** | Unimplemented | `git2/rebase.h`, `git2/annotated_commit.h` | High |
+| **Rebase Operations** | Implemented | `git2/rebase.h`, `git2/annotated_commit.h` | High |
 | **Cherry-Picking** | Unimplemented | `git2/cherrypick.h` | High |
 | **Reverting Commits** | Unimplemented | `git2/revert.h` | High |
 | **Pointer Resetting (Soft/Mixed/Hard)** | Unimplemented | `git2/reset.h` | High |
@@ -21,7 +21,7 @@ A comprehensive reanalysis of `libgit2` features for integration into GitMaster,
 | **Reflog Navigation** | Unimplemented | `git2/reflog.h` | Medium |
 | **Git Tag Creation (Annotated/Lightweight)** | Partial (list/rename/delete) | `git2/tag.h` | Medium |
 | **Remote Repository CRUD & Refspecs** | Partial (list/fetch/push) | `git2/remote.h` | Medium |
-| **Ahead/Behind Graph Analysis** | Unimplemented | `git2/graph.h` | Medium |
+| **Ahead/Behind Graph Analysis** | Partial (Ancestor check implemented) | `git2/graph.h` | Medium |
 | **Commit Amending & GPG/SSH Signing** | Partial (basic commit only) | `git2/commit.h`, `git2/sys/commit.h` | Medium |
 | **Stash Advanced Options & Patch Inspection** | Partial (basic save/pop/apply) | `git2/stash.h` | Low |
 | **Git Describe** | Unimplemented | `git2/describe.h` | Low |
@@ -37,7 +37,7 @@ A comprehensive reanalysis of `libgit2` features for integration into GitMaster,
 
 ### 1. Rebase Operations (`git2/rebase.h` & `git2/annotated_commit.h`)
 * **libgit2 APIs**: `git_rebase_init`, `git_rebase_next`, `git_rebase_commit`, `git_rebase_abort`, `git_rebase_finish`
-* **Description**: Implement a **Rebase Workflow Dialog**. Currently, only basic merge and pull-with-rebase flag are supported. A dedicated rebase interface would step through commits, handle line-by-line conflicts, allow skipping or amending steps, and commit or abort the rebase gracefully.
+* **Status**: **Implemented**. Exposes a custom context menu action in the Log History table allowing users to rebase the current branch onto a selected commit/reference. Features automatic safety controls that prevent rebasing onto active branches or ancestor commits. Also fully integrated into the `QGit::pull` network operation.
 
 ### 2. Cherry-Picking (`git2/cherrypick.h`)
 * **libgit2 APIs**: `git_cherrypick`, `git_cherrypick_commit`
@@ -88,7 +88,7 @@ A comprehensive reanalysis of `libgit2` features for integration into GitMaster,
 
 ### 13. Ahead/Behind Graph Analysis (`git2/graph.h`)
 * **libgit2 APIs**: `git_graph_ahead_behind`, `git_graph_descendant_of`
-* **Description**: **Branch Sync Indicators**. Calculate and display unpushed (ahead) and unpulled (behind) commit counters next to local branches in the repository tree view.
+* **Status**: **Partial**. Ancestry checks (`git_graph_descendant_of`) have been wrapped in `QGit::isAncestor` and hooked into the log context menu to prevent invalid/redundant rebases. Branch sync counters (ahead/behind indicators in repository trees) remain unimplemented.
 
 ### 14. 3-Way Conflict Resolution & Staged Conflict Removal (`git2/index.h` & `git2/merge.h`)
 * **libgit2 APIs**: `git_index_conflict_get`, `git_index_conflict_remove`, `git_index_add_from_buffer`

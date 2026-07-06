@@ -110,6 +110,7 @@ private slots:
     void on_comboBox_gitStatusFiles_itemClicked(int index);
     void on_comboBox_gitDiffOptions_optionsChanged();
     void on_commit_diff_customContextMenuRequested(const QPoint &pos);
+    void on_logHistory_commits_customContextMenuRequested(const QPoint &pos);
     void on_lineEdit_search_returnPressed();
     void on_search_commits_currentCellChanged(int currentRow, int currentColumn, int previousRow, int previousColumn);
     void on_search_files_itemSelectionChanged();

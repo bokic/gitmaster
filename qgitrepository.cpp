@@ -187,6 +187,9 @@ QGitRepository::QGitRepository(const QString &path, QWidget *parent)
     ui->branchesTreeView->setContextMenuPolicy(Qt::CustomContextMenu);
     ui->branchesTreeView->setEditTriggers(QAbstractItemView::NoEditTriggers);
 
+    ui->logHistory_commits->setContextMenuPolicy(Qt::CustomContextMenu);
+    connect(ui->logHistory_commits, &QLogHistoryTableWidget::customContextMenuRequested, this, &QGitRepository::on_logHistory_commits_customContextMenuRequested);
+
     m_thread.setObjectName("QGit(repo)");
     m_thread.start();
 
@@ -1654,6 +1657,57 @@ void QGitRepository::on_commit_diff_customContextMenuRequested(const QPoint &pos
                                              QMessageBox::Yes | QMessageBox::No);
         if (confirm == QMessageBox::Yes) {
             emit repositoryDiscardFileLines(fileName, lines);
+        }
+    }
+}
+
+void QGitRepository::on_logHistory_commits_customContextMenuRequested(const QPoint &pos)
+{
+    QModelIndex index = ui->logHistory_commits->indexAt(pos);
+    if (!index.isValid()) return;
+
+    int row = index.row();
+    int col = (ui->logHistory_commits->columnCount() == 4) ? 3 : 4;
+    QTableWidgetItem *item = ui->logHistory_commits->item(row, col);
+    if (!item) return;
+
+    QString selectedHash = item->data(Qt::UserRole).toString();
+    if (selectedHash.isEmpty()) return;
+
+    QString headHash = m_git->headCommitId();
+
+    bool canRebase = true;
+    if (selectedHash.compare(headHash, Qt::CaseInsensitive) == 0) {
+        canRebase = false;
+    } else if (!headHash.isEmpty() && m_git->isAncestor(selectedHash, headHash)) {
+        canRebase = false;
+    }
+
+    QList<QGitRef> refs = ui->logHistory_commits->getReferences(selectedHash);
+    QString targetName = selectedHash.left(7);
+    for (const auto &ref : refs) {
+        if (ref.type == QGitRef::CurrentBranch) {
+            canRebase = false;
+            targetName = ref.name;
+            break;
+        } else if (ref.type == QGitRef::LocalBranch || ref.type == QGitRef::RemoteBranch || ref.type == QGitRef::Tag) {
+            targetName = ref.name;
+        }
+    }
+
+    if (canRebase) {
+        QMenu menu(this);
+        QAction *rebaseAction = menu.addAction(tr("Rebase current branch onto '%1'").arg(targetName));
+
+        QAction *res = menu.exec(ui->logHistory_commits->viewport()->mapToGlobal(pos));
+        if (res == rebaseAction) {
+            auto confirm = QMessageBox::question(this, tr("Rebase"),
+                                                 tr("Are you sure you want to rebase the current branch onto '%1'?").arg(targetName),
+                                                 QMessageBox::Yes | QMessageBox::No);
+            if (confirm == QMessageBox::Yes) {
+                QGitMasterMainWindow::instance()->updateStatusBarText(tr("Rebasing current branch..."));
+                emit repositoryRebase(selectedHash);
+            }
         }
     }
 }
