@@ -178,6 +178,8 @@ QGitRepository::QGitRepository(const QString &path, QWidget *parent)
     connect(m_git, &QGit::deleteTagReply, this, &QGitRepository::deleteTagReply);
     connect(this, &QGitRepository::repositoryMerge, m_git, &QGit::merge);
     connect(m_git, &QGit::mergeReply, this, &QGitRepository::repositoryMergeReply);
+    connect(this, &QGitRepository::repositoryRebase, m_git, &QGit::rebase);
+    connect(m_git, &QGit::rebaseReply, this, &QGitRepository::repositoryRebaseReply);
     connect(this, &QGitRepository::repositoryRenameBranch, m_git, &QGit::renameBranch);
     connect(this, &QGitRepository::repositoryRenameTag, m_git, &QGit::renameTag);
     connect(m_git, &QGit::renameTagReply, this, &QGitRepository::renameTagReply);
@@ -345,6 +347,18 @@ void QGitRepository::repositoryMergeReply(QGitError error)
     if (error.errorCode()) {
         QMessageBox::critical(this, tr("Merge Error"), 
                               tr("Could not merge the selected branch. Details: %1").arg(error.errorString()));
+    } else {
+        refreshData();
+    }
+}
+
+void QGitRepository::repositoryRebaseReply(QGitError error)
+{
+    QGitMasterMainWindow::instance()->clearStatusBarText();
+
+    if (error.errorCode()) {
+        QMessageBox::critical(this, tr("Rebase Error"), 
+                              tr("Could not rebase onto the specified branch. Details: %1").arg(error.errorString()));
     } else {
         refreshData();
     }

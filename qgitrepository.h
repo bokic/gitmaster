@@ -55,6 +55,7 @@ signals:
     void repositoryDiscardFileLines(QString filename, QVector<QGitDiffWidgetLine> lines);
     void deleteBranches(QList<QGitBranch> branches, bool force);
     void repositoryMerge(QString branchName);
+    void repositoryRebase(QString upstream, QString branch = "", QString onto = "");
     void repositoryRenameBranch(QString oldName, QString newName);
     void repositoryRenameTag(QString oldName, QString newName);
 
@@ -69,6 +70,8 @@ private slots:
     void repositoryFetchReply(QGitError error);
     void repositoryPullReply(QGitError error);
     void repositoryPushReply(QGitError error);
+    void repositoryMergeReply(QGitError error);
+    void repositoryRebaseReply(QGitError error);
     void repositoryBranchesAndTagsReply(QList<QGitBranch> branches, QList<QGitTag> tags, QGitError error);
     void repositoryStashesReply(QStringList stashes, QGitError error);
     void repositoryChangedFilesReply(QList<QPair<QString, git_status_t>> files, QGitError error);
@@ -103,7 +106,6 @@ private slots:
     void renameTagReply(QGitError error);
     void setUpstreamReply(QGitError error);
     void deleteTagReply(QGitError error);
-    void repositoryMergeReply(QGitError error);
     void on_branchesTreeView_itemChanged(QTreeWidgetItem *item, int column);
     void on_comboBox_gitStatusFiles_itemClicked(int index);
     void on_comboBox_gitDiffOptions_optionsChanged();

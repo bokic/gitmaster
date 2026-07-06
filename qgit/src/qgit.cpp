@@ -2485,13 +2485,6 @@ void QGit::pull(QString remote, QString branch, bool rebase)
 {
     QGitError error;
 
-    if (rebase) {
-        // TODO: Implement rebase
-        error = QGitError("Rebase is not implemented yet.", -1);
-        emit pullReply(error);
-        return;
-    }
-
     try
     {
         GitRepository repo;
@@ -2530,12 +2523,12 @@ void QGit::pull(QString remote, QString branch, bool rebase)
             throw QGitError("git_remote_fetch", res);
         }
 
-        // After fetch, perform merge
-        if (is_anonymous) {
-            merge(QStringLiteral("FETCH_HEAD"));
+        QString targetRef = is_anonymous ? QStringLiteral("FETCH_HEAD") : (remote + "/" + branch);
+
+        if (rebase) {
+            this->rebase(targetRef);
         } else {
-            QString remoteBranchName = remote + "/" + branch;
-            merge(remoteBranchName);
+            merge(targetRef);
         }
 
     } catch(const QGitError &ex) {
@@ -2543,6 +2536,120 @@ void QGit::pull(QString remote, QString branch, bool rebase)
     }
 
     emit pullReply(error);
+}
+
+void QGit::rebase(QString upstream, QString branch, QString onto)
+{
+    QGitError error;
+    git_rebase *rebase_ptr = nullptr;
+
+    try
+    {
+        GitRepository repo;
+        int res = git_repository_open(repo, m_path.absolutePath().toUtf8().constData());
+        if (res)
+        {
+            throw QGitError("git_repository_open", res);
+        }
+
+        GitAnnotatedCommit upstream_annotated;
+        res = git_annotated_commit_from_revspec(upstream_annotated, repo, upstream.toUtf8().constData());
+        if (res)
+        {
+            throw QGitError("git_annotated_commit_from_revspec", res);
+        }
+
+        GitAnnotatedCommit branch_annotated;
+        const git_annotated_commit *branch_ptr = nullptr;
+        if (!branch.isEmpty())
+        {
+            res = git_annotated_commit_from_revspec(branch_annotated, repo, branch.toUtf8().constData());
+            if (res)
+            {
+                throw QGitError("git_annotated_commit_from_revspec", res);
+            }
+            branch_ptr = branch_annotated.value;
+        }
+
+        GitAnnotatedCommit onto_annotated;
+        const git_annotated_commit *onto_ptr = nullptr;
+        if (!onto.isEmpty())
+        {
+            res = git_annotated_commit_from_revspec(onto_annotated, repo, onto.toUtf8().constData());
+            if (res)
+            {
+                throw QGitError("git_annotated_commit_from_revspec", res);
+            }
+            onto_ptr = onto_annotated.value;
+        }
+
+        git_rebase_options opts = GIT_REBASE_OPTIONS_INIT;
+        res = git_rebase_init(&rebase_ptr, repo, branch_ptr, upstream_annotated.value, onto_ptr, &opts);
+        if (res)
+        {
+            throw QGitError("git_rebase_init", res);
+        }
+
+        GitSignature committer;
+        res = git_signature_default(committer, repo);
+        if (res)
+        {
+            git_rebase_abort(rebase_ptr);
+            git_rebase_free(rebase_ptr);
+            rebase_ptr = nullptr;
+            throw QGitError("git_signature_default", res);
+        }
+
+        git_rebase_operation *op = nullptr;
+        bool has_conflict = false;
+
+        while ((res = git_rebase_next(&op, rebase_ptr)) == 0)
+        {
+            git_oid commit_id;
+            res = git_rebase_commit(&commit_id, rebase_ptr, nullptr, committer, nullptr, nullptr);
+            if (res == GIT_EUNMERGED)
+            {
+                has_conflict = true;
+                break;
+            }
+            else if (res < 0)
+            {
+                git_rebase_abort(rebase_ptr);
+                git_rebase_free(rebase_ptr);
+                rebase_ptr = nullptr;
+                throw QGitError("git_rebase_commit", res);
+            }
+        }
+
+        if (has_conflict)
+        {
+            git_rebase_free(rebase_ptr);
+            rebase_ptr = nullptr;
+            throw QGitError("Rebase conflicts detected. Please resolve conflicts or abort rebase.", -1);
+        }
+
+        if (res != GIT_ITEROVER && res != 0)
+        {
+            git_rebase_abort(rebase_ptr);
+            git_rebase_free(rebase_ptr);
+            rebase_ptr = nullptr;
+            throw QGitError("git_rebase_next", res);
+        }
+
+        res = git_rebase_finish(rebase_ptr, committer);
+        git_rebase_free(rebase_ptr);
+        rebase_ptr = nullptr;
+        if (res)
+        {
+            throw QGitError("git_rebase_finish", res);
+        }
+    }
+    catch (const QGitError &ex)
+    {
+        error = ex;
+    }
+
+    emit rebaseReply(error);
 }
 
 void QGit::merge(QString branchName)

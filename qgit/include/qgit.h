@@ -110,6 +110,7 @@ public slots:
     void deleteTag(QString name);
     void setUpstream(QString branchName, QString upstreamBranchName);
     void merge(QString branchName);
+    void rebase(QString upstream, QString branch = "", QString onto = "");
 
 signals:
     void initReply(QGitError error);
@@ -145,6 +146,7 @@ signals:
     void setUpstreamReply(QGitError error);
     void deleteTagReply(QGitError error);
     void mergeReply(QGitError error);
+    void rebaseReply(QGitError error);
 
 private:
     QDir m_path;
