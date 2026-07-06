@@ -25,6 +25,8 @@
 #include <QAction>
 #include <QInputDialog>
 #include <QList>
+#include <QFile>
+#include <QTextStream>
 
 #define COMMIT_COUNT_TO_LOAD 100
 
@@ -1724,6 +1726,7 @@ void QGitRepository::on_listWidget_unstaged_customContextMenuRequested(const QPo
 
     uint32_t status = selected.first()->data(Qt::UserRole).toUInt();
     bool hasConflict = (status & GIT_STATUS_CONFLICTED);
+    bool isUntracked = (status & GIT_STATUS_WT_NEW);
 
     QMenu menu(this);
     QAction *resolveAction = nullptr;
@@ -1731,6 +1734,12 @@ void QGitRepository::on_listWidget_unstaged_customContextMenuRequested(const QPo
         resolveAction = menu.addAction(tr("Resolve Conflicts..."));
     }
     QAction *discardAction = menu.addAction(tr("Discard changes"));
+
+    QAction *ignoreAction = nullptr;
+    if (isUntracked && selected.size() == 1) {
+        menu.addSeparator();
+        ignoreAction = menu.addAction(tr("Add to .gitignore..."));
+    }
 
     QAction *res = menu.exec(ui->listWidget_unstaged->mapToGlobal(pos));
     if (resolveAction && res == resolveAction) {
@@ -1748,6 +1757,41 @@ void QGitRepository::on_listWidget_unstaged_customContextMenuRequested(const QPo
                 files << item->text();
             }
             emit repositoryDiscardFiles(files);
+        }
+    } else if (ignoreAction && res == ignoreAction) {
+        QString filePath = selected.first()->text();
+        bool ok = false;
+        QString pattern = QInputDialog::getText(
+            this,
+            tr("Add to .gitignore"),
+            tr("Pattern to ignore:"),
+            QLineEdit::Normal,
+            filePath,
+            &ok);
+        if (ok && !pattern.trimmed().isEmpty()) {
+            QString gitignorePath = m_path + "/.gitignore";
+            QFile file(gitignorePath);
+            if (file.open(QIODevice::ReadWrite | QIODevice::Text)) {
+                // Ensure we start on a new line if the file already has content
+                if (file.size() > 0) {
+                    file.seek(file.size() - 1);
+                    char lastChar;
+                    file.getChar(&lastChar);
+                    if (lastChar != '\n') {
+                        file.seek(file.size());
+                        QTextStream out(&file);
+                        out << "\n";
+                    }
+                }
+                file.seek(file.size());
+                QTextStream out(&file);
+                out << pattern.trimmed() << "\n";
+                file.close();
+                refreshData();
+            } else {
+                QMessageBox::critical(this, tr(".gitignore Error"),
+                                      tr("Could not open .gitignore for writing:\n%1").arg(gitignorePath));
+            }
         }
     }
 }

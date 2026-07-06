@@ -17,7 +17,6 @@ A comprehensive reanalysis of `libgit2` features for integration into GitMaster,
 | **Commit Amending & GPG/SSH Signing** | Partial (basic commit only) | `git2/commit.h`, `git2/sys/commit.h` | Medium |
 | **Stash Advanced Options & Patch Inspection** | Partial (basic save/pop/apply) | `git2/stash.h` | Low |
 | **Git Describe** | Unimplemented | `git2/describe.h` | Low |
-| **Ignore Rules Integration** | Unimplemented | `git2/ignore.h` | Low |
 | **Git Notes Management** | Unimplemented | `git2/note.h` | Low |
 | **Mailmap Author Mapping** | Unimplemented | `git2/mailmap.h` | Low |
 | **Revision Parsing Engine** | Partial (direct OID/ref only) | `git2/revparse.h` | Low |
@@ -63,22 +62,18 @@ A comprehensive reanalysis of `libgit2` features for integration into GitMaster,
 * **libgit2 APIs**: `git_describe_commit`, `git_describe_format`
 * **Description**: **Describe Hash**. Display tags relative to a commit (e.g., `v1.2.0-4-g8c41174`) inside the commit description panel.
 
-### 10. Ignore Rules Integration (`git2/ignore.h`)
-* **libgit2 APIs**: `git_ignore_add_rule`, `git_ignore_path_is_ignored`
-* **Description**: **Context-Menu .gitignore Addition**. Allow users to right-click an untracked file in the changed files list and choose to ignore the file pattern (appending rules directly to `.gitignore`).
-
-### 11. Git Notes Management (`git2/note.h`)
+### 10. Git Notes Management (`git2/note.h`)
 * **libgit2 APIs**: `git_note_create`, `git_note_read`, `git_note_remove`
 * **Description**: **Commit Notes**. View and attach metadata notes to commits without modifying commit hashes.
 
-### 12. Revision Parsing Engine (`git2/revparse.h`)
+### 11. Revision Parsing Engine (`git2/revparse.h`)
 * **libgit2 APIs**: `git_revparse_single`, `git_revparse_ext`
 * **Description**: **Git Revision Query**. Support parsing expressions like `HEAD~3`, `main@{1}`, or `HEAD^2` in search inputs or checkout dialogs.
 
-### 13. Clean Workspace (`git clean`) (`git2/status.h`)
+### 12. Clean Workspace (`git clean`) (`git2/status.h`)
 * **libgit2 APIs**: Status filtering + `git_status_byindex`
 * **Description**: **Clean Untracked Files**. Provide a "Clean Working Directory" action to batch-remove untracked files or ignored build artifacts with prompt confirmations.
 
-### 14. Mailmap Support (`git2/mailmap.h`)
+### 13. Mailmap Support (`git2/mailmap.h`)
 * **libgit2 APIs**: `git_mailmap_new`, `git_mailmap_resolve`
 * **Description**: **Author Identity Normalization**. Resolve author and committer names/emails according to repository `.mailmap` rules when generating commit log tables.
