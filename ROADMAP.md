@@ -22,7 +22,7 @@ Development plan and upcoming features for GitMaster.
 
 ### New git operations
 - [*] **Rebase**: Implement rebasing with a toolbar button.
-- [ ] **Cherry-pick**: Extend context menu to cherry-pick the selected commit to other local branches.
+- [x] **Cherry-pick**: Extend context menu to cherry-pick the selected commit onto the current branch.
 
 ### Log History
 - [x] **Rich Metadata Rendering**: Draw tags and branch names directly within the commit graph.

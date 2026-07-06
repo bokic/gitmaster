@@ -9,7 +9,7 @@ A comprehensive reanalysis of `libgit2` features for integration into GitMaster,
 | Feature Area | Current Status | Relevant libgit2 Headers | Priority |
 | :--- | :--- | :--- | :--- |
 | **Rebase Operations** | Implemented | `git2/rebase.h`, `git2/annotated_commit.h` | High |
-| **Cherry-Picking** | Unimplemented | `git2/cherrypick.h` | High |
+| **Cherry-Picking** | Implemented | `git2/cherrypick.h` | High |
 | **Reverting Commits** | Unimplemented | `git2/revert.h` | High |
 | **Pointer Resetting (Soft/Mixed/Hard)** | Unimplemented | `git2/reset.h` | High |
 | **Git Settings & Config Editor** | Minimal (signature only) | `git2/config.h` | High |
@@ -41,7 +41,7 @@ A comprehensive reanalysis of `libgit2` features for integration into GitMaster,
 
 ### 2. Cherry-Picking (`git2/cherrypick.h`)
 * **libgit2 APIs**: `git_cherrypick`, `git_cherrypick_commit`
-* **Description**: **Cherry-pick from History**. Extend the log history context menu to allow cherry-picking a selected commit directly onto the current checked-out branch.
+* **Status**: **Implemented**. Extends the log history context menu to allow cherry-picking a selected commit directly onto the current checked-out branch. Performs checks to prevent cherry-picking HEAD or ancestor commits. Automatically creates a commit on successful merge, and prompts the user for manual resolution on conflicts.
 
 ### 3. Reverting Commits (`git2/revert.h`)
 * **libgit2 APIs**: `git_revert`, `git_revert_commit`

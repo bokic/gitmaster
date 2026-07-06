@@ -710,6 +710,117 @@ void QGit::createLocalBranch(const QString &name, const QString &commit_id, bool
     }
 }
 
+void QGit::cherrypick(const QString &commitId)
+{
+    GitRepository repo;
+    int res = git_repository_open(repo, m_path.absolutePath().toUtf8().constData());
+    if (res)
+    {
+        throw QGitError("git_repository_open", res);
+    }
+
+    git_repository_state_t state = (git_repository_state_t)git_repository_state(repo);
+    if (state != GIT_REPOSITORY_STATE_NONE)
+    {
+        throw QGitError(tr("Repository is not in a clean state. Please resolve or abort the active merge, rebase, or cherry-pick first."), -1);
+    }
+
+    git_oid oid;
+    res = git_oid_fromstr(&oid, commitId.toUtf8().constData());
+    if (res)
+    {
+        throw QGitError("git_oid_fromstr", res);
+    }
+
+    GitCommit commit;
+    res = git_commit_lookup(commit, repo, &oid);
+    if (res)
+    {
+        throw QGitError("git_commit_lookup", res);
+    }
+
+    git_cherrypick_options opts = GIT_CHERRYPICK_OPTIONS_INIT;
+    opts.checkout_opts.checkout_strategy = GIT_CHECKOUT_SAFE;
+
+    res = git_cherrypick(repo, commit, &opts);
+    if (res)
+    {
+        throw QGitError("git_cherrypick", res);
+    }
+
+    GitIndex index;
+    res = git_repository_index(index, repo);
+    if (res)
+    {
+        throw QGitError("git_repository_index", res);
+    }
+
+    if (git_index_has_conflicts(index))
+    {
+        throw QGitError(tr("Cherry-pick completed with conflicts. Please resolve conflicts and commit manually."), -1);
+    }
+
+    // No conflicts, auto-commit
+    git_oid tree_id;
+    res = git_index_write_tree(&tree_id, index);
+    if (res)
+    {
+        throw QGitError("git_index_write_tree", res);
+    }
+
+    GitTree tree;
+    res = git_tree_lookup(tree, repo, &tree_id);
+    if (res)
+    {
+        throw QGitError("git_tree_lookup", res);
+    }
+
+    GitSignature committer;
+    res = git_signature_default(committer, repo);
+    if (res)
+    {
+        throw QGitError("git_signature_default", res);
+    }
+
+    const git_signature *author = git_commit_author(commit);
+    const char *message = git_commit_message(commit);
+
+    GitReference head_ref;
+    res = git_repository_head(head_ref, repo);
+    if (res)
+    {
+        throw QGitError("git_repository_head", res);
+    }
+
+    GitCommit parent;
+    res = git_commit_lookup(parent, repo, git_reference_target(head_ref));
+    if (res)
+    {
+        throw QGitError("git_commit_lookup (HEAD)", res);
+    }
+
+    git_oid new_commit_id;
+    const git_commit *parents[] = { parent.value };
+    res = git_commit_create(
+        &new_commit_id,
+        repo,
+        "HEAD",
+        author,
+        committer,
+        nullptr,
+        message,
+        tree,
+        1,
+        parents
+    );
+    if (res)
+    {
+        throw QGitError("git_commit_create", res);
+    }
+
+    git_repository_state_cleanup(repo);
+}
+
 void QGit::checkoutBranch(QString name)
 {
     QGitError error;
@@ -2454,7 +2565,7 @@ void QGit::commit(QString message, bool withPush)
                 throw QGitError("git_commit_create", res);
             }
 
-            if (parent_count > 1) {
+            if (parent_count > 1 || git_repository_state(repo) == GIT_REPOSITORY_STATE_CHERRYPICK) {
                 git_repository_state_cleanup(repo);
             }
         }

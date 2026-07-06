@@ -1695,18 +1695,49 @@ void QGitRepository::on_logHistory_commits_customContextMenuRequested(const QPoi
         }
     }
 
-    if (canRebase) {
-        QMenu menu(this);
-        QAction *rebaseAction = menu.addAction(tr("Rebase current branch onto '%1'").arg(targetName));
+    QMenu menu(this);
+    QAction *rebaseAction = nullptr;
+    QAction *cherrypickAction = nullptr;
 
+    if (canRebase) {
+        rebaseAction = menu.addAction(tr("Rebase current branch onto '%1'").arg(targetName));
+    }
+
+    bool canCherrypick = true;
+    if (selectedHash.compare(headHash, Qt::CaseInsensitive) == 0) {
+        canCherrypick = false;
+    } else if (!headHash.isEmpty() && m_git->isAncestor(selectedHash, headHash)) {
+        canCherrypick = false;
+    }
+
+    if (canCherrypick) {
+        cherrypickAction = menu.addAction(tr("Cherry-pick commit '%1'").arg(selectedHash.left(7)));
+    }
+
+    if (rebaseAction || cherrypickAction) {
         QAction *res = menu.exec(ui->logHistory_commits->viewport()->mapToGlobal(pos));
-        if (res == rebaseAction) {
+        if (res && res == rebaseAction) {
             auto confirm = QMessageBox::question(this, tr("Rebase"),
                                                  tr("Are you sure you want to rebase the current branch onto '%1'?").arg(targetName),
                                                  QMessageBox::Yes | QMessageBox::No);
             if (confirm == QMessageBox::Yes) {
                 QGitMasterMainWindow::instance()->updateStatusBarText(tr("Rebasing current branch..."));
                 emit repositoryRebase(selectedHash);
+            }
+        } else if (res && res == cherrypickAction) {
+            auto confirm = QMessageBox::question(this, tr("Cherry-pick"),
+                                                 tr("Are you sure you want to cherry-pick commit '%1' onto the current branch?").arg(selectedHash.left(7)),
+                                                 QMessageBox::Yes | QMessageBox::No);
+            if (confirm == QMessageBox::Yes) {
+                QGitMasterMainWindow::instance()->updateStatusBarText(tr("Cherry-picking commit..."));
+                try {
+                    m_git->cherrypick(selectedHash);
+                    QMessageBox::information(this, tr("Cherry-pick"), tr("Commit '%1' cherry-picked successfully.").arg(selectedHash.left(7)));
+                } catch (const QGitError &error) {
+                    QMessageBox::warning(this, tr("Cherry-pick"), error.errorString());
+                }
+                QGitMasterMainWindow::instance()->updateStatusBarText(tr("Ready"));
+                refreshData();
             }
         }
     }
