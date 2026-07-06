@@ -4,6 +4,7 @@
 #include "qgitclonerepositorydialog.h"
 #include "qnewrepositorydialog.h"
 #include "qgitrepository.h"
+#include "qgitsettingsdialog.h"
 
 #include <QTreeWidgetItem>
 #include <QStyleFactory>
@@ -516,4 +517,24 @@ void QGitMasterMainWindow::on_actionTerminal_triggered()
                                  tr("Could not find or launch a system terminal. Please make sure a terminal emulator is installed."));
         }
     }
+}
+
+void QGitMasterMainWindow::on_actionSettings_triggered()
+{
+    auto widget = dynamic_cast<QGitRepository *>(ui->tabWidget->currentWidget());
+    if (widget && widget->git()) {
+        QGitSettingsDialog dlg(widget->git(), this);
+        if (dlg.exec() == QDialog::Accepted) {
+            widget->refreshData();
+        }
+    } else {
+        QGit tempGit(this);
+        QGitSettingsDialog dlg(&tempGit, this);
+        dlg.exec();
+    }
+}
+
+void QGitMasterMainWindow::on_toolButton_RepositorySettings_clicked()
+{
+    on_actionSettings_triggered();
 }

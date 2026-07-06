@@ -156,6 +156,29 @@ struct GitIndex {
     git_index *value = nullptr;
 };
 
+struct GitConfig {
+    GitConfig() = default;
+    GitConfig(const GitConfig&) = delete;
+    GitConfig& operator=(const GitConfig&) = delete;
+    GitConfig(GitConfig&&) = delete;
+    GitConfig& operator=(GitConfig&&) = delete;
+    operator git_config*() { return value; }
+    operator git_config**() { return &value; }
+    ~GitConfig() { if (value) { git_config_free(value); value = nullptr; }}
+    git_config *value = nullptr;
+};
+
+struct GitBuf {
+    GitBuf() = default;
+    GitBuf(const GitBuf&) = delete;
+    GitBuf& operator=(const GitBuf&) = delete;
+    GitBuf(GitBuf&&) = delete;
+    GitBuf& operator=(GitBuf&&) = delete;
+    operator git_buf*() { return &value; }
+    ~GitBuf() { git_buf_dispose(&value); }
+    git_buf value = GIT_BUF_INIT;
+};
+
 struct GitAnnotatedCommit {
     GitAnnotatedCommit() = default;
     GitAnnotatedCommit(const GitAnnotatedCommit&) = delete;
@@ -980,6 +1003,135 @@ void QGit::reset(const QString &commitId, git_reset_t type)
     {
         git_repository_state_cleanup(repo);
     }
+}
+
+QString QGit::configString(const QString &key) const
+{
+    GitRepository repo;
+    GitConfig cfg;
+    int res = git_repository_open(repo, m_path.absolutePath().toUtf8().constData());
+    if (res == 0)
+    {
+        res = git_repository_config(cfg, repo);
+    }
+    else
+    {
+        res = git_config_open_default(cfg);
+    }
+
+    if (res)
+    {
+        throw QGitError("git_config_open", res);
+    }
+
+    GitBuf buf;
+    res = git_config_get_string_buf(buf, cfg, key.toUtf8().constData());
+    if (res == GIT_ENOTFOUND)
+    {
+        return QString();
+    }
+    if (res)
+    {
+        throw QGitError("git_config_get_string_buf", res);
+    }
+
+    return QString::fromUtf8(buf.value.ptr, buf.value.size);
+}
+
+void QGit::setConfigString(const QString &key, const QString &value, bool global)
+{
+    int res;
+    GitConfig write_cfg;
+
+    if (global)
+    {
+        GitConfig cascade_cfg;
+        res = git_config_open_default(cascade_cfg);
+        if (res) throw QGitError("git_config_open_default", res);
+
+        res = git_config_open_global(write_cfg, cascade_cfg);
+        if (res) throw QGitError("git_config_open_global", res);
+    }
+    else
+    {
+        GitRepository repo;
+        res = git_repository_open(repo, m_path.absolutePath().toUtf8().constData());
+        if (res) throw QGitError("git_repository_open", res);
+
+        GitConfig cascade_cfg;
+        res = git_repository_config(cascade_cfg, repo);
+        if (res) throw QGitError("git_repository_config", res);
+
+        res = git_config_open_level(write_cfg, cascade_cfg, GIT_CONFIG_LEVEL_LOCAL);
+        if (res) throw QGitError("git_config_open_level", res);
+    }
+
+    res = git_config_set_string(write_cfg, key.toUtf8().constData(), value.toUtf8().constData());
+    if (res) throw QGitError("git_config_set_string", res);
+}
+
+void QGit::deleteConfigEntry(const QString &key, bool global)
+{
+    int res;
+    GitConfig write_cfg;
+
+    if (global)
+    {
+        GitConfig cascade_cfg;
+        res = git_config_open_default(cascade_cfg);
+        if (res) throw QGitError("git_config_open_default", res);
+
+        res = git_config_open_global(write_cfg, cascade_cfg);
+        if (res) throw QGitError("git_config_open_global", res);
+    }
+    else
+    {
+        GitRepository repo;
+        res = git_repository_open(repo, m_path.absolutePath().toUtf8().constData());
+        if (res) throw QGitError("git_repository_open", res);
+
+        GitConfig cascade_cfg;
+        res = git_repository_config(cascade_cfg, repo);
+        if (res) throw QGitError("git_repository_config", res);
+
+        res = git_config_open_level(write_cfg, cascade_cfg, GIT_CONFIG_LEVEL_LOCAL);
+        if (res) throw QGitError("git_config_open_level", res);
+    }
+
+    res = git_config_delete_entry(write_cfg, key.toUtf8().constData());
+    if (res && res != GIT_ENOTFOUND)
+    {
+        throw QGitError("git_config_delete_entry", res);
+    }
+}
+
+static int configForeachCallback(const git_config_entry *entry, void *payload)
+{
+    QMap<QString, QString> *map = static_cast<QMap<QString, QString>*>(payload);
+    map->insert(QString::fromUtf8(entry->name), QString::fromUtf8(entry->value));
+    return 0;
+}
+
+QMap<QString, QString> QGit::configEntries() const
+{
+    QMap<QString, QString> entries;
+    GitRepository repo;
+    GitConfig cfg;
+    int res = git_repository_open(repo, m_path.absolutePath().toUtf8().constData());
+    if (res == 0)
+    {
+        res = git_repository_config(cfg, repo);
+    }
+    else
+    {
+        res = git_config_open_default(cfg);
+    }
+
+    if (res == 0)
+    {
+        git_config_foreach(cfg, configForeachCallback, &entries);
+    }
+    return entries;
 }
 
 void QGit::checkoutBranch(QString name)

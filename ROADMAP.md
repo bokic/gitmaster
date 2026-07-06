@@ -10,7 +10,7 @@ Development plan and upcoming features for GitMaster.
 - [x] **Merge Dialog**: Comprehensive interface for merging branches with conflict resolution entry points.
 - [ ] **Git Flow Dialog**: Integrated support for Git Flow branching models (feature, release, hotfix).
 - [x] **Quick Terminal**: One-click button to launch the system terminal directly in the current project directory.
-- [ ] **Settings Portal**: Centralized configuration for UI preferences, Git credentials, and global behaviors.
+- [x] **Settings Portal**: Centralized configuration for UI preferences, Git credentials, and global behaviors.
 - [ ] **Enhanced Branch Management**: New commit history view optimized for branch-specific workflows.
 - [ ] **Conflict Resolution UI**: Implement a Conflict Resolution UI (likely a new widget or tool) to resolve line-by-line conflicts.
 - [ ] **Pull Conflict Resolution**: Add a conflict resolution workflow if the pull results in conflicts.

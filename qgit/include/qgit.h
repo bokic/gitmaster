@@ -75,6 +75,10 @@ public:
     void cherrypick(const QString &commitId);
     void revert(const QString &commitId);
     void reset(const QString &commitId, git_reset_t type);
+    QString configString(const QString &key) const;
+    void setConfigString(const QString &key, const QString &value, bool global = false);
+    void deleteConfigEntry(const QString &key, bool global = false);
+    QMap<QString, QString> configEntries() const;
 
     static QString getBranchNameFromPath(const QString &path);
     static int createLocalRepository(const QDir &path);
