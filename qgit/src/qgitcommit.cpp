@@ -1,13 +1,14 @@
 #include <qgitcommit.h>
 
 
-QGitCommit::QGitCommit(const QString &id, const QList<QGitCommitDiffParent> &parents, const QDateTime &time, const QGitSignature &author, const QGitSignature &commiter, const QString &message)
+QGitCommit::QGitCommit(const QString &id, const QList<QGitCommitDiffParent> &parents, const QDateTime &time, const QGitSignature &author, const QGitSignature &commiter, const QString &message, const QString &description)
     : m_id(id)
     , m_parents(parents)
     , m_time(time)
     , m_author(author)
     , m_commiter(commiter)
     , m_message(message)
+    , m_description(description)
 {
 }
 
@@ -19,6 +20,7 @@ QGitCommit::QGitCommit(QGitCommit &&other) noexcept
     std::swap(m_author, other.m_author);
     std::swap(m_commiter, other.m_commiter);
     std::swap(m_message, other.m_message);
+    std::swap(m_description, other.m_description);
 }
 
 QGitCommit &QGitCommit::operator=(QGitCommit &&other) noexcept
@@ -29,6 +31,7 @@ QGitCommit &QGitCommit::operator=(QGitCommit &&other) noexcept
     std::swap(m_author, other.m_author);
     std::swap(m_commiter, other.m_commiter);
     std::swap(m_message, other.m_message);
+    std::swap(m_description, other.m_description);
 
     return *this;
 }
@@ -61,4 +64,9 @@ QGitSignature QGitCommit::commiter() const
 QString QGitCommit::message() const
 {
     return m_message;
+}
+
+QString QGitCommit::description() const
+{
+    return m_description;
 }

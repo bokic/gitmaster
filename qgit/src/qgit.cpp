@@ -144,6 +144,18 @@ struct GitPatch {
     git_patch *value = nullptr;
 };
 
+struct GitDescribeResult {
+    GitDescribeResult() = default;
+    GitDescribeResult(const GitDescribeResult&) = delete;
+    GitDescribeResult& operator=(const GitDescribeResult&) = delete;
+    GitDescribeResult(GitDescribeResult&&) = delete;
+    GitDescribeResult& operator=(GitDescribeResult&&) = delete;
+    operator git_describe_result*() { return value; }
+    operator git_describe_result**() { return &value; }
+    ~GitDescribeResult() { if (value) { git_describe_result_free(value); value = nullptr; }}
+    git_describe_result *value = nullptr;
+};
+
 struct GitIndex {
     GitIndex() = default;
     GitIndex(const GitIndex&) = delete;
@@ -2189,6 +2201,7 @@ void QGit::commitDiff(QString commitId, bool ignoreWhitespace)
     QGitSignature commitAuthor, commitCommiter;
     QDateTime commitTime;
     QString commitMessage;
+    QString commitDescription;
     QGitCommit commitDiff;
     QGitError error;
 
@@ -2236,6 +2249,22 @@ void QGit::commitDiff(QString commitId, bool ignoreWhitespace)
         commitTime.setTimeZone(QTimeZone(timeOffset * 60));
 
         commitMessage = QString::fromUtf8(git_commit_message(commit));
+
+        // Attempt git describe (best-effort: silently skip if no tags found)
+        {
+            git_describe_options descOpts = GIT_DESCRIBE_OPTIONS_INIT;
+            descOpts.max_candidates_tags = 10;
+            GitDescribeResult descResult;
+            if (git_describe_commit(descResult, (git_object *)commit.value, &descOpts) == 0) {
+                git_describe_format_options fmtOpts = GIT_DESCRIBE_FORMAT_OPTIONS_INIT;
+                char buf[256] = {0};
+                git_buf gbuf = GIT_BUF_INIT_CONST(buf, sizeof(buf));
+                if (git_describe_format(&gbuf, descResult, &fmtOpts) == 0) {
+                    commitDescription = QString::fromUtf8(gbuf.ptr);
+                }
+                git_buf_dispose(&gbuf);
+            }
+        }
 
         unsigned int parentCount = git_commit_parentcount(commit);
         if (parentCount == 0)
@@ -2314,7 +2343,7 @@ void QGit::commitDiff(QString commitId, bool ignoreWhitespace)
         error = ex;
     }
 
-    commitDiff = QGitCommit(commitId, parents, commitTime, commitAuthor, commitCommiter, commitMessage);
+    commitDiff = QGitCommit(commitId, parents, commitTime, commitAuthor, commitCommiter, commitMessage, commitDescription);
 
     emit commitDiffReply(commitId, commitDiff, error);
 }

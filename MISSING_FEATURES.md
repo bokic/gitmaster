@@ -16,7 +16,6 @@ A comprehensive reanalysis of `libgit2` features for integration into GitMaster,
 | **Ahead/Behind Graph Analysis** | Partial (Ancestor check implemented) | `git2/graph.h` | Medium |
 | **Commit Amending & GPG/SSH Signing** | Partial (basic commit only) | `git2/commit.h`, `git2/sys/commit.h` | Medium |
 | **Stash Advanced Options & Patch Inspection** | Partial (basic save/pop/apply) | `git2/stash.h` | Low |
-| **Git Describe** | Unimplemented | `git2/describe.h` | Low |
 | **Git Notes Management** | Unimplemented | `git2/note.h` | Low |
 | **Mailmap Author Mapping** | Unimplemented | `git2/mailmap.h` | Low |
 | **Revision Parsing Engine** | Partial (direct OID/ref only) | `git2/revparse.h` | Low |
@@ -58,22 +57,18 @@ A comprehensive reanalysis of `libgit2` features for integration into GitMaster,
 * **libgit2 APIs**: `git_stash_save2` (`GIT_STASH_INCLUDE_UNTRACKED`, `GIT_STASH_KEEP_INDEX`), `git_stash_apply`
 * **Description**: **Advanced Stash Options**. Allow users to include untracked/ignored files in stashes, view diffs of individual stashes before applying, or apply specific stash elements.
 
-### 9. Git Describe (`git2/describe.h`)
-* **libgit2 APIs**: `git_describe_commit`, `git_describe_format`
-* **Description**: **Describe Hash**. Display tags relative to a commit (e.g., `v1.2.0-4-g8c41174`) inside the commit description panel.
-
-### 10. Git Notes Management (`git2/note.h`)
+### 9. Git Notes Management (`git2/note.h`)
 * **libgit2 APIs**: `git_note_create`, `git_note_read`, `git_note_remove`
 * **Description**: **Commit Notes**. View and attach metadata notes to commits without modifying commit hashes.
 
-### 11. Revision Parsing Engine (`git2/revparse.h`)
+### 10. Revision Parsing Engine (`git2/revparse.h`)
 * **libgit2 APIs**: `git_revparse_single`, `git_revparse_ext`
 * **Description**: **Git Revision Query**. Support parsing expressions like `HEAD~3`, `main@{1}`, or `HEAD^2` in search inputs or checkout dialogs.
 
-### 12. Clean Workspace (`git clean`) (`git2/status.h`)
+### 11. Clean Workspace (`git clean`) (`git2/status.h`)
 * **libgit2 APIs**: Status filtering + `git_status_byindex`
 * **Description**: **Clean Untracked Files**. Provide a "Clean Working Directory" action to batch-remove untracked files or ignored build artifacts with prompt confirmations.
 
-### 13. Mailmap Support (`git2/mailmap.h`)
+### 12. Mailmap Support (`git2/mailmap.h`)
 * **libgit2 APIs**: `git_mailmap_new`, `git_mailmap_resolve`
 * **Description**: **Author Identity Normalization**. Resolve author and committer names/emails according to repository `.mailmap` rules when generating commit log tables.

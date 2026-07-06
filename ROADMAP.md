@@ -26,6 +26,7 @@ Development plan and upcoming features for GitMaster.
 - [x] **Submodules**: Fully integrated support for Git Submodules (listing, statuses, init, update, sync, and tabbed sub-repository opening).
 - [x] **Tag Creation**: Create lightweight and annotated tags from the log history context menu, with optional message and force-overwrite support.
 - [x] **Ignore Rules**: Right-click any untracked file to append a customisable pattern to `.gitignore` directly from the UI.
+- [x] **Git Describe**: The commit info panel now shows a **Describe:** line with the nearest reachable tag (e.g., `v1.2.0-4-g8c41174`) for any selected commit.
 
 ### Log History
 - [x] **Rich Metadata Rendering**: Draw tags and branch names directly within the commit graph.
