@@ -73,6 +73,7 @@ public:
     bool hasCommitId(const QString &commitId) const;
     void createLocalBranch(const QString &name, const QString &commit_id  = "", bool checkout = false, bool force = false);
     void cherrypick(const QString &commitId);
+    void revert(const QString &commitId);
 
     static QString getBranchNameFromPath(const QString &path);
     static int createLocalRepository(const QDir &path);

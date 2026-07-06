@@ -1698,6 +1698,7 @@ void QGitRepository::on_logHistory_commits_customContextMenuRequested(const QPoi
     QMenu menu(this);
     QAction *rebaseAction = nullptr;
     QAction *cherrypickAction = nullptr;
+    QAction *revertAction = nullptr;
 
     if (canRebase) {
         rebaseAction = menu.addAction(tr("Rebase current branch onto '%1'").arg(targetName));
@@ -1714,9 +1715,11 @@ void QGitRepository::on_logHistory_commits_customContextMenuRequested(const QPoi
         cherrypickAction = menu.addAction(tr("Cherry-pick commit '%1'").arg(selectedHash.left(7)));
     }
 
-    if (rebaseAction || cherrypickAction) {
-        QAction *res = menu.exec(ui->logHistory_commits->viewport()->mapToGlobal(pos));
-        if (res && res == rebaseAction) {
+    revertAction = menu.addAction(tr("Revert commit '%1'").arg(selectedHash.left(7)));
+
+    QAction *res = menu.exec(ui->logHistory_commits->viewport()->mapToGlobal(pos));
+    if (res) {
+        if (res == rebaseAction) {
             auto confirm = QMessageBox::question(this, tr("Rebase"),
                                                  tr("Are you sure you want to rebase the current branch onto '%1'?").arg(targetName),
                                                  QMessageBox::Yes | QMessageBox::No);
@@ -1724,7 +1727,7 @@ void QGitRepository::on_logHistory_commits_customContextMenuRequested(const QPoi
                 QGitMasterMainWindow::instance()->updateStatusBarText(tr("Rebasing current branch..."));
                 emit repositoryRebase(selectedHash);
             }
-        } else if (res && res == cherrypickAction) {
+        } else if (res == cherrypickAction) {
             auto confirm = QMessageBox::question(this, tr("Cherry-pick"),
                                                  tr("Are you sure you want to cherry-pick commit '%1' onto the current branch?").arg(selectedHash.left(7)),
                                                  QMessageBox::Yes | QMessageBox::No);
@@ -1735,6 +1738,21 @@ void QGitRepository::on_logHistory_commits_customContextMenuRequested(const QPoi
                     QMessageBox::information(this, tr("Cherry-pick"), tr("Commit '%1' cherry-picked successfully.").arg(selectedHash.left(7)));
                 } catch (const QGitError &error) {
                     QMessageBox::warning(this, tr("Cherry-pick"), error.errorString());
+                }
+                QGitMasterMainWindow::instance()->updateStatusBarText(tr("Ready"));
+                refreshData();
+            }
+        } else if (res == revertAction) {
+            auto confirm = QMessageBox::question(this, tr("Revert"),
+                                                 tr("Are you sure you want to revert commit '%1'? This will apply the inverse changes onto your current branch.").arg(selectedHash.left(7)),
+                                                 QMessageBox::Yes | QMessageBox::No);
+            if (confirm == QMessageBox::Yes) {
+                QGitMasterMainWindow::instance()->updateStatusBarText(tr("Reverting commit..."));
+                try {
+                    m_git->revert(selectedHash);
+                    QMessageBox::information(this, tr("Revert"), tr("Commit '%1' reverted successfully.").arg(selectedHash.left(7)));
+                } catch (const QGitError &error) {
+                    QMessageBox::warning(this, tr("Revert"), error.errorString());
                 }
                 QGitMasterMainWindow::instance()->updateStatusBarText(tr("Ready"));
                 refreshData();
