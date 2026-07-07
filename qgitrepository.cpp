@@ -449,7 +449,7 @@ void QGitRepository::rebase()
     }
 }
 
-void QGitRepository::repositoryMergeReply(QGitError error)
+void QGitRepository::repositoryMergeReply(const QGitError &error)
 {
     QGitMasterMainWindow::instance()->clearStatusBarText();
 
@@ -461,7 +461,7 @@ void QGitRepository::repositoryMergeReply(QGitError error)
     }
 }
 
-void QGitRepository::repositoryRebaseReply(QGitError error)
+void QGitRepository::repositoryRebaseReply(const QGitError &error)
 {
     QGitMasterMainWindow::instance()->clearStatusBarText();
 
@@ -523,7 +523,7 @@ void QGitRepository::gravatarImageDownloadFinished(QNetworkReply *reply)
     }
 }
 
-void QGitRepository::localStashSaveReply(QGitError error)
+void QGitRepository::localStashSaveReply(const QGitError &error)
 {
     if (error.errorCode()) {
         QMessageBox::critical(this, tr("Error saving stash"), error.errorString());
@@ -532,7 +532,7 @@ void QGitRepository::localStashSaveReply(QGitError error)
     }
 }
 
-void QGitRepository::localStashRemoveReply(QGitError error)
+void QGitRepository::localStashRemoveReply(const QGitError &error)
 {
     if (error.errorCode()) {
         QMessageBox::critical(this, tr("Error dropping stash"), error.errorString());
@@ -541,7 +541,7 @@ void QGitRepository::localStashRemoveReply(QGitError error)
     }
 }
 
-void QGitRepository::repositoryFetchReply(QGitError error)
+void QGitRepository::repositoryFetchReply(const QGitError &error)
 {
     if (error.errorCode())
     {
@@ -553,7 +553,7 @@ void QGitRepository::repositoryFetchReply(QGitError error)
     }
 }
 
-void QGitRepository::repositoryPullReply(QGitError error)
+void QGitRepository::repositoryPullReply(const QGitError &error)
 {
     if (error.errorCode())
     {
@@ -567,7 +567,7 @@ void QGitRepository::repositoryPullReply(QGitError error)
     }
 }
 
-void QGitRepository::repositoryUpdateSubmoduleReply(QGitError error)
+void QGitRepository::repositoryUpdateSubmoduleReply(const QGitError &error)
 {
     if (error.errorCode())
     {
@@ -582,7 +582,7 @@ void QGitRepository::repositoryUpdateSubmoduleReply(QGitError error)
     }
 }
 
-void QGitRepository::repositoryPushReply(QGitError error)
+void QGitRepository::repositoryPushReply(const QGitError &error)
 {
     if (error.errorCode())
     {
@@ -608,7 +608,7 @@ void QGitRepository::repositoryPushReply(QGitError error)
     }
 }
 
-void QGitRepository::repositoryBranchesAndTagsReply(QList<QGitBranch> branches, QList<QGitTag> tags, bool hasRemotes, bool hasCommitsToPush, QGitError error)
+void QGitRepository::repositoryBranchesAndTagsReply(const QList<QGitBranch> &branches, const QList<QGitTag> &tags, bool hasRemotes, bool hasCommitsToPush, const QGitError &error)
 {
     auto *mainWindow = QGitMasterMainWindow::instance();
     if (error.errorCode())
@@ -642,11 +642,12 @@ void QGitRepository::repositoryBranchesAndTagsReply(QList<QGitBranch> branches, 
 
     auto current_branch = QGit::getBranchNameFromPath(m_git->path().path());
 
-    std::sort(branches.begin(), branches.end(), [](const QGitBranch &a, const QGitBranch &b) {
+    QList<QGitBranch> sortedBranches = branches;
+    std::sort(sortedBranches.begin(), sortedBranches.end(), [](const QGitBranch &a, const QGitBranch &b) {
         return a.time() < b.time();
     });
 
-    for(const auto &branch: branches)
+    for(const auto &branch: sortedBranches)
     {
         QStringList items = branch.name().split('/');
 
@@ -766,11 +767,12 @@ void QGitRepository::repositoryBranchesAndTagsReply(QList<QGitBranch> branches, 
         }
     }
 
-    std::sort(tags.begin(), tags.end(), [](const QGitTag &a, const QGitTag &b) {
+    QList<QGitTag> sortedTags = tags;
+    std::sort(sortedTags.begin(), sortedTags.end(), [](const QGitTag &a, const QGitTag &b) {
         return a.time() > b.time();
     });
 
-    for(const auto &tag: tags)
+    for(const auto &tag: sortedTags)
     {
         QTreeWidgetItem *child = new QTreeWidgetItem(QStringList() << tag.name());
         child->setData(0, Qt::UserRole, tag.hash());
@@ -902,7 +904,7 @@ void QGitRepository::repositoryBranchesAndTagsReply(QList<QGitBranch> branches, 
     ui->logHistory_commits->setReferences(branches, tags, current_branch);
 }
 
-void QGitRepository::repositoryStashesReply(QStringList stashes, QGitError error)
+void QGitRepository::repositoryStashesReply(const QStringList &stashes, const QGitError &error)
 {
     Q_UNUSED(error)
 
@@ -944,7 +946,7 @@ void QGitRepository::repositoryStashesReply(QStringList stashes, QGitError error
     ui->branchesTreeView->expandAll();
 }
 
-void QGitRepository::repositoryChangedFilesReply(QList<QPair<QString, git_status_t>> files, QGitError error)
+void QGitRepository::repositoryChangedFilesReply(const QList<QPair<QString, git_status_t>> &files, const QGitError &error)
 {
     Q_UNUSED(error)
     int stagedCnt = 0;
@@ -1076,21 +1078,21 @@ void QGitRepository::repositoryChangedFilesReply(QList<QPair<QString, git_status
     }
 }
 
-void QGitRepository::repositoryStageFilesReply(QGitError error)
+void QGitRepository::repositoryStageFilesReply(const QGitError &error)
 {
     Q_UNUSED(error)
 
     fetchRepositoryChangedFiles();
 }
 
-void QGitRepository::repositoryUnstageFilesReply(QGitError error)
+void QGitRepository::repositoryUnstageFilesReply(const QGitError &error)
 {
     Q_UNUSED(error)
 
     fetchRepositoryChangedFiles();
 }
 
-void QGitRepository::repositoryDiscardFilesReply(QGitError error)
+void QGitRepository::repositoryDiscardFilesReply(const QGitError &error)
 {
     if (error.errorCode() != 0) {
         QMessageBox::critical(this, tr("Discard Error"), error.errorString());
@@ -1098,7 +1100,7 @@ void QGitRepository::repositoryDiscardFilesReply(QGitError error)
     fetchRepositoryChangedFiles();
 }
 
-void QGitRepository::repositoryCommitReply(QString commit_id, QGitError error)
+void QGitRepository::repositoryCommitReply(const QString &commit_id, const QGitError &error)
 {
     Q_UNUSED(commit_id)
 
@@ -1115,7 +1117,7 @@ void QGitRepository::repositoryCommitReply(QString commit_id, QGitError error)
     }
 }
 
-void QGitRepository::repositoryGetCommitsReply(QList<QGitCommit> commits, QGitError error)
+void QGitRepository::repositoryGetCommitsReply(const QList<QGitCommit> &commits, const QGitError &error)
 {
     Q_UNUSED(error)
 
@@ -1154,7 +1156,7 @@ void QGitRepository::repositoryGetCommitsReply(QList<QGitCommit> commits, QGitEr
     }
 }
 
-void QGitRepository::repositoryGetCommitDiffReply(QString commitId, QGitCommit diff, QGitError error)
+void QGitRepository::repositoryGetCommitDiffReply(const QString &commitId, const QGitCommit &diff, const QGitError &error)
 {
     if (error.errorCode())
     {
@@ -1372,7 +1374,7 @@ void QGitRepository::repositoryGetCommitDiffReply(QString commitId, QGitCommit d
     }
 }
 
-void QGitRepository::deleteBranchesReply(QGitError error)
+void QGitRepository::deleteBranchesReply(const QGitError &error)
 {
     if (error.errorCode())
     {
@@ -1719,7 +1721,7 @@ void QGitRepository::on_branchesTreeView_customContextMenuRequested(const QPoint
     }
 }
 
-void QGitRepository::checkoutBranchReply(QGitError error)
+void QGitRepository::checkoutBranchReply(const QGitError &error)
 {
     if (error.errorCode())
     {
@@ -1728,7 +1730,7 @@ void QGitRepository::checkoutBranchReply(QGitError error)
     refreshData();
 }
 
-void QGitRepository::renameBranchReply(QGitError error)
+void QGitRepository::renameBranchReply(const QGitError &error)
 {
     if (error.errorCode())
     {
@@ -1737,7 +1739,7 @@ void QGitRepository::renameBranchReply(QGitError error)
     refreshData();
 }
 
-void QGitRepository::renameTagReply(QGitError error)
+void QGitRepository::renameTagReply(const QGitError &error)
 {
     if (error.errorCode())
     {
@@ -1746,7 +1748,7 @@ void QGitRepository::renameTagReply(QGitError error)
     refreshData();
 }
 
-void QGitRepository::setUpstreamReply(QGitError error)
+void QGitRepository::setUpstreamReply(const QGitError &error)
 {
     if (error.errorCode())
     {
@@ -1755,7 +1757,7 @@ void QGitRepository::setUpstreamReply(QGitError error)
     refreshData();
 }
 
-void QGitRepository::stashApplyReply(QGitError error)
+void QGitRepository::stashApplyReply(const QGitError &error)
 {
     if (error.errorCode())
     {
@@ -1770,7 +1772,7 @@ void QGitRepository::stashApplyReply(QGitError error)
     }
 }
 
-void QGitRepository::stashPopReply(QGitError error)
+void QGitRepository::stashPopReply(const QGitError &error)
 {
     if (error.errorCode())
     {
@@ -1954,7 +1956,7 @@ void QGitRepository::historyTableSliderMoved(int pos)
     }
 }
 
-void QGitRepository::selectedLines(QString filename, QVector<QGitDiffWidgetLine> lines)
+void QGitRepository::selectedLines(const QString &filename, const QVector<QGitDiffWidgetLine> &lines)
 {
     if (lines.isEmpty())
     {
@@ -2465,7 +2467,7 @@ void QGitRepository::on_logHistory_commits_customContextMenuRequested(const QPoi
     }
 }
 
-void QGitRepository::deleteTagReply(QGitError error)
+void QGitRepository::deleteTagReply(const QGitError &error)
 {
     if (error.errorCode() != 0) {
         QMessageBox::critical(this, tr("Delete Tag Error"), error.errorString());
@@ -2474,7 +2476,7 @@ void QGitRepository::deleteTagReply(QGitError error)
     }
 }
 
-void QGitRepository::createTagReply(QGitError error)
+void QGitRepository::createTagReply(const QGitError &error)
 {
     QGitMasterMainWindow::instance()->updateStatusBarText(tr("Ready"));
     if (error.errorCode() != 0) {
@@ -2485,7 +2487,7 @@ void QGitRepository::createTagReply(QGitError error)
     }
 }
 
-void QGitRepository::repositoryCleanReply(QGitError error)
+void QGitRepository::repositoryCleanReply(const QGitError &error)
 {
     QGitMasterMainWindow::instance()->updateStatusBarText(tr("Ready"));
     if (error.errorCode() != 0) {
@@ -2496,7 +2498,7 @@ void QGitRepository::repositoryCleanReply(QGitError error)
     }
 }
 
-void QGitRepository::repositoryApplyPatchReply(QGitError error)
+void QGitRepository::repositoryApplyPatchReply(const QGitError &error)
 {
     QGitMasterMainWindow::instance()->updateStatusBarText(tr("Ready"));
     if (error.errorCode() != 0) {
@@ -2507,7 +2509,7 @@ void QGitRepository::repositoryApplyPatchReply(QGitError error)
     }
 }
 
-void QGitRepository::repositorySetNoteReply(QGitError error)
+void QGitRepository::repositorySetNoteReply(const QGitError &error)
 {
     QGitMasterMainWindow::instance()->updateStatusBarText(tr("Ready"));
     if (error.errorCode() != 0) {
@@ -2520,7 +2522,7 @@ void QGitRepository::repositorySetNoteReply(QGitError error)
     }
 }
 
-void QGitRepository::repositoryRemoveNoteReply(QGitError error)
+void QGitRepository::repositoryRemoveNoteReply(const QGitError &error)
 {
     QGitMasterMainWindow::instance()->updateStatusBarText(tr("Ready"));
     if (error.errorCode() != 0) {
@@ -2720,7 +2722,7 @@ void QGitRepository::on_lineEdit_search_returnPressed()
     }
 }
 
-void QGitRepository::onCommitFound(QGitCommit commit)
+void QGitRepository::onCommitFound(const QGitCommit &commit)
 {
     ui->search_commits->addCommit(commit);
 }

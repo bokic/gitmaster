@@ -222,7 +222,7 @@ QVector<QGitDiffWidgetLine> QGitDiffWidget::linesAt(int fileIdx, int hunkIdx, in
     return lines;
 }
 
-void QGitDiffWidget::responseGitDiff(QString first, QString second, QList<QGitDiffFile> diff, QGitError error)
+void QGitDiffWidget::responseGitDiff(const QString &first, const QString &second, const QList<QGitDiffFile> &diff, const QGitError &error)
 {
     int y = 0, file_h = 0, lineMax = 0;
     QSize newSize;

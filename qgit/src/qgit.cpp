@@ -1681,7 +1681,7 @@ void QGit::lockWorktree(const QString &name, bool lock)
     }
 }
 
-void QGit::updateSubmodule(QString name)
+void QGit::updateSubmodule(const QString &name)
 {
     QGitError error;
     try {
@@ -1706,7 +1706,7 @@ void QGit::updateSubmodule(QString name)
     emit updateSubmoduleReply(error);
 }
 
-void QGit::checkoutBranch(QString name)
+void QGit::checkoutBranch(const QString &name)
 {
     QGitError error;
     try {
@@ -1734,7 +1734,7 @@ void QGit::checkoutBranch(QString name)
     emit checkoutBranchReply(error);
 }
 
-void QGit::renameBranch(QString oldName, QString newName)
+void QGit::renameBranch(const QString &oldName, const QString &newName)
 {
     QGitError error;
     try {
@@ -1784,7 +1784,7 @@ void QGit::renameBranch(QString oldName, QString newName)
     emit renameBranchReply(error);
 }
 
-void QGit::renameTag(QString oldName, QString newName)
+void QGit::renameTag(const QString &oldName, const QString &newName)
 {
     QGitError error;
     try {
@@ -1827,7 +1827,7 @@ void QGit::renameTag(QString oldName, QString newName)
     emit renameTagReply(error);
 }
 
-void QGit::deleteTag(QString name)
+void QGit::deleteTag(const QString &name)
 {
     QGitError error;
     try {
@@ -1844,7 +1844,7 @@ void QGit::deleteTag(QString name)
     emit deleteTagReply(error);
 }
 
-void QGit::createTag(QString name, QString targetObjectId, QString message, bool force)
+void QGit::createTag(const QString &name, const QString &targetObjectId, const QString &message, bool force)
 {
     QGitError error;
     try {
@@ -1946,7 +1946,7 @@ void QGit::clean(bool includeIgnored, bool removeDirectories)
     emit cleanReply(error);
 }
 
-void QGit::applyPatch(QString patchPath)
+void QGit::applyPatch(const QString &patchPath)
 {
     QGitError error;
     try {
@@ -1977,7 +1977,7 @@ void QGit::applyPatch(QString patchPath)
     emit applyPatchReply(error);
 }
 
-void QGit::setUpstream(QString branchName, QString upstreamBranchName)
+void QGit::setUpstream(const QString &branchName, const QString &upstreamBranchName)
 {
     QGitError error;
     try {
@@ -1998,7 +1998,7 @@ void QGit::setUpstream(QString branchName, QString upstreamBranchName)
     emit setUpstreamReply(error);
 }
 
-void QGit::deleteBranches(QList<QGitBranch> branches, bool force)
+void QGit::deleteBranches(const QList<QGitBranch> &branches, bool force)
 {
     QGitError error;
 
@@ -2304,7 +2304,7 @@ void QGit::listBranchesAndTags()
     emit listBranchesAndTagsReply(branches, tags, hasRemotes, hasCommitsToPush, error);
 }
 
-void QGit::stashSave(QString name, bool keepIndex, bool includeUntracked, bool includeIgnored)
+void QGit::stashSave(const QString &name, bool keepIndex, bool includeUntracked, bool includeIgnored)
 {
 
     QGitError error;
@@ -2344,7 +2344,7 @@ void QGit::stashSave(QString name, bool keepIndex, bool includeUntracked, bool i
     emit stashSaveReply(error);
 }
 
-void QGit::stashRemove(QString name)
+void QGit::stashRemove(const QString &name)
 {
     QGitError error;
 
@@ -2434,7 +2434,7 @@ void QGit::listStashes()
     emit listStashesReply(stashes, error);
 }
 
-void QGit::stashApply(QString name)
+void QGit::stashApply(const QString &name)
 {
     QGitError error;
 
@@ -2485,7 +2485,7 @@ void QGit::stashApply(QString name)
     emit stashApplyReply(error);
 }
 
-void QGit::stashPop(QString name)
+void QGit::stashPop(const QString &name)
 {
     QGitError error;
 
@@ -2668,7 +2668,7 @@ void QGit::listChangedFiles(int show, int sort, bool reversed)
     emit listChangedFilesReply(items, error);
 }
 
-void QGit::commitDiff(QString commitId, bool ignoreWhitespace)
+void QGit::commitDiff(const QString &commitId, bool ignoreWhitespace)
 {
     QList<QGitCommitDiffParent> parents;
     QGitSignature commitAuthor, commitCommiter;
@@ -2678,6 +2678,7 @@ void QGit::commitDiff(QString commitId, bool ignoreWhitespace)
     QString commitNote;
     QGitCommit commitDiff;
     QGitError error;
+    QString effectiveCommitId = commitId;
 
     try
     {
@@ -2688,13 +2689,13 @@ void QGit::commitDiff(QString commitId, bool ignoreWhitespace)
             throw QGitError("git_repository_open", res);
         }
 
-        if (commitId.isEmpty())
+        if (effectiveCommitId.isEmpty())
         {
-            commitId = QStringLiteral("HEAD");
+            effectiveCommitId = QStringLiteral("HEAD");
         }
 
         GitObject obj;
-        res = git_revparse_single(obj, repo, commitId.toUtf8());
+        res = git_revparse_single(obj, repo, effectiveCommitId.toUtf8());
         if (res)
         {
             throw QGitError("git_revparse_single", res);
@@ -2831,12 +2832,12 @@ void QGit::commitDiff(QString commitId, bool ignoreWhitespace)
         error = ex;
     }
 
-    commitDiff = QGitCommit(commitId, parents, commitTime, commitAuthor, commitCommiter, commitMessage, commitDescription, commitNote);
+    commitDiff = QGitCommit(effectiveCommitId, parents, commitTime, commitAuthor, commitCommiter, commitMessage, commitDescription, commitNote);
 
-    emit commitDiffReply(commitId, commitDiff, error);
+    emit commitDiffReply(effectiveCommitId, commitDiff, error);
 }
 
-void QGit::commitDiffContent(QString first, QString second, QList<QString> files, uint32_t context_lines, bool ignoreWhitespace)
+void QGit::commitDiffContent(const QString &first, const QString &second, const QList<QString> &files, uint32_t context_lines, bool ignoreWhitespace)
 {
     QList<QGitDiffFile> items;
     QGitError error;
@@ -3024,7 +3025,7 @@ void QGit::commitDiffContent(QString first, QString second, QList<QString> files
     emit commitDiffContentReply(first, second, items, error);
 }
 
-void QGit::stageFiles(QStringList items)
+void QGit::stageFiles(const QStringList &items)
 {
     QGitError error;
 
@@ -3078,7 +3079,7 @@ void QGit::stageFiles(QStringList items)
     emit stageFilesReply(error);
 }
 
-void QGit::unstageFiles(QStringList items)
+void QGit::unstageFiles(const QStringList &items)
 {
     QGitError error;
 
@@ -3138,7 +3139,7 @@ void QGit::unstageFiles(QStringList items)
     emit unstageFilesReply(error);
 }
 
-void QGit::stageFileLines(QString filename, QVector<QGitDiffWidgetLine> lines)
+void QGit::stageFileLines(const QString &filename, const QVector<QGitDiffWidgetLine> &lines)
 {
     QGitError error;
 
@@ -3258,7 +3259,7 @@ void QGit::stageFileLines(QString filename, QVector<QGitDiffWidgetLine> lines)
     emit stageFilesReply(error);
 }
 
-void QGit::unstageFileLines(QString filename, QVector<QGitDiffWidgetLine> lines)
+void QGit::unstageFileLines(const QString &filename, const QVector<QGitDiffWidgetLine> &lines)
 {
     QGitError error;
 
@@ -3377,7 +3378,7 @@ void QGit::unstageFileLines(QString filename, QVector<QGitDiffWidgetLine> lines)
     emit unstageFilesReply(error);
 }
 
-void QGit::discardFiles(QStringList items)
+void QGit::discardFiles(const QStringList &items)
 {
     QGitError error;
 
@@ -3476,7 +3477,7 @@ void QGit::discardFiles(QStringList items)
     emit discardFilesReply(error);
 }
 
-void QGit::discardFileLines(QString filename, QVector<QGitDiffWidgetLine> lines)
+void QGit::discardFileLines(const QString &filename, const QVector<QGitDiffWidgetLine> &lines)
 {
     QGitError error;
 
@@ -3569,7 +3570,7 @@ void QGit::discardFileLines(QString filename, QVector<QGitDiffWidgetLine> lines)
     emit discardFilesReply(error);
 }
 
-void QGit::commit(QString message, bool withPush, bool amend)
+void QGit::commit(const QString &message, bool withPush, bool amend)
 {
     git_oid new_commit_id = { {0} };
     QGitError error;
@@ -3738,7 +3739,7 @@ void QGit::commit(QString message, bool withPush, bool amend)
     emit commitReply(QString::fromUtf8(git_oid_tostr_s(&new_commit_id)), error);
 }
 
-void QGit::clone(QUrl url)
+void QGit::clone(const QUrl &url)
 {
     QGitError error;
 
@@ -3791,7 +3792,7 @@ void QGit::clone(QUrl url)
     emit cloneReply(error);
 }
 
-void QGit::pull(QString remote, QString branch, bool rebase)
+void QGit::pull(const QString &remote, const QString &branch, bool rebase)
 {
     QGitError error;
 
@@ -3848,7 +3849,7 @@ void QGit::pull(QString remote, QString branch, bool rebase)
     emit pullReply(error);
 }
 
-void QGit::rebase(QString upstream, QString branch, QString onto)
+void QGit::rebase(const QString &upstream, const QString &branch, const QString &onto)
 {
     QGitError error;
     git_rebase *rebase_ptr = nullptr;
@@ -3962,7 +3963,7 @@ void QGit::rebase(QString upstream, QString branch, QString onto)
     emit rebaseReply(error);
 }
 
-void QGit::merge(QString branchName)
+void QGit::merge(const QString &branchName)
 {
     QGitError error;
     try {
@@ -4161,7 +4162,7 @@ void QGit::fetch(bool fetchFromAllRemotes, bool purgeDeletedBranches, bool fetch
     emit fetchReply(error);
 }
 
-void QGit::push(QString remote, QStringList branches, bool tags, bool force)
+void QGit::push(const QString &remote, const QStringList &branches, bool tags, bool force)
 {
     QGitError error;
 
@@ -4269,7 +4270,7 @@ void QGit::push(QString remote, QStringList branches, bool tags, bool force)
     emit pushReply(error);
 }
 
-void QGit::listCommits(QString branchRef, int offset, int length)
+void QGit::listCommits(const QString &branchRef, int offset, int length)
 {
     QList<QGitCommit> commits;
     QGitError error;
@@ -4413,7 +4414,7 @@ void QGit::abortSearch()
     m_abortSearch = true;
 }
 
-void QGit::searchCommits(QString text, QString type)
+void QGit::searchCommits(const QString &text, const QString &type)
 {
     m_abortSearch = false;
     QGitError error;
@@ -4775,7 +4776,7 @@ QList<QGitBlameHunk> QGit::blameFile(const QString &filePath, const QString &com
     return hunks;
 }
 
-void QGit::setNote(QString commitHash, QString noteText)
+void QGit::setNote(const QString &commitHash, const QString &noteText)
 {
     QGitError error;
     try {
@@ -4801,7 +4802,7 @@ void QGit::setNote(QString commitHash, QString noteText)
     emit setNoteReply(error);
 }
 
-void QGit::removeNote(QString commitHash)
+void QGit::removeNote(const QString &commitHash)
 {
     QGitError error;
     try {

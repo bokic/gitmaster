@@ -34,11 +34,11 @@ public:
     QVector<QGitDiffWidgetLine> linesAt(int fileIdx, int hunkIdx, int lineIdx, QString &fileName) const;
 
 signals:
-    void requestGitDiff(QString first, QString second, QList<QString> files, uint32_t context_lines, bool ignoreWhitespace);
-    void select(QString file, QVector<QGitDiffWidgetLine> lines);
+    void requestGitDiff(const QString &first, const QString &second, const QList<QString> &files, uint32_t context_lines, bool ignoreWhitespace);
+    void select(const QString &file, const QVector<QGitDiffWidgetLine> &lines);
 
 public slots:
-    void responseGitDiff(QString first, QString second, QList<QGitDiffFile> diff, QGitError error);
+    void responseGitDiff(const QString &first, const QString &second, const QList<QGitDiffFile> &diff, const QGitError &error);
 
 protected:
     void paintEvent(QPaintEvent *event) override;

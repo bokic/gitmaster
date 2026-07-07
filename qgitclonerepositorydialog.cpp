@@ -60,7 +60,7 @@ void QGitCloneRepositoryDialog::on_pushButton_close_clicked()
     }
 }
 
-void QGitCloneRepositoryDialog::cloneReply(QGitError error)
+void QGitCloneRepositoryDialog::cloneReply(const QGitError &error)
 {
     Q_UNUSED(error)
 
@@ -97,7 +97,7 @@ void QGitCloneRepositoryDialog::cloneTransferReply(unsigned int total_objects, u
     ui->label_status->setText(tr("Recieved %1 bytes.").arg(received_bytes));
 }
 
-void QGitCloneRepositoryDialog::cloneProgressReply(QString path, size_t completed_steps, size_t total_steps)
+void QGitCloneRepositoryDialog::cloneProgressReply(const QString &path, size_t completed_steps, size_t total_steps)
 {
     Q_UNUSED(path)
 

@@ -23,12 +23,12 @@ protected:
 
 private slots:
     void on_pushButton_close_clicked();
-	void cloneReply(QGitError error);
+	void cloneReply(const QGitError &error);
 	void cloneTransferReply(unsigned int total_objects, unsigned int indexed_objects, unsigned int received_objects, unsigned int local_objects, unsigned int total_deltas, unsigned int indexed_deltas, size_t received_bytes);
-	void cloneProgressReply(QString path, size_t completed_steps, size_t total);
+	void cloneProgressReply(const QString &path, size_t completed_steps, size_t total);
 
 signals:
-	void clone(QUrl url);
+	void clone(const QUrl &url);
 
 private:
     Ui::QGitCloneRepositoryDialog *ui = nullptr;
