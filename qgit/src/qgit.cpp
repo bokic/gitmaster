@@ -184,6 +184,24 @@ static void resolveMailmap(git_repository *repo, QString &name, QString &email)
     }
 }
 
+static int resolveToCommitOid(git_oid &oid, git_repository *repo, const QString &spec)
+{
+    GitObject obj;
+    int res = git_revparse_single(obj, repo, spec.toUtf8().constData());
+    if (res == 0)
+    {
+        GitCommit peeled;
+        if (git_object_peel((git_object **)&peeled.value, obj, GIT_OBJECT_COMMIT) == 0)
+        {
+            oid = *git_commit_id(peeled);
+            return 0;
+        }
+        oid = *git_object_id(obj);
+        return 0;
+    }
+    return git_oid_fromstr(&oid, spec.toUtf8().constData());
+}
+
 struct GitIndex {
     GitIndex() = default;
     GitIndex(const GitIndex&) = delete;
@@ -604,9 +622,9 @@ bool QGit::isAncestor(const QString &ancestor, const QString &descendant) const
     }
 
     git_oid ancestor_oid, descendant_oid;
-    res = git_oid_fromstr(&ancestor_oid, ancestor.toUtf8().constData());
+    res = resolveToCommitOid(ancestor_oid, repo, ancestor);
     if (res) return false;
-    res = git_oid_fromstr(&descendant_oid, descendant.toUtf8().constData());
+    res = resolveToCommitOid(descendant_oid, repo, descendant);
     if (res) return false;
 
     // Returns 1 if descendant is a descendant of ancestor (meaning ancestor is an ancestor of descendant)
@@ -780,16 +798,10 @@ void QGit::createLocalBranch(const QString &name, const QString &commit_id, bool
     }
     else
     {
-        res = git_oid_fromstr(&oid, commit_id.toUtf8().constData());
+        res = resolveToCommitOid(oid, repo, commit_id);
         if(res)
         {
-            throw QGitError("git_oid_fromstr", res);
-        }
-
-        res = git_commit_lookup(commit_obj, repo, &oid);
-        if(res)
-        {
-            throw QGitError("git_commit_lookup", res);
+            throw QGitError("resolveToCommitOid", res);
         }
     }
 
@@ -850,10 +862,10 @@ void QGit::cherrypick(const QString &commitId)
     }
 
     git_oid oid;
-    res = git_oid_fromstr(&oid, commitId.toUtf8().constData());
+    res = resolveToCommitOid(oid, repo, commitId);
     if (res)
     {
-        throw QGitError("git_oid_fromstr", res);
+        throw QGitError("resolveToCommitOid", res);
     }
 
     GitCommit commit;
@@ -961,10 +973,10 @@ void QGit::revert(const QString &commitId)
     }
 
     git_oid oid;
-    res = git_oid_fromstr(&oid, commitId.toUtf8().constData());
+    res = resolveToCommitOid(oid, repo, commitId);
     if (res)
     {
-        throw QGitError("git_oid_fromstr", res);
+        throw QGitError("resolveToCommitOid", res);
     }
 
     GitCommit commit;
@@ -1078,10 +1090,10 @@ void QGit::reset(const QString &commitId, git_reset_t type)
     }
 
     git_oid oid;
-    res = git_oid_fromstr(&oid, commitId.toUtf8().constData());
+    res = resolveToCommitOid(oid, repo, commitId);
     if (res)
     {
-        throw QGitError("git_oid_fromstr", res);
+        throw QGitError("resolveToCommitOid", res);
     }
 
     GitObject obj;
@@ -1605,8 +1617,8 @@ void QGit::createTag(QString name, QString targetObjectId, QString message, bool
 
         // Resolve the target OID from the commit hash string
         git_oid target_oid;
-        res = git_oid_fromstr(&target_oid, targetObjectId.toUtf8().constData());
-        if (res) throw QGitError("git_oid_fromstr", res);
+        res = resolveToCommitOid(target_oid, repo, targetObjectId);
+        if (res) throw QGitError("resolveToCommitOid", res);
 
         // Look up the target git object (commit)
         GitObject target_obj;
@@ -3953,10 +3965,10 @@ void QGit::listCommits(QString object, int length)
         }
         else
         {
-            res = git_oid_fromstr(&oid, object.toUtf8().constData());
+            res = resolveToCommitOid(oid, repo, object);
             if (res)
             {
-                throw QGitError("git_oid_fromstr", res);
+                throw QGitError("resolveToCommitOid", res);
             }
 
             res = git_revwalk_push(walker, &oid);
