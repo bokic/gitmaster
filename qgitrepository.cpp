@@ -12,6 +12,7 @@
 #include "qgitcleandialog.h"
 #include "qgitreflogdialog.h"
 #include "qgitremotesdialog.h"
+#include "qgitblamedialog.h"
 #include <qgitbranch.h>
 
 #include <QCryptographicHash>
@@ -141,6 +142,14 @@ QGitRepository::QGitRepository(const QString &path, QWidget *parent)
     ui->search_files->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
     ui->logHistory_commits->horizontalHeader()->setSectionResizeMode(1, QHeaderView::Stretch);
     ui->search_commits->horizontalHeader()->setSectionResizeMode(0, QHeaderView::Stretch);
+
+    ui->logHistory_files->setContextMenuPolicy(Qt::CustomContextMenu);
+    connect(ui->logHistory_files, &QTableWidget::customContextMenuRequested,
+            this, &QGitRepository::on_logHistory_files_customContextMenuRequested);
+
+    ui->search_files->setContextMenuPolicy(Qt::CustomContextMenu);
+    connect(ui->search_files, &QTableWidget::customContextMenuRequested,
+            this, &QGitRepository::on_search_files_customContextMenuRequested);
 
     activateCommitOperation(false);
 
@@ -419,6 +428,23 @@ void QGitRepository::repositoryRebaseReply(QGitError error)
 QGit *QGitRepository::git() const
 {
     return m_git;
+}
+
+void QGitRepository::navigateToCommit(const QString &hash)
+{
+    if (hash.isEmpty()) return;
+    ui->repositoryDetail->setCurrentWidget(ui->tabLogHistory);
+    if (!ui->logHistory_commits->selectCommit(hash))
+    {
+        if (m_allCommitsLoaded) {
+            QMessageBox::information(this, tr("Commit not found"),
+                                     tr("The commit [%1] was not found in the repository history.").arg(hash.left(10)));
+        } else {
+            m_searchingCommitHash = hash;
+            fetchCommits();
+            QGitMasterMainWindow::instance()->updateStatusBarText(tr("Searching for commit %1...").arg(hash.left(10)));
+        }
+    }
 }
 
 bool QGitRepository::event(QEvent *event)
@@ -1260,6 +1286,7 @@ void QGitRepository::on_branchesTreeView_customContextMenuRequested(const QPoint
         QAction *cleanAction = menu.addAction(tr("Clean Working Directory..."));
         menu.addSeparator();
         QAction *showReflogAction = menu.addAction(tr("Show Reference Log (Reflog)..."));
+        QAction *showBlameAction  = menu.addAction(tr("Browse File Blame..."));
 
         QAction *selectedAction = menu.exec(ui->branchesTreeView->viewport()->mapToGlobal(pos));
         if (selectedAction == applyPatchAction)
@@ -1287,6 +1314,13 @@ void QGitRepository::on_branchesTreeView_customContextMenuRequested(const QPoint
         else if (selectedAction == showReflogAction)
         {
             QGitReflogDialog dlg(QStringLiteral("HEAD"), this, this);
+            dlg.exec();
+        }
+        else if (selectedAction == showBlameAction)
+        {
+            QGitBlameDialog dlg(m_git, this);
+            connect(&dlg, &QGitBlameDialog::commitNavigationRequested,
+                    this, &QGitRepository::navigateToCommit);
             dlg.exec();
         }
         return;
@@ -1820,6 +1854,54 @@ void QGitRepository::on_logHistory_files_itemSelectionChanged()
     {
         ui->logHistory_diff->setIgnoreWhitespace(ignoreWhitespace);
         ui->logHistory_diff->setGitDiff(m_commitDiff.parents().at(0).commitHash(), m_commitDiff.id(), {item->data(Qt::UserRole).toString()});
+    }
+}
+
+static void openBlameForFileItem(QTableWidgetItem *item, QGit *git,
+                                  QGitRepository *repo, const QString &commitId,
+                                  QWidget *parent)
+{
+    if (!item) return;
+    // Column 0 holds the relative file path in UserRole
+    QTableWidgetItem *col0 = item->tableWidget()->item(item->row(), 0);
+    if (!col0) return;
+    QString relPath = col0->data(Qt::UserRole).toString();
+    if (relPath.isEmpty()) return;
+
+    QGitBlameDialog *dlg = new QGitBlameDialog(git, parent);
+    dlg->setAttribute(Qt::WA_DeleteOnClose);
+
+    // Pre-select the file automatically
+    dlg->preSelectFile(relPath, commitId);
+
+    QObject::connect(dlg, &QGitBlameDialog::commitNavigationRequested,
+                     repo, &QGitRepository::navigateToCommit);
+    dlg->show();
+}
+
+void QGitRepository::on_logHistory_files_customContextMenuRequested(const QPoint &pos)
+{
+    QTableWidgetItem *item = ui->logHistory_files->itemAt(pos);
+    if (!item) return;
+
+    QMenu menu(this);
+    QAction *blameAction = menu.addAction(tr("Show Blame at this Commit..."));
+    QAction *selected = menu.exec(ui->logHistory_files->viewport()->mapToGlobal(pos));
+    if (selected == blameAction) {
+        openBlameForFileItem(item, m_git, this, m_commitDiff.id(), this);
+    }
+}
+
+void QGitRepository::on_search_files_customContextMenuRequested(const QPoint &pos)
+{
+    QTableWidgetItem *item = ui->search_files->itemAt(pos);
+    if (!item) return;
+
+    QMenu menu(this);
+    QAction *blameAction = menu.addAction(tr("Show Blame at this Commit..."));
+    QAction *selected = menu.exec(ui->search_files->viewport()->mapToGlobal(pos));
+    if (selected == blameAction) {
+        openBlameForFileItem(item, m_git, this, m_commitDiff.id(), this);
     }
 }
 

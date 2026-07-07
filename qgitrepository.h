@@ -33,6 +33,7 @@ public:
     void push();
     void merge();
     QGit *git() const;
+    void navigateToCommit(const QString &hash);
 
 signals:
     void localStash(QString name, bool keepIndex, bool includeUntracked, bool includeIgnored);
@@ -106,6 +107,8 @@ private slots:
     void on_pushButton_commitCancel_clicked();
     void on_plainTextEdit_commitMessage_focus();
     void on_logHistory_files_itemSelectionChanged();
+    void on_logHistory_files_customContextMenuRequested(const QPoint &pos);
+    void on_search_files_customContextMenuRequested(const QPoint &pos);
     void on_listWidget_staged_itemSelectionChanged();
     void on_listWidget_unstaged_itemSelectionChanged();
     void on_listWidget_unstaged_customContextMenuRequested(const QPoint &pos);

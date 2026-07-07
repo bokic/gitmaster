@@ -83,6 +83,7 @@ set(PROJECT_HEADERS
     qgitstashdialog.h
     qgitreflogdialog.h
     qgitremotesdialog.h
+    qgitblamedialog.h
 
     qgitrepotreeitemdelegate.h
     qgitrepotreewidget.h
@@ -131,6 +132,7 @@ set(PROJECT_SOURCES
     qgitstashdialog.cpp            qgitstashdialog.ui
     qgitreflogdialog.cpp           qgitreflogdialog.ui
     qgitremotesdialog.cpp          qgitremotesdialog.ui
+    qgitblamedialog.cpp            qgitblamedialog.ui
 
     qgitrepotreeitemdelegate.cpp
     qgitrepotreewidget.cpp

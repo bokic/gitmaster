@@ -38,6 +38,25 @@ public:
     QString message;
 };
 
+class QGitBlameHunk
+{
+public:
+    // Range
+    size_t linesInHunk = 0;      // Number of lines this hunk covers
+    size_t finalStartLineNumber = 0; // 1-based line in the final file
+
+    // Commit info
+    QString commitHash;
+    QString authorName;
+    QString authorEmail;
+    int64_t authorTime = 0;      // Unix timestamp
+    QString summary;             // Commit summary (first line of message)
+
+    // Original file
+    QString origPath;            // Filename in the originating commit
+    size_t origStartLineNumber = 0;
+};
+
 class QGitRemote
 {
 public:
@@ -94,6 +113,7 @@ public:
     bool isAncestor(const QString &ancestor, const QString &descendant) const;
     QString getNote(const QString &commitHash) const;
     QList<QGitReflogEntry> getReflog(const QString &refName = QStringLiteral("HEAD")) const;
+    QList<QGitBlameHunk> blameFile(const QString &filePath, const QString &commitId = QString()) const;
     QList<QGitBranch> branches(git_branch_t type) const;
     bool hasCommitId(const QString &commitId) const;
     void createLocalBranch(const QString &name, const QString &commit_id  = "", bool checkout = false, bool force = false);

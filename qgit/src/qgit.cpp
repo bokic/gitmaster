@@ -4429,6 +4429,80 @@ QList<QGitReflogEntry> QGit::getReflog(const QString &refName) const
     return entries;
 }
 
+struct GitBlame {
+    GitBlame() = default;
+    GitBlame(const GitBlame &) = delete;
+    GitBlame &operator=(const GitBlame &) = delete;
+    operator git_blame *() { return value; }
+    operator git_blame **() { return &value; }
+    ~GitBlame() { if (value) { git_blame_free(value); value = nullptr; } }
+    git_blame *value = nullptr;
+};
+
+QList<QGitBlameHunk> QGit::blameFile(const QString &filePath, const QString &commitId) const
+{
+    QList<QGitBlameHunk> hunks;
+    try {
+        GitRepository repo;
+        int res = git_repository_open(repo, m_path.absolutePath().toUtf8().constData());
+        if (res) throw QGitError("git_repository_open", res);
+
+        git_blame_options opts = GIT_BLAME_OPTIONS_INIT;
+
+        // If a commitId is given, blame as-of that commit instead of HEAD
+        if (!commitId.isEmpty()) {
+            res = git_oid_fromstr(&opts.newest_commit, commitId.toUtf8().constData());
+            if (res) throw QGitError("git_oid_fromstr", res);
+        }
+
+        GitBlame blame;
+        res = git_blame_file(blame, repo, filePath.toUtf8().constData(), &opts);
+        if (res) throw QGitError("git_blame_file", res);
+
+        uint32_t count = git_blame_get_hunk_count(blame);
+        hunks.reserve(static_cast<int>(count));
+
+        for (uint32_t i = 0; i < count; i++) {
+            const git_blame_hunk *hunk = git_blame_get_hunk_byindex(blame, i);
+            if (!hunk) continue;
+
+            QGitBlameHunk qHunk;
+            qHunk.linesInHunk          = hunk->lines_in_hunk;
+            qHunk.finalStartLineNumber = hunk->final_start_line_number;
+            qHunk.origStartLineNumber  = hunk->orig_start_line_number;
+
+            // Commit hash
+            char oidStr[GIT_OID_HEXSZ + 1];
+            git_oid_tostr(oidStr, sizeof(oidStr), &hunk->final_commit_id);
+            qHunk.commitHash = QString::fromLatin1(oidStr);
+
+            // Author from the hunk's signature
+            if (hunk->final_signature) {
+                qHunk.authorName  = QString::fromUtf8(hunk->final_signature->name);
+                qHunk.authorEmail = QString::fromUtf8(hunk->final_signature->email);
+                qHunk.authorTime  = hunk->final_signature->when.time;
+            }
+
+            // Commit summary — look up the commit object
+            GitObject obj;
+            if (git_object_lookup(obj, repo, &hunk->final_commit_id, GIT_OBJECT_COMMIT) == 0) {
+                git_commit *commit = reinterpret_cast<git_commit *>(static_cast<git_object *>(obj));
+                const char *msg = git_commit_summary(commit);
+                if (msg) qHunk.summary = QString::fromUtf8(msg);
+            }
+
+            // Original path
+            if (hunk->orig_path) {
+                qHunk.origPath = QString::fromUtf8(hunk->orig_path);
+            }
+
+            hunks.append(qHunk);
+        }
+    } catch (...) {
+    }
+    return hunks;
+}
+
 void QGit::setNote(QString commitHash, QString noteText)
 {
     QGitError error;
