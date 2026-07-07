@@ -16,7 +16,6 @@ A comprehensive reanalysis of `libgit2` features for integration into GitMaster,
 | **Ahead/Behind Graph Analysis** | Partial (Ancestor check implemented) | `git2/graph.h` | Medium |
 | **Stash Advanced Options & Patch Inspection** | Partial (basic save/pop/apply) | `git2/stash.h` | Low |
 | **Git Notes Management** | Unimplemented | `git2/note.h` | Low |
-| **Mailmap Author Mapping** | Unimplemented | `git2/mailmap.h` | Low |
 | **Revision Parsing Engine** | Partial (direct OID/ref only) | `git2/revparse.h` | Low |
 
 ---
@@ -58,7 +57,3 @@ A comprehensive reanalysis of `libgit2` features for integration into GitMaster,
 ### 9. Revision Parsing Engine (`git2/revparse.h`)
 * **libgit2 APIs**: `git_revparse_single`, `git_revparse_ext`
 * **Description**: **Git Revision Query**. Support parsing expressions like `HEAD~3`, `main@{1}`, or `HEAD^2` in search inputs or checkout dialogs.
-
-### 10. Mailmap Support (`git2/mailmap.h`)
-* **libgit2 APIs**: `git_mailmap_new`, `git_mailmap_resolve`
-* **Description**: **Author Identity Normalization**. Resolve author and committer names/emails according to repository `.mailmap` rules when generating commit log tables.
