@@ -61,6 +61,7 @@ signals:
     void repositoryCreateTag(QString name, QString targetObjectId, QString message, bool force);
     void repositoryUpdateSubmodule(QString name);
     void repositoryClean(bool includeIgnored, bool removeDirectories);
+    void repositoryApplyPatch(QString patchPath);
 
 protected:
     void keyPressEvent(QKeyEvent *event) override;
@@ -83,6 +84,7 @@ private slots:
     void repositoryUnstageFilesReply(QGitError error);
     void repositoryDiscardFilesReply(QGitError error);
     void repositoryCleanReply(QGitError error);
+    void repositoryApplyPatchReply(QGitError error);
     void repositoryCommitReply(QString commit_id, QGitError error);
     void repositoryGetCommitsReply(QList<QGitCommit> commits, QGitError error);
     void repositoryGetCommitDiffReply(QString commitId, QGitCommit diff, QGitError error);

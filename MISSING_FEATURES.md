@@ -10,7 +10,6 @@ A comprehensive reanalysis of `libgit2` features for integration into GitMaster,
 | :--- | :--- | :--- | :--- |
 | **Code Blaming (Line Annotations)** | Unimplemented | `git2/blame.h` | Medium |
 | **Worktree Support** | Unimplemented | `git2/worktree.h` | Medium |
-| **Apply Patches/Diffs** | Unimplemented | `git2/apply.h` | Medium |
 | **Reflog Navigation** | Unimplemented | `git2/reflog.h` | Medium |
 | **Remote Repository CRUD & Refspecs** | Partial (list/fetch/push) | `git2/remote.h` | Medium |
 | **Ahead/Behind Graph Analysis** | Partial (Ancestor check implemented) | `git2/graph.h` | Medium |
@@ -30,30 +29,26 @@ A comprehensive reanalysis of `libgit2` features for integration into GitMaster,
 * **libgit2 APIs**: `git_worktree_add`, `git_worktree_list`, `git_worktree_prune`, `git_worktree_validate`
 * **Description**: **Worktrees Manager**. Allow developers to checkout branches into separate work directories directly from the GUI, letting them work on multiple branches concurrently without stashing or switching.
 
-### 3. Apply Patches (`git2/apply.h`)
-* **libgit2 APIs**: `git_apply`
-* **Description**: **Apply Diff/Patch File**. Let users apply a standard unified diff or `.patch` file directly to the workspace/index.
-
-### 4. Reflog Navigation (`git2/reflog.h`)
+### 3. Reflog Navigation (`git2/reflog.h`)
 * **libgit2 APIs**: `git_reflog_read`, `git_reflog_entry_byindex`
 * **Description**: **Reflog Console**. A history list of reference logs (`HEAD` pointer updates), showing checkout histories and actions. This serves as a safety net to find and recover lost commits or aborted rebases.
 
-### 5. Remote Repository CRUD & Refspecs (`git2/remote.h`)
+### 4. Remote Repository CRUD & Refspecs (`git2/remote.h`)
 * **libgit2 APIs**: `git_remote_create`, `git_remote_delete`, `git_remote_rename`, `git_remote_set_url`
 * **Description**: **Remote Configuration Manager**. Provide UI to add new remote repositories, delete remotes, rename remotes, and edit fetch/push refspecs.
 
-### 6. Ahead/Behind Graph Analysis (`git2/graph.h`)
+### 5. Ahead/Behind Graph Analysis (`git2/graph.h`)
 * **libgit2 APIs**: `git_graph_ahead_behind`, `git_graph_descendant_of`
 * **Status**: **Partial**. Ancestry checks (`git_graph_descendant_of`) have been wrapped in `QGit::isAncestor` and hooked into the log context menu to prevent invalid/redundant rebases. Branch sync counters (ahead/behind indicators in repository trees) remain unimplemented.
 
-### 7. Stash Advanced Options & Patch Inspection (`git2/stash.h`)
+### 6. Stash Advanced Options & Patch Inspection (`git2/stash.h`)
 * **libgit2 APIs**: `git_stash_save2` (`GIT_STASH_INCLUDE_UNTRACKED`, `GIT_STASH_KEEP_INDEX`), `git_stash_apply`
 * **Description**: **Advanced Stash Options**. Allow users to include untracked/ignored files in stashes, view diffs of individual stashes before applying, or apply specific stash elements.
 
-### 8. Git Notes Management (`git2/note.h`)
+### 7. Git Notes Management (`git2/note.h`)
 * **libgit2 APIs**: `git_note_create`, `git_note_read`, `git_note_remove`
 * **Description**: **Commit Notes**. View and attach metadata notes to commits without modifying commit hashes.
 
-### 9. Revision Parsing Engine (`git2/revparse.h`)
+### 8. Revision Parsing Engine (`git2/revparse.h`)
 * **libgit2 APIs**: `git_revparse_single`, `git_revparse_ext`
 * **Description**: **Git Revision Query**. Support parsing expressions like `HEAD~3`, `main@{1}`, or `HEAD^2` in search inputs or checkout dialogs.

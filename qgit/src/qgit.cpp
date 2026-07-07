@@ -1697,6 +1697,37 @@ void QGit::clean(bool includeIgnored, bool removeDirectories)
     emit cleanReply(error);
 }
 
+void QGit::applyPatch(QString patchPath)
+{
+    QGitError error;
+    try {
+        GitRepository repo;
+        int res = git_repository_open(repo, m_path.absolutePath().toUtf8().constData());
+        if (res) throw QGitError("git_repository_open", res);
+
+        QFile file(patchPath);
+        if (!file.open(QIODevice::ReadOnly | QIODevice::Text))
+        {
+            throw QGitError(QString("Could not open patch file: %1").arg(patchPath), -1);
+        }
+
+        QByteArray content = file.readAll();
+        file.close();
+
+        GitDiff diff;
+        res = git_diff_from_buffer(diff, content.constData(), content.length());
+        if (res) throw QGitError("git_diff_from_buffer", res);
+
+        git_apply_options opts = GIT_APPLY_OPTIONS_INIT;
+        res = git_apply(repo, diff, GIT_APPLY_LOCATION_WORKDIR, &opts);
+        if (res) throw QGitError("git_apply", res);
+
+    } catch (const QGitError &ex) {
+        error = ex;
+    }
+    emit applyPatchReply(error);
+}
+
 void QGit::setUpstream(QString branchName, QString upstreamBranchName)
 {
     QGitError error;

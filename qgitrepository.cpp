@@ -18,6 +18,7 @@
 #include <QNetworkRequest>
 #include <QNetworkReply>
 #include <QMessageBox>
+#include <QFileDialog>
 #include <QInputDialog>
 #include <QKeyEvent>
 #include <QScrollBar>
@@ -196,6 +197,8 @@ QGitRepository::QGitRepository(const QString &path, QWidget *parent)
     connect(m_git, &QGit::createTagReply, this, &QGitRepository::createTagReply);
     connect(this, &QGitRepository::repositoryClean, m_git, &QGit::clean);
     connect(m_git, &QGit::cleanReply, this, &QGitRepository::repositoryCleanReply);
+    connect(this, &QGitRepository::repositoryApplyPatch, m_git, &QGit::applyPatch);
+    connect(m_git, &QGit::applyPatchReply, this, &QGitRepository::repositoryApplyPatchReply);
 
     ui->branchesTreeView->setContextMenuPolicy(Qt::CustomContextMenu);
     ui->branchesTreeView->setEditTriggers(QAbstractItemView::NoEditTriggers);
@@ -510,6 +513,7 @@ void QGitRepository::repositoryBranchesAndTagsReply(QList<QGitBranch> branches, 
     QTreeWidgetItem *itemRemoteBranches = new QTreeWidgetItem(QStringList() << tr("Remotes"));
 
 
+    itemWorkingCopy->setData(0, Qt::UserRole + 2, "WorkingCopy");
     itemWorkingCopy->setIcon(0, m_iconWhiteCheckbox);
     itemFileStatus->addChild(itemWorkingCopy);
 
@@ -1186,6 +1190,38 @@ void QGitRepository::on_branchesTreeView_customContextMenuRequested(const QPoint
 
     QString type = item->data(0, Qt::UserRole + 2).toString();
     QString fullName = item->data(0, Qt::UserRole + 1).toString();
+
+    if (type == "WorkingCopy")
+    {
+        QMenu menu(this);
+        QAction *applyPatchAction = menu.addAction(tr("Apply Patch..."));
+        QAction *cleanAction = menu.addAction(tr("Clean Working Directory..."));
+
+        QAction *selectedAction = menu.exec(ui->branchesTreeView->viewport()->mapToGlobal(pos));
+        if (selectedAction == applyPatchAction)
+        {
+            QString patchPath = QFileDialog::getOpenFileName(
+                this,
+                tr("Select Patch File"),
+                QString(),
+                tr("Patch/Diff Files (*.patch *.diff);;All Files (*)")
+            );
+            if (!patchPath.isEmpty())
+            {
+                QGitMasterMainWindow::instance()->updateStatusBarText(tr("Applying patch..."));
+                emit repositoryApplyPatch(patchPath);
+            }
+        }
+        else if (selectedAction == cleanAction)
+        {
+            QGitCleanDialog dlg(this);
+            if (dlg.exec() == QDialog::Accepted) {
+                QGitMasterMainWindow::instance()->updateStatusBarText(tr("Cleaning working directory..."));
+                emit repositoryClean(dlg.removeIgnored(), dlg.removeDirectories());
+            }
+        }
+        return;
+    }
 
     if (type == "Submodule")
     {
@@ -2062,6 +2098,17 @@ void QGitRepository::repositoryCleanReply(QGitError error)
         QMessageBox::critical(this, tr("Clean Error"), error.errorString());
     } else {
         QMessageBox::information(this, tr("Clean Successful"), tr("Working directory cleaned successfully."));
+        refreshData();
+    }
+}
+
+void QGitRepository::repositoryApplyPatchReply(QGitError error)
+{
+    QGitMasterMainWindow::instance()->updateStatusBarText(tr("Ready"));
+    if (error.errorCode() != 0) {
+        QMessageBox::critical(this, tr("Apply Patch Error"), error.errorString());
+    } else {
+        QMessageBox::information(this, tr("Apply Patch Successful"), tr("Patch applied successfully."));
         refreshData();
     }
 }

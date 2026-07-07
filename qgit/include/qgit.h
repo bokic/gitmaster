@@ -143,6 +143,7 @@ public slots:
     void rebase(QString upstream, QString branch = "", QString onto = "");
     void createTag(QString name, QString targetObjectId, QString message, bool force);
     void clean(bool includeIgnored, bool removeDirectories);
+    void applyPatch(QString patchPath);
 
 signals:
     void initReply(QGitError error);
@@ -182,6 +183,7 @@ signals:
     void mergeReply(QGitError error);
     void rebaseReply(QGitError error);
     void cleanReply(QGitError error);
+    void applyPatchReply(QGitError error);
 
 private:
     QDir m_path;
