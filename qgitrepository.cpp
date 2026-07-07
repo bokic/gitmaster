@@ -17,6 +17,7 @@
 #include "qgitflowdialog.h"
 #include <qgitbranch.h>
 
+#include <QDebug>
 #include <QCryptographicHash>
 #include <QTableWidgetItem>
 #include <QTreeWidgetItem>
@@ -778,7 +779,11 @@ void QGitRepository::repositoryBranchesAndTagsReply(QList<QGitBranch> branches, 
     QList<QGitSubmodule> submods;
     try {
         submods = m_git->submodules();
-    } catch (...) {}
+    } catch (const std::exception &ex) {
+        qWarning() << "Failed to load submodules:" << ex.what();
+    } catch (...) {
+        qWarning() << "Failed to load submodules: unknown exception";
+    }
 
     QTreeWidgetItem *itemSubmodules = new QTreeWidgetItem(QStringList() << tr("Submodules"));
     for (const auto &sub : submods) {
@@ -804,7 +809,11 @@ void QGitRepository::repositoryBranchesAndTagsReply(QList<QGitBranch> branches, 
     QList<QGitWorktree> worktreeList;
     try {
         worktreeList = m_git->worktrees();
-    } catch (...) {}
+    } catch (const std::exception &ex) {
+        qWarning() << "Failed to load worktrees:" << ex.what();
+    } catch (...) {
+        qWarning() << "Failed to load worktrees: unknown exception";
+    }
 
     QTreeWidgetItem *itemWorktrees = new QTreeWidgetItem(QStringList() << tr("Worktrees"));
     itemWorktrees->setData(0, Qt::UserRole + 2, QStringLiteral("WorktreesHeader"));
