@@ -79,6 +79,7 @@ set(PROJECT_HEADERS
     qgitsettingsdialog.h
     qgitconflictresolverdialog.h
     qgitcreatetagdialog.h
+    qgitcleandialog.h
 
     qgitrepotreeitemdelegate.h
     qgitrepotreewidget.h
@@ -123,6 +124,7 @@ set(PROJECT_SOURCES
     qgitsettingsdialog.cpp        qgitsettingsdialog.ui
     qgitconflictresolverdialog.cpp qgitconflictresolverdialog.ui
     qgitcreatetagdialog.cpp        qgitcreatetagdialog.ui
+    qgitcleandialog.cpp        qgitcleandialog.ui
 
     qgitrepotreeitemdelegate.cpp
     qgitrepotreewidget.cpp

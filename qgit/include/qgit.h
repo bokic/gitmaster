@@ -141,6 +141,7 @@ public slots:
     void merge(QString branchName);
     void rebase(QString upstream, QString branch = "", QString onto = "");
     void createTag(QString name, QString targetObjectId, QString message, bool force);
+    void clean(bool includeIgnored, bool removeDirectories);
 
 signals:
     void initReply(QGitError error);
@@ -179,6 +180,7 @@ signals:
     void deleteTagReply(QGitError error);
     void mergeReply(QGitError error);
     void rebaseReply(QGitError error);
+    void cleanReply(QGitError error);
 
 private:
     QDir m_path;

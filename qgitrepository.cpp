@@ -9,6 +9,7 @@
 #include "qgitmergedialog.h"
 #include "qgitconflictresolverdialog.h"
 #include "qgitcreatetagdialog.h"
+#include "qgitcleandialog.h"
 #include <qgitbranch.h>
 
 #include <QCryptographicHash>
@@ -193,6 +194,8 @@ QGitRepository::QGitRepository(const QString &path, QWidget *parent)
     connect(m_git, &QGit::renameTagReply, this, &QGitRepository::renameTagReply);
     connect(this, &QGitRepository::repositoryCreateTag, m_git, &QGit::createTag);
     connect(m_git, &QGit::createTagReply, this, &QGitRepository::createTagReply);
+    connect(this, &QGitRepository::repositoryClean, m_git, &QGit::clean);
+    connect(m_git, &QGit::cleanReply, this, &QGitRepository::repositoryCleanReply);
 
     ui->branchesTreeView->setContextMenuPolicy(Qt::CustomContextMenu);
     ui->branchesTreeView->setEditTriggers(QAbstractItemView::NoEditTriggers);
@@ -1728,24 +1731,30 @@ void QGitRepository::on_listWidget_unstaged_itemSelectionChanged()
 void QGitRepository::on_listWidget_unstaged_customContextMenuRequested(const QPoint &pos)
 {
     const auto &selected = ui->listWidget_unstaged->selectedItems();
-    if (selected.isEmpty()) return;
-
-    uint32_t status = selected.first()->data(Qt::UserRole).toUInt();
-    bool hasConflict = (status & GIT_STATUS_CONFLICTED);
-    bool isUntracked = (status & GIT_STATUS_WT_NEW);
 
     QMenu menu(this);
     QAction *resolveAction = nullptr;
-    if (hasConflict) {
-        resolveAction = menu.addAction(tr("Resolve Conflicts..."));
-    }
-    QAction *discardAction = menu.addAction(tr("Discard changes"));
-
+    QAction *discardAction = nullptr;
     QAction *ignoreAction = nullptr;
-    if (isUntracked && selected.size() == 1) {
+
+    if (!selected.isEmpty()) {
+        uint32_t status = selected.first()->data(Qt::UserRole).toUInt();
+        bool hasConflict = (status & GIT_STATUS_CONFLICTED);
+        bool isUntracked = (status & GIT_STATUS_WT_NEW);
+
+        if (hasConflict) {
+            resolveAction = menu.addAction(tr("Resolve Conflicts..."));
+        }
+        discardAction = menu.addAction(tr("Discard changes"));
+
+        if (isUntracked && selected.size() == 1) {
+            menu.addSeparator();
+            ignoreAction = menu.addAction(tr("Add to .gitignore..."));
+        }
         menu.addSeparator();
-        ignoreAction = menu.addAction(tr("Add to .gitignore..."));
     }
+
+    QAction *cleanAction = menu.addAction(tr("Clean Working Directory..."));
 
     QAction *res = menu.exec(ui->listWidget_unstaged->mapToGlobal(pos));
     if (resolveAction && res == resolveAction) {
@@ -1753,7 +1762,7 @@ void QGitRepository::on_listWidget_unstaged_customContextMenuRequested(const QPo
         if (dlg.exec() == QDialog::Accepted) {
             refreshData();
         }
-    } else if (res == discardAction) {
+    } else if (discardAction && res == discardAction) {
         auto confirm = QMessageBox::question(this, tr("Discard changes"),
                                              tr("Are you sure you want to discard changes in the selected files? This operation cannot be undone."),
                                              QMessageBox::Yes | QMessageBox::No);
@@ -1798,6 +1807,12 @@ void QGitRepository::on_listWidget_unstaged_customContextMenuRequested(const QPo
                 QMessageBox::critical(this, tr(".gitignore Error"),
                                       tr("Could not open .gitignore for writing:\n%1").arg(gitignorePath));
             }
+        }
+    } else if (res == cleanAction) {
+        QGitCleanDialog dlg(this);
+        if (dlg.exec() == QDialog::Accepted) {
+            QGitMasterMainWindow::instance()->updateStatusBarText(tr("Cleaning working directory..."));
+            emit repositoryClean(dlg.removeIgnored(), dlg.removeDirectories());
         }
     }
 }
@@ -2006,6 +2021,17 @@ void QGitRepository::createTagReply(QGitError error)
         QMessageBox::critical(this, tr("Create Tag Error"), error.errorString());
     } else {
         QMessageBox::information(this, tr("Tag Created"), tr("Tag created successfully."));
+        refreshData();
+    }
+}
+
+void QGitRepository::repositoryCleanReply(QGitError error)
+{
+    QGitMasterMainWindow::instance()->updateStatusBarText(tr("Ready"));
+    if (error.errorCode() != 0) {
+        QMessageBox::critical(this, tr("Clean Error"), error.errorString());
+    } else {
+        QMessageBox::information(this, tr("Clean Successful"), tr("Working directory cleaned successfully."));
         refreshData();
     }
 }

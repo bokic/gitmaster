@@ -10,6 +10,7 @@
 #include <QVector>
 #include <QDir>
 #include <QFile>
+#include <functional>
 
 
 struct GitRepository {
@@ -1567,6 +1568,69 @@ void QGit::createTag(QString name, QString targetObjectId, QString message, bool
         error = ex;
     }
     emit createTagReply(error);
+}
+
+void QGit::clean(bool includeIgnored, bool removeDirectories)
+{
+    QGitError error;
+    try {
+        GitRepository repo;
+        int res = git_repository_open(repo, m_path.absolutePath().toUtf8().constData());
+        if (res) throw QGitError("git_repository_open", res);
+
+        git_status_options opts = GIT_STATUS_OPTIONS_INIT;
+        opts.show = GIT_STATUS_SHOW_INDEX_AND_WORKDIR;
+        opts.flags = GIT_STATUS_OPT_INCLUDE_UNTRACKED | GIT_STATUS_OPT_RECURSE_UNTRACKED_DIRS;
+
+        if (includeIgnored) {
+            opts.flags |= GIT_STATUS_OPT_INCLUDE_IGNORED | GIT_STATUS_OPT_RECURSE_IGNORED_DIRS;
+        }
+
+        GitStatusList list;
+        res = git_status_list_new(list, repo, &opts);
+        if (res) throw QGitError("git_status_list_new", res);
+
+        size_t count = git_status_list_entrycount(list);
+        for (size_t i = 0; i < count; ++i) {
+            const git_status_entry *entry = git_status_byindex(list, i);
+            if (!entry) continue;
+
+            const git_diff_delta *delta = entry->index_to_workdir;
+            if (!delta) continue;
+
+            QString relPath = QString::fromUtf8(delta->new_file.path);
+            QString absPath = m_path.absoluteFilePath(relPath);
+
+            git_status_t status = entry->status;
+            bool isUntracked = (status & GIT_STATUS_WT_NEW);
+            bool isIgnored = (status & GIT_STATUS_IGNORED);
+
+            if (isUntracked || isIgnored) {
+                QFile::remove(absPath);
+            }
+        }
+
+        if (removeDirectories) {
+            std::function<void(const QString&)> pruneEmptyDirs = [&](const QString &dirPath) {
+                QDir dir(dirPath);
+                QStringList subDirs = dir.entryList(QDir::Dirs | QDir::NoDotAndDotDot | QDir::Hidden);
+                for (const QString &sub : subDirs) {
+                    if (sub == ".git") continue;
+                    pruneEmptyDirs(dir.absoluteFilePath(sub));
+                }
+                if (dirPath != m_path.absolutePath()) {
+                    if (dir.entryList(QDir::AllEntries | QDir::NoDotAndDotDot | QDir::Hidden).isEmpty()) {
+                        dir.rmdir(dirPath);
+                    }
+                }
+            };
+            pruneEmptyDirs(m_path.absolutePath());
+        }
+
+    } catch (const QGitError &ex) {
+        error = ex;
+    }
+    emit cleanReply(error);
 }
 
 void QGit::setUpstream(QString branchName, QString upstreamBranchName)
