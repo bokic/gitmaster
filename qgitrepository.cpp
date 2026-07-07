@@ -33,6 +33,32 @@
 #define COMMIT_COUNT_TO_LOAD 100
 
 
+#include <QLineEdit>
+#include <QStyledItemDelegate>
+
+class QGitBranchTreeItemDelegate : public QStyledItemDelegate
+{
+public:
+    explicit QGitBranchTreeItemDelegate(QObject *parent = nullptr) : QStyledItemDelegate(parent) {}
+
+    QWidget *createEditor(QWidget *parent, const QStyleOptionViewItem &option, const QModelIndex &index) const override
+    {
+        QWidget *editor = QStyledItemDelegate::createEditor(parent, option, index);
+        QLineEdit *lineEdit = qobject_cast<QLineEdit *>(editor);
+        if (lineEdit) {
+            QString text = lineEdit->text();
+            int suffixIndex = text.indexOf(QStringLiteral(" [↑"));
+            if (suffixIndex == -1) {
+                suffixIndex = text.indexOf(QStringLiteral(" [↓"));
+            }
+            if (suffixIndex != -1) {
+                lineEdit->setText(text.left(suffixIndex).trimmed());
+            }
+        }
+        return editor;
+    }
+};
+
 QGitRepository::QGitRepository(const QString &path, QWidget *parent)
     : QWidget(parent)
     , ui(new Ui::QGitRepository)
@@ -64,6 +90,7 @@ QGitRepository::QGitRepository(const QString &path, QWidget *parent)
     ui->commit_diff->setContentsMargins(10, 10, 10, 10);
 
     ui->logHistory_commits->setItemDelegate(new QLogHistoryItemDelegate(ui->logHistory_commits));
+    ui->branchesTreeView->setItemDelegate(new QGitBranchTreeItemDelegate(this));
 
     m_git->moveToThread(&m_thread);
 
@@ -555,25 +582,47 @@ void QGitRepository::repositoryBranchesAndTagsReply(QList<QGitBranch> branches, 
 
                         if (!found)
                         {
-                            QTreeWidgetItem *child = new QTreeWidgetItem(QStringList() << name);
+                            QString displayName = name;
+                            if (depth == items.count() - 1)
+                            {
+                                if (branch.ahead() > 0 || branch.behind() > 0)
+                                {
+                                    QStringList indicators;
+                                    if (branch.ahead() > 0) {
+                                        indicators << QStringLiteral("↑%1").arg(branch.ahead());
+                                    }
+                                    if (branch.behind() > 0) {
+                                        indicators << QStringLiteral("↓%1").arg(branch.behind());
+                                    }
+                                    displayName += QStringLiteral(" [%1]").arg(indicators.join(QStringLiteral(" ")));
+                                }
+                            }
+
+                            QTreeWidgetItem *child = new QTreeWidgetItem(QStringList() << displayName);
                             child->setData(0, Qt::UserRole, branch.hash());
                             if (depth == items.count() - 1) {
                                 child->setData(0, Qt::UserRole + 1, items.mid(2).join('/'));
                                 child->setData(0, Qt::UserRole + 2, "LocalBranch");
                                 child->setFlags(child->flags() | Qt::ItemIsEditable);
                             }
-                            if (name == current_branch)
-                        {
-                            auto font = child->font(0);
-                            font.setBold(true);
-                            child->setFont(0, font);
 
-                            child->setIcon(0, m_iconCurrentBranch);
-                        }
-                        else
-                        {
-                            child->setIcon(0, m_iconBranch);
-                        }
+                            bool isCurrent = false;
+                            if (depth == items.count() - 1 && items.mid(2).join('/') == current_branch) {
+                                isCurrent = true;
+                            }
+
+                            if (isCurrent)
+                            {
+                                auto font = child->font(0);
+                                font.setBold(true);
+                                child->setFont(0, font);
+
+                                child->setIcon(0, m_iconCurrentBranch);
+                            }
+                            else
+                            {
+                                child->setIcon(0, m_iconBranch);
+                            }
 
                         item->addChild(child);
                         item = child;

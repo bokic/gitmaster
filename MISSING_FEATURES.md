@@ -12,7 +12,6 @@ A comprehensive reanalysis of `libgit2` features for integration into GitMaster,
 | **Worktree Support** | Unimplemented | `git2/worktree.h` | Medium |
 | **Reflog Navigation** | Unimplemented | `git2/reflog.h` | Medium |
 | **Remote Repository CRUD & Refspecs** | Partial (list/fetch/push) | `git2/remote.h` | Medium |
-| **Ahead/Behind Graph Analysis** | Partial (Ancestor check implemented) | `git2/graph.h` | Medium |
 
 ---
 
@@ -33,7 +32,3 @@ A comprehensive reanalysis of `libgit2` features for integration into GitMaster,
 ### 4. Remote Repository CRUD & Refspecs (`git2/remote.h`)
 * **libgit2 APIs**: `git_remote_create`, `git_remote_delete`, `git_remote_rename`, `git_remote_set_url`
 * **Description**: **Remote Configuration Manager**. Provide UI to add new remote repositories, delete remotes, rename remotes, and edit fetch/push refspecs.
-
-### 5. Ahead/Behind Graph Analysis (`git2/graph.h`)
-* **libgit2 APIs**: `git_graph_ahead_behind`, `git_graph_descendant_of`
-* **Status**: **Partial**. Ancestry checks (`git_graph_descendant_of`) have been wrapped in `QGit::isAncestor` and hooked into the log context menu to prevent invalid/redundant rebases. Branch sync counters (ahead/behind indicators in repository trees) remain unimplemented.

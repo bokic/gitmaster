@@ -1971,7 +1971,31 @@ void QGit::listBranchesAndTags()
                 char oid_str[GIT_OID_HEXSZ + 1];
                 git_oid_tostr(oid_str, sizeof(oid_str), git_object_id(obj));
 
-                QGitBranch branch = QGitBranch(ref_name, QString::fromLatin1(oid_str), commit_time, type);
+                int ahead = 0;
+                int behind = 0;
+
+                if (type == GIT_BRANCH_LOCAL)
+                {
+                    GitReference upstream_ref;
+                    int upstream_res = git_branch_upstream(upstream_ref, ref);
+                    if (upstream_res == 0)
+                    {
+                        const git_oid *local_oid = git_reference_target(ref);
+                        const git_oid *upstream_oid = git_reference_target(upstream_ref);
+                        if (local_oid && upstream_oid)
+                        {
+                            size_t size_ahead = 0;
+                            size_t size_behind = 0;
+                            if (git_graph_ahead_behind(&size_ahead, &size_behind, repo, local_oid, upstream_oid) == 0)
+                            {
+                                ahead = static_cast<int>(size_ahead);
+                                behind = static_cast<int>(size_behind);
+                            }
+                        }
+                    }
+                }
+
+                QGitBranch branch = QGitBranch(ref_name, QString::fromLatin1(oid_str), commit_time, type, ahead, behind);
                 branches.append(branch);
             }
         }
