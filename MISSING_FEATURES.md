@@ -14,7 +14,6 @@ A comprehensive reanalysis of `libgit2` features for integration into GitMaster,
 | **Reflog Navigation** | Unimplemented | `git2/reflog.h` | Medium |
 | **Remote Repository CRUD & Refspecs** | Partial (list/fetch/push) | `git2/remote.h` | Medium |
 | **Ahead/Behind Graph Analysis** | Partial (Ancestor check implemented) | `git2/graph.h` | Medium |
-| **Commit Amending & GPG/SSH Signing** | Partial (basic commit only) | `git2/commit.h`, `git2/sys/commit.h` | Medium |
 | **Stash Advanced Options & Patch Inspection** | Partial (basic save/pop/apply) | `git2/stash.h` | Low |
 | **Git Notes Management** | Unimplemented | `git2/note.h` | Low |
 | **Mailmap Author Mapping** | Unimplemented | `git2/mailmap.h` | Low |
@@ -48,22 +47,18 @@ A comprehensive reanalysis of `libgit2` features for integration into GitMaster,
 * **libgit2 APIs**: `git_graph_ahead_behind`, `git_graph_descendant_of`
 * **Status**: **Partial**. Ancestry checks (`git_graph_descendant_of`) have been wrapped in `QGit::isAncestor` and hooked into the log context menu to prevent invalid/redundant rebases. Branch sync counters (ahead/behind indicators in repository trees) remain unimplemented.
 
-### 7. Commit Amending & GPG/SSH Signature Signing (`git2/commit.h` & `git2/sys/commit.h`)
-* **libgit2 APIs**: `git_commit_amend`, `git_commit_create_with_signature`
-* **Description**: **Amend & Signed Commits**. Allow users to amend the last commit message or staged files, and optionally sign commits using GPG or SSH keys.
-
-### 8. Stash Advanced Options & Patch Inspection (`git2/stash.h`)
+### 7. Stash Advanced Options & Patch Inspection (`git2/stash.h`)
 * **libgit2 APIs**: `git_stash_save2` (`GIT_STASH_INCLUDE_UNTRACKED`, `GIT_STASH_KEEP_INDEX`), `git_stash_apply`
 * **Description**: **Advanced Stash Options**. Allow users to include untracked/ignored files in stashes, view diffs of individual stashes before applying, or apply specific stash elements.
 
-### 9. Git Notes Management (`git2/note.h`)
+### 8. Git Notes Management (`git2/note.h`)
 * **libgit2 APIs**: `git_note_create`, `git_note_read`, `git_note_remove`
 * **Description**: **Commit Notes**. View and attach metadata notes to commits without modifying commit hashes.
 
-### 10. Revision Parsing Engine (`git2/revparse.h`)
+### 9. Revision Parsing Engine (`git2/revparse.h`)
 * **libgit2 APIs**: `git_revparse_single`, `git_revparse_ext`
 * **Description**: **Git Revision Query**. Support parsing expressions like `HEAD~3`, `main@{1}`, or `HEAD^2` in search inputs or checkout dialogs.
 
-### 11. Mailmap Support (`git2/mailmap.h`)
+### 10. Mailmap Support (`git2/mailmap.h`)
 * **libgit2 APIs**: `git_mailmap_new`, `git_mailmap_resolve`
 * **Description**: **Author Identity Normalization**. Resolve author and committer names/emails according to repository `.mailmap` rules when generating commit log tables.

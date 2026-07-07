@@ -44,7 +44,7 @@ signals:
     void repositoryChangedFiles(int show, int sort, bool reversed);
     void repositoryStageFiles(QStringList items);
     void repositoryUnstageFiles(QStringList items);
-    void repositoryCommit(QString message, bool withPush);
+    void repositoryCommit(QString message, bool withPush, bool amend);
     void repositoryGetCommits(QString object, int length);
     void repositorySearchCommits(QString text, QString type);
     void repositoryAbortSearch();
@@ -93,6 +93,7 @@ private slots:
     void on_logHistory_commits_currentCellChanged(int currentRow, int currentColumn, int previousRow, int previousColumn);
     void on_checkBox_StagedFiles_clicked();
     void on_checkBox_UnstagedFiles_clicked();
+    void on_checkBox_amendCommit_clicked(bool checked);
     void on_listWidget_staged_itemChanged(QListWidgetItem *item);
     void on_listWidget_unstaged_itemChanged(QListWidgetItem *item);
     void on_pushButton_commit_clicked();
@@ -152,6 +153,7 @@ private:
     QIcon m_iconRemoteBranch;
     QIcon m_iconSubmodule;
     QString m_searchingCommitHash;
+    QString m_draftCommitMessage;
     bool m_stageingFiles = true;
     bool m_searchingCommits = false;
     QString m_lastRemote;

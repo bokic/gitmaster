@@ -80,6 +80,7 @@ public:
     bool hasCommitsToPush() const;
     QString currentBranch() const;
     QString headCommitId() const;
+    QString headCommitMessage() const;
     bool isAncestor(const QString &ancestor, const QString &descendant) const;
     QList<QGitBranch> branches(git_branch_t type) const;
     bool hasCommitId(const QString &commitId) const;
@@ -125,7 +126,7 @@ public slots:
     void unstageFileLines(QString filename, QVector<QGitDiffWidgetLine> lines);
     void discardFiles(QStringList items);
     void discardFileLines(QString filename, QVector<QGitDiffWidgetLine> lines);
-    void commit(QString message, bool withPush);
+    void commit(QString message, bool withPush, bool amend = false);
     void clone(QUrl url);
     void pull(QString remote, QString branch, bool rebase);
     void fetch(bool fetchFromAllRemotes, bool purgeDeletedBranches, bool fetchAllTags);

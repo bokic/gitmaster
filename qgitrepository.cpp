@@ -816,7 +816,7 @@ void QGitRepository::repositoryChangedFilesReply(QList<QPair<QString, git_status
 
     ui->commit_diff->refresh();
 
-    if (ui->listWidget_staged->count() > 0)
+    if (ui->listWidget_staged->count() > 0 || ui->checkBox_amendCommit->isChecked())
     {
         ui->pushButton_commit->setEnabled(true);
     }
@@ -874,13 +874,18 @@ void QGitRepository::repositoryDiscardFilesReply(QGitError error)
 void QGitRepository::repositoryCommitReply(QString commit_id, QGitError error)
 {
     Q_UNUSED(commit_id)
-    Q_UNUSED(error)
 
-    ui->plainTextEdit_commitMessage->clear();
-	ui->plainTextEdit_commitMessage->setEnabled(true);
-	ui->pushButton_commit->setEnabled(true);
+    ui->plainTextEdit_commitMessage->setEnabled(true);
+    ui->pushButton_commit->setEnabled(true);
 
-    refreshData();
+    if (error.errorCode() != 0) {
+        QMessageBox::critical(this, tr("Commit Error"), error.errorString());
+    } else {
+        ui->plainTextEdit_commitMessage->clear();
+        ui->checkBox_amendCommit->setChecked(false);
+        m_draftCommitMessage.clear();
+        refreshData();
+    }
 }
 
 void QGitRepository::repositoryGetCommitsReply(QList<QGitCommit> commits, QGitError error)
@@ -1533,13 +1538,38 @@ void QGitRepository::on_pushButton_commit_clicked()
     ui->pushButton_commit->setEnabled(false);
 
     bool withPush = ui->checkBox_pushChangesImmidietely->isChecked();
+    bool amend = ui->checkBox_amendCommit->isChecked();
 
-    emit repositoryCommit(ui->plainTextEdit_commitMessage->toPlainText(), withPush);
+    emit repositoryCommit(ui->plainTextEdit_commitMessage->toPlainText(), withPush, amend);
 }
 
 void QGitRepository::on_pushButton_commitCancel_clicked()
 {
     activateCommitOperation(false);
+}
+
+void QGitRepository::on_checkBox_amendCommit_clicked(bool checked)
+{
+    if (checked)
+    {
+        m_draftCommitMessage = ui->plainTextEdit_commitMessage->toPlainText();
+        QString headMessage = m_git->headCommitMessage();
+        ui->plainTextEdit_commitMessage->setPlainText(headMessage);
+        ui->pushButton_commit->setEnabled(true);
+    }
+    else
+    {
+        ui->plainTextEdit_commitMessage->setPlainText(m_draftCommitMessage);
+        m_draftCommitMessage.clear();
+        if (ui->listWidget_staged->count() > 0)
+        {
+            ui->pushButton_commit->setEnabled(true);
+        }
+        else
+        {
+            ui->pushButton_commit->setEnabled(false);
+        }
+    }
 }
 
 void QGitRepository::historyTableSliderMoved(int pos)

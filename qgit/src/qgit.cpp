@@ -530,6 +530,43 @@ QString QGit::headCommitId() const
     return QString();
 }
 
+QString QGit::headCommitMessage() const
+{
+    GitRepository repo;
+    int res = git_repository_open(repo, m_path.absolutePath().toUtf8().constData());
+    if (res)
+    {
+        return QString();
+    }
+
+    GitReference ref;
+    res = git_repository_head(ref, repo);
+    if (res)
+    {
+        return QString();
+    }
+
+    const git_oid *oid = git_reference_target(ref);
+    if (!oid)
+    {
+        return QString();
+    }
+
+    GitCommit commit;
+    res = git_commit_lookup(commit, repo, oid);
+    if (res)
+    {
+        return QString();
+    }
+
+    const char *message = git_commit_message(commit);
+    if (message)
+    {
+        return QString::fromUtf8(message);
+    }
+    return QString();
+}
+
 bool QGit::isAncestor(const QString &ancestor, const QString &descendant) const
 {
     GitRepository repo;
@@ -3125,7 +3162,7 @@ void QGit::discardFileLines(QString filename, QVector<QGitDiffWidgetLine> lines)
     emit discardFilesReply(error);
 }
 
-void QGit::commit(QString message, bool withPush)
+void QGit::commit(QString message, bool withPush, bool amend)
 {
     git_oid new_commit_id = { {0} };
     QGitError error;
@@ -3160,7 +3197,7 @@ void QGit::commit(QString message, bool withPush)
         }
 
         int _count = git_diff_num_deltas(diff);
-        if (_count == 0)
+        if (_count == 0 && !amend)
         {
             throw QGitError("Nothing staged.", res);
         }
@@ -3226,40 +3263,59 @@ void QGit::commit(QString message, bool withPush)
                 throw QGitError("git_commit_lookup", res);
             }
 
-            GitCommit parent2;
-            int parent_count = 1;
-            const git_commit *commit_parents[2] = { parent.value, nullptr };
-
-            if (git_repository_state(repo) == GIT_REPOSITORY_STATE_MERGE) {
-                git_oid merge_head_id;
-                if (git_reference_name_to_id(&merge_head_id, repo, "MERGE_HEAD") == 0) {
-                    if (git_commit_lookup(parent2, repo, &merge_head_id) == 0) {
-                        commit_parents[1] = parent2.value;
-                        parent_count = 2;
-                    }
+            if (amend)
+            {
+                res = git_commit_amend(
+                  &new_commit_id,
+                  parent,
+                  "HEAD",                        /* name of ref to update */
+                  nullptr,                       /* nullptr = keep original author */
+                  me,                            /* committer */
+                  nullptr,                       /* nullptr = UTF-8 message encoding */
+                  message.toUtf8().constData(),  /* message */
+                  tree);                         /* new tree */
+                if (res)
+                {
+                    throw QGitError("git_commit_amend", res);
                 }
             }
-
-            res = git_commit_create(
-              &new_commit_id,
-              repo,
-              "HEAD",                        /* name of ref to update */
-              me,                            /* author */
-              me,                            /* committer */
-              nullptr,                       /* nullptr = UTF-8 message encoding */
-              message.toUtf8().constData(),  /* message */
-              tree,                          /* root tree */
-              parent_count,                  /* parent count */
-              commit_parents);               /* parents */
-            if (res)
+            else
             {
-                throw QGitError("git_commit_create", res);
-            }
+                GitCommit parent2;
+                int parent_count = 1;
+                const git_commit *commit_parents[2] = { parent.value, nullptr };
 
-            if (parent_count > 1 || 
-                git_repository_state(repo) == GIT_REPOSITORY_STATE_CHERRYPICK ||
-                git_repository_state(repo) == GIT_REPOSITORY_STATE_REVERT) {
-                git_repository_state_cleanup(repo);
+                if (git_repository_state(repo) == GIT_REPOSITORY_STATE_MERGE) {
+                    git_oid merge_head_id;
+                    if (git_reference_name_to_id(&merge_head_id, repo, "MERGE_HEAD") == 0) {
+                        if (git_commit_lookup(parent2, repo, &merge_head_id) == 0) {
+                            commit_parents[1] = parent2.value;
+                            parent_count = 2;
+                        }
+                    }
+                }
+
+                res = git_commit_create(
+                  &new_commit_id,
+                  repo,
+                  "HEAD",                        /* name of ref to update */
+                  me,                            /* author */
+                  me,                            /* committer */
+                  nullptr,                       /* nullptr = UTF-8 message encoding */
+                  message.toUtf8().constData(),  /* message */
+                  tree,                          /* root tree */
+                  parent_count,                  /* parent count */
+                  commit_parents);               /* parents */
+                if (res)
+                {
+                    throw QGitError("git_commit_create", res);
+                }
+
+                if (parent_count > 1 || 
+                    git_repository_state(repo) == GIT_REPOSITORY_STATE_CHERRYPICK ||
+                    git_repository_state(repo) == GIT_REPOSITORY_STATE_REVERT) {
+                    git_repository_state_cleanup(repo);
+                }
             }
         }
 
