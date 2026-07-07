@@ -15,7 +15,7 @@ void QLogHistoryTableWidget::addCommit(const QGitCommit &commit)
 
         QTableWidgetItem *item = nullptr;
 
-        item = new QTableWidgetItem(commit.message().split('\n').first());
+        item = new QTableWidgetItem(commit.message().section('\n', 0, 0));
         item->setData(Qt::UserRole, commit.message());
         item->setData(Qt::UserRole + 1, commit.id());
         setItem(row, 0, item);
@@ -222,7 +222,7 @@ void QLogHistoryTableWidget::addCommit(const QGitCommit &commit)
     item->setData(Qt::UserRole, data);
     setItem(row, 0, item);
 
-    item = new QTableWidgetItem(commit.message().split('\n').first());
+    item = new QTableWidgetItem(commit.message().section('\n', 0, 0));
     item->setData(Qt::UserRole, commit.message());
     item->setData(Qt::UserRole + 1, commit.id());
     setItem(row, 1, item);

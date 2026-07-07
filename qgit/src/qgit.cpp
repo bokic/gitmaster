@@ -1085,7 +1085,7 @@ void QGit::revert(const QString &commitId)
     if (orig_message)
     {
         QString fullMsg = QString::fromUtf8(orig_message);
-        summary = fullMsg.split('\n').first().trimmed();
+        summary = fullMsg.section('\n', 0, 0).trimmed();
     }
     else
     {
