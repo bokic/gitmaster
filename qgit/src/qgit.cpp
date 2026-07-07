@@ -310,6 +310,29 @@ struct GitStrArray {
     git_strarray value = {nullptr, 0};
 };
 
+struct SafeGitStrArray {
+    SafeGitStrArray() = default;
+    ~SafeGitStrArray() {
+        if (value.strings) {
+            for (size_t i = 0; i < value.count; ++i) {
+                if (value.strings[i]) {
+                    free(value.strings[i]);
+                }
+            }
+            free(value.strings);
+        }
+    }
+    SafeGitStrArray(const SafeGitStrArray&) = delete;
+    SafeGitStrArray& operator=(const SafeGitStrArray&) = delete;
+    SafeGitStrArray(SafeGitStrArray&&) = delete;
+    SafeGitStrArray& operator=(SafeGitStrArray&&) = delete;
+
+    operator git_strarray&() { return value; }
+    operator git_strarray*() { return &value; }
+
+    git_strarray value = {nullptr, 0};
+};
+
 
 struct GitTag {
     GitTag() = default;
@@ -1997,11 +2020,19 @@ void QGit::deleteBranches(QList<QGitBranch> branches, bool force)
                         throw QGitError("git_remote_lookup", res);
                     }
                     
-                    GitStrArray refspecs;
+                    SafeGitStrArray refspecs;
                     refspecs.value.count = 1;
-                    refspecs.value.strings = (char **)malloc(sizeof(char *) * 1);
+                    refspecs.value.strings = static_cast<char **>(calloc(1, sizeof(char *)));
+                    if (refspecs.value.strings == nullptr)
+                    {
+                        throw QGitError("malloc", 0);
+                    }
                     QByteArray refspec = ":refs/heads/" + branchName.toUtf8();
                     refspecs.value.strings[0] = strdup(refspec.constData());
+                    if (refspecs.value.strings[0] == nullptr)
+                    {
+                        throw QGitError("strdup", 0);
+                    }
                     
                     git_push_options push_opts = GIT_PUSH_OPTIONS_INIT;
                     push_opts.callbacks.payload = this;
@@ -2785,11 +2816,11 @@ void QGit::commitDiffContent(QString first, QString second, QList<QString> files
             throw QGitError("git_repository_open", res);
         }
 
-        GitStrArray pathspec;
+        SafeGitStrArray pathspec;
         if (!files.isEmpty())
         {
             pathspec.value.count = static_cast<size_t>(files.count());
-            pathspec.value.strings = static_cast<char **>(malloc(sizeof(char *) * pathspec.value.count));
+            pathspec.value.strings = static_cast<char **>(calloc(pathspec.value.count, sizeof(char *)));
             if (pathspec.value.strings == nullptr)
             {
                 throw QGitError("malloc", 0);
@@ -2799,6 +2830,10 @@ void QGit::commitDiffContent(QString first, QString second, QList<QString> files
             for(const auto &file: files)
             {
                 pathspec.value.strings[c] = strdup(file.toUtf8().constData());
+                if (pathspec.value.strings[c] == nullptr)
+                {
+                    throw QGitError("strdup", 0);
+                }
                 c++;
             }
         }
@@ -3027,9 +3062,9 @@ void QGit::unstageFiles(QStringList items)
             throw QGitError("git_repository_open", res);
         }
 
-        GitStrArray paths;
+        SafeGitStrArray paths;
         paths.value.count = static_cast<size_t>(items.count());
-        paths.value.strings = static_cast<char **>(malloc(sizeof(char *) * paths.value.count));
+        paths.value.strings = static_cast<char **>(calloc(paths.value.count, sizeof(char *)));
         if (paths.value.strings == nullptr)
         {
             throw QGitError("malloc", 0);
@@ -3038,6 +3073,10 @@ void QGit::unstageFiles(QStringList items)
         for(int c = 0; c < items.count(); c++)
         {
             paths.value.strings[c] = strdup(items.at(c).toUtf8().constData());
+            if (paths.value.strings[c] == nullptr)
+            {
+                throw QGitError("strdup", 0);
+            }
         }
 
         GitReference head;
@@ -3360,9 +3399,9 @@ void QGit::discardFiles(QStringList items)
 
         if (!filesToCheckout.isEmpty())
         {
-            GitStrArray paths;
+            SafeGitStrArray paths;
             paths.value.count = static_cast<size_t>(filesToCheckout.count());
-            paths.value.strings = static_cast<char **>(malloc(sizeof(char *) * paths.value.count));
+            paths.value.strings = static_cast<char **>(calloc(paths.value.count, sizeof(char *)));
             if (paths.value.strings == nullptr)
             {
                 throw QGitError("malloc", 0);
@@ -3371,6 +3410,10 @@ void QGit::discardFiles(QStringList items)
             for(int c = 0; c < filesToCheckout.count(); c++)
             {
                 paths.value.strings[c] = strdup(filesToCheckout.at(c).toUtf8().constData());
+                if (paths.value.strings[c] == nullptr)
+                {
+                    throw QGitError("strdup", 0);
+                }
             }
 
             git_checkout_options opts = GIT_CHECKOUT_OPTIONS_INIT;
@@ -4124,14 +4167,22 @@ void QGit::push(QString remote, QStringList branches, bool tags, bool force)
             }
         }
 
-        GitStrArray refspecs;
+        SafeGitStrArray refspecs;
         refspecs.value.count = branches.size();
-        refspecs.value.strings = static_cast<char **>(malloc(sizeof(char *) * refspecs.value.count));
+        refspecs.value.strings = static_cast<char **>(calloc(refspecs.value.count, sizeof(char *)));
+        if (refspecs.value.strings == nullptr)
+        {
+            throw QGitError("malloc", 0);
+        }
         for(int i = 0; i < branches.size(); i++)
         {
             QByteArray refspec = "refs/heads/" + branches[i].toUtf8() + ":refs/heads/" + branches[i].toUtf8();
             if (force) refspec.prepend("+");
             refspecs.value.strings[i] = strdup(refspec.constData());
+            if (refspecs.value.strings[i] == nullptr)
+            {
+                throw QGitError("strdup", 0);
+            }
         }
 
         git_push_options push_opts = GIT_PUSH_OPTIONS_INIT;
