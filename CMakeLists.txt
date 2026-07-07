@@ -84,6 +84,7 @@ set(PROJECT_HEADERS
     qgitreflogdialog.h
     qgitremotesdialog.h
     qgitblamedialog.h
+    qgitworktreedialog.h
 
     qgitrepotreeitemdelegate.h
     qgitrepotreewidget.h
@@ -111,6 +112,7 @@ set(PROJECT_HEADERS
     qgit/include/qgitdiffline.h
     qgit/include/qgiterror.h
     qgit/include/qgitsignature.h
+    qgit/include/qgitworktree.h
 )
 
 set(PROJECT_SOURCES
@@ -133,6 +135,7 @@ set(PROJECT_SOURCES
     qgitreflogdialog.cpp           qgitreflogdialog.ui
     qgitremotesdialog.cpp          qgitremotesdialog.ui
     qgitblamedialog.cpp            qgitblamedialog.ui
+    qgitworktreedialog.cpp         qgitworktreedialog.ui
 
     qgitrepotreeitemdelegate.cpp
     qgitrepotreewidget.cpp
@@ -159,6 +162,7 @@ set(PROJECT_SOURCES
     qgit/src/qgitdiffline.cpp
     qgit/src/qgiterror.cpp
     qgit/src/qgitsignature.cpp
+    qgit/src/qgitworktree.cpp
 
     resource.qrc
 

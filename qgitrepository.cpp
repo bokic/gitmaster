@@ -13,6 +13,7 @@
 #include "qgitreflogdialog.h"
 #include "qgitremotesdialog.h"
 #include "qgitblamedialog.h"
+#include "qgitworktreedialog.h"
 #include <qgitbranch.h>
 
 #include <QCryptographicHash>
@@ -83,6 +84,7 @@ QGitRepository::QGitRepository(const QString &path, QWidget *parent)
     , m_iconStash(":/small/stash")
     , m_iconRemoteBranch(":/small/remote_branch")
     , m_iconSubmodule(":/small/submodule")
+    , m_iconWorktree(":/small/worktree")
     , m_git(new QGit())
 {
     QString name;
@@ -322,6 +324,20 @@ void QGitRepository::branchDialog()
             auto forced = dlg.forceDelete();
 
             emit deleteBranches(branches, forced);
+        }
+    }
+}
+
+void QGitRepository::worktreeDialog()
+{
+    QGitWorktreeDialog dlg(this);
+    if (dlg.exec() == QDialog::Accepted) {
+        try {
+            m_git->addWorktree(dlg.worktreeName(), dlg.worktreePath(),
+                               dlg.worktreeBranch(), dlg.createNewBranch());
+            refreshData();
+        } catch (const QGitError &error) {
+            QMessageBox::critical(this, tr("Error adding worktree"), error.errorString());
         }
     }
 }
@@ -744,6 +760,32 @@ void QGitRepository::repositoryBranchesAndTagsReply(QList<QGitBranch> branches, 
         itemSubmodules->addChild(child);
     }
 
+    // Worktrees group
+    QList<QGitWorktree> worktreeList;
+    try {
+        worktreeList = m_git->worktrees();
+    } catch (...) {}
+
+    QTreeWidgetItem *itemWorktrees = new QTreeWidgetItem(QStringList() << tr("Worktrees"));
+    itemWorktrees->setData(0, Qt::UserRole + 2, QStringLiteral("WorktreesHeader"));
+    for (const auto &wt : worktreeList) {
+        if (wt.isMain())
+            continue; // main worktree is the current tab -- skip it
+        QString label = wt.name();
+        if (!wt.branch().isEmpty())
+            label += QStringLiteral(" [%1]").arg(wt.branch());
+        if (wt.isLocked())
+            label += tr(" [Locked]");
+        QTreeWidgetItem *child = new QTreeWidgetItem(QStringList() << label);
+        child->setData(0, Qt::UserRole,     wt.path());
+        child->setData(0, Qt::UserRole + 1, wt.branch());
+        child->setData(0, Qt::UserRole + 2, QStringLiteral("Worktree"));
+        child->setData(0, Qt::UserRole + 3, wt.name());
+        child->setData(0, Qt::UserRole + 4, wt.isLocked());
+        child->setIcon(0, m_iconWorktree);
+        itemWorktrees->addChild(child);
+    }
+
     items.append(itemFileStatus);
     items.append(itemLocalBranches);
     items.append(itemTags);
@@ -752,6 +794,11 @@ void QGitRepository::repositoryBranchesAndTagsReply(QList<QGitBranch> branches, 
         items.append(itemSubmodules);
     } else {
         delete itemSubmodules;
+    }
+    if (itemWorktrees->childCount() > 0) {
+        items.append(itemWorktrees);
+    } else {
+        delete itemWorktrees;
     }
 
     ui->branchesTreeView->clear();
@@ -1336,6 +1383,65 @@ void QGitRepository::on_branchesTreeView_customContextMenuRequested(const QPoint
         {
             QGitRemotesDialog dlg(this, this);
             dlg.exec();
+        }
+        return;
+    }
+
+    if (type == "WorktreesHeader")
+    {
+        QMenu menu(this);
+        QAction *addAction = menu.addAction(tr("Add Worktree..."));
+
+        QAction *selectedAction = menu.exec(ui->branchesTreeView->viewport()->mapToGlobal(pos));
+        if (selectedAction == addAction)
+        {
+            worktreeDialog();
+        }
+        return;
+    }
+
+    if (type == "Worktree")
+    {
+        QString wtName   = item->data(0, Qt::UserRole + 3).toString();
+        QString wtPath   = item->data(0, Qt::UserRole).toString();
+        bool    wtLocked = item->data(0, Qt::UserRole + 4).toBool();
+
+        QMenu menu(this);
+        QAction *openAction   = menu.addAction(tr("Open in New Tab"));
+        menu.addSeparator();
+        QAction *lockAction   = menu.addAction(wtLocked ? tr("Unlock Worktree") : tr("Lock Worktree"));
+        menu.addSeparator();
+        QAction *removeAction = menu.addAction(tr("Remove Worktree (Prune)"));
+
+        QAction *selectedAction = menu.exec(ui->branchesTreeView->viewport()->mapToGlobal(pos));
+        if (selectedAction == openAction)
+        {
+            QGitMasterMainWindow::instance()->openRepository(wtPath);
+        }
+        else if (selectedAction == lockAction)
+        {
+            try {
+                m_git->lockWorktree(wtName, !wtLocked);
+                refreshData();
+            } catch (const QGitError &error) {
+                QMessageBox::critical(this, tr("Worktree Error"), error.errorString());
+            }
+        }
+        else if (selectedAction == removeAction)
+        {
+            auto res = QMessageBox::question(
+                this, tr("Remove Worktree"),
+                tr("Remove worktree '%1'? This will prune its Git metadata. "
+                   "The directory itself will not be deleted.").arg(wtName),
+                QMessageBox::Yes | QMessageBox::No);
+            if (res == QMessageBox::Yes) {
+                try {
+                    m_git->removeWorktree(wtName);
+                    refreshData();
+                } catch (const QGitError &error) {
+                    QMessageBox::critical(this, tr("Worktree Error"), error.errorString());
+                }
+            }
         }
         return;
     }

@@ -4,6 +4,7 @@
 #include <qgitdiffhunk.h>
 #include <qgitdiffline.h>
 #include <qgiterror.h>
+#include <git2/worktree.h>
 
 #include <QThread>
 #include <QString>
@@ -320,6 +321,18 @@ struct GitTag {
     operator git_tag**() { return &value; }
     ~GitTag() {  git_tag_free(value); value = nullptr; }
     git_tag *value = nullptr;
+};
+
+struct GitWorktree {
+    GitWorktree() = default;
+    GitWorktree(const GitWorktree&) = delete;
+    GitWorktree& operator=(const GitWorktree&) = delete;
+    GitWorktree(GitWorktree&&) = delete;
+    GitWorktree& operator=(GitWorktree&&) = delete;
+    operator git_worktree*() { return value; }
+    operator git_worktree**() { return &value; }
+    ~GitWorktree() { if (value) { git_worktree_free(value); value = nullptr; }}
+    git_worktree *value = nullptr;
 };
 
 #define LINE_END '\n'
@@ -1489,6 +1502,137 @@ void QGit::setRemoteUrl(const QString &name, const QString &url, bool isPushUrl)
     } else {
         res = git_remote_set_url(repo, name.toUtf8().constData(), url.toUtf8().constData());
         if (res) throw QGitError("git_remote_set_url", res);
+    }
+}
+
+QList<QGitWorktree> QGit::worktrees() const
+{
+    QList<QGitWorktree> list;
+    GitRepository repo;
+    int res = git_repository_open(repo, m_path.absolutePath().toUtf8().constData());
+    if (res != 0)
+        return list;
+
+    // Always include the main worktree first
+    {
+        const char *workdir = git_repository_workdir(repo);
+        QString mainPath = workdir ? QString::fromUtf8(workdir) : m_path.absolutePath();
+        // Remove trailing slash
+        while (mainPath.endsWith('/') || mainPath.endsWith('\\'))
+            mainPath.chop(1);
+
+        // Resolve the branch via HEAD
+        GitReference head;
+        QString branch;
+        if (git_repository_head(head, repo) == 0) {
+            const char *shorthand = git_reference_shorthand(head);
+            if (shorthand)
+                branch = QString::fromUtf8(shorthand);
+        }
+        list.append(QGitWorktree(QStringLiteral("(main)"), mainPath, branch, true, false, false));
+    }
+
+    git_strarray names = {nullptr, 0};
+    if (git_worktree_list(&names, repo) != 0)
+        return list;
+
+    for (size_t i = 0; i < names.count; ++i) {
+        const char *wtName = names.strings[i];
+        GitWorktree wt;
+        if (git_worktree_lookup(wt, repo, wtName) != 0)
+            continue;
+
+        const char *wtPath = git_worktree_path(wt);
+        QString path = wtPath ? QString::fromUtf8(wtPath) : QString();
+        while (path.endsWith('/') || path.endsWith('\\'))
+            path.chop(1);
+
+        bool locked   = (git_worktree_is_locked(nullptr, wt) > 0);
+        bool prunable = false;
+        {
+            git_worktree_prune_options pruneOpts = GIT_WORKTREE_PRUNE_OPTIONS_INIT;
+            prunable = (git_worktree_is_prunable(wt, &pruneOpts) > 0);
+        }
+
+        // Resolve branch from the worktree's HEAD
+        QString branch;
+        {
+            GitRepository wtRepo;
+            if (git_repository_open(wtRepo, path.toUtf8().constData()) == 0) {
+                GitReference head;
+                if (git_repository_head(head, wtRepo) == 0) {
+                    const char *shorthand = git_reference_shorthand(head);
+                    if (shorthand)
+                        branch = QString::fromUtf8(shorthand);
+                }
+            }
+        }
+
+        list.append(QGitWorktree(QString::fromUtf8(wtName), path, branch, false, locked, prunable));
+    }
+
+    git_strarray_dispose(&names);
+    return list;
+}
+
+void QGit::addWorktree(const QString &name, const QString &path, const QString &branch, bool newBranch)
+{
+    GitRepository repo;
+    int res = git_repository_open(repo, m_path.absolutePath().toUtf8().constData());
+    if (res) throw QGitError("git_repository_open", res);
+
+    git_worktree_add_options opts = GIT_WORKTREE_ADD_OPTIONS_INIT;
+
+    if (!branch.isEmpty() && !newBranch) {
+        // Checkout an existing branch: resolve it to a reference
+        GitReference ref;
+        QString refName = QStringLiteral("refs/heads/") + branch;
+        res = git_reference_lookup(ref, repo, refName.toUtf8().constData());
+        if (res) throw QGitError("git_reference_lookup", res);
+        opts.ref = ref.value;
+    }
+
+    // When newBranch is true, opts.ref stays null and libgit2 creates a new branch
+    // named after `name` at HEAD.
+
+    GitWorktree wt;
+    res = git_worktree_add(wt, repo, name.toUtf8().constData(), path.toUtf8().constData(), &opts);
+    if (res) throw QGitError("git_worktree_add", res);
+}
+
+void QGit::removeWorktree(const QString &name)
+{
+    GitRepository repo;
+    int res = git_repository_open(repo, m_path.absolutePath().toUtf8().constData());
+    if (res) throw QGitError("git_repository_open", res);
+
+    GitWorktree wt;
+    res = git_worktree_lookup(wt, repo, name.toUtf8().constData());
+    if (res) throw QGitError("git_worktree_lookup", res);
+
+    git_worktree_prune_options opts = GIT_WORKTREE_PRUNE_OPTIONS_INIT;
+    opts.flags = GIT_WORKTREE_PRUNE_VALID | GIT_WORKTREE_PRUNE_LOCKED | GIT_WORKTREE_PRUNE_WORKING_TREE;
+
+    res = git_worktree_prune(wt, &opts);
+    if (res) throw QGitError("git_worktree_prune", res);
+}
+
+void QGit::lockWorktree(const QString &name, bool lock)
+{
+    GitRepository repo;
+    int res = git_repository_open(repo, m_path.absolutePath().toUtf8().constData());
+    if (res) throw QGitError("git_repository_open", res);
+
+    GitWorktree wt;
+    res = git_worktree_lookup(wt, repo, name.toUtf8().constData());
+    if (res) throw QGitError("git_worktree_lookup", res);
+
+    if (lock) {
+        res = git_worktree_lock(wt, nullptr);
+        if (res) throw QGitError("git_worktree_lock", res);
+    } else {
+        res = git_worktree_unlock(wt);
+        if (res) throw QGitError("git_worktree_unlock", res);
     }
 }
 

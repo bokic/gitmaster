@@ -5,6 +5,7 @@
 #include "qgitbranch.h"
 #include "qgiterror.h"
 #include "qgittag.h"
+#include "qgitworktree.h"
 
 #include <QStringList>
 #include <QDateTime>
@@ -135,6 +136,10 @@ public:
     void deleteRemote(const QString &name);
     void renameRemote(const QString &oldName, const QString &newName);
     void setRemoteUrl(const QString &name, const QString &url, bool isPushUrl = false);
+    QList<QGitWorktree> worktrees() const;
+    void addWorktree(const QString &name, const QString &path, const QString &branch, bool newBranch = false);
+    void removeWorktree(const QString &name);
+    void lockWorktree(const QString &name, bool lock);
 
     static QString getBranchNameFromPath(const QString &path);
     static int createLocalRepository(const QDir &path);

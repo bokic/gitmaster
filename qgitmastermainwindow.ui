@@ -178,6 +178,7 @@
    <addaction name="separator"/>
    <addaction name="actionBranch"/>
    <addaction name="actionMerge"/>
+   <addaction name="actionWorktrees"/>
    <addaction name="separator"/>
    <addaction name="actionStash"/>
    <addaction name="separator"/>
@@ -247,6 +248,18 @@
    </property>
    <property name="text">
     <string>Merge</string>
+   </property>
+  </action>
+  <action name="actionWorktrees">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
+   <property name="icon">
+    <iconset resource="resource.qrc">
+     <normaloff>:/small/worktree</normaloff>:/small/worktree</iconset>
+   </property>
+   <property name="text">
+    <string>Worktrees</string>
    </property>
   </action>
   <action name="actionGit_Flow">

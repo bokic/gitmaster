@@ -27,6 +27,7 @@ public:
     void refreshData();
     void stash(const QString &name, bool keepIndex = false, bool includeUntracked = false, bool includeIgnored = false);
     void branchDialog();
+    void worktreeDialog();
     void commit();
     void fetch();
     void pull();
@@ -161,6 +162,7 @@ private:
     QIcon m_iconStash;
     QIcon m_iconRemoteBranch;
     QIcon m_iconSubmodule;
+    QIcon m_iconWorktree;
     QString m_searchingCommitHash;
     QString m_draftCommitMessage;
     bool m_stageingFiles = true;

@@ -69,7 +69,7 @@
         <file>images/small/database-medium.png</file>
         <file alias="deleted">images/small/deleted.png</file>
         <file>images/small/diff.png</file>
-        <file>images/small/folder_16x16.png</file>
+        <file alias="worktree">images/small/folder_16x16.png</file>
         <file alias="git">images/small/git_16x16.png</file>
         <file alias="ignored">images/small/ignored.png</file>
         <file>images/small/lock.png</file>
