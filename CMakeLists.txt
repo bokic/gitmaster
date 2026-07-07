@@ -112,19 +112,19 @@ set(PROJECT_HEADERS
 set(PROJECT_SOURCES
     main.cpp
 
-    qgitmastermainwindow.cpp      qgitmastermainwindow.ui
-    qgitrepository.cpp            qgitrepository.ui
-    qnewrepositorydialog.cpp      qnewrepositorydialog.ui
-    qgitclonerepositorydialog.cpp qgitclonerepositorydialog.ui
-    qgitpushdialog.cpp            qgitpushdialog.ui
-    qgitpulldialog.cpp            qgitpulldialog.ui
-    qgitfetchdialog.cpp           qgitfetchdialog.ui
-    qgitbranchdialog.cpp          qgitbranchdialog.ui
-    qgitmergedialog.cpp           qgitmergedialog.ui
-    qgitsettingsdialog.cpp        qgitsettingsdialog.ui
+    qgitmastermainwindow.cpp       qgitmastermainwindow.ui
+    qgitrepository.cpp             qgitrepository.ui
+    qnewrepositorydialog.cpp       qnewrepositorydialog.ui
+    qgitclonerepositorydialog.cpp  qgitclonerepositorydialog.ui
+    qgitpushdialog.cpp             qgitpushdialog.ui
+    qgitpulldialog.cpp             qgitpulldialog.ui
+    qgitfetchdialog.cpp            qgitfetchdialog.ui
+    qgitbranchdialog.cpp           qgitbranchdialog.ui
+    qgitmergedialog.cpp            qgitmergedialog.ui
+    qgitsettingsdialog.cpp         qgitsettingsdialog.ui
     qgitconflictresolverdialog.cpp qgitconflictresolverdialog.ui
     qgitcreatetagdialog.cpp        qgitcreatetagdialog.ui
-    qgitcleandialog.cpp        qgitcleandialog.ui
+    qgitcleandialog.cpp            qgitcleandialog.ui
 
     qgitrepotreeitemdelegate.cpp
     qgitrepotreewidget.cpp
