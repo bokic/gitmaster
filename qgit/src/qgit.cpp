@@ -2747,12 +2747,10 @@ void QGit::commitDiff(QString commitId, bool ignoreWhitespace)
             GitDescribeResult descResult;
             if (git_describe_commit(descResult, (git_object *)commit.value, &descOpts) == 0) {
                 git_describe_format_options fmtOpts = GIT_DESCRIBE_FORMAT_OPTIONS_INIT;
-                char buf[256] = {0};
-                git_buf gbuf = GIT_BUF_INIT_CONST(buf, sizeof(buf));
-                if (git_describe_format(&gbuf, descResult, &fmtOpts) == 0) {
-                    commitDescription = QString::fromUtf8(gbuf.ptr);
+                GitBuf gbuf;
+                if (git_describe_format(gbuf, descResult, &fmtOpts) == 0) {
+                    commitDescription = QString::fromUtf8(gbuf.value.ptr);
                 }
-                git_buf_dispose(&gbuf);
             }
         }
 
