@@ -4,19 +4,6 @@ Development plan and upcoming features for GitMaster.
 
 ---
 
-## 📈 Version 0.7 - Visual & Log Enhancements
-*Enhancing the primary control surfaces and utility access.*
-
-- [x] **Merge Dialog**: Comprehensive interface for merging branches with conflict resolution entry points.
-- [x] **Git Flow Dialog**: Integrated support for Git Flow branching models (feature, release, hotfix).
-- [x] **Quick Terminal**: One-click button to launch the system terminal directly in the current project directory.
-- [x] **Settings Portal**: Centralized configuration for UI preferences, Git credentials, and global behaviors.
-- [ ] **Enhanced Branch Management**: New commit history view optimized for branch-specific workflows.
-- [x] **Conflict Resolution UI**: Implement a Conflict Resolution UI (likely a new widget or tool) to resolve line-by-line conflicts.
-- [x] **Pull Conflict Resolution**: Add a conflict resolution workflow if the pull results in conflicts.
-
----
-
 ## 🌍 Version 0.8 - Finalizing work & Branding
 *Focusing on new features, data visualization and repository history clarity.*
 
@@ -24,6 +11,7 @@ Development plan and upcoming features for GitMaster.
 - [*] **Rebase**: Implement rebasing with a toolbar button.
 - [x] **Cherry-pick**: Extend context menu to cherry-pick the selected commit onto the current branch.
 - [x] **Submodules**: Fully integrated support for Git Submodules (listing, statuses, init, update, sync, and tabbed sub-repository opening).
+- [x] **Worktree Support**: Full support for linked working trees (listing, creating, locking, unlocking, pruning, and opening in separate tabs).
 - [x] **Tag Creation**: Create lightweight and annotated tags from the log history context menu, with optional message and force-overwrite support.
 - [x] **Ignore Rules**: Right-click any untracked file to append a customisable pattern to `.gitignore` directly from the UI.
 - [x] **Git Describe**: The commit info panel now shows a **Describe:** line with the nearest reachable tag (e.g., `v1.2.0-4-g8c41174`) for any selected commit.

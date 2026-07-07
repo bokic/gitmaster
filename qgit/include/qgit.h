@@ -172,7 +172,7 @@ public slots:
     void pull(QString remote, QString branch, bool rebase);
     void fetch(bool fetchFromAllRemotes, bool purgeDeletedBranches, bool fetchAllTags);
     void push(QString remote, QStringList branches, bool tags, bool force);
-    void listCommits(QString object, int length);
+    void listCommits(QString branchRef, int offset, int length);
     void searchCommits(QString text, QString type);
     void abortSearch();
     void checkoutBranch(QString name);

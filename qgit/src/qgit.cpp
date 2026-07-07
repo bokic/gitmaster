@@ -4154,7 +4154,7 @@ void QGit::push(QString remote, QStringList branches, bool tags, bool force)
     emit pushReply(error);
 }
 
-void QGit::listCommits(QString object, int length)
+void QGit::listCommits(QString branchRef, int offset, int length)
 {
     QList<QGitCommit> commits;
     QGitError error;
@@ -4175,8 +4175,16 @@ void QGit::listCommits(QString object, int length)
             throw QGitError("git_revwalk_new", res);
         }
 
-        git_oid oid;
-        if (object.isEmpty())
+        // Apply topological and time sorting for clean multi-branch graph visualization
+        git_revwalk_sorting(walker, GIT_SORT_TIME | GIT_SORT_TOPOLOGICAL);
+
+        if (branchRef == QStringLiteral("all"))
+        {
+            git_revwalk_push_glob(walker, "refs/heads/*");
+            git_revwalk_push_glob(walker, "refs/remotes/*");
+            git_revwalk_push_head(walker);
+        }
+        else if (branchRef.isEmpty())
         {
             res = git_revwalk_push_head(walker);
             if (res)
@@ -4186,7 +4194,8 @@ void QGit::listCommits(QString object, int length)
         }
         else
         {
-            res = resolveToCommitOid(oid, repo, object);
+            git_oid oid;
+            res = resolveToCommitOid(oid, repo, branchRef);
             if (res)
             {
                 throw QGitError("resolveToCommitOid", res);
@@ -4197,12 +4206,16 @@ void QGit::listCommits(QString object, int length)
             {
                 throw QGitError("git_revwalk_push", res);
             }
+        }
 
-            memset(&oid, 0, sizeof(oid));
-
-            git_revwalk_next(&oid, walker);
-
-            memset(&oid, 0, sizeof(oid));
+        git_oid oid;
+        // Skip offset commits
+        for (int i = 0; i < offset; ++i)
+        {
+            if (git_revwalk_next(&oid, walker) != 0)
+            {
+                break;
+            }
         }
 
         int count = 0;

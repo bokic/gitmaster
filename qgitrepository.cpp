@@ -69,6 +69,8 @@ QGitRepository::QGitRepository(const QString &path, QWidget *parent)
     , ui(new Ui::QGitRepository)
     , m_path(path)
     , m_allCommitsLoaded(false)
+    , m_currentLogBranchFilter("")
+    , m_logCommitsOffset(0)
     , m_iconFileNew(":/small/added")
     , m_iconFileClean(":/small/clean")
     , m_iconFileModified(":/small/modified")
@@ -92,6 +94,9 @@ QGitRepository::QGitRepository(const QString &path, QWidget *parent)
     QString email;
 
     ui->setupUi(this);
+
+    connect(ui->comboBox_logBranchFilter, &QComboBox::currentTextChanged,
+            this, &QGitRepository::on_comboBox_logBranchFilter_currentTextChanged);
 
     ui->commit_diff->setContentsMargins(10, 10, 10, 10);
 
@@ -812,6 +817,45 @@ void QGitRepository::repositoryBranchesAndTagsReply(QList<QGitBranch> branches, 
     ui->branchesTreeView->addTopLevelItems(items);
     ui->branchesTreeView->expandAll();
 
+    // Populate the branch filter dropdown
+    ui->comboBox_logBranchFilter->blockSignals(true);
+    QString currentSavedText = ui->comboBox_logBranchFilter->currentText();
+    ui->comboBox_logBranchFilter->clear();
+
+    ui->comboBox_logBranchFilter->addItem(tr("All Branches"), QStringLiteral("all"));
+    ui->comboBox_logBranchFilter->addItem(tr("Current Branch (HEAD)"), QStringLiteral(""));
+
+    // Add local branches
+    ui->comboBox_logBranchFilter->addItem(QStringLiteral("--- Local Branches ---"), QVariant());
+    for (const auto &branch : branches) {
+        if (branch.type() & GIT_BRANCH_LOCAL) {
+            QString name = branch.name();
+            if (name.startsWith(QStringLiteral("refs/heads/")))
+                name = name.mid(11);
+            ui->comboBox_logBranchFilter->addItem(name, branch.name());
+        }
+    }
+
+    // Add remote branches
+    ui->comboBox_logBranchFilter->addItem(QStringLiteral("--- Remote Branches ---"), QVariant());
+    for (const auto &branch : branches) {
+        if (branch.type() & GIT_BRANCH_REMOTE) {
+            QString name = branch.name();
+            if (name.startsWith(QStringLiteral("refs/remotes/")))
+                name = name.mid(13);
+            ui->comboBox_logBranchFilter->addItem(name, branch.name());
+        }
+    }
+
+    // Restore selection
+    int savedIdx = ui->comboBox_logBranchFilter->findText(currentSavedText);
+    if (savedIdx >= 0) {
+        ui->comboBox_logBranchFilter->setCurrentIndex(savedIdx);
+    } else {
+        ui->comboBox_logBranchFilter->setCurrentIndex(1); // default to Current Branch (HEAD)
+    }
+    ui->comboBox_logBranchFilter->blockSignals(false);
+
     ui->logHistory_commits->setReferences(branches, tags, current_branch);
 }
 
@@ -1036,6 +1080,8 @@ void QGitRepository::repositoryGetCommitsReply(QList<QGitCommit> commits, QGitEr
     {
         ui->logHistory_commits->addCommit(commit);
     }
+
+    m_logCommitsOffset += commits.count();
 
     if (commits.count() < COMMIT_COUNT_TO_LOAD)
     {
@@ -1920,19 +1966,7 @@ void QGitRepository::fetchCommits()
 {
     if (!m_allCommitsLoaded)
     {
-        int rows = ui->logHistory_commits->rowCount();
-
-        if (rows > 0)
-        {
-            QString last_commit_hash = ui->logHistory_commits->item(rows - 1, 4)->data(Qt::UserRole).toString();
-
-            emit repositoryGetCommits(last_commit_hash, COMMIT_COUNT_TO_LOAD);
-        }
-        else
-        {
-            emit repositoryGetCommits("", COMMIT_COUNT_TO_LOAD);
-        }
-
+        emit repositoryGetCommits(m_currentLogBranchFilter, m_logCommitsOffset, COMMIT_COUNT_TO_LOAD);
         QGitMasterMainWindow::instance()->updateStatusBarText(tr("Fetching commits..."));
     }
 }
@@ -2521,6 +2555,29 @@ void QGitRepository::on_comboBox_gitStatusFiles_itemClicked(int index)
     Q_UNUSED(index)
 
     fetchRepositoryChangedFiles();
+}
+
+void QGitRepository::on_comboBox_logBranchFilter_currentTextChanged(const QString &text)
+{
+    Q_UNUSED(text)
+    int index = ui->comboBox_logBranchFilter->currentIndex();
+    if (index < 0) return;
+
+    QVariant data = ui->comboBox_logBranchFilter->itemData(index);
+    if (!data.isValid()) {
+        // It's a separator! Revert to HEAD (index 1)
+        ui->comboBox_logBranchFilter->blockSignals(true);
+        ui->comboBox_logBranchFilter->setCurrentIndex(1);
+        m_currentLogBranchFilter = ui->comboBox_logBranchFilter->itemData(1).toString();
+        ui->comboBox_logBranchFilter->blockSignals(false);
+        return;
+    }
+
+    m_currentLogBranchFilter = data.toString();
+    m_logCommitsOffset = 0;
+    m_allCommitsLoaded = false;
+    ui->logHistory_commits->setRowCount(0);
+    fetchCommits();
 }
 
 /*    enum QGitFileSort {

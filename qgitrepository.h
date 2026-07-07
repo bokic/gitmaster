@@ -48,7 +48,7 @@ signals:
     void repositoryStageFiles(QStringList items);
     void repositoryUnstageFiles(QStringList items);
     void repositoryCommit(QString message, bool withPush, bool amend);
-    void repositoryGetCommits(QString object, int length);
+    void repositoryGetCommits(QString branchRef, int offset, int length);
     void repositorySearchCommits(QString text, QString type);
     void repositoryAbortSearch();
     void repositoryGetCommitDiff(QString commitId, bool ignoreWhitespace = false);
@@ -126,6 +126,7 @@ private slots:
     void deleteTagReply(QGitError error);
     void on_branchesTreeView_itemChanged(QTreeWidgetItem *item, int column);
     void on_comboBox_gitStatusFiles_itemClicked(int index);
+    void on_comboBox_logBranchFilter_currentTextChanged(const QString &text);
     void on_comboBox_gitDiffOptions_optionsChanged();
     void on_commit_diff_customContextMenuRequested(const QPoint &pos);
     void on_logHistory_commits_customContextMenuRequested(const QPoint &pos);
@@ -168,6 +169,8 @@ private:
     QString m_draftCommitMessage;
     bool m_stageingFiles = true;
     bool m_searchingCommits = false;
+    QString m_currentLogBranchFilter;
+    int m_logCommitsOffset = 0;
     QString m_lastRemote;
     QStringList m_lastBranches;
     bool m_lastTags;
