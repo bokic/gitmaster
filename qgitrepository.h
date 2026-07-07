@@ -28,6 +28,7 @@ public:
     void stash(const QString &name, bool keepIndex = false, bool includeUntracked = false, bool includeIgnored = false);
     void branchDialog();
     void worktreeDialog();
+    void gitFlowDialog();
     void commit();
     void fetch();
     void pull();

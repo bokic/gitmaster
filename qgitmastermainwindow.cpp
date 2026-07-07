@@ -495,6 +495,14 @@ void QGitMasterMainWindow::on_actionWorktrees_triggered()
     }
 }
 
+void QGitMasterMainWindow::on_actionGit_Flow_triggered()
+{
+    auto widget = dynamic_cast<QGitRepository *>(ui->tabWidget->currentWidget());
+    if (widget) {
+        widget->gitFlowDialog();
+    }
+}
+
 void QGitMasterMainWindow::on_actionTerminal_triggered()
 {
     auto widget = dynamic_cast<QGitRepository *>(ui->tabWidget->currentWidget());

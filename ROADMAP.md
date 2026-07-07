@@ -8,7 +8,7 @@ Development plan and upcoming features for GitMaster.
 *Enhancing the primary control surfaces and utility access.*
 
 - [x] **Merge Dialog**: Comprehensive interface for merging branches with conflict resolution entry points.
-- [ ] **Git Flow Dialog**: Integrated support for Git Flow branching models (feature, release, hotfix).
+- [x] **Git Flow Dialog**: Integrated support for Git Flow branching models (feature, release, hotfix).
 - [x] **Quick Terminal**: One-click button to launch the system terminal directly in the current project directory.
 - [x] **Settings Portal**: Centralized configuration for UI preferences, Git credentials, and global behaviors.
 - [ ] **Enhanced Branch Management**: New commit history view optimized for branch-specific workflows.

@@ -14,6 +14,7 @@
 #include "qgitremotesdialog.h"
 #include "qgitblamedialog.h"
 #include "qgitworktreedialog.h"
+#include "qgitflowdialog.h"
 #include <qgitbranch.h>
 
 #include <QCryptographicHash>
@@ -340,6 +341,12 @@ void QGitRepository::worktreeDialog()
             QMessageBox::critical(this, tr("Error adding worktree"), error.errorString());
         }
     }
+}
+
+void QGitRepository::gitFlowDialog()
+{
+    QGitFlowDialog dlg(this);
+    dlg.exec();
 }
 
 void QGitRepository::commit()
