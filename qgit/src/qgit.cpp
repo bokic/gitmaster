@@ -2361,6 +2361,7 @@ void QGit::commitDiff(QString commitId, bool ignoreWhitespace)
     QDateTime commitTime;
     QString commitMessage;
     QString commitDescription;
+    QString commitNote;
     QGitCommit commitDiff;
     QGitError error;
 
@@ -2415,6 +2416,15 @@ void QGit::commitDiff(QString commitId, bool ignoreWhitespace)
         commitTime.setTimeZone(QTimeZone(timeOffset * 60));
 
         commitMessage = QString::fromUtf8(git_commit_message(commit));
+
+        {
+            git_note *note = nullptr;
+            if (git_note_read(&note, repo, nullptr, git_object_id(obj)) == 0)
+            {
+                commitNote = QString::fromUtf8(git_note_message(note));
+                git_note_free(note);
+            }
+        }
 
         // Attempt git describe (best-effort: silently skip if no tags found)
         {
@@ -2509,7 +2519,7 @@ void QGit::commitDiff(QString commitId, bool ignoreWhitespace)
         error = ex;
     }
 
-    commitDiff = QGitCommit(commitId, parents, commitTime, commitAuthor, commitCommiter, commitMessage, commitDescription);
+    commitDiff = QGitCommit(commitId, parents, commitTime, commitAuthor, commitCommiter, commitMessage, commitDescription, commitNote);
 
     emit commitDiffReply(commitId, commitDiff, error);
 }
@@ -4238,4 +4248,79 @@ void QGit::searchCommits(QString text, QString type)
     }
 
     emit searchFinished();
+}
+
+QString QGit::getNote(const QString &commitHash) const
+{
+    QString noteText;
+    try {
+        GitRepository repo;
+        int res = git_repository_open(repo, m_path.absolutePath().toUtf8().constData());
+        if (res) throw QGitError("git_repository_open", res);
+
+        git_oid oid;
+        res = git_oid_fromstr(&oid, commitHash.toUtf8().constData());
+        if (res) throw QGitError("git_oid_fromstr", res);
+
+        git_note *note = nullptr;
+        if (git_note_read(&note, repo, nullptr, &oid) == 0)
+        {
+            noteText = QString::fromUtf8(git_note_message(note));
+            git_note_free(note);
+        }
+    } catch (...) {
+        // Silently catch errors during synchronous retrieval
+    }
+    return noteText;
+}
+
+void QGit::setNote(QString commitHash, QString noteText)
+{
+    QGitError error;
+    try {
+        GitRepository repo;
+        int res = git_repository_open(repo, m_path.absolutePath().toUtf8().constData());
+        if (res) throw QGitError("git_repository_open", res);
+
+        git_oid oid;
+        res = git_oid_fromstr(&oid, commitHash.toUtf8().constData());
+        if (res) throw QGitError("git_oid_fromstr", res);
+
+        GitSignature me;
+        res = git_signature_default(me, repo);
+        if (res) throw QGitError("git_signature_default", res);
+
+        git_oid note_oid;
+        res = git_note_create(&note_oid, repo, nullptr, me, me, &oid, noteText.toUtf8().constData(), 1);
+        if (res) throw QGitError("git_note_create", res);
+
+    } catch (const QGitError &ex) {
+        error = ex;
+    }
+    emit setNoteReply(error);
+}
+
+void QGit::removeNote(QString commitHash)
+{
+    QGitError error;
+    try {
+        GitRepository repo;
+        int res = git_repository_open(repo, m_path.absolutePath().toUtf8().constData());
+        if (res) throw QGitError("git_repository_open", res);
+
+        git_oid oid;
+        res = git_oid_fromstr(&oid, commitHash.toUtf8().constData());
+        if (res) throw QGitError("git_oid_fromstr", res);
+
+        GitSignature me;
+        res = git_signature_default(me, repo);
+        if (res) throw QGitError("git_signature_default", res);
+
+        res = git_note_remove(repo, nullptr, me, me, &oid);
+        if (res) throw QGitError("git_note_remove", res);
+
+    } catch (const QGitError &ex) {
+        error = ex;
+    }
+    emit removeNoteReply(error);
 }

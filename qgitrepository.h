@@ -62,6 +62,8 @@ signals:
     void repositoryUpdateSubmodule(QString name);
     void repositoryClean(bool includeIgnored, bool removeDirectories);
     void repositoryApplyPatch(QString patchPath);
+    void repositorySetNote(QString commitHash, QString note);
+    void repositoryRemoveNote(QString commitHash);
 
 protected:
     void keyPressEvent(QKeyEvent *event) override;
@@ -85,6 +87,8 @@ private slots:
     void repositoryDiscardFilesReply(QGitError error);
     void repositoryCleanReply(QGitError error);
     void repositoryApplyPatchReply(QGitError error);
+    void repositorySetNoteReply(QGitError error);
+    void repositoryRemoveNoteReply(QGitError error);
     void repositoryCommitReply(QString commit_id, QGitError error);
     void repositoryGetCommitsReply(QList<QGitCommit> commits, QGitError error);
     void repositoryGetCommitDiffReply(QString commitId, QGitCommit diff, QGitError error);

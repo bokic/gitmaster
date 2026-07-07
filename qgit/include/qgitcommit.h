@@ -11,7 +11,7 @@
 class QGitCommit {
 public:
     QGitCommit() = default;
-    QGitCommit(const QString &id, const QList<QGitCommitDiffParent> &parents, const QDateTime &time, const QGitSignature &author, const QGitSignature &commiter, const QString &message, const QString &description = QString());
+    QGitCommit(const QString &id, const QList<QGitCommitDiffParent> &parents, const QDateTime &time, const QGitSignature &author, const QGitSignature &commiter, const QString &message, const QString &description = QString(), const QString &note = QString());
     QGitCommit(const QGitCommit &other) = default;
     QGitCommit(QGitCommit &&other) noexcept;
     virtual ~QGitCommit() = default;
@@ -26,6 +26,7 @@ public:
     QGitSignature commiter() const;
     QString message() const;
     QString description() const;
+    QString note() const;
 
 private:
     QString m_id;
@@ -35,4 +36,5 @@ private:
     QGitSignature m_commiter;
     QString m_message;
     QString m_description;
+    QString m_note;
 };

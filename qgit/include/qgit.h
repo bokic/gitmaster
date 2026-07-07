@@ -82,6 +82,7 @@ public:
     QString headCommitId() const;
     QString headCommitMessage() const;
     bool isAncestor(const QString &ancestor, const QString &descendant) const;
+    QString getNote(const QString &commitHash) const;
     QList<QGitBranch> branches(git_branch_t type) const;
     bool hasCommitId(const QString &commitId) const;
     void createLocalBranch(const QString &name, const QString &commit_id  = "", bool checkout = false, bool force = false);
@@ -144,6 +145,8 @@ public slots:
     void createTag(QString name, QString targetObjectId, QString message, bool force);
     void clean(bool includeIgnored, bool removeDirectories);
     void applyPatch(QString patchPath);
+    void setNote(QString commitHash, QString note);
+    void removeNote(QString commitHash);
 
 signals:
     void initReply(QGitError error);
@@ -184,6 +187,8 @@ signals:
     void rebaseReply(QGitError error);
     void cleanReply(QGitError error);
     void applyPatchReply(QGitError error);
+    void setNoteReply(QGitError error);
+    void removeNoteReply(QGitError error);
 
 private:
     QDir m_path;

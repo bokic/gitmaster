@@ -199,6 +199,10 @@ QGitRepository::QGitRepository(const QString &path, QWidget *parent)
     connect(m_git, &QGit::cleanReply, this, &QGitRepository::repositoryCleanReply);
     connect(this, &QGitRepository::repositoryApplyPatch, m_git, &QGit::applyPatch);
     connect(m_git, &QGit::applyPatchReply, this, &QGitRepository::repositoryApplyPatchReply);
+    connect(this, &QGitRepository::repositorySetNote, m_git, &QGit::setNote);
+    connect(m_git, &QGit::setNoteReply, this, &QGitRepository::repositorySetNoteReply);
+    connect(this, &QGitRepository::repositoryRemoveNote, m_git, &QGit::removeNote);
+    connect(m_git, &QGit::removeNoteReply, this, &QGitRepository::repositoryRemoveNoteReply);
 
     ui->branchesTreeView->setContextMenuPolicy(Qt::CustomContextMenu);
     ui->branchesTreeView->setEditTriggers(QAbstractItemView::NoEditTriggers);
@@ -983,6 +987,9 @@ void QGitRepository::repositoryGetCommitDiffReply(QString commitId, QGitCommit d
             html += QStringLiteral("<b>Labels:</b> ") + labelsHtml.join(", ") + QStringLiteral("<br />");
             html += QStringLiteral("<br />");
             html += m_commitDiff.message();
+            if (!m_commitDiff.note().isEmpty()) {
+                html += QStringLiteral("<br /><br /><b>Notes:</b><br />") + m_commitDiff.note().toHtmlEscaped().replace(QLatin1Char('\n'), QStringLiteral("<br />"));
+            }
 
             ui->search_info->setHtml(html);
 
@@ -1075,6 +1082,9 @@ void QGitRepository::repositoryGetCommitDiffReply(QString commitId, QGitCommit d
             html += QStringLiteral("<b>Labels:</b> ") + labelsHtml.join(", ") + QStringLiteral("<br />");
             html += QStringLiteral("<br />");
             html += m_commitDiff.message();
+            if (!m_commitDiff.note().isEmpty()) {
+                html += QStringLiteral("<br /><br /><b>Notes:</b><br />") + m_commitDiff.note().toHtmlEscaped().replace(QLatin1Char('\n'), QStringLiteral("<br />"));
+            }
 
             ui->logHistory_info->setHtml(html);
 
@@ -1975,6 +1985,9 @@ void QGitRepository::on_logHistory_commits_customContextMenuRequested(const QPoi
 
     menu.addSeparator();
     QAction *createTagAction = menu.addAction(tr("Create Tag at '%1'...").arg(selectedHash.left(7)));
+    menu.addSeparator();
+    QAction *editNoteAction = menu.addAction(tr("Edit Git Note..."));
+    QAction *deleteNoteAction = menu.addAction(tr("Delete Git Note"));
 
     QAction *res = menu.exec(ui->logHistory_commits->viewport()->mapToGlobal(pos));
     if (res) {
@@ -2067,6 +2080,28 @@ void QGitRepository::on_logHistory_commits_customContextMenuRequested(const QPoi
                 QGitMasterMainWindow::instance()->updateStatusBarText(tr("Creating tag..."));
                 emit repositoryCreateTag(dlg.tagName(), selectedHash, dlg.tagMessage(), dlg.forceCreate());
             }
+        } else if (res == editNoteAction) {
+            QString currentNote = m_git->getNote(selectedHash);
+            bool ok;
+            QString noteText = QInputDialog::getMultiLineText(
+                this,
+                tr("Edit Git Note"),
+                tr("Enter note text for commit %1:").arg(selectedHash.left(7)),
+                currentNote,
+                &ok
+            );
+            if (ok) {
+                QGitMasterMainWindow::instance()->updateStatusBarText(tr("Setting Git Note..."));
+                emit repositorySetNote(selectedHash, noteText);
+            }
+        } else if (res == deleteNoteAction) {
+            auto confirm = QMessageBox::question(this, tr("Delete Git Note"),
+                                                 tr("Are you sure you want to delete the Git Note for commit %1?").arg(selectedHash.left(7)),
+                                                 QMessageBox::Yes | QMessageBox::No);
+            if (confirm == QMessageBox::Yes) {
+                QGitMasterMainWindow::instance()->updateStatusBarText(tr("Deleting Git Note..."));
+                emit repositoryRemoveNote(selectedHash);
+            }
         }
     }
 }
@@ -2110,6 +2145,32 @@ void QGitRepository::repositoryApplyPatchReply(QGitError error)
     } else {
         QMessageBox::information(this, tr("Apply Patch Successful"), tr("Patch applied successfully."));
         refreshData();
+    }
+}
+
+void QGitRepository::repositorySetNoteReply(QGitError error)
+{
+    QGitMasterMainWindow::instance()->updateStatusBarText(tr("Ready"));
+    if (error.errorCode() != 0) {
+        QMessageBox::critical(this, tr("Note Error"), error.errorString());
+    } else {
+        int currentRow = ui->logHistory_commits->currentRow();
+        if (currentRow >= 0) {
+            on_logHistory_commits_currentCellChanged(currentRow, 0, 0, 0);
+        }
+    }
+}
+
+void QGitRepository::repositoryRemoveNoteReply(QGitError error)
+{
+    QGitMasterMainWindow::instance()->updateStatusBarText(tr("Ready"));
+    if (error.errorCode() != 0) {
+        QMessageBox::critical(this, tr("Note Error"), error.errorString());
+    } else {
+        int currentRow = ui->logHistory_commits->currentRow();
+        if (currentRow >= 0) {
+            on_logHistory_commits_currentCellChanged(currentRow, 0, 0, 0);
+        }
     }
 }
 
