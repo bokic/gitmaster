@@ -259,10 +259,10 @@ QGitRepository::QGitRepository(const QString &path, QWidget *parent)
     ui->logHistory_commits->setContextMenuPolicy(Qt::CustomContextMenu);
     connect(ui->logHistory_commits, &QLogHistoryTableWidget::customContextMenuRequested, this, &QGitRepository::on_logHistory_commits_customContextMenuRequested);
 
+    m_git->setPath(QDir(m_path));
+
     m_thread.setObjectName("QGit(repo)");
     m_thread.start();
-
-    m_git->setPath(QDir(m_path));
 
     connect(ui->comboBox_gitDiffOptions, &QComboBoxGitDiffOptions::optionsChanged, this, &QGitRepository::on_comboBox_gitDiffOptions_optionsChanged);
 }
