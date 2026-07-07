@@ -12,6 +12,7 @@
 #include <QDir>
 #include <QFile>
 #include <functional>
+#include <limits>
 
 
 struct GitRepository {
@@ -3148,7 +3149,11 @@ void QGit::stageFileLines(QString filename, QVector<QGitDiffWidgetLine> lines)
 
         const char *blob_content = static_cast<const char *>(git_blob_rawcontent(blob));
         git_off_t blob_size = git_blob_rawsize(blob);
-        QByteArray buffer = QByteArray(blob_content, blob_size);
+        if (blob_size > std::numeric_limits<int>::max())
+        {
+            throw QGitError("File size exceeds 2GB limit for QByteArray", 0);
+        }
+        QByteArray buffer = QByteArray(blob_content, static_cast<int>(blob_size));
         auto bufferLines = buffer.split(LINE_END);
         int added = 0;
 
@@ -3264,7 +3269,11 @@ void QGit::unstageFileLines(QString filename, QVector<QGitDiffWidgetLine> lines)
 
         const char *blob_content = static_cast<const char *>(git_blob_rawcontent(blob));
         git_off_t blob_size = git_blob_rawsize(blob);
-        QByteArray buffer = QByteArray(blob_content, blob_size);
+        if (blob_size > std::numeric_limits<int>::max())
+        {
+            throw QGitError("File size exceeds 2GB limit for QByteArray", 0);
+        }
+        QByteArray buffer = QByteArray(blob_content, static_cast<int>(blob_size));
         auto bufferLines = buffer.split(LINE_END);
         int added = 0;
 
