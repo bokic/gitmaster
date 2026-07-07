@@ -19,7 +19,6 @@ A comprehensive reanalysis of `libgit2` features for integration into GitMaster,
 | **Git Notes Management** | Unimplemented | `git2/note.h` | Low |
 | **Mailmap Author Mapping** | Unimplemented | `git2/mailmap.h` | Low |
 | **Revision Parsing Engine** | Partial (direct OID/ref only) | `git2/revparse.h` | Low |
-| **Clean Workspace (`git clean`)** | Unimplemented | `git2/status.h`, filesystem | Low |
 
 ---
 
@@ -65,10 +64,6 @@ A comprehensive reanalysis of `libgit2` features for integration into GitMaster,
 * **libgit2 APIs**: `git_revparse_single`, `git_revparse_ext`
 * **Description**: **Git Revision Query**. Support parsing expressions like `HEAD~3`, `main@{1}`, or `HEAD^2` in search inputs or checkout dialogs.
 
-### 11. Clean Workspace (`git clean`) (`git2/status.h`)
-* **libgit2 APIs**: Status filtering + `git_status_byindex`
-* **Description**: **Clean Untracked Files**. Provide a "Clean Working Directory" action to batch-remove untracked files or ignored build artifacts with prompt confirmations.
-
-### 12. Mailmap Support (`git2/mailmap.h`)
+### 11. Mailmap Support (`git2/mailmap.h`)
 * **libgit2 APIs**: `git_mailmap_new`, `git_mailmap_resolve`
 * **Description**: **Author Identity Normalization**. Resolve author and committer names/emails according to repository `.mailmap` rules when generating commit log tables.
