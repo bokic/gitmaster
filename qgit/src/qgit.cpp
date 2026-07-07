@@ -3032,7 +3032,7 @@ void QGit::stageFiles(QStringList items)
     {
         if (items.count() == 0)
         {
-            throw QGitError();
+            throw QGitError(tr("No files selected to stage"), 0);
         }
 
         GitRepository repo;
@@ -3086,7 +3086,7 @@ void QGit::unstageFiles(QStringList items)
     {
         if (items.count() == 0)
         {
-            throw QGitError();
+            throw QGitError(tr("No files selected to unstage"), 0);
         }
 
         GitRepository repo;
@@ -3146,7 +3146,7 @@ void QGit::stageFileLines(QString filename, QVector<QGitDiffWidgetLine> lines)
     {
         if (lines.count() == 0)
         {
-            throw QGitError();
+            throw QGitError(tr("No lines selected to stage"), 0);
         }
 
         GitRepository repo;
@@ -3266,7 +3266,7 @@ void QGit::unstageFileLines(QString filename, QVector<QGitDiffWidgetLine> lines)
     {
         if (lines.count() == 0)
         {
-            throw QGitError();
+            throw QGitError(tr("No lines selected to unstage"), 0);
         }
 
         GitRepository repo;
@@ -3385,7 +3385,7 @@ void QGit::discardFiles(QStringList items)
     {
         if (items.count() == 0)
         {
-            throw QGitError();
+            throw QGitError(tr("No files selected to discard"), 0);
         }
 
         GitRepository repo;
@@ -3484,7 +3484,7 @@ void QGit::discardFileLines(QString filename, QVector<QGitDiffWidgetLine> lines)
     {
         if (lines.count() == 0)
         {
-            throw QGitError();
+            throw QGitError(tr("No lines selected to discard"), 0);
         }
 
         QString filePath = m_path.absoluteFilePath(filename);
