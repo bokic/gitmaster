@@ -21,7 +21,9 @@ Development plan and upcoming features for GitMaster.
 - [x] **Advanced Graphing**: Implement smooth, multi-color graph lines for complex branching history.
 
 ### File Status
-- [ ] **Combo Functionality**: Complete the implementation of all remaining filtering and view options in the status combos.
+- [x] **Combo Functionality**: Complete the implementation of all remaining filtering and view options in the status combos.
+- [ ] **View Layout Options**: Wire up and implement the Flat list and Tree view options in the View Options combo.
+- [ ] **Staging Mode Options**: Wire up and implement the No staging, Fluid staging, and Split view staging options in the View Options combo.
 
 ### Search
 - [x] **Global Search Suite**: Full implementation of commit message, author, and file content searching.
