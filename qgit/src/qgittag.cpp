@@ -26,12 +26,12 @@ QGitTag &QGitTag::operator=(QGitTag &&other) noexcept
     return *this;
 }
 
-QString QGitTag::name() const
+const QString &QGitTag::name() const
 {
     return m_name;
 }
 
-QString QGitTag::hash() const
+const QString &QGitTag::hash() const
 {
     return m_hash;
 }

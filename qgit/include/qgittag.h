@@ -16,8 +16,8 @@ public:
     QGitTag &operator=(QGitTag &&other) noexcept;
     QGitTag &operator=(const QGitTag &other) = default;
 
-    QString name() const;
-    QString hash() const;
+    const QString &name() const;
+    const QString &hash() const;
     int64_t time() const;
 
 private:

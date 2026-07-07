@@ -24,17 +24,17 @@ QGitSignature &QGitSignature::operator=(QGitSignature &&other) noexcept
     return *this;
 }
 
-QString QGitSignature::name() const
+const QString &QGitSignature::name() const
 {
     return m_name;
 }
 
-QString QGitSignature::email() const
+const QString &QGitSignature::email() const
 {
     return m_email;
 }
 
-QDateTime QGitSignature::when() const
+const QDateTime &QGitSignature::when() const
 {
     return m_when;
 }

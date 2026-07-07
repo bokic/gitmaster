@@ -16,9 +16,9 @@ public:
     QGitSignature &operator=(const QGitSignature &other) = default;
 
 
-    QString name() const;
-    QString email() const;
-    QDateTime when() const;
+    const QString &name() const;
+    const QString &email() const;
+    const QDateTime &when() const;
 
 private:
     QString m_name;

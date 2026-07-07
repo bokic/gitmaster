@@ -35,12 +35,12 @@ QGitBranch &QGitBranch::operator=(QGitBranch &&other) noexcept
     return *this;
 }
 
-QString QGitBranch::name() const
+const QString &QGitBranch::name() const
 {
     return m_name;
 }
 
-QString QGitBranch::hash() const
+const QString &QGitBranch::hash() const
 {
     return m_hash;
 }

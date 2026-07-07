@@ -19,14 +19,14 @@ public:
     QGitCommit &operator=(QGitCommit &&other) noexcept;
     QGitCommit &operator=(const QGitCommit &other) = default;
 
-    QString id() const;
-    QList<QGitCommitDiffParent> parents() const;
-    QDateTime time() const;
-    QGitSignature author() const;
-    QGitSignature commiter() const;
-    QString message() const;
-    QString description() const;
-    QString note() const;
+    const QString &id() const;
+    const QList<QGitCommitDiffParent> &parents() const;
+    const QDateTime &time() const;
+    const QGitSignature &author() const;
+    const QGitSignature &commiter() const;
+    const QString &message() const;
+    const QString &description() const;
+    const QString &note() const;
 
 private:
     QString m_id;

@@ -17,8 +17,8 @@ public:
     QGitBranch &operator=(QGitBranch &&other) noexcept;
     QGitBranch &operator=(const QGitBranch &other) = default;
 
-    QString name() const;
-    QString hash() const;
+    const QString &name() const;
+    const QString &hash() const;
     int64_t time() const;
     git_branch_t type() const;
     int ahead() const;

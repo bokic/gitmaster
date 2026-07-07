@@ -39,42 +39,42 @@ QGitCommit &QGitCommit::operator=(QGitCommit &&other) noexcept
     return *this;
 }
 
-QString QGitCommit::id() const
+const QString &QGitCommit::id() const
 {
     return m_id;
 }
 
-QList<QGitCommitDiffParent> QGitCommit::parents() const
+const QList<QGitCommitDiffParent> &QGitCommit::parents() const
 {
     return m_parents;
 }
 
-QDateTime QGitCommit::time() const
+const QDateTime &QGitCommit::time() const
 {
     return m_time;
 }
 
-QGitSignature QGitCommit::author() const
+const QGitSignature &QGitCommit::author() const
 {
     return m_author;
 }
 
-QGitSignature QGitCommit::commiter() const
+const QGitSignature &QGitCommit::commiter() const
 {
     return m_commiter;
 }
 
-QString QGitCommit::message() const
+const QString &QGitCommit::message() const
 {
     return m_message;
 }
 
-QString QGitCommit::description() const
+const QString &QGitCommit::description() const
 {
     return m_description;
 }
 
-QString QGitCommit::note() const
+const QString &QGitCommit::note() const
 {
     return m_note;
 }
