@@ -37,6 +37,8 @@ public:
     void rebase();
     QGit *git() const;
     void navigateToCommit(const QString &hash);
+    bool hasRemotes() const { return m_hasRemotes; }
+    bool hasCommitsToPush() const { return m_hasCommitsToPush; }
 
 signals:
     void localStash(QString name, bool keepIndex, bool includeUntracked, bool includeIgnored);
@@ -83,7 +85,7 @@ private slots:
     void repositoryMergeReply(QGitError error);
     void repositoryRebaseReply(QGitError error);
     void repositoryUpdateSubmoduleReply(QGitError error);
-    void repositoryBranchesAndTagsReply(QList<QGitBranch> branches, QList<QGitTag> tags, QGitError error);
+    void repositoryBranchesAndTagsReply(QList<QGitBranch> branches, QList<QGitTag> tags, bool hasRemotes, bool hasCommitsToPush, QGitError error);
     void repositoryStashesReply(QStringList stashes, QGitError error);
     void repositoryChangedFilesReply(QList<QPair<QString, git_status_t>> files, QGitError error);
     void repositoryStageFilesReply(QGitError error);
@@ -176,4 +178,6 @@ private:
     QStringList m_lastBranches;
     bool m_lastTags;
     QGit *m_git = nullptr;
+    bool m_hasRemotes = false;
+    bool m_hasCommitsToPush = false;
 };

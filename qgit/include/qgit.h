@@ -193,7 +193,7 @@ signals:
     void signatureReply(QString name, QString email, QGitError error);
     void updateSubmoduleReply(QGitError error);
     void statusReply(QMap<git_status_t, int> items, QGitError error);
-    void listBranchesAndTagsReply(QList<QGitBranch> branches, QList<QGitTag> tags, QGitError error);
+    void listBranchesAndTagsReply(QList<QGitBranch> branches, QList<QGitTag> tags, bool hasRemotes, bool hasCommitsToPush, QGitError error);
     void stashSaveReply(QGitError error);
     void stashRemoveReply(QGitError error);
     void stashApplyReply(QGitError error);

@@ -491,20 +491,10 @@ QList<QGitRemote> QGit::remotes() const
     return ret;
 }
 
-bool QGit::hasCommitsToPush() const
+static bool hasCommitsToPushHelper(git_repository *repo)
 {
-    if (m_path.absolutePath().isEmpty())
-        return false;
-
-    GitRepository repo;
-    int res = git_repository_open(repo, m_path.absolutePath().toUtf8().constData());
-    if (res)
-    {
-        return false;
-    }
-
     GitBranchIterator it;
-    res = git_branch_iterator_new(it, repo, GIT_BRANCH_LOCAL);
+    int res = git_branch_iterator_new(it, repo, GIT_BRANCH_LOCAL);
     if (res)
     {
         return false;
@@ -560,6 +550,21 @@ bool QGit::hasCommitsToPush() const
     }
 
     return hasCommits;
+}
+
+bool QGit::hasCommitsToPush() const
+{
+    if (m_path.absolutePath().isEmpty())
+        return false;
+
+    GitRepository repo;
+    int res = git_repository_open(repo, m_path.absolutePath().toUtf8().constData());
+    if (res)
+    {
+        return false;
+    }
+
+    return hasCommitsToPushHelper(repo);
 }
 
 QString QGit::currentBranch() const
@@ -2157,6 +2162,8 @@ void QGit::listBranchesAndTags()
     QList<QGitBranch> branches;
     QList<QGitTag> tags;
     QGitError error;
+    bool hasRemotes = false;
+    bool hasCommitsToPush = false;
 
     try
     {
@@ -2266,11 +2273,19 @@ void QGit::listBranchesAndTags()
             tags.append(tag);
         }
 
+        hasCommitsToPush = hasCommitsToPushHelper(repo);
+
+        GitStrArray remotes_list;
+        if (git_remote_list(remotes_list, repo) == 0)
+        {
+            hasRemotes = remotes_list.value.count > 0;
+        }
+
     } catch(const QGitError &ex) {
         error = ex;
     }
 
-    emit listBranchesAndTagsReply(branches, tags, error);
+    emit listBranchesAndTagsReply(branches, tags, hasRemotes, hasCommitsToPush, error);
 }
 
 void QGit::stashSave(QString name, bool keepIndex, bool includeUntracked, bool includeIgnored)

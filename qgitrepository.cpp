@@ -89,6 +89,8 @@ QGitRepository::QGitRepository(const QString &path, QWidget *parent)
     , m_iconSubmodule(":/small/submodule")
     , m_iconWorktree(":/small/worktree")
     , m_git(new QGit())
+    , m_hasRemotes(false)
+    , m_hasCommitsToPush(false)
 {
     QString name;
     QString email;
@@ -608,9 +610,18 @@ void QGitRepository::repositoryPushReply(QGitError error)
     }
 }
 
-void QGitRepository::repositoryBranchesAndTagsReply(QList<QGitBranch> branches, QList<QGitTag> tags, QGitError error)
+void QGitRepository::repositoryBranchesAndTagsReply(QList<QGitBranch> branches, QList<QGitTag> tags, bool hasRemotes, bool hasCommitsToPush, QGitError error)
 {
     Q_UNUSED(error)
+
+    m_hasRemotes = hasRemotes;
+    m_hasCommitsToPush = hasCommitsToPush;
+
+    auto *mainWindow = QGitMasterMainWindow::instance();
+    if (mainWindow)
+    {
+        mainWindow->updateRemoteActions(this);
+    }
 
     QList<QTreeWidgetItem *> items;
     QTreeWidgetItem *itemWorkingCopy = new QTreeWidgetItem(QStringList() << tr("Working Copy"));
