@@ -89,6 +89,15 @@ echo "Successfully built: $APP_BUNDLE"
 echo "Running macdeployqt to bundle dependencies (Qt, libgit2, etc.)..."
 "$MACDEPLOYQT_PATH" "$APP_BUNDLE" -verbose=1
 
+# 4.5 Update version info in Info.plist to use the complete git describe version
+GIT_DESCRIBE=$(git describe --tags --dirty 2>/dev/null || echo "latest")
+echo "Updating Info.plist version strings to: $GIT_DESCRIBE"
+chmod +w "$APP_BUNDLE/Contents/Info.plist"
+plutil -replace CFBundleShortVersionString -string "$GIT_DESCRIBE" "$APP_BUNDLE/Contents/Info.plist"
+plutil -replace CFBundleVersion -string "$GIT_DESCRIBE" "$APP_BUNDLE/Contents/Info.plist"
+plutil -replace CFBundleDisplayName -string "Git Master" "$APP_BUNDLE/Contents/Info.plist"
+plutil -replace CFBundleName -string "Git Master" "$APP_BUNDLE/Contents/Info.plist"
+
 # 5. Resign the bundle
 # macdeployqt copies dylibs from Homebrew which may have invalid/mismatched codesignatures.
 # Deep codesigning using an ad-hoc signature (-) resolves this.
@@ -99,7 +108,6 @@ codesign --force --deep --sign - "$APP_BUNDLE"
 codesign --verify --verbose "$APP_BUNDLE"
 
 # 6. Get version info for DMG filename
-GIT_DESCRIBE=$(git describe --tags --dirty 2>/dev/null || echo "latest")
 DMG_NAME="bin/GitMaster_${GIT_DESCRIBE}_macOS.dmg"
 
 # 7. Package the app bundle into a DMG installer
@@ -118,7 +126,7 @@ ln -s /Applications "$DMG_DIR/Applications"
 rm -f "$DMG_NAME"
 
 # Build the DMG
-hdiutil create -volname "GitMaster" -srcfolder "$DMG_DIR" -ov -format UDZO "$DMG_NAME"
+hdiutil create -volname "Git Master" -srcfolder "$DMG_DIR" -ov -format UDZO "$DMG_NAME"
 
 # Clean up DMG staging directory
 rm -rf "$DMG_DIR"

@@ -247,6 +247,7 @@ set_target_properties(gitmaster PROPERTIES
 if (APPLE)
     set_target_properties(gitmaster PROPERTIES
         MACOSX_BUNDLE_ICON_FILE gitmaster.icns
+        MACOSX_BUNDLE_BUNDLE_NAME "Git Master"
     )
 endif()
 
