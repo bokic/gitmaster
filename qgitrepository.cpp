@@ -610,12 +610,18 @@ void QGitRepository::repositoryPushReply(QGitError error)
 
 void QGitRepository::repositoryBranchesAndTagsReply(QList<QGitBranch> branches, QList<QGitTag> tags, bool hasRemotes, bool hasCommitsToPush, QGitError error)
 {
-    Q_UNUSED(error)
+    auto *mainWindow = QGitMasterMainWindow::instance();
+    if (error.errorCode())
+    {
+        if (mainWindow)
+        {
+            mainWindow->updateStatusBarText(tr("Error loading branches/tags: %1").arg(error.errorString()));
+        }
+    }
 
     m_hasRemotes = hasRemotes;
     m_hasCommitsToPush = hasCommitsToPush;
 
-    auto *mainWindow = QGitMasterMainWindow::instance();
     if (mainWindow)
     {
         mainWindow->updateRemoteActions(this);
