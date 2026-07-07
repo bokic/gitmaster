@@ -369,64 +369,68 @@ static int sshKeyCredentialCallback(
     unsigned int allowed_types, 
     void *payload)
 {
-    Q_UNUSED(url);
-    Q_UNUSED(payload);
+    try {
+        Q_UNUSED(url);
+        Q_UNUSED(payload);
 
-    if (allowed_types & GIT_CREDENTIAL_SSH_KEY) {
-        int agent_res = git_credential_ssh_key_from_agent(out, username_from_url);
-        if (agent_res == 0) {
-            return 0;
-        }
-
-        QString pass;
-        QMetaObject::invokeMethod(QGitMasterMainWindow::instance(), &QGitMasterMainWindow::getPassword, 
-                                  Qt::BlockingQueuedConnection, Q_RETURN_ARG(QString, pass));
-
-        if (!pass.isEmpty())
-        {
-            QString sshDir = QDir::homePath() + "/.ssh";
-            QDir dir(sshDir);
-            
-            QStringList preferredKeys = {"id_ed25519", "id_rsa", "id_ecdsa", "id_dsa"};
-            QFileInfo pubkeyFileInfo;
-            QFileInfo privkeyFileInfo;
-            bool found = false;
-
-            for (const QString &keyName : preferredKeys) {
-                QFileInfo privKey(dir, keyName);
-                QFileInfo pubKey(dir, keyName + ".pub");
-                if (privKey.exists() && pubKey.exists()) {
-                    pubkeyFileInfo = pubKey;
-                    privkeyFileInfo = privKey;
-                    found = true;
-                    break;
-                }
-            }
-
-            if (!found) {
-                auto keys = dir.entryInfoList({"*.pub"});
-                if (keys.size() == 1)
-                {
-                    pubkeyFileInfo = keys.first();
-                    privkeyFileInfo = QFileInfo(pubkeyFileInfo.dir(), pubkeyFileInfo.completeBaseName());
-                    if (privkeyFileInfo.exists()) {
-                        found = true;
-                    }
-                }
-            }
-
-            if (found)
-            {
-                auto pubkeyPathname = pubkeyFileInfo.absoluteFilePath().toUtf8();
-                auto privkeyPathname = privkeyFileInfo.absoluteFilePath().toUtf8();
-
-                git_credential_ssh_key_new(out, username_from_url, pubkeyPathname, privkeyPathname, pass.toUtf8().constData());
+        if (allowed_types & GIT_CREDENTIAL_SSH_KEY) {
+            int agent_res = git_credential_ssh_key_from_agent(out, username_from_url);
+            if (agent_res == 0) {
                 return 0;
             }
-        }
-    }
 
-    return -1;
+            QString pass;
+            QMetaObject::invokeMethod(QGitMasterMainWindow::instance(), &QGitMasterMainWindow::getPassword, 
+                                      Qt::BlockingQueuedConnection, Q_RETURN_ARG(QString, pass));
+
+            if (!pass.isEmpty())
+            {
+                QString sshDir = QDir::homePath() + "/.ssh";
+                QDir dir(sshDir);
+                
+                QStringList preferredKeys = {"id_ed25519", "id_rsa", "id_ecdsa", "id_dsa"};
+                QFileInfo pubkeyFileInfo;
+                QFileInfo privkeyFileInfo;
+                bool found = false;
+
+                for (const QString &keyName : preferredKeys) {
+                    QFileInfo privKey(dir, keyName);
+                    QFileInfo pubKey(dir, keyName + ".pub");
+                    if (privKey.exists() && pubKey.exists()) {
+                        pubkeyFileInfo = pubKey;
+                        privkeyFileInfo = privKey;
+                        found = true;
+                        break;
+                    }
+                }
+
+                if (!found) {
+                    auto keys = dir.entryInfoList({"*.pub"});
+                    if (keys.size() == 1)
+                    {
+                        pubkeyFileInfo = keys.first();
+                        privkeyFileInfo = QFileInfo(pubkeyFileInfo.dir(), pubkeyFileInfo.completeBaseName());
+                        if (privkeyFileInfo.exists()) {
+                            found = true;
+                        }
+                    }
+                }
+
+                if (found)
+                {
+                    auto pubkeyPathname = pubkeyFileInfo.absoluteFilePath().toUtf8();
+                    auto privkeyPathname = privkeyFileInfo.absoluteFilePath().toUtf8();
+
+                    git_credential_ssh_key_new(out, username_from_url, pubkeyPathname, privkeyPathname, pass.toUtf8().constData());
+                    return 0;
+                }
+            }
+        }
+
+        return -1;
+    } catch (...) {
+        return -1;
+    }
 }
 
 
@@ -1266,9 +1270,13 @@ void QGit::deleteConfigEntry(const QString &key, bool global)
 
 static int configForeachCallback(const git_config_entry *entry, void *payload)
 {
-    QMap<QString, QString> *map = static_cast<QMap<QString, QString>*>(payload);
-    map->insert(QString::fromUtf8(entry->name), QString::fromUtf8(entry->value));
-    return 0;
+    try {
+        QMap<QString, QString> *map = static_cast<QMap<QString, QString>*>(payload);
+        map->insert(QString::fromUtf8(entry->name), QString::fromUtf8(entry->value));
+        return 0;
+    } catch (...) {
+        return -1;
+    }
 }
 
 QMap<QString, QString> QGit::configEntries() const
@@ -1421,33 +1429,37 @@ void QGit::resolveConflict(const QString &path, const QString &resolvedContent)
 
 static int submoduleForeachCallback(git_submodule *sm, const char *name, void *payload)
 {
-    QList<QGitSubmodule> *list = static_cast<QList<QGitSubmodule>*>(payload);
-    QGitSubmodule sub;
-    sub.name = QString::fromUtf8(git_submodule_name(sm));
-    sub.path = QString::fromUtf8(git_submodule_path(sm));
+    try {
+        QList<QGitSubmodule> *list = static_cast<QList<QGitSubmodule>*>(payload);
+        QGitSubmodule sub;
+        sub.name = QString::fromUtf8(git_submodule_name(sm));
+        sub.path = QString::fromUtf8(git_submodule_path(sm));
 
-    const char *url = git_submodule_url(sm);
-    if (url) sub.url = QString::fromUtf8(url);
+        const char *url = git_submodule_url(sm);
+        if (url) sub.url = QString::fromUtf8(url);
 
-    auto formatOid = [](const git_oid *oid) {
-        if (!oid || git_oid_is_zero(oid)) return QString();
-        char buf[GIT_OID_HEXSZ + 1];
-        git_oid_tostr(buf, sizeof(buf), oid);
-        return QString::fromLatin1(buf);
-    };
+        auto formatOid = [](const git_oid *oid) {
+            if (!oid || git_oid_is_zero(oid)) return QString();
+            char buf[GIT_OID_HEXSZ + 1];
+            git_oid_tostr(buf, sizeof(buf), oid);
+            return QString::fromLatin1(buf);
+        };
 
-    sub.headId = formatOid(git_submodule_head_id(sm));
-    sub.indexId = formatOid(git_submodule_index_id(sm));
-    sub.wdId = formatOid(git_submodule_wd_id(sm));
+        sub.headId = formatOid(git_submodule_head_id(sm));
+        sub.indexId = formatOid(git_submodule_index_id(sm));
+        sub.wdId = formatOid(git_submodule_wd_id(sm));
 
-    git_repository *repo = git_submodule_owner(sm);
-    unsigned int status = 0;
-    if (git_submodule_status(&status, repo, name, GIT_SUBMODULE_IGNORE_UNSPECIFIED) == 0) {
-        sub.status = status;
+        git_repository *repo = git_submodule_owner(sm);
+        unsigned int status = 0;
+        if (git_submodule_status(&status, repo, name, GIT_SUBMODULE_IGNORE_UNSPECIFIED) == 0) {
+            sub.status = status;
+        }
+
+        list->append(sub);
+        return 0;
+    } catch (...) {
+        return -1;
     }
-
-    list->append(sub);
-    return 0;
 }
 
 QList<QGitSubmodule> QGit::submodules() const
@@ -2048,9 +2060,13 @@ void QGit::deleteBranches(QList<QGitBranch> branches, bool force)
                     push_opts.callbacks.payload = this;
                     push_opts.callbacks.push_transfer_progress = [](unsigned int current, unsigned int total, size_t bytes, void *payload)->int
                     {
-                        QGit *_this = static_cast<QGit *>(payload);
-                        emit _this->pushProgress(current, total, bytes);
-                        return 0;
+                        try {
+                            QGit *_this = static_cast<QGit *>(payload);
+                            emit _this->pushProgress(current, total, bytes);
+                            return 0;
+                        } catch (...) {
+                            return -1;
+                        }
                     };
                     
                     push_opts.callbacks.credentials = sshKeyCredentialCallback;
@@ -4217,21 +4233,29 @@ void QGit::push(QString remote, QStringList branches, bool tags, bool force)
         push_opts.callbacks.payload = this;
         push_opts.callbacks.push_transfer_progress = [](unsigned int current, unsigned int total, size_t bytes,void *payload)->int
         {
-            QGit *_this = static_cast<QGit *>(payload);
-            emit _this->pushProgress(current, total, bytes);
-            return 0;
+            try {
+                QGit *_this = static_cast<QGit *>(payload);
+                emit _this->pushProgress(current, total, bytes);
+                return 0;
+            } catch (...) {
+                return -1;
+            }
         };
 
         push_opts.callbacks.credentials = sshKeyCredentialCallback;
 
         push_opts.callbacks.push_update_reference = [](const char *refname, const char *status, void *payload) -> int
         {
-            Q_UNUSED(payload);
-            if (status) {
-                fprintf(stderr, "Push rejected for %s: %s\n", refname, status);
-                return -1; // Returning non-zero will fail the push operation locally as well
+            try {
+                Q_UNUSED(payload);
+                if (status) {
+                    fprintf(stderr, "Push rejected for %s: %s\n", refname, status);
+                    return -1; // Returning non-zero will fail the push operation locally as well
+                }
+                return 0;
+            } catch (...) {
+                return -1;
             }
-            return 0;
         };
 
         res = git_remote_push(libgit2_remote, &refspecs.value, &push_opts);
