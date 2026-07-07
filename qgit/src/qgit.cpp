@@ -762,7 +762,11 @@ QString QGit::getBranchNameFromPath(const QString &path)
     }
 
     const char *branch = nullptr;
-    git_branch_name(&branch, ref);
+    res = git_branch_name(&branch, ref);
+    if (res)
+    {
+        return ret;
+    }
 
     return branch;
 }
