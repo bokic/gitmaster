@@ -8,7 +8,7 @@ Development plan and upcoming features for GitMaster.
 *Focusing on new features, data visualization and repository history clarity.*
 
 ### New git operations
-- [*] **Rebase**: Implement rebasing with a toolbar button.
+- [x] **Rebase**: Implement rebasing with a toolbar button.
 - [x] **Cherry-pick**: Extend context menu to cherry-pick the selected commit onto the current branch.
 - [x] **Submodules**: Fully integrated support for Git Submodules (listing, statuses, init, update, sync, and tabbed sub-repository opening).
 - [x] **Worktree Support**: Full support for linked working trees (listing, creating, locking, unlocking, pruning, and opening in separate tabs).

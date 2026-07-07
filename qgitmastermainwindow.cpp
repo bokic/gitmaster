@@ -399,6 +399,7 @@ void QGitMasterMainWindow::on_tabWidget_currentChanged(int index)
         updateRemoteActions(panel);
         ui->actionBranch->setEnabled(true);
         ui->actionMerge->setEnabled(true);
+        ui->actionRebase->setEnabled(true);
         ui->actionWorktrees->setEnabled(true);
         ui->actionStash->setEnabled(false);
         ui->actionGit_Flow->setEnabled(true);
@@ -412,6 +413,7 @@ void QGitMasterMainWindow::on_tabWidget_currentChanged(int index)
         ui->actionPush->setEnabled(false);
         ui->actionBranch->setEnabled(false);
         ui->actionMerge->setEnabled(false);
+        ui->actionRebase->setEnabled(false);
         ui->actionWorktrees->setEnabled(false);
         ui->actionStash->setEnabled(false);
         ui->actionGit_Flow->setEnabled(false);
@@ -484,6 +486,14 @@ void QGitMasterMainWindow::on_actionMerge_triggered()
     auto widget = dynamic_cast<QGitRepository *>(ui->tabWidget->currentWidget());
     if (widget) {
         widget->merge();
+    }
+}
+
+void QGitMasterMainWindow::on_actionRebase_triggered()
+{
+    auto widget = dynamic_cast<QGitRepository *>(ui->tabWidget->currentWidget());
+    if (widget) {
+        widget->rebase();
     }
 }
 

@@ -26,6 +26,7 @@ public:
     bool rebaseInsteadOfMerge() const;
     bool detectRenames() const;
     int renameSimilarity() const;
+    void setRebaseMode(bool rebaseOnly);
 
 private slots:
     void on_mergedFromLog_toolButton_clicked();

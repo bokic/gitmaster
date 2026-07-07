@@ -34,6 +34,7 @@ public:
     void pull();
     void push();
     void merge();
+    void rebase();
     QGit *git() const;
     void navigateToCommit(const QString &hash);
 

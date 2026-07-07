@@ -423,8 +423,28 @@ void QGitRepository::merge()
     {
         QString branchName = dlg.selectedBranch();
         if (!branchName.isEmpty()) {
-            QGitMasterMainWindow::instance()->updateStatusBarText(tr("Merging branch %1...").arg(branchName));
-            emit repositoryMerge(branchName);
+            if (dlg.rebaseInsteadOfMerge()) {
+                QGitMasterMainWindow::instance()->updateStatusBarText(tr("Rebasing current branch onto %1...").arg(branchName));
+                emit repositoryRebase(branchName);
+            } else {
+                QGitMasterMainWindow::instance()->updateStatusBarText(tr("Merging branch %1...").arg(branchName));
+                emit repositoryMerge(branchName);
+            }
+        }
+    }
+}
+
+void QGitRepository::rebase()
+{
+    QGitMergeDialog dlg(m_git->path(), this);
+    dlg.setRebaseMode(true);
+
+    if (dlg.exec() == QDialog::Accepted)
+    {
+        QString branchName = dlg.selectedBranch();
+        if (!branchName.isEmpty()) {
+            QGitMasterMainWindow::instance()->updateStatusBarText(tr("Rebasing current branch onto %1...").arg(branchName));
+            emit repositoryRebase(branchName);
         }
     }
 }

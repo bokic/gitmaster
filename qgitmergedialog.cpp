@@ -88,6 +88,20 @@ int QGitMergeDialog::renameSimilarity() const
     return ui->spinBox->value();
 }
 
+void QGitMergeDialog::setRebaseMode(bool rebaseOnly)
+{
+    if (rebaseOnly) {
+        setWindowTitle(tr("Rebase"));
+        ui->groupBox->setVisible(false); // Hide merge options groupbox
+        ui->mergedFromLog_toolButton->setText(tr("Rebase from Log"));
+        ui->mergeFetched_toolButton->setText(tr("Rebase Fetched"));
+        ui->label->setText(tr("Rebase current branch onto:"));
+        ui->label_4->setText(tr("Rebase from fetched remote branch:"));
+        // Force the checkbox to be checked so rebaseInsteadOfMerge() returns true
+        ui->checkBox_5->setChecked(true);
+    }
+}
+
 void QGitMergeDialog::on_mergedFromLog_toolButton_clicked()
 {
     ui->mergedFromLog_toolButton->setChecked(true);

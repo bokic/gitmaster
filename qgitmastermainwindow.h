@@ -49,6 +49,7 @@ private slots:
     void on_actionStash_triggered();
     void on_actionBranch_triggered();
     void on_actionMerge_triggered();
+    void on_actionRebase_triggered();
     void on_actionWorktrees_triggered();
     void on_actionGit_Flow_triggered();
     void on_actionTerminal_triggered();
