@@ -255,9 +255,9 @@ void QGitRepository::refreshData()
     }
 }
 
-void QGitRepository::stash(const QString &name)
+void QGitRepository::stash(const QString &name, bool keepIndex, bool includeUntracked, bool includeIgnored)
 {
-    m_git->stashSave(name);
+    emit localStash(name, keepIndex, includeUntracked, includeIgnored);
 }
 
 void QGitRepository::branchDialog()

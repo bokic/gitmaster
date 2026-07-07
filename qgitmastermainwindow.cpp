@@ -5,6 +5,7 @@
 #include "qnewrepositorydialog.h"
 #include "qgitrepository.h"
 #include "qgitsettingsdialog.h"
+#include "qgitstashdialog.h"
 
 #include <QTreeWidgetItem>
 #include <QStyleFactory>
@@ -444,10 +445,9 @@ void QGitMasterMainWindow::on_actionStash_triggered()
 {
     auto widget = dynamic_cast<QGitRepository *>(ui->tabWidget->currentWidget());
     if (widget) {
-        QString stashName = QInputDialog::getText(this, tr("Question?"), tr("Stash name:"));
-
-        if(!stashName.isEmpty()) {
-            widget->stash(stashName);
+        QGitStashDialog dlg(this);
+        if (dlg.exec() == QDialog::Accepted) {
+            widget->stash(dlg.message(), dlg.keepIndex(), dlg.includeUntracked(), dlg.includeIgnored());
         }
     }
 }

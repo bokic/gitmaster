@@ -114,7 +114,7 @@ public slots:
     void status();
     void listBranchesAndTags();
     void listStashes();
-    void stashSave(QString name);
+    void stashSave(QString name, bool keepIndex = false, bool includeUntracked = false, bool includeIgnored = false);
     void stashRemove(QString name);
     void stashApply(QString name);
     void stashPop(QString name);

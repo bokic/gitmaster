@@ -2021,7 +2021,7 @@ void QGit::listBranchesAndTags()
     emit listBranchesAndTagsReply(branches, tags, error);
 }
 
-void QGit::stashSave(QString name)
+void QGit::stashSave(QString name, bool keepIndex, bool includeUntracked, bool includeIgnored)
 {
 
     QGitError error;
@@ -2042,8 +2042,13 @@ void QGit::stashSave(QString name)
             throw QGitError("git_signature_default", res);
         }
 
+        uint32_t flags = GIT_STASH_DEFAULT;
+        if (keepIndex) flags |= GIT_STASH_KEEP_INDEX;
+        if (includeUntracked) flags |= GIT_STASH_INCLUDE_UNTRACKED;
+        if (includeIgnored) flags |= GIT_STASH_INCLUDE_IGNORED;
+
         git_oid stashid;
-        res = git_stash_save(&stashid, repo, me, name.toUtf8().constData(), GIT_STASH_DEFAULT);
+        res = git_stash_save(&stashid, repo, me, name.toUtf8().constData(), flags);
         if (res)
         {
             throw QGitError("git_stash_save", res);

@@ -25,7 +25,7 @@ public:
     explicit QGitRepository(const QString &path, QWidget *parent);
     ~QGitRepository();
     void refreshData();
-    void stash(const QString &name);
+    void stash(const QString &name, bool keepIndex = false, bool includeUntracked = false, bool includeIgnored = false);
     void branchDialog();
     void commit();
     void fetch();
@@ -35,7 +35,7 @@ public:
     QGit *git() const;
 
 signals:
-    void localStash(QString name);
+    void localStash(QString name, bool keepIndex, bool includeUntracked, bool includeIgnored);
     void repositoryPush(QString remote, QStringList branches, bool tags, bool force);
     void repositoryPull(QString remote, QString branch, bool rebase);
     void repositoryFetch(bool fetchFromAllRemotes, bool purgeDeletedBranches, bool fetchAllTags);

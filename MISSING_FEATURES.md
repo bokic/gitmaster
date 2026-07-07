@@ -13,7 +13,6 @@ A comprehensive reanalysis of `libgit2` features for integration into GitMaster,
 | **Reflog Navigation** | Unimplemented | `git2/reflog.h` | Medium |
 | **Remote Repository CRUD & Refspecs** | Partial (list/fetch/push) | `git2/remote.h` | Medium |
 | **Ahead/Behind Graph Analysis** | Partial (Ancestor check implemented) | `git2/graph.h` | Medium |
-| **Stash Advanced Options & Patch Inspection** | Partial (basic save/pop/apply) | `git2/stash.h` | Low |
 
 ---
 
@@ -38,7 +37,3 @@ A comprehensive reanalysis of `libgit2` features for integration into GitMaster,
 ### 5. Ahead/Behind Graph Analysis (`git2/graph.h`)
 * **libgit2 APIs**: `git_graph_ahead_behind`, `git_graph_descendant_of`
 * **Status**: **Partial**. Ancestry checks (`git_graph_descendant_of`) have been wrapped in `QGit::isAncestor` and hooked into the log context menu to prevent invalid/redundant rebases. Branch sync counters (ahead/behind indicators in repository trees) remain unimplemented.
-
-### 6. Stash Advanced Options & Patch Inspection (`git2/stash.h`)
-* **libgit2 APIs**: `git_stash_save2` (`GIT_STASH_INCLUDE_UNTRACKED`, `GIT_STASH_KEEP_INDEX`), `git_stash_apply`
-* **Description**: **Advanced Stash Options**. Allow users to include untracked/ignored files in stashes, view diffs of individual stashes before applying, or apply specific stash elements.
