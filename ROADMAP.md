@@ -4,7 +4,7 @@ Development plan and upcoming features for GitMaster.
 
 ---
 
-## 🌍 Version 0.8 - Finalizing work & Branding
+## 🌍 Version 0.7 - Finalizing features
 *Focusing on new features, data visualization and repository history clarity.*
 
 ### New git operations
@@ -25,6 +25,11 @@ Development plan and upcoming features for GitMaster.
 
 ### Search
 - [x] **Global Search Suite**: Full implementation of commit message, author, and file content searching.
+
+---
+
+## 🌍 Version 0.8 - Finalizing work & Branding
+*Desloping/bugfixing codebase.
 
 ---
 
