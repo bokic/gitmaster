@@ -2571,6 +2571,20 @@ void QGit::listChangedFiles(int show, int sort, bool reversed)
                 return a.second < b.second;
             });
             break;
+        case QGIT_SORT_CHECKED:
+            std::sort(items.begin(), items.end(), [](const auto &a, const auto &b) {
+                bool aStaged = a.second & (GIT_STATUS_INDEX_NEW | GIT_STATUS_INDEX_MODIFIED | 
+                                           GIT_STATUS_INDEX_DELETED | GIT_STATUS_INDEX_RENAMED | 
+                                           GIT_STATUS_INDEX_TYPECHANGE);
+                bool bStaged = b.second & (GIT_STATUS_INDEX_NEW | GIT_STATUS_INDEX_MODIFIED | 
+                                           GIT_STATUS_INDEX_DELETED | GIT_STATUS_INDEX_RENAMED | 
+                                           GIT_STATUS_INDEX_TYPECHANGE);
+                if (aStaged != bStaged) {
+                    return aStaged > bStaged;
+                }
+                return a.first < b.first;
+            });
+            break;
         default:
             break;
         }

@@ -2639,18 +2639,27 @@ void QGitRepository::fetchRepositoryChangedFiles()
     switch (ui->comboBox_gitStatusFiles->showSortBy())
     {
     case QComboBoxGitStatusFiles::QUnsortedFiles:
+        sort = QGit::QGIT_SORT_UNSORTED;
         break;
     case QComboBoxGitStatusFiles::QFilePathSortFiles:
+        sort = QGit::QGIT_SORT_FILEPATH;
         break;
     case QComboBoxGitStatusFiles::QReversedFilePathSortFiles:
+        sort = QGit::QGIT_SORT_FILEPATH;
+        reversed = true;
         break;
     case QComboBoxGitStatusFiles::QFileNameSortFiles:
+        sort = QGit::QGIT_SORT_FILENAME;
         break;
     case QComboBoxGitStatusFiles::QReversedFileNameSortFiles:
+        sort = QGit::QGIT_SORT_FILENAME;
+        reversed = true;
         break;
     case QComboBoxGitStatusFiles::QFileStatusSortFiles:
+        sort = QGit::QGIT_SORT_STATUS;
         break;
     case QComboBoxGitStatusFiles::QCheckedUncheckedSortFiles:
+        sort = QGit::QGIT_SORT_CHECKED;
         break;
     }
 
