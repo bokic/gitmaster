@@ -4315,6 +4315,72 @@ QString QGit::getNote(const QString &commitHash) const
     return noteText;
 }
 
+struct GitReflog {
+    GitReflog() = default;
+    GitReflog(const GitReflog&) = delete;
+    GitReflog& operator=(const GitReflog&) = delete;
+    GitReflog(GitReflog&&) = delete;
+    GitReflog& operator=(GitReflog&&) = delete;
+    operator git_reflog*() { return value; }
+    operator git_reflog**() { return &value; }
+    ~GitReflog() { if (value) { git_reflog_free(value); value = nullptr; }}
+    git_reflog *value = nullptr;
+};
+
+QList<QGitReflogEntry> QGit::getReflog(const QString &refName) const
+{
+    QList<QGitReflogEntry> entries;
+    try {
+        GitRepository repo;
+        int res = git_repository_open(repo, m_path.absolutePath().toUtf8().constData());
+        if (res) throw QGitError("git_repository_open", res);
+
+        GitReflog reflog;
+        QString fullRefName = refName;
+        if (refName != QStringLiteral("HEAD") && !refName.startsWith(QStringLiteral("refs/"))) {
+            fullRefName = QStringLiteral("refs/heads/") + refName;
+        }
+
+        res = git_reflog_read(reflog, repo, fullRefName.toUtf8().constData());
+        if (res) {
+            res = git_reflog_read(reflog, repo, refName.toUtf8().constData());
+        }
+
+        if (res == 0) {
+            size_t count = git_reflog_entrycount(reflog);
+            for (size_t i = 0; i < count; i++) {
+                const git_reflog_entry *entry = git_reflog_entry_byindex(reflog, i);
+                if (entry) {
+                    QGitReflogEntry qEntry;
+                    
+                    const git_oid *oid = git_reflog_entry_id_new(entry);
+                    if (oid) {
+                        char oid_str[GIT_OID_HEXSZ + 1];
+                        git_oid_tostr(oid_str, sizeof(oid_str), oid);
+                        qEntry.commitHash = QString::fromLatin1(oid_str);
+                    }
+                    
+                    const git_signature *committer = git_reflog_entry_committer(entry);
+                    if (committer) {
+                        qEntry.committerName = QString::fromUtf8(committer->name);
+                        qEntry.committerEmail = QString::fromUtf8(committer->email);
+                        qEntry.time = committer->when.time;
+                    }
+                    
+                    const char *msg = git_reflog_entry_message(entry);
+                    if (msg) {
+                        qEntry.message = QString::fromUtf8(msg);
+                    }
+                    
+                    entries.append(qEntry);
+                }
+            }
+        }
+    } catch (...) {
+    }
+    return entries;
+}
+
 void QGit::setNote(QString commitHash, QString noteText)
 {
     QGitError error;

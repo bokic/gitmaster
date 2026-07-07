@@ -10,6 +10,7 @@
 #include "qgitconflictresolverdialog.h"
 #include "qgitcreatetagdialog.h"
 #include "qgitcleandialog.h"
+#include "qgitreflogdialog.h"
 #include <qgitbranch.h>
 
 #include <QCryptographicHash>
@@ -1255,6 +1256,8 @@ void QGitRepository::on_branchesTreeView_customContextMenuRequested(const QPoint
         QMenu menu(this);
         QAction *applyPatchAction = menu.addAction(tr("Apply Patch..."));
         QAction *cleanAction = menu.addAction(tr("Clean Working Directory..."));
+        menu.addSeparator();
+        QAction *showReflogAction = menu.addAction(tr("Show Reference Log (Reflog)..."));
 
         QAction *selectedAction = menu.exec(ui->branchesTreeView->viewport()->mapToGlobal(pos));
         if (selectedAction == applyPatchAction)
@@ -1278,6 +1281,11 @@ void QGitRepository::on_branchesTreeView_customContextMenuRequested(const QPoint
                 QGitMasterMainWindow::instance()->updateStatusBarText(tr("Cleaning working directory..."));
                 emit repositoryClean(dlg.removeIgnored(), dlg.removeDirectories());
             }
+        }
+        else if (selectedAction == showReflogAction)
+        {
+            QGitReflogDialog dlg(QStringLiteral("HEAD"), this, this);
+            dlg.exec();
         }
         return;
     }
@@ -1365,6 +1373,8 @@ void QGitRepository::on_branchesTreeView_customContextMenuRequested(const QPoint
         QAction *renameAction = menu.addAction(tr("Rename Branch..."));
         QAction *setUpstreamAction = menu.addAction(tr("Set Upstream..."));
         menu.addSeparator();
+        QAction *showReflogAction = menu.addAction(tr("Show Reference Log (Reflog)..."));
+        menu.addSeparator();
         QAction *deleteAction = menu.addAction(tr("Delete Branch"));
 
         if (item->font(0).bold()) {
@@ -1389,6 +1399,11 @@ void QGitRepository::on_branchesTreeView_customContextMenuRequested(const QPoint
                 m_git->setUpstream(fullName, upstream);
             }
         }
+        else if (selectedAction == showReflogAction)
+        {
+            QGitReflogDialog dlg(fullName, this, this);
+            dlg.exec();
+        }
         else if (selectedAction == deleteAction)
         {
             auto res = QMessageBox::question(this, tr("Delete Branch"), 
@@ -1405,6 +1420,8 @@ void QGitRepository::on_branchesTreeView_customContextMenuRequested(const QPoint
     {
         QMenu menu(this);
         QAction *checkoutAction = menu.addAction(tr("Checkout as Local Branch..."));
+        menu.addSeparator();
+        QAction *showReflogAction = menu.addAction(tr("Show Reference Log (Reflog)..."));
         
         QAction *selectedAction = menu.exec(ui->branchesTreeView->viewport()->mapToGlobal(pos));
         if (selectedAction == checkoutAction)
@@ -1420,6 +1437,11 @@ void QGitRepository::on_branchesTreeView_customContextMenuRequested(const QPoint
             if (ok && !name.isEmpty()) {
                 m_git->checkoutBranch(fullName); // Simplified for now
             }
+        }
+        else if (selectedAction == showReflogAction)
+        {
+            QGitReflogDialog dlg(fullName, this, this);
+            dlg.exec();
         }
     }
     else if (type == "Tag")

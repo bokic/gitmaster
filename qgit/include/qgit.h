@@ -28,6 +28,16 @@ public:
     char origin = '\0';
 };
 
+class QGitReflogEntry
+{
+public:
+    QString commitHash;
+    QString committerName;
+    QString committerEmail;
+    int64_t time = 0;
+    QString message;
+};
+
 class QGitRemote
 {
 public:
@@ -83,6 +93,7 @@ public:
     QString headCommitMessage() const;
     bool isAncestor(const QString &ancestor, const QString &descendant) const;
     QString getNote(const QString &commitHash) const;
+    QList<QGitReflogEntry> getReflog(const QString &refName = QStringLiteral("HEAD")) const;
     QList<QGitBranch> branches(git_branch_t type) const;
     bool hasCommitId(const QString &commitId) const;
     void createLocalBranch(const QString &name, const QString &commit_id  = "", bool checkout = false, bool force = false);

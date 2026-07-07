@@ -10,7 +10,6 @@ A comprehensive reanalysis of `libgit2` features for integration into GitMaster,
 | :--- | :--- | :--- | :--- |
 | **Code Blaming (Line Annotations)** | Unimplemented | `git2/blame.h` | Medium |
 | **Worktree Support** | Unimplemented | `git2/worktree.h` | Medium |
-| **Reflog Navigation** | Unimplemented | `git2/reflog.h` | Medium |
 | **Remote Repository CRUD & Refspecs** | Partial (list/fetch/push) | `git2/remote.h` | Medium |
 
 ---
@@ -25,10 +24,6 @@ A comprehensive reanalysis of `libgit2` features for integration into GitMaster,
 * **libgit2 APIs**: `git_worktree_add`, `git_worktree_list`, `git_worktree_prune`, `git_worktree_validate`
 * **Description**: **Worktrees Manager**. Allow developers to checkout branches into separate work directories directly from the GUI, letting them work on multiple branches concurrently without stashing or switching.
 
-### 3. Reflog Navigation (`git2/reflog.h`)
-* **libgit2 APIs**: `git_reflog_read`, `git_reflog_entry_byindex`
-* **Description**: **Reflog Console**. A history list of reference logs (`HEAD` pointer updates), showing checkout histories and actions. This serves as a safety net to find and recover lost commits or aborted rebases.
-
-### 4. Remote Repository CRUD & Refspecs (`git2/remote.h`)
+### 3. Remote Repository CRUD & Refspecs (`git2/remote.h`)
 * **libgit2 APIs**: `git_remote_create`, `git_remote_delete`, `git_remote_rename`, `git_remote_set_url`
 * **Description**: **Remote Configuration Manager**. Provide UI to add new remote repositories, delete remotes, rename remotes, and edit fetch/push refspecs.
