@@ -111,6 +111,10 @@ public:
     QList<QGitSubmodule> submodules() const;
     void initSubmodule(const QString &name);
     void syncSubmodule(const QString &name);
+    void addRemote(const QString &name, const QString &url);
+    void deleteRemote(const QString &name);
+    void renameRemote(const QString &oldName, const QString &newName);
+    void setRemoteUrl(const QString &name, const QString &url, bool isPushUrl = false);
 
     static QString getBranchNameFromPath(const QString &path);
     static int createLocalRepository(const QDir &path);

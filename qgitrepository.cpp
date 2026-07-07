@@ -11,6 +11,7 @@
 #include "qgitcreatetagdialog.h"
 #include "qgitcleandialog.h"
 #include "qgitreflogdialog.h"
+#include "qgitremotesdialog.h"
 #include <qgitbranch.h>
 
 #include <QCryptographicHash>
@@ -543,6 +544,7 @@ void QGitRepository::repositoryBranchesAndTagsReply(QList<QGitBranch> branches, 
     QTreeWidgetItem *itemLocalBranches = new QTreeWidgetItem(QStringList() << tr("Branches"));
     QTreeWidgetItem *itemTags = new QTreeWidgetItem(QStringList() << tr("Tags"));
     QTreeWidgetItem *itemRemoteBranches = new QTreeWidgetItem(QStringList() << tr("Remotes"));
+    itemRemoteBranches->setData(0, Qt::UserRole + 2, QStringLiteral("RemotesHeader"));
 
 
     itemWorkingCopy->setData(0, Qt::UserRole + 2, "WorkingCopy");
@@ -1285,6 +1287,20 @@ void QGitRepository::on_branchesTreeView_customContextMenuRequested(const QPoint
         else if (selectedAction == showReflogAction)
         {
             QGitReflogDialog dlg(QStringLiteral("HEAD"), this, this);
+            dlg.exec();
+        }
+        return;
+    }
+
+    if (type == "RemotesHeader")
+    {
+        QMenu menu(this);
+        QAction *manageAction = menu.addAction(tr("Manage Remotes..."));
+
+        QAction *selectedAction = menu.exec(ui->branchesTreeView->viewport()->mapToGlobal(pos));
+        if (selectedAction == manageAction)
+        {
+            QGitRemotesDialog dlg(this, this);
             dlg.exec();
         }
         return;

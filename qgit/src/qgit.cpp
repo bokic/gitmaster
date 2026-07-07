@@ -1444,6 +1444,54 @@ void QGit::syncSubmodule(const QString &name)
     if (res) throw QGitError("git_submodule_sync", res);
 }
 
+void QGit::addRemote(const QString &name, const QString &url)
+{
+    GitRepository repo;
+    int res = git_repository_open(repo, m_path.absolutePath().toUtf8().constData());
+    if (res) throw QGitError("git_repository_open", res);
+
+    GitRemote remote;
+    res = git_remote_create(remote, repo, name.toUtf8().constData(), url.toUtf8().constData());
+    if (res) throw QGitError("git_remote_create", res);
+}
+
+void QGit::deleteRemote(const QString &name)
+{
+    GitRepository repo;
+    int res = git_repository_open(repo, m_path.absolutePath().toUtf8().constData());
+    if (res) throw QGitError("git_repository_open", res);
+
+    res = git_remote_delete(repo, name.toUtf8().constData());
+    if (res) throw QGitError("git_remote_delete", res);
+}
+
+void QGit::renameRemote(const QString &oldName, const QString &newName)
+{
+    GitRepository repo;
+    int res = git_repository_open(repo, m_path.absolutePath().toUtf8().constData());
+    if (res) throw QGitError("git_repository_open", res);
+
+    git_strarray problems = {nullptr, 0};
+    res = git_remote_rename(&problems, repo, oldName.toUtf8().constData(), newName.toUtf8().constData());
+    git_strarray_free(&problems);
+    if (res) throw QGitError("git_remote_rename", res);
+}
+
+void QGit::setRemoteUrl(const QString &name, const QString &url, bool isPushUrl)
+{
+    GitRepository repo;
+    int res = git_repository_open(repo, m_path.absolutePath().toUtf8().constData());
+    if (res) throw QGitError("git_repository_open", res);
+
+    if (isPushUrl) {
+        res = git_remote_set_pushurl(repo, name.toUtf8().constData(), url.toUtf8().constData());
+        if (res) throw QGitError("git_remote_set_pushurl", res);
+    } else {
+        res = git_remote_set_url(repo, name.toUtf8().constData(), url.toUtf8().constData());
+        if (res) throw QGitError("git_remote_set_url", res);
+    }
+}
+
 void QGit::updateSubmodule(QString name)
 {
     QGitError error;
