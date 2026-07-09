@@ -50,7 +50,7 @@ Development plan and upcoming features for GitMaster.
 *Ensuring seamless installation across all major operating systems.*
 
 ### MacOS Support
-- [x] **App Bundling**: Create a `.app` bundle for macOS users.
+- [x] **App Bundling**: Create a `.dmg` bundle for macOS users.
 
 ### Linux Distribution
 - [ ] **RPM Support**: Native package for Fedora/RHEL/openSUSE.
