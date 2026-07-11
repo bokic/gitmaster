@@ -174,11 +174,11 @@
               </widget>
              </item>
              <item>
-              <widget class="QListWidget" name="listWidget_staged">
-               <property name="selectionMode">
-                <enum>QAbstractItemView::SelectionMode::ExtendedSelection</enum>
-               </property>
-              </widget>
+               <widget class="QTreeWidget" name="treeWidget_staged">
+                <property name="selectionMode">
+                 <enum>QAbstractItemView::SelectionMode::ExtendedSelection</enum>
+                </property>
+               </widget>
              </item>
             </layout>
            </widget>
@@ -204,11 +204,11 @@
               </widget>
              </item>
              <item>
-              <widget class="QListWidget" name="listWidget_unstaged">
-               <property name="selectionMode">
-                <enum>QAbstractItemView::SelectionMode::ExtendedSelection</enum>
-               </property>
-              </widget>
+               <widget class="QTreeWidget" name="treeWidget_unstaged">
+                <property name="selectionMode">
+                 <enum>QAbstractItemView::SelectionMode::ExtendedSelection</enum>
+                </property>
+               </widget>
              </item>
             </layout>
            </widget>

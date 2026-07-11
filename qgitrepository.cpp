@@ -42,6 +42,17 @@
 #include <QLineEdit>
 #include <QStyledItemDelegate>
 
+#include <QHBoxLayout>
+#include <QCheckBox>
+#include <QLabel>
+#include <QToolButton>
+#include <QMouseEvent>
+#include <QFileInfo>
+#include <QSvgRenderer>
+#include <QPainter>
+
+
+
 class QGitBranchTreeItemDelegate : public QStyledItemDelegate
 {
 public:
@@ -97,6 +108,12 @@ QGitRepository::QGitRepository(const QString &path, QWidget *parent)
     QString email;
 
     ui->setupUi(this);
+
+    ui->treeWidget_staged->setHeaderHidden(true);
+    ui->treeWidget_staged->setColumnCount(1);
+    ui->treeWidget_unstaged->setHeaderHidden(true);
+    ui->treeWidget_unstaged->setColumnCount(1);
+    ui->treeWidget_unstaged->setContextMenuPolicy(Qt::CustomContextMenu);
 
     connect(ui->comboBox_logBranchFilter, &QComboBox::currentTextChanged,
             this, &QGitRepository::on_comboBox_logBranchFilter_currentTextChanged);
@@ -214,7 +231,7 @@ QGitRepository::QGitRepository(const QString &path, QWidget *parent)
 
     connect(ui->commit_diff, &QGitDiffWidget::select, this, &QGitRepository::selectedLines);
 
-    ui->listWidget_unstaged->setContextMenuPolicy(Qt::CustomContextMenu);
+    ui->treeWidget_unstaged->setContextMenuPolicy(Qt::CustomContextMenu);
     ui->commit_diff->setContextMenuPolicy(Qt::CustomContextMenu);
 
     connect(this, &QGitRepository::stageFileLines, m_git, &QGit::stageFileLines);
@@ -949,110 +966,8 @@ void QGitRepository::repositoryStashesReply(const QStringList &stashes, const QG
 void QGitRepository::repositoryChangedFilesReply(const QList<QPair<QString, git_status_t>> &files, const QGitError &error)
 {
     Q_UNUSED(error)
-    int stagedCnt = 0;
-    int unstagedCnt = 0;
-
-    ui->listWidget_staged->blockSignals(true);
-    ui->listWidget_unstaged->blockSignals(true);
-
-    ui->listWidget_staged->setEnabled(true);
-    ui->listWidget_unstaged->setEnabled(true);
-
-    for(int c = 0; c < files.count(); c++)
-    {
-        const QString &file = files.at(c).first;
-        git_status_t status = files.at(c).second;
-
-        // --- Staged Reconciliation ---
-        if (status & (GIT_STATUS_INDEX_NEW | GIT_STATUS_INDEX_MODIFIED | GIT_STATUS_INDEX_DELETED | GIT_STATUS_INDEX_RENAMED | GIT_STATUS_INDEX_TYPECHANGE))
-        {
-            QListWidgetItem *item = nullptr;
-            for (int i = stagedCnt; i < ui->listWidget_staged->count(); ++i) {
-                if (ui->listWidget_staged->item(i)->text() == file) {
-                    while (stagedCnt < i) {
-                        delete ui->listWidget_staged->takeItem(stagedCnt);
-                        i--;
-                    }
-                    item = ui->listWidget_staged->item(stagedCnt);
-                    break;
-                }
-            }
-            if (!item) {
-                item = new QListWidgetItem(file);
-                item->setFlags(item->flags() | Qt::ItemIsUserCheckable);
-                item->setCheckState(Qt::Checked);
-                ui->listWidget_staged->insertItem(stagedCnt, item);
-            }
-
-            item->setData(Qt::UserRole, (int)status);
-
-            if (status & GIT_STATUS_INDEX_NEW) item->setIcon(m_iconFileNew);
-            else if (status & GIT_STATUS_INDEX_DELETED) item->setIcon(m_iconFileRemoved);
-            else if (status & GIT_STATUS_INDEX_RENAMED) item->setIcon(m_iconFileRenamed);
-            else item->setIcon(m_iconFileModified);
-
-            stagedCnt++;
-        }
-
-        // --- Unstaged Reconciliation ---
-        if ((status == GIT_STATUS_CURRENT) || (status & (GIT_STATUS_WT_NEW | GIT_STATUS_WT_MODIFIED | GIT_STATUS_WT_DELETED | GIT_STATUS_WT_TYPECHANGE | GIT_STATUS_WT_RENAMED | GIT_STATUS_WT_UNREADABLE | GIT_STATUS_IGNORED | GIT_STATUS_CONFLICTED)))
-        {
-            QListWidgetItem *item = nullptr;
-            for (int i = unstagedCnt; i < ui->listWidget_unstaged->count(); ++i) {
-                if (ui->listWidget_unstaged->item(i)->text() == file) {
-                    while (unstagedCnt < i) {
-                        delete ui->listWidget_unstaged->takeItem(unstagedCnt);
-                        i--;
-                    }
-                    item = ui->listWidget_unstaged->item(unstagedCnt);
-                    break;
-                }
-            }
-            if (!item) {
-                item = new QListWidgetItem(file);
-                item->setFlags(item->flags() | Qt::ItemIsUserCheckable);
-                item->setCheckState(Qt::Unchecked);
-                ui->listWidget_unstaged->insertItem(unstagedCnt, item);
-            }
-
-            item->setData(Qt::UserRole, (int)status);
-
-            uint32_t wt_status = status & (GIT_STATUS_CURRENT | GIT_STATUS_WT_NEW | GIT_STATUS_WT_MODIFIED | GIT_STATUS_WT_DELETED | GIT_STATUS_IGNORED | GIT_STATUS_CONFLICTED | GIT_STATUS_WT_RENAMED);
-            if (wt_status == GIT_STATUS_CURRENT) item->setIcon(m_iconFileClean);
-            else if (wt_status & GIT_STATUS_WT_NEW) item->setIcon(m_iconFileNew);
-            else if (wt_status & GIT_STATUS_WT_MODIFIED) item->setIcon(m_iconFileModified);
-            else if (wt_status & GIT_STATUS_WT_DELETED) item->setIcon(m_iconFileRemoved);
-            else if (wt_status & GIT_STATUS_WT_RENAMED) item->setIcon(m_iconFileRenamed);
-            else if (wt_status & GIT_STATUS_IGNORED) item->setIcon(m_iconFileIgnored);
-            else if (wt_status & GIT_STATUS_CONFLICTED) item->setIcon(m_iconFileConflict);
-            else item->setIcon(m_iconFileUnknown);
-
-            unstagedCnt++;
-        }
-    }
-
-    while(ui->listWidget_staged->count() > stagedCnt)
-    {
-        delete ui->listWidget_staged->takeItem(stagedCnt);
-    }
-    while(ui->listWidget_unstaged->count() > unstagedCnt)
-    {
-        delete ui->listWidget_unstaged->takeItem(unstagedCnt);
-    }
-
-    ui->listWidget_staged->blockSignals(false);
-    ui->listWidget_unstaged->blockSignals(false);
-
-    ui->commit_diff->refresh();
-
-    if (ui->listWidget_staged->count() > 0 || ui->checkBox_amendCommit->isChecked())
-    {
-        ui->pushButton_commit->setEnabled(true);
-    }
-    else
-    {
-        ui->pushButton_commit->setEnabled(false);
-    }
+    m_changedFiles = files;
+    updateStatusViews();
 
     // Update stash button state: check if there are any staged or unstaged changes
     bool hasStashableChanges = false;
@@ -1075,6 +990,214 @@ void QGitRepository::repositoryChangedFilesReply(const QList<QPair<QString, git_
     {
         mainWindow->setStashEnabled(this, hasStashableChanges);
         mainWindow->refreshRepositoryTree();
+    }
+}
+
+void QGitRepository::updateStatusViews()
+{
+    ui->treeWidget_staged->blockSignals(true);
+    ui->treeWidget_unstaged->blockSignals(true);
+    ui->treeWidget_staged->clear();
+    ui->treeWidget_unstaged->clear();
+
+    ui->treeWidget_staged->setEnabled(true);
+    ui->treeWidget_unstaged->setEnabled(true);
+
+    auto getFileIcon = [&](git_status_t status, bool isStaged) -> QIcon {
+        if (isStaged) {
+            if (status & GIT_STATUS_INDEX_NEW) return m_iconFileNew;
+            else if (status & GIT_STATUS_INDEX_DELETED) return m_iconFileRemoved;
+            else if (status & GIT_STATUS_INDEX_RENAMED) return m_iconFileRenamed;
+            else return m_iconFileModified;
+        } else {
+            uint32_t wt_status = status & (GIT_STATUS_CURRENT | GIT_STATUS_WT_NEW | GIT_STATUS_WT_MODIFIED | GIT_STATUS_WT_DELETED | GIT_STATUS_IGNORED | GIT_STATUS_CONFLICTED | GIT_STATUS_WT_RENAMED);
+            if (wt_status == GIT_STATUS_CURRENT) return m_iconFileClean;
+            else if (wt_status & GIT_STATUS_WT_NEW) return m_iconFileNew;
+            else if (wt_status & GIT_STATUS_WT_MODIFIED) return m_iconFileModified;
+            else if (wt_status & GIT_STATUS_WT_DELETED) return m_iconFileRemoved;
+            else if (wt_status & GIT_STATUS_WT_RENAMED) return m_iconFileRenamed;
+            else if (wt_status & GIT_STATUS_IGNORED) return m_iconFileIgnored;
+            else if (wt_status & GIT_STATUS_CONFLICTED) return m_iconFileConflict;
+            else return m_iconFileUnknown;
+        }
+    };
+
+    auto statusText = [&](git_status_t status) -> QString {
+        if (status & GIT_STATUS_CONFLICTED) return tr("Conflicted");
+        if (status & (GIT_STATUS_INDEX_NEW | GIT_STATUS_WT_NEW)) return tr("Added");
+        if (status & (GIT_STATUS_INDEX_MODIFIED | GIT_STATUS_WT_MODIFIED)) return tr("Modified");
+        if (status & (GIT_STATUS_INDEX_DELETED | GIT_STATUS_WT_DELETED)) return tr("Deleted");
+        if (status & (GIT_STATUS_INDEX_RENAMED | GIT_STATUS_WT_RENAMED)) return tr("Renamed");
+        if (status & (GIT_STATUS_INDEX_TYPECHANGE | GIT_STATUS_WT_TYPECHANGE)) return tr("Typechange");
+        if (status & GIT_STATUS_IGNORED) return tr("Ignored");
+        return tr("Unknown");
+    };
+
+    int stagedCnt = 0;
+    int unstagedCnt = 0;
+
+    for (int c = 0; c < m_changedFiles.count(); c++)
+    {
+        const QString &file = m_changedFiles.at(c).first;
+        git_status_t status = m_changedFiles.at(c).second;
+
+        // --- Staged files ---
+        if (status & (GIT_STATUS_INDEX_NEW | GIT_STATUS_INDEX_MODIFIED | GIT_STATUS_INDEX_DELETED | GIT_STATUS_INDEX_RENAMED | GIT_STATUS_INDEX_TYPECHANGE))
+        {
+            stagedCnt++;
+            if (m_layoutOption == 0) // Flat Single
+            {
+                QTreeWidgetItem *item = new QTreeWidgetItem(ui->treeWidget_staged);
+                item->setFlags(item->flags() | Qt::ItemIsUserCheckable);
+                item->setCheckState(0, Qt::Checked);
+                item->setData(0, Qt::UserRole, file);
+                item->setData(0, Qt::UserRole + 1, (int)status);
+                item->setText(0, file);
+                item->setIcon(0, getFileIcon(status, true));
+            }
+            else if (m_layoutOption == 1) // Flat Multi
+            {
+                QTreeWidgetItem *item = new QTreeWidgetItem(ui->treeWidget_staged);
+                item->setFlags(item->flags() | Qt::ItemIsUserCheckable);
+                item->setCheckState(0, Qt::Checked);
+                item->setData(0, Qt::UserRole, file);
+                item->setData(0, Qt::UserRole + 1, (int)status);
+
+                QFileInfo info(file);
+                item->setText(0, info.fileName());
+                item->setIcon(0, getFileIcon(status, true));
+                item->setText(1, info.path() == "." ? "" : info.path());
+                item->setText(2, statusText(status));
+            }
+            else if (m_layoutOption == 2) // Tree View
+            {
+                QStringList parts = file.split('/');
+                QTreeWidgetItem *parent = nullptr;
+                for (int i = 0; i < parts.size() - 1; ++i)
+                {
+                    QString dirName = parts.at(i);
+                    QTreeWidgetItem *found = nullptr;
+                    int childCount = parent ? parent->childCount() : ui->treeWidget_staged->topLevelItemCount();
+                    for (int j = 0; j < childCount; ++j)
+                    {
+                        QTreeWidgetItem *child = parent ? parent->child(j) : ui->treeWidget_staged->topLevelItem(j);
+                        if (child->text(0) == dirName && child->data(0, Qt::UserRole).toString().isEmpty())
+                        {
+                            found = child;
+                            break;
+                        }
+                    }
+                    if (!found)
+                    {
+                        if (parent) {
+                            found = new QTreeWidgetItem(parent);
+                        } else {
+                            found = new QTreeWidgetItem(ui->treeWidget_staged);
+                        }
+                        found->setText(0, dirName);
+                        found->setIcon(0, QApplication::style()->standardIcon(QStyle::SP_DirIcon));
+                    }
+                    parent = found;
+                }
+
+                QTreeWidgetItem *item = parent ? new QTreeWidgetItem(parent) : new QTreeWidgetItem(ui->treeWidget_staged);
+                item->setFlags(item->flags() | Qt::ItemIsUserCheckable);
+                item->setCheckState(0, Qt::Checked);
+                item->setData(0, Qt::UserRole, file);
+                item->setData(0, Qt::UserRole + 1, (int)status);
+                item->setText(0, parts.last());
+                item->setIcon(0, getFileIcon(status, true));
+            }
+        }
+
+        // --- Unstaged files ---
+        if ((status == GIT_STATUS_CURRENT) || (status & (GIT_STATUS_WT_NEW | GIT_STATUS_WT_MODIFIED | GIT_STATUS_WT_DELETED | GIT_STATUS_WT_TYPECHANGE | GIT_STATUS_WT_RENAMED | GIT_STATUS_WT_UNREADABLE | GIT_STATUS_IGNORED | GIT_STATUS_CONFLICTED)))
+        {
+            unstagedCnt++;
+            if (m_layoutOption == 0) // Flat Single
+            {
+                QTreeWidgetItem *item = new QTreeWidgetItem(ui->treeWidget_unstaged);
+                item->setFlags(item->flags() | Qt::ItemIsUserCheckable);
+                item->setCheckState(0, Qt::Unchecked);
+                item->setData(0, Qt::UserRole, file);
+                item->setData(0, Qt::UserRole + 1, (int)status);
+                item->setText(0, file);
+                item->setIcon(0, getFileIcon(status, false));
+            }
+            else if (m_layoutOption == 1) // Flat Multi
+            {
+                QTreeWidgetItem *item = new QTreeWidgetItem(ui->treeWidget_unstaged);
+                item->setFlags(item->flags() | Qt::ItemIsUserCheckable);
+                item->setCheckState(0, Qt::Unchecked);
+                item->setData(0, Qt::UserRole, file);
+                item->setData(0, Qt::UserRole + 1, (int)status);
+
+                QFileInfo info(file);
+                item->setText(0, info.fileName());
+                item->setIcon(0, getFileIcon(status, false));
+                item->setText(1, info.path() == "." ? "" : info.path());
+                item->setText(2, statusText(status));
+            }
+            else if (m_layoutOption == 2) // Tree View
+            {
+                QStringList parts = file.split('/');
+                QTreeWidgetItem *parent = nullptr;
+                for (int i = 0; i < parts.size() - 1; ++i)
+                {
+                    QString dirName = parts.at(i);
+                    QTreeWidgetItem *found = nullptr;
+                    int childCount = parent ? parent->childCount() : ui->treeWidget_unstaged->topLevelItemCount();
+                    for (int j = 0; j < childCount; ++j)
+                    {
+                        QTreeWidgetItem *child = parent ? parent->child(j) : ui->treeWidget_unstaged->topLevelItem(j);
+                        if (child->text(0) == dirName && child->data(0, Qt::UserRole).toString().isEmpty())
+                        {
+                            found = child;
+                            break;
+                        }
+                    }
+                    if (!found)
+                    {
+                        if (parent) {
+                            found = new QTreeWidgetItem(parent);
+                        } else {
+                            found = new QTreeWidgetItem(ui->treeWidget_unstaged);
+                        }
+                        found->setText(0, dirName);
+                        found->setIcon(0, QApplication::style()->standardIcon(QStyle::SP_DirIcon));
+                    }
+                    parent = found;
+                }
+
+                QTreeWidgetItem *item = parent ? new QTreeWidgetItem(parent) : new QTreeWidgetItem(ui->treeWidget_unstaged);
+                item->setFlags(item->flags() | Qt::ItemIsUserCheckable);
+                item->setCheckState(0, Qt::Unchecked);
+                item->setData(0, Qt::UserRole, file);
+                item->setData(0, Qt::UserRole + 1, (int)status);
+                item->setText(0, parts.last());
+                item->setIcon(0, getFileIcon(status, false));
+            }
+        }
+    }
+
+    if (m_layoutOption == 2)
+    {
+        ui->treeWidget_staged->expandAll();
+        ui->treeWidget_unstaged->expandAll();
+    }
+
+    ui->treeWidget_staged->blockSignals(false);
+    ui->treeWidget_unstaged->blockSignals(false);
+
+    ui->commit_diff->refresh();
+
+    if (stagedCnt > 0 || ui->checkBox_amendCommit->isChecked())
+    {
+        ui->pushButton_commit->setEnabled(true);
+    }
+    else
+    {
+        ui->pushButton_commit->setEnabled(false);
     }
 }
 
@@ -1827,11 +1950,13 @@ void QGitRepository::on_checkBox_StagedFiles_clicked()
 
     ui->checkBox_StagedFiles->setChecked(true);
 
-    for(int c = 0; c < ui->listWidget_staged->count(); c++)
+    for (const auto &pair : m_changedFiles)
     {
-        QString file = ui->listWidget_staged->item(c)->text();
-
-        items.append(file);
+        git_status_t status = pair.second;
+        if (status & (GIT_STATUS_INDEX_NEW | GIT_STATUS_INDEX_MODIFIED | GIT_STATUS_INDEX_DELETED | GIT_STATUS_INDEX_RENAMED | GIT_STATUS_INDEX_TYPECHANGE))
+        {
+            items.append(pair.first);
+        }
     }
 
     if (items.count() > 0)
@@ -1846,11 +1971,13 @@ void QGitRepository::on_checkBox_UnstagedFiles_clicked()
 
     ui->checkBox_UnstagedFiles->setChecked(false);
 
-    for(int c = 0; c < ui->listWidget_unstaged->count(); c++)
+    for (const auto &pair : m_changedFiles)
     {
-        QString file = ui->listWidget_unstaged->item(c)->text();
-
-        items.append(file);
+        git_status_t status = pair.second;
+        if ((status == GIT_STATUS_CURRENT) || (status & (GIT_STATUS_WT_NEW | GIT_STATUS_WT_MODIFIED | GIT_STATUS_WT_DELETED | GIT_STATUS_WT_TYPECHANGE | GIT_STATUS_WT_RENAMED | GIT_STATUS_WT_UNREADABLE | GIT_STATUS_IGNORED | GIT_STATUS_CONFLICTED)))
+        {
+            items.append(pair.first);
+        }
     }
 
     if (items.count() > 0)
@@ -1859,47 +1986,27 @@ void QGitRepository::on_checkBox_UnstagedFiles_clicked()
     }
 }
 
-void QGitRepository::on_listWidget_staged_itemChanged(QListWidgetItem *item)
+void QGitRepository::on_treeWidget_staged_itemChanged(QTreeWidgetItem *item, int column)
 {
-    QStringList selectedItems;
+    if (column != 0) return;
+    QString file = item->data(0, Qt::UserRole).toString();
+    if (file.isEmpty()) return;
 
-    for(int row = ui->listWidget_staged->count() - 1; row >= 0; row--)
+    if (item->checkState(0) == Qt::Unchecked)
     {
-        QListWidgetItem *item = ui->listWidget_staged->item(row);
-
-        if (item->checkState() == Qt::Unchecked)
-        {
-            selectedItems.append(item->text());
-
-            delete ui->listWidget_staged->takeItem(row);
-        }
-    }
-
-    if (!selectedItems.isEmpty())
-    {
-        emit repositoryUnstageFiles(selectedItems);
+        emit repositoryUnstageFiles({file});
     }
 }
 
-void QGitRepository::on_listWidget_unstaged_itemChanged(QListWidgetItem *item)
+void QGitRepository::on_treeWidget_unstaged_itemChanged(QTreeWidgetItem *item, int column)
 {
-    QStringList selectedItems;
+    if (column != 0) return;
+    QString file = item->data(0, Qt::UserRole).toString();
+    if (file.isEmpty()) return;
 
-    for(int row = ui->listWidget_unstaged->count() - 1; row >= 0; row--)
+    if (item->checkState(0) == Qt::Checked)
     {
-        QListWidgetItem *item = ui->listWidget_unstaged->item(row);
-
-        if (item->checkState() == Qt::Checked)
-        {
-            selectedItems.append(item->text());
-
-            delete ui->listWidget_unstaged->takeItem(row);
-        }
-    }
-
-    if (!selectedItems.isEmpty())
-    {
-        emit repositoryStageFiles(selectedItems);
+        emit repositoryStageFiles({file});
     }
 }
 
@@ -1932,7 +2039,7 @@ void QGitRepository::on_checkBox_amendCommit_clicked(bool checked)
     {
         ui->plainTextEdit_commitMessage->setPlainText(m_draftCommitMessage);
         m_draftCommitMessage.clear();
-        if (ui->listWidget_staged->count() > 0)
+        if (ui->treeWidget_staged->topLevelItemCount() > 0)
         {
             ui->pushButton_commit->setEnabled(true);
         }
@@ -2115,67 +2222,79 @@ void QGitRepository::on_comboBox_gitDiffOptions_optionsChanged()
     }
 }
 
-void QGitRepository::on_listWidget_staged_itemSelectionChanged()
+void QGitRepository::on_treeWidget_staged_itemSelectionChanged()
 {
     QList<QString> files;
     QMap<QString, git_status_t> statuses;
 
-    if (ui->listWidget_staged->isActiveWindow())
+    if (ui->treeWidget_staged->isActiveWindow())
     {
-        const auto &staged = ui->listWidget_staged->selectedItems();
-        for(auto row: staged) {
-            files << row->text();
-            statuses.insert(row->text(), (git_status_t)row->data(Qt::UserRole).toInt());
+        const auto &staged = ui->treeWidget_staged->selectedItems();
+        for(auto item: staged) {
+            QString file = item->data(0, Qt::UserRole).toString();
+            if (file.isEmpty()) continue;
+            files << file;
+            statuses.insert(file, (git_status_t)item->data(0, Qt::UserRole + 1).toInt());
         }
 
         ui->commit_diff->setGitDiff("", "staged", files, statuses);
 
-        const auto &unstaged = ui->listWidget_unstaged->selectedItems();
-        for(auto item: unstaged)
+        ui->treeWidget_unstaged->blockSignals(true);
+        for(auto item: ui->treeWidget_unstaged->selectedItems())
         {
             item->setSelected(false);
         }
+        ui->treeWidget_unstaged->blockSignals(false);
     }
 
     m_stageingFiles = false;
 }
 
-void QGitRepository::on_listWidget_unstaged_itemSelectionChanged()
+void QGitRepository::on_treeWidget_unstaged_itemSelectionChanged()
 {
     QList<QString> files;
     QMap<QString, git_status_t> statuses;
 
-    if (ui->listWidget_unstaged->isActiveWindow())
+    if (ui->treeWidget_unstaged->isActiveWindow())
     {
-        const auto &unstaged = ui->listWidget_unstaged->selectedItems();
-        for(const auto &row: unstaged) {
-            files << row->text();
-            statuses.insert(row->text(), (git_status_t)row->data(Qt::UserRole).toInt());
+        const auto &unstaged = ui->treeWidget_unstaged->selectedItems();
+        for(const auto &item: unstaged) {
+            QString file = item->data(0, Qt::UserRole).toString();
+            if (file.isEmpty()) continue;
+            files << file;
+            statuses.insert(file, (git_status_t)item->data(0, Qt::UserRole + 1).toInt());
         }
 
         ui->commit_diff->setGitDiff("", "unstaged", files, statuses);
 
-        const auto &staged = ui->listWidget_staged->selectedItems();
-        for(auto item: staged)
+        ui->treeWidget_staged->blockSignals(true);
+        for(auto item: ui->treeWidget_staged->selectedItems())
         {
             item->setSelected(false);
         }
+        ui->treeWidget_staged->blockSignals(false);
     }
 
     m_stageingFiles = true;
 }
 
-void QGitRepository::on_listWidget_unstaged_customContextMenuRequested(const QPoint &pos)
+void QGitRepository::on_treeWidget_unstaged_customContextMenuRequested(const QPoint &pos)
 {
-    const auto &selected = ui->listWidget_unstaged->selectedItems();
+    const auto &selected = ui->treeWidget_unstaged->selectedItems();
+    QList<QTreeWidgetItem*> selectedFiles;
+    for (auto item : selected) {
+        if (!item->data(0, Qt::UserRole).toString().isEmpty()) {
+            selectedFiles << item;
+        }
+    }
 
     QMenu menu(this);
     QAction *resolveAction = nullptr;
     QAction *discardAction = nullptr;
     QAction *ignoreAction = nullptr;
 
-    if (!selected.isEmpty()) {
-        uint32_t status = selected.first()->data(Qt::UserRole).toUInt();
+    if (!selectedFiles.isEmpty()) {
+        uint32_t status = selectedFiles.first()->data(0, Qt::UserRole + 1).toUInt();
         bool hasConflict = (status & GIT_STATUS_CONFLICTED);
         bool isUntracked = (status & GIT_STATUS_WT_NEW);
 
@@ -2184,7 +2303,7 @@ void QGitRepository::on_listWidget_unstaged_customContextMenuRequested(const QPo
         }
         discardAction = menu.addAction(tr("Discard changes"));
 
-        if (isUntracked && selected.size() == 1) {
+        if (isUntracked && selectedFiles.size() == 1) {
             menu.addSeparator();
             ignoreAction = menu.addAction(tr("Add to .gitignore..."));
         }
@@ -2193,9 +2312,9 @@ void QGitRepository::on_listWidget_unstaged_customContextMenuRequested(const QPo
 
     QAction *cleanAction = menu.addAction(tr("Clean Working Directory..."));
 
-    QAction *res = menu.exec(ui->listWidget_unstaged->mapToGlobal(pos));
+    QAction *res = menu.exec(ui->treeWidget_unstaged->mapToGlobal(pos));
     if (resolveAction && res == resolveAction) {
-        QGitConflictResolverDialog dlg(m_git, selected.first()->text(), this);
+        QGitConflictResolverDialog dlg(m_git, selectedFiles.first()->data(0, Qt::UserRole).toString(), this);
         if (dlg.exec() == QDialog::Accepted) {
             refreshData();
         }
@@ -2205,13 +2324,13 @@ void QGitRepository::on_listWidget_unstaged_customContextMenuRequested(const QPo
                                              QMessageBox::Yes | QMessageBox::No);
         if (confirm == QMessageBox::Yes) {
             QStringList files;
-            for (auto item : selected) {
-                files << item->text();
+            for (auto item : selectedFiles) {
+                files << item->data(0, Qt::UserRole).toString();
             }
             emit repositoryDiscardFiles(files);
         }
     } else if (ignoreAction && res == ignoreAction) {
-        QString filePath = selected.first()->text();
+        QString filePath = selectedFiles.first()->data(0, Qt::UserRole).toString();
         bool ok = false;
         QString pattern = QInputDialog::getText(
             this,
@@ -2224,7 +2343,6 @@ void QGitRepository::on_listWidget_unstaged_customContextMenuRequested(const QPo
             QString gitignorePath = m_path + "/.gitignore";
             QFile file(gitignorePath);
             if (file.open(QIODevice::ReadWrite | QIODevice::Text)) {
-                // Ensure we start on a new line if the file already has content
                 if (file.size() > 0) {
                     file.seek(file.size() - 1);
                     char lastChar;
@@ -2233,25 +2351,25 @@ void QGitRepository::on_listWidget_unstaged_customContextMenuRequested(const QPo
                         file.seek(file.size());
                         QTextStream out(&file);
                         out << "\n";
-                    }
-                }
-                file.seek(file.size());
-                QTextStream out(&file);
-                out << pattern.trimmed() << "\n";
-                file.close();
-                refreshData();
-            } else {
-                QMessageBox::critical(this, tr(".gitignore Error"),
-                                      tr("Could not open .gitignore for writing:\n%1").arg(gitignorePath));
-            }
-        }
-    } else if (res == cleanAction) {
-        QGitCleanDialog dlg(this);
-        if (dlg.exec() == QDialog::Accepted) {
-            QGitMasterMainWindow::instance()->updateStatusBarText(tr("Cleaning working directory..."));
-            emit repositoryClean(dlg.removeIgnored(), dlg.removeDirectories());
-        }
-    }
+                      }
+                  }
+                  file.seek(file.size());
+                  QTextStream out(&file);
+                  out << pattern.trimmed() << "\n";
+                  file.close();
+                  refreshData();
+              } else {
+                  QMessageBox::critical(this, tr(".gitignore Error"),
+                                        tr("Could not open .gitignore for writing:\n%1").arg(gitignorePath));
+              }
+          }
+      } else if (res == cleanAction) {
+          QGitCleanDialog dlg(this);
+          if (dlg.exec() == QDialog::Accepted) {
+              QGitMasterMainWindow::instance()->updateStatusBarText(tr("Cleaning working directory..."));
+              emit repositoryClean(dlg.removeIgnored(), dlg.removeDirectories());
+          }
+      }
 }
 
 void QGitRepository::on_commit_diff_customContextMenuRequested(const QPoint &pos)
@@ -2602,6 +2720,44 @@ void QGitRepository::on_comboBox_gitStatusFiles_itemClicked(int index)
     fetchRepositoryChangedFiles();
 }
 
+void QGitRepository::on_comboBox_gitViewOptions_activated(int index)
+{
+    if (index >= 0 && index <= 2)
+    {
+        m_layoutOption = index;
+
+        if (m_layoutOption == 0) {
+            ui->treeWidget_staged->setHeaderHidden(true);
+            ui->treeWidget_staged->setColumnCount(1);
+            ui->treeWidget_unstaged->setHeaderHidden(true);
+            ui->treeWidget_unstaged->setColumnCount(1);
+        }
+        else if (m_layoutOption == 1) {
+            ui->treeWidget_staged->setHeaderHidden(false);
+            ui->treeWidget_staged->setColumnCount(3);
+            ui->treeWidget_unstaged->setHeaderHidden(false);
+            ui->treeWidget_unstaged->setColumnCount(3);
+
+            QStringList headers = { tr("Name"), tr("Path"), tr("Status") };
+            ui->treeWidget_staged->setHeaderLabels(headers);
+            ui->treeWidget_unstaged->setHeaderLabels(headers);
+
+            ui->treeWidget_staged->setColumnWidth(0, 200);
+            ui->treeWidget_staged->setColumnWidth(1, 300);
+            ui->treeWidget_unstaged->setColumnWidth(0, 200);
+            ui->treeWidget_unstaged->setColumnWidth(1, 300);
+        }
+        else if (m_layoutOption == 2) {
+            ui->treeWidget_staged->setHeaderHidden(true);
+            ui->treeWidget_staged->setColumnCount(1);
+            ui->treeWidget_unstaged->setHeaderHidden(true);
+            ui->treeWidget_unstaged->setColumnCount(1);
+        }
+
+        updateStatusViews();
+    }
+}
+
 void QGitRepository::on_comboBox_logBranchFilter_currentTextChanged(const QString &text)
 {
     Q_UNUSED(text)
@@ -2688,8 +2844,8 @@ void QGitRepository::fetchRepositoryChangedFiles()
         break;
     }
 
-    ui->listWidget_staged->setEnabled(false);
-    ui->listWidget_unstaged->setEnabled(false);
+    ui->treeWidget_staged->setEnabled(false);
+    ui->treeWidget_unstaged->setEnabled(false);
     emit repositoryChangedFiles(show, sort, reversed);
 }
 
