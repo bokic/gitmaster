@@ -31,7 +31,6 @@
     <qresource prefix="/QComboBoxGitViewOptions">
         <file alias="flat_list_multiple_column">images/combobox/flat_list_multiple_column.svg</file>
         <file alias="flat_list_single_column">images/combobox/flat_list_single_column.svg</file>
-        <file alias="fluid_staging">images/combobox/fluid_staging.svg</file>
         <file alias="no_staging">images/combobox/no_staging.svg</file>
         <file alias="split_view_staging">images/combobox/split_view_staging.svg</file>
         <file alias="tree_view">images/combobox/tree_view.svg</file>

@@ -32,7 +32,6 @@ private:
     QIcon m_iconFlatListMultipleColumn;
     QIcon m_iconTreeView;
     QIcon m_iconNoStaging;
-    QIcon m_iconFluidStaging;
     QIcon m_iconSplitViewStaging;
     int m_currentView = 0;
     bool m_showIcons = false;

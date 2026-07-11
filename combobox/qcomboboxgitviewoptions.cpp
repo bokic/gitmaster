@@ -14,7 +14,6 @@ enum {
     ITEM_TREE_VIEW,
     ITEM_SEPARATOR,
     ITEM_NO_STAGING,
-    ITEM_FLUID_STAGING,
     ITEM_SPLIT_VIEW_STAGING,
 };
 
@@ -24,7 +23,6 @@ QComboBoxGitViewOptions::QComboBoxGitViewOptions(QWidget *parent)
     , m_iconFlatListMultipleColumn(":/QComboBoxGitViewOptions/flat_list_multiple_column")
     , m_iconTreeView(":/QComboBoxGitViewOptions/tree_view")
     , m_iconNoStaging(":/QComboBoxGitViewOptions/no_staging")
-    , m_iconFluidStaging(":/QComboBoxGitViewOptions/fluid_staging")
     , m_iconSplitViewStaging(":/QComboBoxGitViewOptions/split_view_staging")
 {
     QStandardItemModel *model = new QStandardItemModel();
@@ -63,12 +61,6 @@ QComboBoxGitViewOptions::QComboBoxGitViewOptions(QWidget *parent)
     item->setFlags(Qt::ItemIsSelectable | Qt::ItemIsEnabled);
     item->setCheckState(Qt::Unchecked);
     if (m_showIcons) item->setIcon(m_iconNoStaging);
-    model->appendRow(item);
-
-    item = new QStandardItem(tr("Fluid staging"));
-    item->setFlags(Qt::ItemIsSelectable | Qt::ItemIsEnabled);
-    item->setCheckState(Qt::Unchecked);
-    if (m_showIcons) item->setIcon(m_iconFluidStaging);
     model->appendRow(item);
 
     item = new QStandardItem(tr("Split view staging"));
@@ -303,26 +295,7 @@ void QComboBoxGitViewOptions::updateIconColor()
         resource.close();
     }
 
-    resource.setFileName(":/QComboBoxGitViewOptions/fluid_staging");
-    if (resource.open(QIODeviceBase::ReadOnly))
-    {
-        auto svgContent = resource.readAll();
 
-        QString newColor = palette().color(QPalette::Text).name();
-        svgContent.replace("#000000", newColor.toUtf8());
-
-        QSvgRenderer renderer(svgContent);
-        if (renderer.isValid()) {
-            QImage image(iconSize(), QImage::Format_ARGB32_Premultiplied);
-            image.fill(0);
-            QPainter painter(&image);
-            renderer.render(&painter);
-            m_iconFluidStaging = QPixmap::fromImage(image);
-            doUpdate = true;
-        }
-
-        resource.close();
-    }
 
     resource.setFileName(":/QComboBoxGitViewOptions/split_view_staging");
     if (resource.open(QIODeviceBase::ReadOnly))
