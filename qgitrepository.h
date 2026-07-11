@@ -117,6 +117,10 @@ private slots:
     void on_treeWidget_staged_itemSelectionChanged();
     void on_treeWidget_unstaged_itemSelectionChanged();
     void on_treeWidget_unstaged_customContextMenuRequested(const QPoint &pos);
+    void on_checkBox_PendingFiles_clicked();
+    void on_treeWidget_pending_itemChanged(QTreeWidgetItem *item, int column);
+    void on_treeWidget_pending_itemSelectionChanged();
+    void on_treeWidget_pending_customContextMenuRequested(const QPoint &pos);
     void on_comboBox_gitViewOptions_activated(int index);
     void on_branchesTreeView_itemDoubleClicked(QTreeWidgetItem *item, int column);
     void on_branchesTreeView_customContextMenuRequested(const QPoint &pos);
@@ -184,4 +188,6 @@ private:
     int m_layoutOption = 0;
     QList<QPair<QString, git_status_t>> m_changedFiles;
     void updateStatusViews();
+    void updateFolderCheckStates(QTreeWidgetItem *item);
+    void collectFilePaths(QTreeWidgetItem *item, QStringList &paths);
 };

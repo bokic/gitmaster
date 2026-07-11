@@ -23,7 +23,7 @@ Development plan and upcoming features for GitMaster.
 ### File Status
 - [x] **Combo Functionality**: Complete the implementation of all remaining filtering and view options in the status combos.
 - [x] **View Layout Options**: Wire up and implement the Flat list and Tree view options in the View Options combo.
-- [ ] **Staging Mode Options**: Wire up and implement the No staging and Split view staging options in the View Options combo.
+- [x] **Staging Mode Options**: Wire up and implement the No staging and Split view staging options in the View Options combo.
 
 ### Search
 - [x] **Global Search Suite**: Full implementation of commit message, author, and file content searching.

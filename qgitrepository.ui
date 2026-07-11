@@ -142,53 +142,23 @@
           <property name="orientation">
            <enum>Qt::Orientation::Horizontal</enum>
           </property>
-          <widget class="QSplitter" name="splitter_2">
+          <widget class="QStackedWidget" name="stackedWidget_staging">
            <property name="sizePolicy">
             <sizepolicy hsizetype="Fixed" vsizetype="Expanding">
              <horstretch>1</horstretch>
              <verstretch>0</verstretch>
             </sizepolicy>
            </property>
-           <property name="orientation">
-            <enum>Qt::Orientation::Vertical</enum>
+           <property name="currentIndex">
+            <number>0</number>
            </property>
-           <widget class="QWidget" name="layoutWidget">
-            <layout class="QVBoxLayout" name="verticalLayout_2" stretch="0,1">
-             <property name="sizeConstraint">
-              <enum>QLayout::SizeConstraint::SetDefaultConstraint</enum>
-             </property>
-             <property name="leftMargin">
-              <number>0</number>
-             </property>
-             <property name="rightMargin">
-              <number>0</number>
-             </property>
-             <item>
-              <widget class="QCheckBox" name="checkBox_StagedFiles">
-               <property name="text">
-                <string>Staged files</string>
-               </property>
-               <property name="checked">
-                <bool>true</bool>
-               </property>
-              </widget>
-             </item>
-             <item>
-               <widget class="QTreeWidget" name="treeWidget_staged">
-                <property name="selectionMode">
-                 <enum>QAbstractItemView::SelectionMode::ExtendedSelection</enum>
-                </property>
-               </widget>
-             </item>
-            </layout>
-           </widget>
-           <widget class="QWidget" name="layoutWidget_2">
-            <layout class="QVBoxLayout" name="verticalLayout_3" stretch="0,1">
+           <widget class="QWidget" name="page_splitStaging">
+            <layout class="QVBoxLayout" name="verticalLayout_splitStaging">
              <property name="leftMargin">
               <number>0</number>
              </property>
              <property name="topMargin">
-              <number>6</number>
+              <number>0</number>
              </property>
              <property name="rightMargin">
               <number>0</number>
@@ -197,18 +167,101 @@
               <number>0</number>
              </property>
              <item>
-              <widget class="QCheckBox" name="checkBox_UnstagedFiles">
+              <widget class="QSplitter" name="splitter_2">
+               <property name="orientation">
+                <enum>Qt::Orientation::Vertical</enum>
+               </property>
+               <widget class="QWidget" name="layoutWidget">
+                <layout class="QVBoxLayout" name="verticalLayout_2" stretch="0,1">
+                 <property name="sizeConstraint">
+                  <enum>QLayout::SizeConstraint::SetDefaultConstraint</enum>
+                 </property>
+                 <property name="leftMargin">
+                  <number>0</number>
+                 </property>
+                 <property name="rightMargin">
+                  <number>0</number>
+                 </property>
+                 <item>
+                  <widget class="QCheckBox" name="checkBox_StagedFiles">
+                   <property name="text">
+                    <string>Staged files</string>
+                   </property>
+                   <property name="checked">
+                    <bool>true</bool>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <widget class="QTreeWidget" name="treeWidget_staged">
+                   <property name="selectionMode">
+                    <enum>QAbstractItemView::SelectionMode::ExtendedSelection</enum>
+                   </property>
+                  </widget>
+                 </item>
+                </layout>
+               </widget>
+               <widget class="QWidget" name="layoutWidget_2">
+                <layout class="QVBoxLayout" name="verticalLayout_3" stretch="0,1">
+                 <property name="leftMargin">
+                  <number>0</number>
+                 </property>
+                 <property name="topMargin">
+                  <number>6</number>
+                 </property>
+                 <property name="rightMargin">
+                  <number>0</number>
+                 </property>
+                 <property name="bottomMargin">
+                  <number>0</number>
+                 </property>
+                 <item>
+                  <widget class="QCheckBox" name="checkBox_UnstagedFiles">
+                   <property name="text">
+                    <string>Unstaged files</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <widget class="QTreeWidget" name="treeWidget_unstaged">
+                   <property name="selectionMode">
+                    <enum>QAbstractItemView::SelectionMode::ExtendedSelection</enum>
+                   </property>
+                  </widget>
+                 </item>
+                </layout>
+               </widget>
+              </widget>
+             </item>
+            </layout>
+           </widget>
+           <widget class="QWidget" name="page_noStaging">
+            <layout class="QVBoxLayout" name="verticalLayout_noStaging">
+             <property name="leftMargin">
+              <number>0</number>
+             </property>
+             <property name="topMargin">
+              <number>0</number>
+             </property>
+             <property name="rightMargin">
+              <number>0</number>
+             </property>
+             <property name="bottomMargin">
+              <number>0</number>
+             </property>
+             <item>
+              <widget class="QCheckBox" name="checkBox_PendingFiles">
                <property name="text">
-                <string>Unstaged files</string>
+                <string>Pending files</string>
                </property>
               </widget>
              </item>
              <item>
-               <widget class="QTreeWidget" name="treeWidget_unstaged">
-                <property name="selectionMode">
-                 <enum>QAbstractItemView::SelectionMode::ExtendedSelection</enum>
-                </property>
-               </widget>
+              <widget class="QTreeWidget" name="treeWidget_pending">
+               <property name="selectionMode">
+                <enum>QAbstractItemView::SelectionMode::ExtendedSelection</enum>
+               </property>
+              </widget>
              </item>
             </layout>
            </widget>
