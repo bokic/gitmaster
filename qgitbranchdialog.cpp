@@ -143,13 +143,22 @@ void QGitBranchDialog::checkForNewBranch()
     bool enable = true;
 
     QString newBranch = ui->newBranch_lineEdit->text();
-    if (!newBranch.isEmpty())
+    QStringView newBranchView(newBranch);
+    if (newBranchView.startsWith(QStringLiteral("refs/heads/")))
+        newBranchView = newBranchView.sliced(11);
+
+    if (!newBranchView.isEmpty())
     {
         bool alreadyExists = false;
 
         for(const auto &branch: std::as_const(m_currentBranches))
         {
-            if (branch.name() == newBranch)
+            QString bName = branch.name();
+            QStringView bNameView(bName);
+            if (bNameView.startsWith(QStringLiteral("refs/heads/")))
+                bNameView = bNameView.sliced(11);
+
+            if (bNameView == newBranchView)
             {
                 alreadyExists = true;
                 break;
