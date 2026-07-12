@@ -7,7 +7,7 @@
 #include <QApplication>
 #include <QByteArray>
 #include <QDir>
-
+#include <QFile>
 
 QExtTextBrowser::QExtTextBrowser(QWidget* parent)
     : QTextBrowser(parent)
@@ -27,6 +27,11 @@ QVariant QExtTextBrowser::loadResource(int type, const QUrl &name)
 {
     if (type == QTextDocument::ImageResource)
     {
+        if (name.scheme().toLower() != QStringLiteral("https"))
+        {
+            return QPixmap();
+        }
+
         QByteArray urlHash = QCryptographicHash::hash(name.url().toUtf8(), QCryptographicHash::Sha1).toHex();
         QString filename = m_imgPath + "/" + urlHash;
 
@@ -67,7 +72,12 @@ void QExtTextBrowser::imgDownloaded(QNetworkReply *reply)
         if (file.open(QIODevice::WriteOnly | QIODevice::Truncate) == true)
             file.write(ba);
 
-        //reload();
-        setHtml(toHtml());
+        QPixmap mPixmap;
+        mPixmap.loadFromData(ba);
+        if (!mPixmap.isNull()) {
+            document()->addResource(QTextDocument::ImageResource, reply->request().url(), mPixmap);
+            document()->markContentsDirty(0, document()->characterCount());
+            viewport()->update();
+        }
     }
 }
