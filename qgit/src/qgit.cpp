@@ -2018,11 +2018,21 @@ void QGit::deleteBranches(const QList<QGitBranch> &branches, bool force)
             }
             else
             {
-                QStringList parts = branch.name().split('/');
-                if (parts.size() >= 4 && parts[0] == "refs" && parts[1] == "remotes")
+                QString name = branch.name();
+                if (name.startsWith(QStringLiteral("refs/remotes/")))
                 {
-                    QString remoteName = parts[2];
-                    QString branchName = parts.mid(3).join('/');
+                    name = name.mid(13);
+                }
+                else if (name.startsWith(QStringLiteral("refs/heads/")))
+                {
+                    name = name.mid(11);
+                }
+
+                QStringList parts = name.split('/');
+                if (parts.size() >= 2)
+                {
+                    QString remoteName = parts[0];
+                    QString branchName = parts.mid(1).join('/');
                     
                     GitRemote remote;
                     res = git_remote_lookup(remote, repo, remoteName.toUtf8().constData());
