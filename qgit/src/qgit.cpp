@@ -837,22 +837,11 @@ void QGit::createLocalBranch(const QString &name, const QString &commit_id, bool
         throw QGitError("git_repository_open", res);
     }
 
-    if (commit_id.isEmpty())
+    QString effectiveCommitId = commit_id.isEmpty() ? QStringLiteral("HEAD") : commit_id;
+    res = resolveToCommitOid(oid, repo, effectiveCommitId);
+    if(res)
     {
-
-        res = git_reference_name_to_id(&oid, repo, "HEAD");
-        if(res)
-        {
-            throw QGitError("git_reference_name_to_id", res);
-        }
-    }
-    else
-    {
-        res = resolveToCommitOid(oid, repo, commit_id);
-        if(res)
-        {
-            throw QGitError("resolveToCommitOid", res);
-        }
+        throw QGitError("resolveToCommitOid", res);
     }
 
     res = git_commit_lookup(commit_obj, repo, &oid);
