@@ -290,6 +290,9 @@ QGitRepository::QGitRepository(const QString &path, QWidget *parent)
 
 QGitRepository::~QGitRepository()
 {
+    m_git->disconnect(this);
+    this->disconnect(m_git);
+
     m_thread.quit();
     m_thread.wait();
 

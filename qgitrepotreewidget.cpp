@@ -18,6 +18,9 @@ QGitRepoTreeWidget::QGitRepoTreeWidget(QWidget *parent)
 
 QGitRepoTreeWidget::~QGitRepoTreeWidget()
 {
+    m_git->disconnect(this);
+    this->disconnect(m_git);
+
     m_thread.quit();
     m_thread.wait();
 

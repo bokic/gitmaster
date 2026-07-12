@@ -29,6 +29,9 @@ QGitCloneRepositoryDialog::QGitCloneRepositoryDialog(const QString &url, const Q
 
 QGitCloneRepositoryDialog::~QGitCloneRepositoryDialog()
 {
+    m_git->disconnect(this);
+    this->disconnect(m_git);
+
     m_thread.quit();
     m_thread.wait();
 
