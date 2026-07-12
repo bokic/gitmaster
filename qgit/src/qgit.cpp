@@ -4418,18 +4418,28 @@ void QGit::listCommits(const QString &branchRef, int offset, int length)
             }
         }
 
+        QGitCommit item;
+        unsigned int parents = 0;
+
+        QString commit_id;
+        QList<QGitCommitDiffParent> commit_parents;
+        QDateTime commit_time;
+        QGitSignature commit_author;
+        QGitSignature commit_commiter;
+        QString commit_message;
+
+        QByteArray parentStr;
+        QString author_name;
+        QString author_email;
+        QDateTime author_when;
+
+        QString commiter_name;
+        QString commiter_email;
+        QDateTime commiter_when;
+
         int count = 0;
         while ((!git_revwalk_next(&oid, walker))&&(count < length)) {
-
-            QGitCommit item;
-            unsigned int parents = 0;
-
-            QString commit_id;
-            QList<QGitCommitDiffParent> commit_parents;
-            QDateTime commit_time;
-            QGitSignature commit_author;
-            QGitSignature commit_commiter;
-            QString commit_message;
+            commit_parents.clear();
 
             GitCommit commit;
             res = git_commit_lookup(commit, repo, &oid);
@@ -4444,7 +4454,6 @@ void QGit::listCommits(const QString &branchRef, int offset, int length)
             for(unsigned int index = 0; index < parents; index++)
             {
                 GitCommit parent;
-                QByteArray parentStr;
 
                 res = git_commit_parent(parent, commit, index);
                 if (res)
@@ -4463,17 +4472,17 @@ void QGit::listCommits(const QString &branchRef, int offset, int length)
             commit_time = QDateTime::fromMSecsSinceEpoch(time * 1000);
             commit_time.setTimeZone(QTimeZone(timeOffset * 60));
 
-            QString author_name = QString::fromUtf8(git_commit_author(commit)->name);
-            QString author_email = QString::fromUtf8(git_commit_author(commit)->email);
+            author_name = QString::fromUtf8(git_commit_author(commit)->name);
+            author_email = QString::fromUtf8(git_commit_author(commit)->email);
             resolveMailmap(repo, author_name, author_email);
-            QDateTime author_when = QDateTime::fromMSecsSinceEpoch(git_commit_author(commit)->when.time * 1000);
+            author_when = QDateTime::fromMSecsSinceEpoch(git_commit_author(commit)->when.time * 1000);
             author_when.setTimeZone(QTimeZone(git_commit_author(commit)->when.offset * 60));
             commit_author = QGitSignature(author_name, author_email, author_when);
 
-            QString commiter_name =  QString::fromUtf8(git_commit_committer(commit)->name);
-            QString commiter_email = QString::fromUtf8(git_commit_committer(commit)->email);
+            commiter_name =  QString::fromUtf8(git_commit_committer(commit)->name);
+            commiter_email = QString::fromUtf8(git_commit_committer(commit)->email);
             resolveMailmap(repo, commiter_name, commiter_email);
-            QDateTime commiter_when = QDateTime::fromMSecsSinceEpoch(git_commit_committer(commit)->when.time * 1000);
+            commiter_when = QDateTime::fromMSecsSinceEpoch(git_commit_committer(commit)->when.time * 1000);
             commiter_when.setTimeZone(QTimeZone(git_commit_committer(commit)->when.offset * 60));
             commit_commiter = QGitSignature(commiter_name, commiter_email, commiter_when);
 
