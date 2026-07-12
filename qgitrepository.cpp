@@ -2734,7 +2734,8 @@ void QGitRepository::on_logHistory_commits_customContextMenuRequested(const QPoi
     }
 
     QList<QGitRef> refs = ui->logHistory_commits->getReferences(selectedHash);
-    QString targetName = selectedHash.left(7);
+    QString shortHash = selectedHash.left(7);
+    QString targetName = shortHash;
     for (const auto &ref : refs) {
         if (ref.type == QGitRef::CurrentBranch) {
             canRebase = false;
@@ -2762,19 +2763,19 @@ void QGitRepository::on_logHistory_commits_customContextMenuRequested(const QPoi
     }
 
     if (canCherrypick) {
-        cherrypickAction = menu.addAction(tr("Cherry-pick commit '%1'").arg(selectedHash.left(7)));
+        cherrypickAction = menu.addAction(tr("Cherry-pick commit '%1'").arg(shortHash));
     }
 
-    revertAction = menu.addAction(tr("Revert commit '%1'").arg(selectedHash.left(7)));
+    revertAction = menu.addAction(tr("Revert commit '%1'").arg(shortHash));
 
-    QMenu *resetMenu = new QMenu(tr("Reset current branch to '%1'").arg(selectedHash.left(7)), &menu);
+    QMenu *resetMenu = new QMenu(tr("Reset current branch to '%1'").arg(shortHash), &menu);
     QAction *softResetAction = resetMenu->addAction(tr("Soft (keep changes staged)"));
     QAction *mixedResetAction = resetMenu->addAction(tr("Mixed (keep changes unstaged)"));
     QAction *hardResetAction = resetMenu->addAction(tr("Hard (discard all changes)"));
     menu.addMenu(resetMenu);
 
     menu.addSeparator();
-    QAction *createTagAction = menu.addAction(tr("Create Tag at '%1'...").arg(selectedHash.left(7)));
+    QAction *createTagAction = menu.addAction(tr("Create Tag at '%1'...").arg(shortHash));
     menu.addSeparator();
     QAction *editNoteAction = menu.addAction(tr("Edit Git Note..."));
     QAction *deleteNoteAction = menu.addAction(tr("Delete Git Note"));
@@ -2791,13 +2792,13 @@ void QGitRepository::on_logHistory_commits_customContextMenuRequested(const QPoi
             }
         } else if (res == cherrypickAction) {
             auto confirm = QMessageBox::question(this, tr("Cherry-pick"),
-                                                 tr("Are you sure you want to cherry-pick commit '%1' onto the current branch?").arg(selectedHash.left(7)),
+                                                 tr("Are you sure you want to cherry-pick commit '%1' onto the current branch?").arg(shortHash),
                                                  QMessageBox::Yes | QMessageBox::No);
             if (confirm == QMessageBox::Yes) {
                 QGitMasterMainWindow::instance()->updateStatusBarText(tr("Cherry-picking commit..."));
                 try {
                     m_git->cherrypick(selectedHash);
-                    QMessageBox::information(this, tr("Cherry-pick"), tr("Commit '%1' cherry-picked successfully.").arg(selectedHash.left(7)));
+                    QMessageBox::information(this, tr("Cherry-pick"), tr("Commit '%1' cherry-picked successfully.").arg(shortHash));
                 } catch (const QGitError &error) {
                     QMessageBox::warning(this, tr("Cherry-pick"), error.errorString());
                 }
@@ -2806,13 +2807,13 @@ void QGitRepository::on_logHistory_commits_customContextMenuRequested(const QPoi
             }
         } else if (res == revertAction) {
             auto confirm = QMessageBox::question(this, tr("Revert"),
-                                                 tr("Are you sure you want to revert commit '%1'? This will apply the inverse changes onto your current branch.").arg(selectedHash.left(7)),
+                                                 tr("Are you sure you want to revert commit '%1'? This will apply the inverse changes onto your current branch.").arg(shortHash),
                                                  QMessageBox::Yes | QMessageBox::No);
             if (confirm == QMessageBox::Yes) {
                 QGitMasterMainWindow::instance()->updateStatusBarText(tr("Reverting commit..."));
                 try {
                     m_git->revert(selectedHash);
-                    QMessageBox::information(this, tr("Revert"), tr("Commit '%1' reverted successfully.").arg(selectedHash.left(7)));
+                    QMessageBox::information(this, tr("Revert"), tr("Commit '%1' reverted successfully.").arg(shortHash));
                 } catch (const QGitError &error) {
                     QMessageBox::warning(this, tr("Revert"), error.errorString());
                 }
@@ -2821,13 +2822,13 @@ void QGitRepository::on_logHistory_commits_customContextMenuRequested(const QPoi
             }
         } else if (res == softResetAction) {
             auto confirm = QMessageBox::question(this, tr("Soft Reset"),
-                                                 tr("Are you sure you want to perform a soft reset to '%1'?\n\nThis will move the branch pointer, but keep all modifications staged.").arg(selectedHash.left(7)),
+                                                 tr("Are you sure you want to perform a soft reset to '%1'?\n\nThis will move the branch pointer, but keep all modifications staged.").arg(shortHash),
                                                  QMessageBox::Yes | QMessageBox::No);
             if (confirm == QMessageBox::Yes) {
                 QGitMasterMainWindow::instance()->updateStatusBarText(tr("Resetting current branch (soft)..."));
                 try {
                     m_git->reset(selectedHash, GIT_RESET_SOFT);
-                    QMessageBox::information(this, tr("Reset"), tr("Branch reset to '%1' successfully (soft).").arg(selectedHash.left(7)));
+                    QMessageBox::information(this, tr("Reset"), tr("Branch reset to '%1' successfully (soft).").arg(shortHash));
                 } catch (const QGitError &error) {
                     QMessageBox::critical(this, tr("Reset Error"), error.errorString());
                 }
@@ -2836,13 +2837,13 @@ void QGitRepository::on_logHistory_commits_customContextMenuRequested(const QPoi
             }
         } else if (res == mixedResetAction) {
             auto confirm = QMessageBox::question(this, tr("Mixed Reset"),
-                                                 tr("Are you sure you want to perform a mixed reset to '%1'?\n\nThis will move the branch pointer and unstage changes, but keep them in your working directory.").arg(selectedHash.left(7)),
+                                                 tr("Are you sure you want to perform a mixed reset to '%1'?\n\nThis will move the branch pointer and unstage changes, but keep them in your working directory.").arg(shortHash),
                                                  QMessageBox::Yes | QMessageBox::No);
             if (confirm == QMessageBox::Yes) {
                 QGitMasterMainWindow::instance()->updateStatusBarText(tr("Resetting current branch (mixed)..."));
                 try {
                     m_git->reset(selectedHash, GIT_RESET_MIXED);
-                    QMessageBox::information(this, tr("Reset"), tr("Branch reset to '%1' successfully (mixed).").arg(selectedHash.left(7)));
+                    QMessageBox::information(this, tr("Reset"), tr("Branch reset to '%1' successfully (mixed).").arg(shortHash));
                 } catch (const QGitError &error) {
                     QMessageBox::critical(this, tr("Reset Error"), error.errorString());
                 }
@@ -2851,13 +2852,13 @@ void QGitRepository::on_logHistory_commits_customContextMenuRequested(const QPoi
             }
         } else if (res == hardResetAction) {
             auto confirm = QMessageBox::question(this, tr("Hard Reset"),
-                                                 tr("WARNING: Are you sure you want to perform a hard reset to '%1'?\n\nThis will move the branch pointer and discard ALL staged and unstaged changes. This cannot be undone!").arg(selectedHash.left(7)),
+                                                 tr("WARNING: Are you sure you want to perform a hard reset to '%1'?\n\nThis will move the branch pointer and discard ALL staged and unstaged changes. This cannot be undone!").arg(shortHash),
                                                  QMessageBox::Yes | QMessageBox::No);
             if (confirm == QMessageBox::Yes) {
                 QGitMasterMainWindow::instance()->updateStatusBarText(tr("Resetting current branch (hard)..."));
                 try {
                     m_git->reset(selectedHash, GIT_RESET_HARD);
-                    QMessageBox::information(this, tr("Reset"), tr("Branch reset to '%1' successfully (hard).").arg(selectedHash.left(7)));
+                    QMessageBox::information(this, tr("Reset"), tr("Branch reset to '%1' successfully (hard).").arg(shortHash));
                 } catch (const QGitError &error) {
                     QMessageBox::critical(this, tr("Reset Error"), error.errorString());
                 }
@@ -2876,7 +2877,7 @@ void QGitRepository::on_logHistory_commits_customContextMenuRequested(const QPoi
             QString noteText = QInputDialog::getMultiLineText(
                 this,
                 tr("Edit Git Note"),
-                tr("Enter note text for commit %1:").arg(selectedHash.left(7)),
+                tr("Enter note text for commit %1:").arg(shortHash),
                 currentNote,
                 &ok
             );
@@ -2886,7 +2887,7 @@ void QGitRepository::on_logHistory_commits_customContextMenuRequested(const QPoi
             }
         } else if (res == deleteNoteAction) {
             auto confirm = QMessageBox::question(this, tr("Delete Git Note"),
-                                                 tr("Are you sure you want to delete the Git Note for commit %1?").arg(selectedHash.left(7)),
+                                                 tr("Are you sure you want to delete the Git Note for commit %1?").arg(shortHash),
                                                  QMessageBox::Yes | QMessageBox::No);
             if (confirm == QMessageBox::Yes) {
                 QGitMasterMainWindow::instance()->updateStatusBarText(tr("Deleting Git Note..."));
