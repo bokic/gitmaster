@@ -21,9 +21,10 @@ QGitWorktreeDialog::QGitWorktreeDialog(QGitRepository *parent)
     for (const auto &branch : branches) {
         // Extract short name from "refs/heads/..." format
         QString name = branch.name();
-        if (name.startsWith(QStringLiteral("refs/heads/")))
-            name = name.mid(11);
-        ui->comboBox_branch->addItem(name);
+        QStringView nameView(name);
+        if (nameView.startsWith(QStringLiteral("refs/heads/")))
+            nameView = nameView.sliced(11);
+        ui->comboBox_branch->addItem(nameView.toString());
     }
 
     // Pre-select current branch

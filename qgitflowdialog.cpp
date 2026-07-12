@@ -33,15 +33,16 @@ void QGitFlowDialog::refreshBranches()
     auto localBranches = m_git.branches(GIT_BRANCH_LOCAL);
     for (const auto &branch : localBranches) {
         QString name = branch.name();
-        if (name.startsWith(QStringLiteral("refs/heads/")))
-            name = name.mid(11);
+        QStringView nameView(name);
+        if (nameView.startsWith(QStringLiteral("refs/heads/")))
+            nameView = nameView.sliced(11);
 
-        if (name.startsWith(QStringLiteral("feature/"))) {
-            ui->comboBox_featureBranch->addItem(name);
-        } else if (name.startsWith(QStringLiteral("release/"))) {
-            ui->comboBox_releaseBranch->addItem(name);
-        } else if (name.startsWith(QStringLiteral("hotfix/"))) {
-            ui->comboBox_hotfixBranch->addItem(name);
+        if (nameView.startsWith(QStringLiteral("feature/"))) {
+            ui->comboBox_featureBranch->addItem(nameView.toString());
+        } else if (nameView.startsWith(QStringLiteral("release/"))) {
+            ui->comboBox_releaseBranch->addItem(nameView.toString());
+        } else if (nameView.startsWith(QStringLiteral("hotfix/"))) {
+            ui->comboBox_hotfixBranch->addItem(nameView.toString());
         }
     }
 
@@ -55,9 +56,10 @@ bool QGitFlowDialog::hasBranch(const QString &name) const
     auto localBranches = m_git.branches(GIT_BRANCH_LOCAL);
     for (const auto &branch : localBranches) {
         QString bName = branch.name();
-        if (bName.startsWith(QStringLiteral("refs/heads/")))
-            bName = bName.mid(11);
-        if (bName == name)
+        QStringView bNameView(bName);
+        if (bNameView.startsWith(QStringLiteral("refs/heads/")))
+            bNameView = bNameView.sliced(11);
+        if (bNameView == name)
             return true;
     }
     return false;
