@@ -308,6 +308,15 @@ QGitRepository::~QGitRepository()
 
 void QGitRepository::refreshData()
 {
+    if (m_refreshing)
+        return;
+
+    struct RefreshGuard {
+        bool &flag;
+        RefreshGuard(bool &f) : flag(f) { flag = true; }
+        ~RefreshGuard() { flag = false; }
+    } guard(m_refreshing);
+
     on_repositoryDetail_currentChanged(ui->repositoryDetail->currentIndex());
 
     if (ui->repositoryDetail->currentIndex() != 0)

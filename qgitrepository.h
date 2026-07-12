@@ -183,6 +183,7 @@ private:
     QStringList m_lastBranches;
     bool m_lastTags;
     QGit *m_git = nullptr;
+    bool m_refreshing = false;
     bool m_hasRemotes = false;
     bool m_hasCommitsToPush = false;
     int m_layoutOption = 0;
