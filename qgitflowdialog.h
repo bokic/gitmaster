@@ -32,7 +32,7 @@ private:
     void refreshBranches();
     bool hasBranch(const QString &name) const;
     QString detectMainBranch() const;
-    void ensureDevelopBranch();
+    bool ensureDevelopBranch();
 
     Ui::QGitFlowDialog *ui;
     QGitRepository *m_repo;

@@ -74,10 +74,15 @@ QString QGitFlowDialog::detectMainBranch() const
     return m_git.currentBranch();
 }
 
-void QGitFlowDialog::ensureDevelopBranch()
+bool QGitFlowDialog::ensureDevelopBranch()
 {
     if (!hasBranch(QStringLiteral("develop"))) {
         QString mainBranch = detectMainBranch();
+        if (mainBranch.isEmpty()) {
+            QMessageBox::warning(this, tr("Git Flow Initialization"),
+                                 tr("Cannot initialize Git Flow in an empty repository. Please make at least one commit first."));
+            return false;
+        }
         try {
             m_git.createLocalBranch(QStringLiteral("develop"), mainBranch, false);
             QMessageBox::information(this, tr("Git Flow Initialization"),
@@ -85,9 +90,10 @@ void QGitFlowDialog::ensureDevelopBranch()
         } catch (const QGitError &err) {
             QMessageBox::critical(this, tr("Initialization Error"),
                                   tr("Failed to create 'develop' branch:\n%1").arg(err.errorString()));
-            throw;
+            return false;
         }
     }
+    return true;
 }
 
 void QGitFlowDialog::on_pushButton_startFeature_clicked()
@@ -102,7 +108,7 @@ void QGitFlowDialog::on_pushButton_startFeature_clicked()
     }
 
     try {
-        ensureDevelopBranch();
+        if (!ensureDevelopBranch()) return;
         m_git.createLocalBranch(branchName, QStringLiteral("develop"), true);
         ui->lineEdit_featureName->clear();
         refreshBranches();
@@ -119,7 +125,7 @@ void QGitFlowDialog::on_pushButton_finishFeature_clicked()
     if (branchName.isEmpty()) return;
 
     try {
-        ensureDevelopBranch();
+        if (!ensureDevelopBranch()) return;
         m_git.checkoutBranch(QStringLiteral("develop"));
         m_git.merge(branchName);
 
@@ -148,7 +154,7 @@ void QGitFlowDialog::on_pushButton_startRelease_clicked()
     }
 
     try {
-        ensureDevelopBranch();
+        if (!ensureDevelopBranch()) return;
         m_git.createLocalBranch(branchName, QStringLiteral("develop"), true);
         ui->lineEdit_releaseName->clear();
         refreshBranches();
@@ -176,7 +182,7 @@ void QGitFlowDialog::on_pushButton_finishRelease_clicked()
         m_git.createTag(releaseName, mainBranch, QString("Release %1").arg(releaseName), true);
 
         // Merge into develop
-        ensureDevelopBranch();
+        if (!ensureDevelopBranch()) return;
         m_git.checkoutBranch(QStringLiteral("develop"));
         m_git.merge(branchName);
 
@@ -233,7 +239,7 @@ void QGitFlowDialog::on_pushButton_finishHotfix_clicked()
         m_git.createTag(hotfixName, mainBranch, QString("Hotfix %1").arg(hotfixName), true);
 
         // Merge into develop
-        ensureDevelopBranch();
+        if (!ensureDevelopBranch()) return;
         m_git.checkoutBranch(QStringLiteral("develop"));
         m_git.merge(branchName);
 
