@@ -109,7 +109,7 @@ void QNewRepositoryDialog::updateWidgets()
 
         dir = QDir(ui->lineEditCloneRepositoryDestinationPath->text());
 
-        if ((dir.exists())&&(dir.entryInfoList().count() > 2))
+        if ((dir.exists())&&(!dir.isEmpty()))
         {
             ui->lineEditCloneRepositoryDestinationPath->setStyleSheet("background: red");
             ui->lineEditCloneRepositoryDestinationPath->setToolTip(tr("Path exist and not empty."));
@@ -229,7 +229,7 @@ void QNewRepositoryDialog::updateWidgets()
             ui->lineEditCreateNewRepositoryPath->setToolTip(tr("Path doesn't exist."));
             enable = false;
         }
-        else if (dir.entryInfoList().count() > 2)
+        else if (!dir.isEmpty())
         {
             ui->lineEditCreateNewRepositoryPath->setStyleSheet("background: red");
             ui->lineEditCreateNewRepositoryPath->setToolTip(tr("Dir is not empty."));
