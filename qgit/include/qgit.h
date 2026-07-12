@@ -193,7 +193,7 @@ signals:
     void signatureReply(const QString &name, const QString &email, const QGitError &error);
     void updateSubmoduleReply(const QGitError &error);
     void statusReply(const QMap<git_status_t, int> &items, const QGitError &error);
-    void listBranchesAndTagsReply(const QList<QGitBranch> &branches, const QList<QGitTag> &tags, bool hasRemotes, bool hasCommitsToPush, const QGitError &error);
+    void listBranchesAndTagsReply(const QList<QGitBranch> &branches, const QList<QGitTag> &tags, const QList<QGitSubmodule> &submodules, const QList<QGitWorktree> &worktrees, bool hasRemotes, bool hasCommitsToPush, const QGitError &error);
     void stashSaveReply(const QGitError &error);
     void stashRemoveReply(const QGitError &error);
     void stashApplyReply(const QGitError &error);

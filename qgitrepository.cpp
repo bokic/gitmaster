@@ -632,7 +632,7 @@ void QGitRepository::repositoryPushReply(const QGitError &error)
     }
 }
 
-void QGitRepository::repositoryBranchesAndTagsReply(const QList<QGitBranch> &branches, const QList<QGitTag> &tags, bool hasRemotes, bool hasCommitsToPush, const QGitError &error)
+void QGitRepository::repositoryBranchesAndTagsReply(const QList<QGitBranch> &branches, const QList<QGitTag> &tags, const QList<QGitSubmodule> &submodules, const QList<QGitWorktree> &worktrees, bool hasRemotes, bool hasCommitsToPush, const QGitError &error)
 {
     auto *mainWindow = QGitMasterMainWindow::instance();
     if (error.errorCode())
@@ -808,14 +808,7 @@ void QGitRepository::repositoryBranchesAndTagsReply(const QList<QGitBranch> &bra
         itemTags->addChild(child);
     }
 
-    QList<QGitSubmodule> submods;
-    try {
-        submods = m_git->submodules();
-    } catch (const std::exception &ex) {
-        qWarning() << "Failed to load submodules:" << ex.what();
-    } catch (...) {
-        qWarning() << "Failed to load submodules: unknown exception";
-    }
+    const QList<QGitSubmodule> &submods = submodules;
 
     QTreeWidgetItem *itemSubmodules = new QTreeWidgetItem(QStringList() << tr("Submodules"));
     for (const auto &sub : submods) {
@@ -838,14 +831,7 @@ void QGitRepository::repositoryBranchesAndTagsReply(const QList<QGitBranch> &bra
     }
 
     // Worktrees group
-    QList<QGitWorktree> worktreeList;
-    try {
-        worktreeList = m_git->worktrees();
-    } catch (const std::exception &ex) {
-        qWarning() << "Failed to load worktrees:" << ex.what();
-    } catch (...) {
-        qWarning() << "Failed to load worktrees: unknown exception";
-    }
+    const QList<QGitWorktree> &worktreeList = worktrees;
 
     QTreeWidgetItem *itemWorktrees = new QTreeWidgetItem(QStringList() << tr("Worktrees"));
     itemWorktrees->setData(0, Qt::UserRole + 2, QStringLiteral("WorktreesHeader"));

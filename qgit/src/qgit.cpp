@@ -2251,6 +2251,8 @@ void QGit::listBranchesAndTags()
 {
     QList<QGitBranch> branches;
     QList<QGitTag> tags;
+    QList<QGitSubmodule> submods;
+    QList<QGitWorktree> worktreeList;
     QGitError error;
     bool hasRemotes = false;
     bool hasCommitsToPush = false;
@@ -2371,11 +2373,19 @@ void QGit::listBranchesAndTags()
             hasRemotes = remotes_list.value.count > 0;
         }
 
+        try {
+            submods = submodules();
+        } catch (...) {}
+
+        try {
+            worktreeList = worktrees();
+        } catch (...) {}
+
     } catch(const QGitError &ex) {
         error = ex;
     }
 
-    emit listBranchesAndTagsReply(branches, tags, hasRemotes, hasCommitsToPush, error);
+    emit listBranchesAndTagsReply(branches, tags, submods, worktreeList, hasRemotes, hasCommitsToPush, error);
 }
 
 void QGit::stashSave(const QString &name, bool keepIndex, bool includeUntracked, bool includeIgnored)

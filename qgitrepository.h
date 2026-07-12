@@ -85,7 +85,7 @@ private slots:
     void repositoryMergeReply(const QGitError &error);
     void repositoryRebaseReply(const QGitError &error);
     void repositoryUpdateSubmoduleReply(const QGitError &error);
-    void repositoryBranchesAndTagsReply(const QList<QGitBranch> &branches, const QList<QGitTag> &tags, bool hasRemotes, bool hasCommitsToPush, const QGitError &error);
+    void repositoryBranchesAndTagsReply(const QList<QGitBranch> &branches, const QList<QGitTag> &tags, const QList<QGitSubmodule> &submodules, const QList<QGitWorktree> &worktrees, bool hasRemotes, bool hasCommitsToPush, const QGitError &error);
     void repositoryStashesReply(const QStringList &stashes, const QGitError &error);
     void repositoryChangedFilesReply(const QList<QPair<QString, git_status_t>> &files, const QGitError &error);
     void repositoryStageFilesReply(const QGitError &error);
