@@ -204,6 +204,34 @@ static int resolveToCommitOid(git_oid &oid, git_repository *repo, const QString 
     return git_oid_fromstr(&oid, spec.toUtf8().constData());
 }
 
+static bool isValidRefName(const QString &prefix, const QString &name)
+{
+    if (name.isEmpty())
+        return false;
+    int valid = 0;
+    QString fullName = prefix + name;
+    int res = git_reference_name_is_valid(&valid, fullName.toUtf8().constData());
+    return (res == 0 && valid != 0);
+}
+
+static bool isValidRemoteName(const QString &name)
+{
+    if (name.isEmpty())
+        return false;
+    return git_remote_is_valid_name(name.toUtf8().constData()) != 0;
+}
+
+static bool isValidUrl(const QString &url)
+{
+    if (url.trimmed().isEmpty())
+        return false;
+    for (QChar c : url) {
+        if (c.isSpace() || c.unicode() < 32)
+            return false;
+    }
+    return true;
+}
+
 struct GitIndex {
     GitIndex() = default;
     GitIndex(const GitIndex&) = delete;
@@ -825,6 +853,12 @@ bool QGit::gitRepositoryDefaultSignature(const QDir &path, QString &name, QStrin
 
 void QGit::createLocalBranch(const QString &name, const QString &commit_id, bool checkout, bool force)
 {
+    if (!isValidRefName(QStringLiteral("refs/heads/"), name))
+    {
+        giterr_set_str(GITERR_INVALID, "Invalid branch name");
+        throw QGitError("createLocalBranch", -1);
+    }
+
     GitRepository repo;
     GitReference branch;
     GitObject target_obj;
@@ -1493,6 +1527,17 @@ void QGit::syncSubmodule(const QString &name)
 
 void QGit::addRemote(const QString &name, const QString &url)
 {
+    if (!isValidRemoteName(name))
+    {
+        giterr_set_str(GITERR_INVALID, "Invalid remote name");
+        throw QGitError("addRemote", -1);
+    }
+    if (!isValidUrl(url))
+    {
+        giterr_set_str(GITERR_INVALID, "Invalid remote URL");
+        throw QGitError("addRemote", -1);
+    }
+
     GitRepository repo;
     int res = git_repository_open(repo, m_path.absolutePath().toUtf8().constData());
     if (res) throw QGitError("git_repository_open", res);
@@ -1514,6 +1559,12 @@ void QGit::deleteRemote(const QString &name)
 
 void QGit::renameRemote(const QString &oldName, const QString &newName)
 {
+    if (!isValidRemoteName(newName))
+    {
+        giterr_set_str(GITERR_INVALID, "Invalid remote name");
+        throw QGitError("renameRemote", -1);
+    }
+
     GitRepository repo;
     int res = git_repository_open(repo, m_path.absolutePath().toUtf8().constData());
     if (res) throw QGitError("git_repository_open", res);
@@ -1526,6 +1577,12 @@ void QGit::renameRemote(const QString &oldName, const QString &newName)
 
 void QGit::setRemoteUrl(const QString &name, const QString &url, bool isPushUrl)
 {
+    if (!isValidUrl(url))
+    {
+        giterr_set_str(GITERR_INVALID, "Invalid remote URL");
+        throw QGitError("setRemoteUrl", -1);
+    }
+
     GitRepository repo;
     int res = git_repository_open(repo, m_path.absolutePath().toUtf8().constData());
     if (res) throw QGitError("git_repository_open", res);
@@ -1727,6 +1784,12 @@ void QGit::renameBranch(const QString &oldName, const QString &newName)
 {
     QGitError error;
     try {
+        if (!isValidRefName(QStringLiteral("refs/heads/"), newName))
+        {
+            giterr_set_str(GITERR_INVALID, "Invalid branch name");
+            throw QGitError("renameBranch", -1);
+        }
+
         GitRepository repo;
         int res = git_repository_open(repo, m_path.absolutePath().toUtf8().constData());
         if(res) throw QGitError("git_repository_open", res);
@@ -1777,6 +1840,12 @@ void QGit::renameTag(const QString &oldName, const QString &newName)
 {
     QGitError error;
     try {
+        if (!isValidRefName(QStringLiteral("refs/tags/"), newName))
+        {
+            giterr_set_str(GITERR_INVALID, "Invalid tag name");
+            throw QGitError("renameTag", -1);
+        }
+
         GitRepository repo;
         int res = git_repository_open(repo, m_path.absolutePath().toUtf8().constData());
         if(res) throw QGitError("git_repository_open", res);
@@ -1837,6 +1906,12 @@ void QGit::createTag(const QString &name, const QString &targetObjectId, const Q
 {
     QGitError error;
     try {
+        if (!isValidRefName(QStringLiteral("refs/tags/"), name))
+        {
+            giterr_set_str(GITERR_INVALID, "Invalid tag name");
+            throw QGitError("createTag", -1);
+        }
+
         GitRepository repo;
         int res = git_repository_open(repo, m_path.absolutePath().toUtf8().constData());
         if (res) throw QGitError("git_repository_open", res);
