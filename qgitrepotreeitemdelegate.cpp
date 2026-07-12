@@ -10,15 +10,17 @@
 
 QGitRepoTreeItemDelegate::QGitRepoTreeItemDelegate(QObject *parent)
     : QStyledItemDelegate(parent)
-    , m_boldFont("Arial", 10, QFont::Bold, false)
-    , m_normalFont("Arial", 10, QFont::Normal, false)
 {
 }
 
 void QGitRepoTreeItemDelegate::paint(QPainter *painter, const QStyleOptionViewItem &option, const QModelIndex &index) const
 {
-    QFontMetrics fm(m_normalFont);
-    QFontMetrics fmb(m_boldFont);
+    QFont normalFont = option.font;
+    QFont boldFont = option.font;
+    boldFont.setBold(true);
+
+    QFontMetrics fm(normalFont);
+    QFontMetrics fmb(boldFont);
     QColor background, text_color;
     QString text;
 
@@ -54,7 +56,7 @@ void QGitRepoTreeItemDelegate::paint(QPainter *painter, const QStyleOptionViewIt
 
     if (!text.isEmpty())
     {
-        painter->setFont(m_boldFont);
+        painter->setFont(boldFont);
         painter->drawText(x, y + 17, text);
 
         x += fmb.horizontalAdvance(text) + 6;
@@ -72,7 +74,7 @@ void QGitRepoTreeItemDelegate::paint(QPainter *painter, const QStyleOptionViewIt
             text = QString("~/") + text.right(text.length() - homePath.length());
         }
 #endif
-        painter->setFont(m_normalFont);
+        painter->setFont(normalFont);
         painter->drawText(x, y + 17, text);
 
         //x += fm.width(text) + 6;
@@ -85,7 +87,7 @@ void QGitRepoTreeItemDelegate::paint(QPainter *painter, const QStyleOptionViewIt
     if ((modifiedFiles.isValid())&&(deletedFiles.isValid())&&(newFiles.isValid())&&(unversionedFiles.isValid())&&(branchName.isValid()))
     {
 
-        painter->setFont(m_normalFont);
+        painter->setFont(normalFont);
 
         if (modifiedFiles.toInt() > 0)
         {

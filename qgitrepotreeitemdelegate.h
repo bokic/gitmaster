@@ -20,8 +20,6 @@ signals:
 public slots:
 
 private:
-    QFont m_boldFont;
-    QFont m_normalFont;
     QImage m_branchLogoImage;
     QImage m_fileStatusOkImage;
     QImage m_fileStatusNewImage;
