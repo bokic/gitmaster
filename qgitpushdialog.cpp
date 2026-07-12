@@ -25,8 +25,10 @@ QGitPushDialog::QGitPushDialog(QGitRepository *parent)
     auto currentBranch = git->currentBranch();
 
     const auto localBranches = git->branches(GIT_BRANCH_LOCAL);
-    for(const auto &localBranch: std::as_const(localBranches))
+    ui->branches_tableWidget->setRowCount(localBranches.count());
+    for(int row = 0; row < localBranches.count(); ++row)
     {
+        const auto &localBranch = localBranches.at(row);
         QTableWidgetItem *item = new QTableWidgetItem(localBranch.name());
         item->setFlags(item->flags() | Qt::ItemIsUserCheckable);
         if (localBranch.name() == currentBranch)
@@ -39,8 +41,7 @@ QGitPushDialog::QGitPushDialog(QGitRepository *parent)
         {
             item->setCheckState(Qt::Unchecked);
         }
-        ui->branches_tableWidget->insertRow(ui->branches_tableWidget->rowCount());
-        ui->branches_tableWidget->setItem(ui->branches_tableWidget->rowCount() - 1, 0, item);
+        ui->branches_tableWidget->setItem(row, 0, item);
     }
 }
 

@@ -26,12 +26,11 @@ QGitRemotesDialog::~QGitRemotesDialog()
 
 void QGitRemotesDialog::loadRemotes()
 {
-    ui->tableWidget->setRowCount(0);
-
     QList<QGitRemote> remotes = m_repository->git()->remotes();
-    for (const auto &remote : remotes) {
-        int row = ui->tableWidget->rowCount();
-        ui->tableWidget->insertRow(row);
+    ui->tableWidget->setRowCount(remotes.count());
+
+    for (int row = 0; row < remotes.count(); ++row) {
+        const auto &remote = remotes.at(row);
         ui->tableWidget->setItem(row, 0, new QTableWidgetItem(remote.name));
         ui->tableWidget->setItem(row, 1, new QTableWidgetItem(remote.url));
     }

@@ -34,16 +34,19 @@ void QGitReflogDialog::loadReflog()
     ui->tableWidget->setSortingEnabled(false);
 
     QList<QGitReflogEntry> entries = m_repository->git()->getReflog(m_refName);
-    for (const auto &entry : entries) {
-        int row = ui->tableWidget->rowCount();
-        ui->tableWidget->insertRow(row);
+    ui->tableWidget->setRowCount(entries.count());
+
+    for (int row = 0; row < entries.count(); ++row) {
+        const auto &entry = entries.at(row);
 
         auto *itemHash = new QTableWidgetItem(entry.commitHash.left(8));
         itemHash->setData(Qt::UserRole, entry.commitHash);
         
-        QString committerStr = entry.committerName;
+        QString committerStr;
         if (!entry.committerEmail.isEmpty()) {
-            committerStr += QStringLiteral(" <%1>").arg(entry.committerEmail);
+            committerStr = QStringLiteral("%1 <%2>").arg(entry.committerName, entry.committerEmail);
+        } else {
+            committerStr = entry.committerName;
         }
         auto *itemCommitter = new QTableWidgetItem(committerStr);
         
