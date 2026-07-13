@@ -30,4 +30,4 @@ Development plan and upcoming features for GitMaster.
 - [ ] **RPM Support**: Native package for Fedora/RHEL/openSUSE.
 - [x] **Snap Package**: Universal Linux distribution via Canonical's Snapcraft.
 - [x] **AppImage**: Portable, single-file Linux executable.
-- [ ] **Flatpak**: Modern, sandboxed Linux application distribution.
+- [x] **Flatpak**: Modern, sandboxed Linux application distribution.
