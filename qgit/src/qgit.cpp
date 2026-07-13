@@ -11,6 +11,7 @@
 #include <QVector>
 #include <QDir>
 #include <QFile>
+#include <QFileInfo>
 #include <functional>
 #include <limits>
 
@@ -171,18 +172,25 @@ struct GitMailmap {
     git_mailmap *value = nullptr;
 };
 
+static void resolveMailmap(git_mailmap *mailmap, QString &name, QString &email)
+{
+    if (!mailmap)
+        return;
+    const char *resolved_name = nullptr;
+    const char *resolved_email = nullptr;
+    if (git_mailmap_resolve(&resolved_name, &resolved_email, mailmap, name.toUtf8().constData(), email.toUtf8().constData()) == 0)
+    {
+        if (resolved_name) name = QString::fromUtf8(resolved_name);
+        if (resolved_email) email = QString::fromUtf8(resolved_email);
+    }
+}
+
 static void resolveMailmap(git_repository *repo, QString &name, QString &email)
 {
     GitMailmap mailmap;
     if (git_mailmap_from_repository(mailmap, repo) == 0)
     {
-        const char *resolved_name = nullptr;
-        const char *resolved_email = nullptr;
-        if (git_mailmap_resolve(&resolved_name, &resolved_email, mailmap, name.toUtf8().constData(), email.toUtf8().constData()) == 0)
-        {
-            if (resolved_name) name = QString::fromUtf8(resolved_name);
-            if (resolved_email) email = QString::fromUtf8(resolved_email);
-        }
+        resolveMailmap(mailmap, name, email);
     }
 }
 
@@ -1648,13 +1656,40 @@ QList<QGitWorktree> QGit::worktrees() const
         // Resolve branch from the worktree's HEAD
         QString branch;
         {
-            GitRepository wtRepo;
-            if (git_repository_open(wtRepo, path.toUtf8().constData()) == 0) {
-                GitReference head;
-                if (git_repository_head(head, wtRepo) == 0) {
-                    const char *shorthand = git_reference_shorthand(head);
-                    if (shorthand)
-                        branch = QString::fromUtf8(shorthand);
+            bool resolved = false;
+            QFile gitFile(path + QStringLiteral("/.git"));
+            if (gitFile.open(QIODevice::ReadOnly | QIODevice::Text)) {
+                QByteArray line = gitFile.readLine().trimmed();
+                if (line.startsWith("gitdir: ")) {
+                    QString gitdir = QString::fromUtf8(line.mid(8).trimmed());
+                    if (QFileInfo(gitdir).isRelative()) {
+                        gitdir = QDir(path).absoluteFilePath(gitdir);
+                    }
+                    QFile headFile(gitdir + QStringLiteral("/HEAD"));
+                    if (headFile.open(QIODevice::ReadOnly | QIODevice::Text)) {
+                        QByteArray headLine = headFile.readLine().trimmed();
+                        if (headLine.startsWith("ref: refs/heads/")) {
+                            branch = QString::fromUtf8(headLine.mid(16).trimmed());
+                            resolved = true;
+                        } else if (headLine.startsWith("ref: ")) {
+                            branch = QString::fromUtf8(headLine.mid(5).trimmed());
+                            resolved = true;
+                        } else if (headLine.length() == 40 || headLine.length() == 64) {
+                            branch = QStringLiteral("HEAD");
+                            resolved = true;
+                        }
+                    }
+                }
+            }
+            if (!resolved) {
+                GitRepository wtRepo;
+                if (git_repository_open(wtRepo, path.toUtf8().constData()) == 0) {
+                    GitReference head;
+                    if (git_repository_head(head, wtRepo) == 0) {
+                        const char *shorthand = git_reference_shorthand(head);
+                        if (shorthand)
+                            branch = QString::fromUtf8(shorthand);
+                    }
                 }
             }
         }
@@ -4437,6 +4472,9 @@ void QGit::listCommits(const QString &branchRef, int offset, int length)
         QString commiter_email;
         QDateTime commiter_when;
 
+        GitMailmap mailmap;
+        git_mailmap_from_repository(mailmap, repo);
+
         int count = 0;
         while ((!git_revwalk_next(&oid, walker))&&(count < length)) {
             commit_parents.clear();
@@ -4474,14 +4512,14 @@ void QGit::listCommits(const QString &branchRef, int offset, int length)
 
             author_name = QString::fromUtf8(git_commit_author(commit)->name);
             author_email = QString::fromUtf8(git_commit_author(commit)->email);
-            resolveMailmap(repo, author_name, author_email);
+            resolveMailmap(mailmap, author_name, author_email);
             author_when = QDateTime::fromMSecsSinceEpoch(git_commit_author(commit)->when.time * 1000);
             author_when.setTimeZone(QTimeZone(git_commit_author(commit)->when.offset * 60));
             commit_author = QGitSignature(author_name, author_email, author_when);
 
             commiter_name =  QString::fromUtf8(git_commit_committer(commit)->name);
             commiter_email = QString::fromUtf8(git_commit_committer(commit)->email);
-            resolveMailmap(repo, commiter_name, commiter_email);
+            resolveMailmap(mailmap, commiter_name, commiter_email);
             commiter_when = QDateTime::fromMSecsSinceEpoch(git_commit_committer(commit)->when.time * 1000);
             commiter_when.setTimeZone(QTimeZone(git_commit_committer(commit)->when.offset * 60));
             commit_commiter = QGitSignature(commiter_name, commiter_email, commiter_when);
@@ -4536,6 +4574,9 @@ void QGit::searchCommits(const QString &text, const QString &type)
         }
 
         git_revwalk_sorting(walker, GIT_SORT_TIME);
+
+        GitMailmap mailmap;
+        git_mailmap_from_repository(mailmap, repo);
 
         git_oid oid;
         while (!git_revwalk_next(&oid, walker)) {
@@ -4676,14 +4717,14 @@ void QGit::searchCommits(const QString &text, const QString &type)
 
                 QString author_name = QString::fromUtf8(git_commit_author(commit)->name);
                 QString author_email = QString::fromUtf8(git_commit_author(commit)->email);
-                resolveMailmap(repo, author_name, author_email);
+                resolveMailmap(mailmap, author_name, author_email);
                 QDateTime author_when = QDateTime::fromMSecsSinceEpoch(git_commit_author(commit)->when.time * 1000);
                 author_when.setTimeZone(QTimeZone(git_commit_author(commit)->when.offset * 60));
                 QGitSignature commit_author(author_name, author_email, author_when);
 
                 QString commiter_name = QString::fromUtf8(git_commit_committer(commit)->name);
                 QString commiter_email = QString::fromUtf8(git_commit_committer(commit)->email);
-                resolveMailmap(repo, commiter_name, commiter_email);
+                resolveMailmap(mailmap, commiter_name, commiter_email);
                 QDateTime commiter_when = QDateTime::fromMSecsSinceEpoch(git_commit_committer(commit)->when.time * 1000);
                 commiter_when.setTimeZone(QTimeZone(git_commit_committer(commit)->when.offset * 60));
                 QGitSignature commit_commiter(commiter_name, commiter_email, commiter_when);
