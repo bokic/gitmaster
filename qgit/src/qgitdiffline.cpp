@@ -43,7 +43,7 @@ QGitDiffLine &QGitDiffLine::operator=(QGitDiffLine &&other) noexcept
     return *this;
 }
 
-QByteArray QGitDiffLine::content() const
+const QByteArray &QGitDiffLine::content() const
 {
     return m_content;
 }

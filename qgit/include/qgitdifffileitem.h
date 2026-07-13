@@ -20,8 +20,8 @@ public:
     bool operator==(const QGitDiffFileItem &other);
     bool operator==(const git_diff_file &other);
 
-    QString path() const;
-    QByteArray id() const;
+    const QString &path() const;
+    const QByteArray &id() const;
     quint16 mode() const;
     quint32 flags() const;
     quint64 size() const;

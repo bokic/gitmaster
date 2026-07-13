@@ -24,14 +24,14 @@ public:
     bool operator==(const git_diff_delta *other);
     bool operator==(const QGitDiffFile &other);
 
-    QGitDiffFileItem new_file() const;
-    QGitDiffFileItem old_file() const;
+    const QGitDiffFileItem &new_file() const;
+    const QGitDiffFileItem &old_file() const;
     uint32_t flags() const;
     int nfiles() const;
     int simularity() const;
     int status() const;
-    QList<QGitDiffHunk> hunks() const;
-    QList<QGitDiffBinary> binaries() const;
+    const QList<QGitDiffHunk> &hunks() const;
+    const QList<QGitDiffBinary> &binaries() const;
 
     void addHunk(const QGitDiffHunk &hunk);
     void addBinary(const QGitDiffBinary &binary);

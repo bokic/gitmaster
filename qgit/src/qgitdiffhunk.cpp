@@ -37,7 +37,7 @@ QGitDiffHunk &QGitDiffHunk::operator=(QGitDiffHunk &&other) noexcept
     return *this;
 }
 
-QString QGitDiffHunk::header() const
+const QString &QGitDiffHunk::header() const
 {
     return m_header;
 }
@@ -62,7 +62,7 @@ int QGitDiffHunk::old_start() const
     return m_old_start;
 }
 
-QList<QGitDiffLine> QGitDiffHunk::lines() const
+const QList<QGitDiffLine> &QGitDiffHunk::lines() const
 {
     return m_lines;
 }

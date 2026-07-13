@@ -37,7 +37,7 @@ git_diff_binary_t QGitDiffBinaryFile::type() const
     return m_type;
 }
 
-QByteArray QGitDiffBinaryFile::data() const
+const QByteArray &QGitDiffBinaryFile::data() const
 {
     return m_data;
 }

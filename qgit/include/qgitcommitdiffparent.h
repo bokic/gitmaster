@@ -20,8 +20,8 @@ public:
     QGitCommitDiffParent &operator=(QGitCommitDiffParent &&other) noexcept;
     QGitCommitDiffParent &operator=(const QGitCommitDiffParent &other) = default;
 
-    QByteArray commitHash() const;
-    QList<QGitDiffFile> files() const;
+    const QByteArray &commitHash() const;
+    const QList<QGitDiffFile> &files() const;
 
     void addFile(const git_diff_delta *delta);
 

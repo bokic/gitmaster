@@ -18,7 +18,7 @@ public:
     QGitDiffBinaryFile &operator=(const QGitDiffBinaryFile &other) = default;
 
     git_diff_binary_t type() const;
-    QByteArray data() const;
+    const QByteArray &data() const;
     size_t inflatedLen() const;
 
 private:

@@ -20,12 +20,12 @@ QGitCommitDiffParent &QGitCommitDiffParent::operator=(QGitCommitDiffParent &&oth
     return *this;
 }
 
-QByteArray QGitCommitDiffParent::commitHash() const
+const QByteArray &QGitCommitDiffParent::commitHash() const
 {
     return m_commitHash;
 }
 
-QList<QGitDiffFile> QGitCommitDiffParent::files() const
+const QList<QGitDiffFile> &QGitCommitDiffParent::files() const
 {
     return m_files;
 }

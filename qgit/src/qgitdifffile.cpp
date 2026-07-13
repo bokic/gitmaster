@@ -98,12 +98,12 @@ bool QGitDiffFile::operator==(const QGitDiffFile &other)
     return false;
 }
 
-QGitDiffFileItem QGitDiffFile::new_file() const
+const QGitDiffFileItem &QGitDiffFile::new_file() const
 {
     return m_new_file;
 }
 
-QGitDiffFileItem QGitDiffFile::old_file() const
+const QGitDiffFileItem &QGitDiffFile::old_file() const
 {
     return m_old_file;
 }
@@ -128,12 +128,12 @@ int QGitDiffFile::status() const
     return m_status;
 }
 
-QList<QGitDiffHunk> QGitDiffFile::hunks() const
+const QList<QGitDiffHunk> &QGitDiffFile::hunks() const
 {
     return m_hunks;
 }
 
-QList<QGitDiffBinary> QGitDiffFile::binaries() const
+const QList<QGitDiffBinary> &QGitDiffFile::binaries() const
 {
     return m_binary;
 }

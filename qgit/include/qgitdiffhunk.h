@@ -19,12 +19,12 @@ public:
     QGitDiffHunk &operator=(QGitDiffHunk &&other) noexcept;
     QGitDiffHunk &operator=(const QGitDiffHunk &other) = default;
 
-    QString header() const;
+    const QString &header() const;
     int new_lines() const;
     int new_start() const;
     int old_lines() const;
     int old_start() const;
-    QList<QGitDiffLine> lines() const;
+    const QList<QGitDiffLine> &lines() const;
 
     void addLine(const QGitDiffLine &line);
 

@@ -67,12 +67,12 @@ bool QGitDiffFileItem::operator==(const git_diff_file &other)
     return false;
 }
 
-QString QGitDiffFileItem::path() const
+const QString &QGitDiffFileItem::path() const
 {
     return m_path;
 }
 
-QByteArray QGitDiffFileItem::id() const
+const QByteArray &QGitDiffFileItem::id() const
 {
     return m_id;
 }
