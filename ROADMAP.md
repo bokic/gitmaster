@@ -21,13 +21,3 @@ Development plan and upcoming features for GitMaster.
 ---
 
 ## 🏁 Version 1.0 - Production Readiness
-*Ensuring seamless installation across all major operating systems.*
-
-### MacOS Support
-- [x] **App Bundling**: Create a `.dmg` bundle for macOS users.
-
-### Linux Distribution
-- [x] **RPM Support**: Native package for Fedora/RHEL/openSUSE.
-- [x] **Snap Package**: Universal Linux distribution via Canonical's Snapcraft.
-- [x] **AppImage**: Portable, single-file Linux executable.
-- [x] **Flatpak**: Modern, sandboxed Linux application distribution.
