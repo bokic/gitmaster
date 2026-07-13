@@ -1,0 +1,37 @@
+name: gitmaster
+base: core24
+version: adopt-info
+summary: Lightweight and fast cross-platform Git GUI client.
+description: |
+  GitMaster is a lightweight, fast, cross-platform GUI client for Git,
+  built using C++ (C++20), Qt6, and libgit2.
+confinement: strict
+grade: stable
+
+apps:
+  gitmaster:
+    extensions: [kde-neon-6]
+    command: usr/bin/gitmaster
+    desktop: usr/share/applications/gitmaster.desktop
+    plugs:
+      - home
+      - removable-media
+
+parts:
+  gitmaster:
+    plugin: cmake
+    source: .
+    build-packages:
+      - git
+      - libgit2-dev
+      - build-essential
+    stage-packages:
+      - libgit2-1.7
+    cmake-parameters:
+      - -DCMAKE_BUILD_TYPE=Release
+    override-build: |
+      # Query version from git tag
+      VERSION=$(git describe --tags --always || echo "1.0.0")
+      VERSION="${VERSION#v}"
+      craftctl set version="$VERSION"
+      craftctl default
