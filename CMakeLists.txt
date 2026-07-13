@@ -263,5 +263,16 @@ qt_finalize_executable(gitmaster)
 set(CMAKE_INSTALL_PREFIX /usr)
 install(
     TARGETS gitmaster
+    RUNTIME DESTINATION bin
     BUNDLE DESTINATION gitmaster
+)
+
+install(
+    FILES gitmaster.desktop
+    DESTINATION share/applications
+)
+
+install(
+    FILES gitmaster.svg
+    DESTINATION share/icons/hicolor/scalable/apps
 )
