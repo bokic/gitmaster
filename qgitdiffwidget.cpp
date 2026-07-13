@@ -467,6 +467,7 @@ void QGitDiffWidget::mouseMoveEvent(QMouseEvent *event)
 
 void QGitDiffWidget::moveEvent(QMoveEvent *event)
 {
+    QWidget::moveEvent(event);
     updatePosition();
 }
 

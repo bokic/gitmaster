@@ -144,7 +144,6 @@ QGitRepository::QGitRepository(const QString &path, QWidget *parent)
     if (QGit::gitRepositoryDefaultSignature(m_path, name, email))
     {
         QByteArray hash;
-        QNetworkReply *reply = nullptr;
 
         hash = QCryptographicHash::hash(email.trimmed().toUtf8(), QCryptographicHash::Md5).toHex();
 
@@ -1042,7 +1041,6 @@ void QGitRepository::updateStatusViews()
     };
 
     int stagedCnt = 0;
-    int unstagedCnt = 0;
 
     for (int c = 0; c < m_changedFiles.count(); c++)
     {
@@ -1053,7 +1051,6 @@ void QGitRepository::updateStatusViews()
         bool hasUnstaged = (status == GIT_STATUS_CURRENT) || (status & (GIT_STATUS_WT_NEW | GIT_STATUS_WT_MODIFIED | GIT_STATUS_WT_DELETED | GIT_STATUS_WT_TYPECHANGE | GIT_STATUS_WT_RENAMED | GIT_STATUS_WT_UNREADABLE | GIT_STATUS_IGNORED | GIT_STATUS_CONFLICTED));
 
         if (hasStaged) stagedCnt++;
-        if (hasUnstaged) unstagedCnt++;
 
         if (noStaging)
         {

@@ -2099,6 +2099,7 @@ void QGit::setUpstream(const QString &branchName, const QString &upstreamBranchN
 
 void QGit::deleteBranches(const QList<QGitBranch> &branches, bool force)
 {
+    Q_UNUSED(force);
     QGitError error;
 
     try {
@@ -4283,6 +4284,7 @@ void QGit::fetch(bool fetchFromAllRemotes, bool purgeDeletedBranches, bool fetch
 
 void QGit::push(const QString &remote, const QStringList &branches, bool tags, bool force)
 {
+    Q_UNUSED(tags);
     QGitError error;
 
     try

@@ -24,14 +24,6 @@ static const QStringList kIgnoredExts  = {
     ".pdf", ".pyc"
 };
 
-static bool isTextFile(const QString &path)
-{
-    QFile f(path);
-    if (!f.open(QIODevice::ReadOnly)) return false;
-    QByteArray sample = f.read(8000);
-    f.close();
-    return !sample.contains('\0');
-}
 
 // ---------------------------------------------------------------------------
 // Colour palette for blame hunks (one colour per unique commit, cycling)
