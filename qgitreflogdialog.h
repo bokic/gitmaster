@@ -1,8 +1,8 @@
-#ifndef QGITREFLOGDIALOG_H
-#define QGITREFLOGDIALOG_H
+#pragma once
 
 #include <QDialog>
 #include "qgitrepository.h"
+
 
 namespace Ui {
 class QGitReflogDialog;
@@ -30,5 +30,3 @@ private:
     QString m_refName;
     QGitRepository *m_repository = nullptr;
 };
-
-#endif // QGITREFLOGDIALOG_H

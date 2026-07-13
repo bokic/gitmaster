@@ -1,5 +1,4 @@
-#ifndef QGITBRANCHDIALOG_H
-#define QGITBRANCHDIALOG_H
+#pragma once
 
 #include <qgitrepository.h>
 #include <qgitbranch.h>
@@ -7,6 +6,7 @@
 
 #include <QTableWidgetItem>
 #include <QDialog>
+
 
 namespace Ui {
 class QGitBranchDialog;
@@ -43,5 +43,3 @@ private:
     QList<QGitBranch> m_currentBranches;
     QGit m_git;
 };
-
-#endif // QGITBRANCHDIALOG_H

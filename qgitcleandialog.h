@@ -1,7 +1,7 @@
-#ifndef QGITCLEANDIALOG_H
-#define QGITCLEANDIALOG_H
+#pragma once
 
 #include <QDialog>
+
 
 namespace Ui {
 class QGitCleanDialog;
@@ -21,5 +21,3 @@ public:
 private:
     Ui::QGitCleanDialog *ui = nullptr;
 };
-
-#endif // QGITCLEANDIALOG_H

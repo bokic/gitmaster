@@ -1,8 +1,8 @@
-#ifndef QGITCREATETAGDIALOG_H
-#define QGITCREATETAGDIALOG_H
+#pragma once
 
 #include <QDialog>
 #include <QString>
+
 
 namespace Ui {
 class QGitCreateTagDialog;
@@ -28,5 +28,3 @@ private slots:
 private:
     Ui::QGitCreateTagDialog *ui = nullptr;
 };
-
-#endif // QGITCREATETAGDIALOG_H

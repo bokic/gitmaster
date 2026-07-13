@@ -1,11 +1,11 @@
-#ifndef QGITMERGEDIALOG_H
-#define QGITMERGEDIALOG_H
+#pragma once
 
 #include <QDialog>
 #include <QDir>
 #include <QTableWidgetItem>
 #include "qgit.h"
 #include "qgitbranch.h"
+
 
 namespace Ui {
 class QGitMergeDialog;
@@ -46,5 +46,3 @@ private:
     QGit m_git;
     QList<QGitBranch> m_allBranches;
 };
-
-#endif // QGITMERGEDIALOG_H

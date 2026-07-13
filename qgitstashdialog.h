@@ -1,7 +1,7 @@
-#ifndef QGITSTASHDIALOG_H
-#define QGITSTASHDIALOG_H
+#pragma once
 
 #include <QDialog>
+
 
 namespace Ui {
 class QGitStashDialog;
@@ -23,5 +23,3 @@ public:
 private:
     Ui::QGitStashDialog *ui = nullptr;
 };
-
-#endif // QGITSTASHDIALOG_H
