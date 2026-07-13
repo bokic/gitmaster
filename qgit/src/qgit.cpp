@@ -2386,7 +2386,6 @@ void QGit::listBranchesAndTags()
                 throw QGitError("git_reference_lookup", res);
             }
 
-            //res = git_tag_lookup(tag_obj, repo, git_reference_target(tag_ref));
             res = git_reference_peel(git_obj, tag_ref, GIT_OBJ_COMMIT);
             if (res)
             {

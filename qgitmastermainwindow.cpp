@@ -58,25 +58,6 @@ QGitMasterMainWindow::QGitMasterMainWindow(QWidget *parent)
     else
         QApplication::setStyle(QStyleFactory::create(m_appTheme));
 
-    /*auto themeGroup = new QActionGroup(this);
-
-    for(const auto &theme: themes)
-    {
-        QAction *newAction = new QAction(ui->menu_Themes);
-
-        newAction->setText(theme);
-        newAction->setCheckable(true);
-        themeGroup->addAction(newAction);
-
-        if (m_appTheme.compare(theme, Qt::CaseInsensitive) == 0)
-        {
-            newAction->setChecked(true);
-        }
-
-        ui->menu_Themes->addAction(newAction);
-
-        connect(newAction, &QAction::triggered, this, &QGitMasterMainWindow::change_theme_triggered);
-    }*/
 }
 
 QGitMasterMainWindow::~QGitMasterMainWindow()
@@ -455,23 +436,6 @@ void QGitMasterMainWindow::on_actionStash_triggered()
         }
     }
 }
-
-/*void QGitMasterMainWindow::change_theme_triggered(bool checked)
-{
-    QAction *menu = nullptr;
-    QSettings settings;
-
-    menu = dynamic_cast<QAction *>(sender());
-    if (menu)
-    {
-        auto name = menu->text();
-
-        QApplication::setStyle(QStyleFactory::create(name));
-        menu->setChecked(true);
-
-        settings.setValue("theme", name);
-    }
-}*/
 
 void QGitMasterMainWindow::on_actionBranch_triggered()
 {

@@ -162,12 +162,6 @@ QGitRepository::QGitRepository(const QString &path, QWidget *parent)
         ui->label_signatureEmail->setText(tr("%1 <%2>").arg(name, email));
     }
 
-    //ui->label_signatureEmail->setVisible(false);
-    //ui->toolButton->setVisible(false);
-    //ui->comboBox_4->setVisible(false);
-    //ui->checkBox_3->setVisible(false);
-    //ui->pushButton_commit->setVisible(false);
-    //ui->pushButton_2->setVisible(false);
 
     ui->logHistory_files->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
     ui->search_files->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
@@ -3129,9 +3123,6 @@ void QGitRepository::on_comboBox_logBranchFilter_currentTextChanged(const QStrin
     fetchCommits();
 }
 
-/*    enum QGitFileSort {
-        QUnsortedFiles, QFilePathSortFiles, QReversedFilePathSortFiles, QFileNameSortFiles, QReversedFileNameSortFiles, QFileStatusSortFiles, QCheckedUncheckedSortFiles
-    };*/
 
 
 void QGitRepository::fetchRepositoryChangedFiles()
