@@ -99,25 +99,25 @@ QComboBoxGitStatusFiles::QComboBoxGitStatusFiles(QWidget *parent)
     if (m_showIcons) item->setIcon(m_iconUnchecked);
     model->appendRow(item);
 
-    item = new QStandardItem(tr("Path aplhabetically"));
+    item = new QStandardItem(tr("Path alphabetically"));
     item->setFlags(Qt::ItemIsSelectable | Qt::ItemIsEnabled);
     item->setCheckState(Qt::Unchecked);
     if (m_showIcons) item->setIcon(m_iconUnchecked);
     model->appendRow(item);
 
-    item = new QStandardItem(tr("Path aplhabetically (reversed)"));
+    item = new QStandardItem(tr("Path alphabetically (reversed)"));
     item->setFlags(Qt::ItemIsSelectable | Qt::ItemIsEnabled);
     item->setCheckState(Qt::Unchecked);
     if (m_showIcons) item->setIcon(m_iconUnchecked);
     model->appendRow(item);
 
-    item = new QStandardItem(tr("File name aplhabetically"));
+    item = new QStandardItem(tr("File name alphabetically"));
     item->setFlags(Qt::ItemIsSelectable | Qt::ItemIsEnabled);
     item->setCheckState(Qt::Unchecked);
     if (m_showIcons) item->setIcon(m_iconUnchecked);
     model->appendRow(item);
 
-    item = new QStandardItem(tr("File name aplhabetically (reversed)"));
+    item = new QStandardItem(tr("File name alphabetically (reversed)"));
     item->setFlags(Qt::ItemIsSelectable | Qt::ItemIsEnabled);
     item->setCheckState(Qt::Unchecked);
     if (m_showIcons) item->setIcon(m_iconUnchecked);
