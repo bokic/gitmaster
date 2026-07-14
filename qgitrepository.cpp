@@ -149,14 +149,9 @@ QGitRepository::QGitRepository(const QString &path, QWidget *parent)
 
         QString urlStr = QString("https://www.gravatar.com/avatar/%1?s=24").arg(QString::fromLatin1(hash));
         auto url = QUrl(urlStr);
-        //auto req = QNetworkRequest(url);
         connect(&m_networkManager, &QNetworkAccessManager::finished, this, &QGitRepository::gravatarImageDownloadFinished);
 
         m_networkManager.get(QNetworkRequest(url));
-
-        //reply = m_networkManager.get(req);
-
-        //connect(reply, &QNetworkReply::finished, this, &QGitRepository::gravatarImageDownloadFinished);
 
         ui->label_signatureGravatarImage->setToolTip(tr("%1 <%2>").arg(name, email));
         ui->label_signatureEmail->setText(tr("%1 <%2>").arg(name, email));
@@ -534,8 +529,6 @@ bool QGitRepository::event(QEvent *event)
 
 void QGitRepository::gravatarImageDownloadFinished(QNetworkReply *reply)
 {
-    //auto reply = dynamic_cast<QNetworkReply *>(sender());
-
     if (reply) {
         QByteArray data = reply->readAll();
 

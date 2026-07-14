@@ -29,7 +29,6 @@ enum {
 
 QComboBoxGitStatusFiles::QComboBoxGitStatusFiles(QWidget *parent)
     : QComboBox(parent)
-    //, m_iconChecked(":/QCustomComboBox/check")
     , m_iconUnchecked(":/QCustomComboBox/uncheck")
 {
     QStandardItemModel *model = new QStandardItemModel();

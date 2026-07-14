@@ -127,15 +127,11 @@ QSize QComboBoxGitDiffOptions::minimumSizeHint() const
 
     QSize contentSize;
 
-    //opt.currentIcon = m_icon;
-    //opt.iconSize = iconSize();
-
 // TODO: Periodically check if we still need this Windows style fix.
 #ifdef Q_OS_WIN
     contentSize = QSize(0, iconSize().width());
 #else
     contentSize = iconSize();
-    //contentSize = {16, 16};
 #endif
 
     return style()->sizeFromContents(QStyle::CT_ComboBox, &opt, contentSize, this);
