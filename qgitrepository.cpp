@@ -31,7 +31,6 @@
 #include <QWindow>
 #include <QMenu>
 #include <QAction>
-#include <QInputDialog>
 #include <QList>
 #include <QFile>
 #include <QTextStream>
