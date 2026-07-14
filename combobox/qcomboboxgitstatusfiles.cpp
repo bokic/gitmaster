@@ -162,7 +162,7 @@ QSize QComboBoxGitStatusFiles::minimumSizeHint() const
 
     contentSize = fm.size(Qt::TextSingleLine, m_text);
 
-// TODO: Periodicly check if we still need this Windows style fix.
+// TODO: Periodically check if we still need this Windows style fix.
 #ifdef Q_OS_WIN
     contentSize.setWidth(contentSize.width() - iconSize().width());
 #endif
