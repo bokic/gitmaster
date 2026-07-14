@@ -4274,7 +4274,6 @@ void QGit::fetch(bool fetchFromAllRemotes, bool purgeDeletedBranches, bool fetch
         }
 
     } catch(const QGitError &ex) {
-        fprintf(stderr, "error doing git fetch!\n");
         error = ex;
     }
 
@@ -4367,8 +4366,8 @@ void QGit::push(const QString &remote, const QStringList &branches, bool tags, b
         {
             try {
                 Q_UNUSED(payload);
+                Q_UNUSED(refname);
                 if (status) {
-                    fprintf(stderr, "Push rejected for %s: %s\n", refname, status);
                     return -1; // Returning non-zero will fail the push operation locally as well
                 }
                 return 0;
