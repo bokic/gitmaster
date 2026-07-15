@@ -3042,26 +3042,12 @@ void QGit::commitDiffContent(const QString &first, const QString &second, const 
         }
         else
         {
-            GitObject first_obj;
-            res = git_revparse_single(first_obj, repo, first.toUtf8());
-            if (res)
-            {
-                throw QGitError("git_revparse_single(first)", res);
-            }
-
-            GitCommit first_commit;
-            res = git_commit_lookup(first_commit, repo, git_object_id(first_obj));
-            if (res)
-            {
-                throw QGitError("git_commit_lookup(first)", res);
-            }
-
-            GitTree first_tree;
-            res = git_commit_tree(first_tree, first_commit);
-            if (res)
-            {
-                throw QGitError("git_commit_tree(first)", res);
-            }
+            git_diff_options options;
+            memset(&options, 0, sizeof(options));
+            options.version = GIT_DIFF_OPTIONS_VERSION;
+            if (ignoreWhitespace) options.flags |= GIT_DIFF_IGNORE_WHITESPACE;
+            options.context_lines = context_lines;
+            options.pathspec = pathspec;
 
             GitObject second_obj;
             res = git_revparse_single(second_obj, repo, second.toUtf8());
@@ -3084,7 +3070,35 @@ void QGit::commitDiffContent(const QString &first, const QString &second, const 
                 throw QGitError("git_commit_tree(second)", res);
             }
 
-            res = git_diff_tree_to_tree(diff, repo, first_tree, second_tree, nullptr);
+            if (first.isEmpty())
+            {
+                res = git_diff_tree_to_tree(diff, repo, nullptr, second_tree, &options);
+            }
+            else
+            {
+                GitObject first_obj;
+                res = git_revparse_single(first_obj, repo, first.toUtf8());
+                if (res)
+                {
+                    throw QGitError("git_revparse_single(first)", res);
+                }
+
+                GitCommit first_commit;
+                res = git_commit_lookup(first_commit, repo, git_object_id(first_obj));
+                if (res)
+                {
+                    throw QGitError("git_commit_lookup(first)", res);
+                }
+
+                GitTree first_tree;
+                res = git_commit_tree(first_tree, first_commit);
+                if (res)
+                {
+                    throw QGitError("git_commit_tree(first)", res);
+                }
+
+                res = git_diff_tree_to_tree(diff, repo, first_tree, second_tree, &options);
+            }
             if (res)
             {
                 throw QGitError("git_diff_tree_to_tree", res);
