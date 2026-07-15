@@ -1435,7 +1435,7 @@ void QGitRepository::repositoryGetCommitDiffReply(const QString &commitId, const
             }
             html += QStringLiteral("<b>Labels:</b> ") + labelsHtml.join(", ") + QStringLiteral("<br />");
             html += QStringLiteral("<br />");
-            html += m_commitDiff.message();
+            html += m_commitDiff.message().toHtmlEscaped().replace(QLatin1Char('\n'), QStringLiteral("<br />"));
             if (!m_commitDiff.note().isEmpty()) {
                 html += QStringLiteral("<br /><br /><b>Notes:</b><br />") + m_commitDiff.note().toHtmlEscaped().replace(QLatin1Char('\n'), QStringLiteral("<br />"));
             }
@@ -1530,7 +1530,7 @@ void QGitRepository::repositoryGetCommitDiffReply(const QString &commitId, const
             }
             html += QStringLiteral("<b>Labels:</b> ") + labelsHtml.join(", ") + QStringLiteral("<br />");
             html += QStringLiteral("<br />");
-            html += m_commitDiff.message();
+            html += m_commitDiff.message().toHtmlEscaped().replace(QLatin1Char('\n'), QStringLiteral("<br />"));
             if (!m_commitDiff.note().isEmpty()) {
                 html += QStringLiteral("<br /><br /><b>Notes:</b><br />") + m_commitDiff.note().toHtmlEscaped().replace(QLatin1Char('\n'), QStringLiteral("<br />"));
             }
