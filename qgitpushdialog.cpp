@@ -91,16 +91,13 @@ void QGitPushDialog::on_selectAllBranches_checkBox_checkStateChanged(const Qt::C
 {
     if (value == Qt::Checked)
     {
-        m_savedBranches.clear();
+        m_savedBranchStates.clear();
+        m_savedBranchStates.reserve(ui->branches_tableWidget->rowCount());
         for(int row = 0; row < ui->branches_tableWidget->rowCount(); row++)
         {
             auto item = ui->branches_tableWidget->item(row, 0);
-
-            if (item->isSelected() == false)
-            {
-                m_savedBranches.append(item->text());
-                item->setSelected(true);
-            }
+            m_savedBranchStates.append(item->checkState());
+            item->setCheckState(Qt::Checked);
         }
 
         ui->branches_tableWidget->setEnabled(false);
@@ -110,13 +107,12 @@ void QGitPushDialog::on_selectAllBranches_checkBox_checkStateChanged(const Qt::C
         for(int row = 0; row < ui->branches_tableWidget->rowCount(); row++)
         {
             auto item = ui->branches_tableWidget->item(row, 0);
-
-            if (m_savedBranches.contains(item->text()))
+            if (row < m_savedBranchStates.size())
             {
-                item->setSelected(false);
+                item->setCheckState(m_savedBranchStates.at(row));
             }
         }
-        m_savedBranches.clear();
+        m_savedBranchStates.clear();
 
         ui->branches_tableWidget->setEnabled(true);
     }

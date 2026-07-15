@@ -5,6 +5,7 @@
 #include <QStringList>
 #include <QString>
 #include <QDialog>
+#include <QVector>
 
 
 namespace Ui {
@@ -30,5 +31,5 @@ private slots:
 
 private:
     Ui::QGitPushDialog *ui = nullptr;
-    QStringList m_savedBranches;
+    QVector<Qt::CheckState> m_savedBranchStates;
 };
