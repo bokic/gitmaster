@@ -4413,12 +4413,6 @@ void QGit::push(const QString &remote, const QStringList &branches, bool tags, b
                 throw QGitError("Local branch not found!", res);
             }
 
-            GitReference upstream_branch_ref;
-            res = git_branch_upstream(upstream_branch_ref, ref);
-            if (res)
-            {
-                throw QGitError("Local branch is not linked with remote branch!", res);
-            }
         }
 
         SafeGitStrArray refspecs;
