@@ -3848,7 +3848,79 @@ void QGit::commit(const QString &message, bool withPush, bool amend)
 
         if (withPush)
         {
+            GitReference head;
+            res = git_repository_head(head, repo);
+            if (res)
+            {
+                throw QGitError("git_repository_head", res);
+            }
 
+            const char *localRefName = git_reference_name(head);
+            if (!localRefName)
+            {
+                throw QGitError("git_reference_name", GIT_ERROR);
+            }
+
+            GitBuf remoteName;
+            res = git_branch_upstream_remote(remoteName, repo, localRefName);
+            if (res)
+            {
+                throw QGitError("git_branch_upstream_remote", res);
+            }
+
+            GitBuf upstreamRefName;
+            res = git_branch_upstream_merge(upstreamRefName, repo, localRefName);
+            if (res)
+            {
+                throw QGitError("git_branch_upstream_merge", res);
+            }
+
+            GitRemote remote;
+            res = git_remote_lookup(remote, repo, remoteName.value.ptr);
+            if (res)
+            {
+                throw QGitError("git_remote_lookup", res);
+            }
+
+            QByteArray refspec = QByteArray(localRefName) + ':' + QByteArray(upstreamRefName.value.ptr);
+            SafeGitStrArray refspecs;
+            refspecs.value.count = 1;
+            refspecs.value.strings = static_cast<char **>(calloc(1, sizeof(char *)));
+            if (!refspecs.value.strings)
+            {
+                throw QGitError("malloc", 0);
+            }
+            refspecs.value.strings[0] = strdup(refspec.constData());
+            if (!refspecs.value.strings[0])
+            {
+                throw QGitError("strdup", 0);
+            }
+
+            git_push_options push_opts = GIT_PUSH_OPTIONS_INIT;
+            push_opts.callbacks.payload = this;
+            push_opts.callbacks.push_transfer_progress = [](unsigned int current, unsigned int total, size_t bytes, void *payload) -> int
+            {
+                try {
+                    QGit *git = static_cast<QGit *>(payload);
+                    emit git->pushProgress(current, total, bytes);
+                    return 0;
+                } catch (...) {
+                    return -1;
+                }
+            };
+            push_opts.callbacks.credentials = sshKeyCredentialCallback;
+            push_opts.callbacks.push_update_reference = [](const char *refname, const char *status, void *payload) -> int
+            {
+                Q_UNUSED(refname);
+                Q_UNUSED(payload);
+                return status ? -1 : 0;
+            };
+
+            res = git_remote_push(remote, &refspecs.value, &push_opts);
+            if (res)
+            {
+                throw QGitError("git_remote_push", res);
+            }
         }
 
     } catch(const QGitError &ex) {

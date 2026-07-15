@@ -1335,6 +1335,8 @@ void QGitRepository::repositoryCommitReply(const QString &commit_id, const QGitE
 
     if (error.errorCode() != 0) {
         QMessageBox::critical(this, tr("Commit Error"), error.errorString());
+        // A post-commit push can fail after the local commit has succeeded.
+        refreshData();
     } else {
         ui->plainTextEdit_commitMessage->clear();
         ui->checkBox_amendCommit->setChecked(false);
