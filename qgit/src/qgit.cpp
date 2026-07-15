@@ -4354,7 +4354,6 @@ void QGit::fetch(bool fetchFromAllRemotes, bool purgeDeletedBranches, bool fetch
 
 void QGit::push(const QString &remote, const QStringList &branches, bool tags, bool force)
 {
-    Q_UNUSED(tags);
     QGitError error;
 
     try
@@ -4364,6 +4363,13 @@ void QGit::push(const QString &remote, const QStringList &branches, bool tags, b
         if (res)
         {
             throw QGitError("git_repository_open", res);
+        }
+
+        const int refspecCount = branches.size() + (tags ? 1 : 0);
+        if (refspecCount == 0)
+        {
+            giterr_set_str(GIT_ERROR_INVALID, "No branches or tags selected to push");
+            throw QGitError("git_remote_push", GIT_ERROR_INVALID);
         }
 
         GitRemote libgit2_remote;
@@ -4402,7 +4408,7 @@ void QGit::push(const QString &remote, const QStringList &branches, bool tags, b
         }
 
         SafeGitStrArray refspecs;
-        refspecs.value.count = branches.size();
+        refspecs.value.count = refspecCount;
         refspecs.value.strings = static_cast<char **>(calloc(refspecs.value.count, sizeof(char *)));
         if (refspecs.value.strings == nullptr)
         {
@@ -4414,6 +4420,16 @@ void QGit::push(const QString &remote, const QStringList &branches, bool tags, b
             if (force) refspec.prepend("+");
             refspecs.value.strings[i] = strdup(refspec.constData());
             if (refspecs.value.strings[i] == nullptr)
+            {
+                throw QGitError("strdup", 0);
+            }
+        }
+        if (tags)
+        {
+            QByteArray tagRefspec = "refs/tags/*:refs/tags/*";
+            if (force) tagRefspec.prepend('+');
+            refspecs.value.strings[branches.size()] = strdup(tagRefspec.constData());
+            if (refspecs.value.strings[branches.size()] == nullptr)
             {
                 throw QGitError("strdup", 0);
             }
