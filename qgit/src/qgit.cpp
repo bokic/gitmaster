@@ -132,6 +132,8 @@ struct GitObject {
     GitObject& operator=(GitObject&&) = delete;
     operator git_object*() { return value; }
     operator git_object**() { return &value; }
+    const git_commit* asCommit() const { return reinterpret_cast<const git_commit*>(value); }
+    git_commit* asCommit() { return reinterpret_cast<git_commit*>(value); }
     ~GitObject() { if (value) { git_object_free(value); value = nullptr; }}
     git_object *value = nullptr;
 };
@@ -757,7 +759,7 @@ QList<QGitBranch> QGit::branches(git_branch_t type) const
                 throw QGitError("git_reference_peel", res);
             }
 
-            git_time_t commit_time = git_commit_time(reinterpret_cast<const git_commit *>(obj.value));
+            git_time_t commit_time = git_commit_time(obj.asCommit());
             char oid_str[GIT_OID_HEXSZ + 1];
             git_oid_tostr(oid_str, sizeof(oid_str), git_object_id(obj));
 
@@ -2330,7 +2332,7 @@ void QGit::listBranchesAndTags()
                     throw QGitError("git_reference_peel", res);
                 }
 
-                git_time_t commit_time = git_commit_time(reinterpret_cast<const git_commit *>(obj.value));
+                git_time_t commit_time = git_commit_time(obj.asCommit());
                 char oid_str[GIT_OID_HEXSZ + 1];
                 git_oid_tostr(oid_str, sizeof(oid_str), git_object_id(obj));
 
@@ -2392,7 +2394,7 @@ void QGit::listBranchesAndTags()
                 throw QGitError("git_reference_peel", res);
             }
 
-            tag_time = git_commit_time(reinterpret_cast<const git_commit *>(git_obj.value));
+            tag_time = git_commit_time(git_obj.asCommit());
             char oid_str[GIT_OID_HEXSZ + 1];
             git_oid_tostr(oid_str, sizeof(oid_str), git_object_id(git_obj));
 
@@ -4989,8 +4991,7 @@ QList<QGitBlameHunk> QGit::blameFile(const QString &filePath, const QString &com
             // Commit summary — look up the commit object
             GitObject obj;
             if (git_object_lookup(obj, repo, &hunk->final_commit_id, GIT_OBJECT_COMMIT) == 0) {
-                git_commit *commit = reinterpret_cast<git_commit *>(static_cast<git_object *>(obj));
-                const char *msg = git_commit_summary(commit);
+                const char *msg = git_commit_summary(obj.asCommit());
                 if (msg) qHunk.summary = QString::fromUtf8(msg);
             }
 
