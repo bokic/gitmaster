@@ -331,7 +331,8 @@ QComboBoxGitStatusFiles::QComboBoxGitStatusFilesOrderFiles QComboBoxGitStatusFil
 
 void QComboBoxGitStatusFiles::activated(int index)
 {
-    QStandardItemModel *items = static_cast<QStandardItemModel *>(model());
+    QStandardItemModel *items = qobject_cast<QStandardItemModel *>(model());
+    if (!items) return;
 
     if ((index >= ITEM_SHOW_ONLY)&&(index <= ITEM_ALL))
     {

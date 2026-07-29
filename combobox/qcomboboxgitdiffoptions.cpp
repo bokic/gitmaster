@@ -178,7 +178,8 @@ void QComboBoxGitDiffOptions::showPopup()
 
 void QComboBoxGitDiffOptions::activated(int index)
 {
-    QStandardItemModel *items = static_cast<QStandardItemModel *>(model());
+    QStandardItemModel *items = qobject_cast<QStandardItemModel *>(model());
+    if (!items) return;
 
     if ((index >= ITEM_IGNORE_WHITESPACE)&&(index <= ITEM_SHOW_WHITESPACE))
     {
@@ -219,14 +220,16 @@ void QComboBoxGitDiffOptions::activated(int index)
 
 bool QComboBoxGitDiffOptions::ignoreWhitespace() const
 {
-    QStandardItemModel *items = static_cast<QStandardItemModel *>(model());
+    QStandardItemModel *items = qobject_cast<QStandardItemModel *>(model());
+    if (!items) return false;
 
     return items->data(items->index(ITEM_IGNORE_WHITESPACE, 0), Qt::CheckStateRole).toInt() == Qt::Checked;
 }
 
 int QComboBoxGitDiffOptions::linesOfContent() const
 {
-    QStandardItemModel *items = static_cast<QStandardItemModel *>(model());
+    QStandardItemModel *items = qobject_cast<QStandardItemModel *>(model());
+    if (!items) return 1;
 
     for(int c = ITEM_SHOW_1_LINE; c <= ITEM_SHOW_100_LINE; c++)
     {

@@ -28,20 +28,22 @@ QGitPullDialog::QGitPullDialog(QGitRepository *parent)
     auto branches = git->branches(GIT_BRANCH_LOCAL);
     auto currentBranch = git->currentBranch();
 
-    auto branch_comboBox_model = static_cast<QStandardItemModel *>(ui->branch_comboBox->model());
-
-    for(const auto &branch: std::as_const(branches))
+    auto branch_comboBox_model = qobject_cast<QStandardItemModel *>(ui->branch_comboBox->model());
+    if (branch_comboBox_model)
     {
-        QStandardItem *item = new QStandardItem(branch.name());
-
-        if (branch.name() == currentBranch)
+        for(const auto &branch: std::as_const(branches))
         {
-            auto font = item->font();
-            font.setBold(true);
-            item->setFont(font);
-        }
+            QStandardItem *item = new QStandardItem(branch.name());
 
-        branch_comboBox_model->appendRow(item);
+            if (branch.name() == currentBranch)
+            {
+                auto font = item->font();
+                font.setBold(true);
+                item->setFont(font);
+            }
+
+            branch_comboBox_model->appendRow(item);
+        }
     }
 
     ui->branch_comboBox->setCurrentText(currentBranch);
