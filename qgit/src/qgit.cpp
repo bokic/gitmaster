@@ -3133,7 +3133,7 @@ void QGit::commitDiffContent(const QString &first, const QString &second, const 
                     size_t lines = git_patch_num_lines_in_hunk(patch, hunk_cnt);
                     if (lines > 0)
                     {
-                        for(int  line_cnt = 0; line_cnt < lines; line_cnt++) {
+                        for (size_t line_cnt = 0; line_cnt < lines; line_cnt++) {
                             const git_diff_line *line = nullptr;
                             res = git_patch_get_line_in_hunk(&line, patch, hunk_cnt, line_cnt);
                             if (res)
