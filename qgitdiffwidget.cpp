@@ -256,6 +256,19 @@ void QGitDiffWidget::responseGitDiff(const QString &first, const QString &second
         }
     }
 
+    // Dynamically calculate line number gutter width & content offset
+    int maxLineNum = 1;
+    for (const QGitDiffFile &diffFile : diff) {
+        for (const QGitDiffHunk &diffHunk : diffFile.hunks()) {
+            for (const QGitDiffLine &diffLine : diffHunk.lines()) {
+                maxLineNum = qMax(maxLineNum, qMax(diffLine.old_lineno(), diffLine.new_lineno()));
+            }
+        }
+    }
+    const int numDigits = QString::number(maxLineNum).length();
+    const int lineNumWidth = fm.horizontalAdvance(QString(numDigits, '9')) + 10;
+    const int contentOffset = lineNumWidth * 2 + 20;
+
     for(int c = 0; c < diff.count(); c++)
     {
         const auto &file_item = diff.at(c);
@@ -272,7 +285,7 @@ void QGitDiffWidget::responseGitDiff(const QString &first, const QString &second
 
         file.rect.setTop(y);
         file.rect.setLeft(contentsMargins().left());
-        file.rect.setWidth(100 + lineMax); // TODO: Unhardcode 100
+        file.rect.setWidth(contentOffset + lineMax);
 
         file_h = m_fontHeight * 2;
 
@@ -293,7 +306,7 @@ void QGitDiffWidget::responseGitDiff(const QString &first, const QString &second
 
             hunk.rect.setTop(y + file_h);
             hunk.rect.setLeft(contentsMargins().left());
-            hunk.rect.setWidth(100 + lineMax); // TODO: Unhardcode 100
+            hunk.rect.setWidth(contentOffset + lineMax);
 
             for(int pos_line = 0; pos_line < hunk_item.lines().count(); pos_line++)
             {
@@ -308,7 +321,7 @@ void QGitDiffWidget::responseGitDiff(const QString &first, const QString &second
 
                 line.rect.setTop(y + file_h + hunk_h);
                 line.rect.setLeft(contentsMargins().left());
-                line.rect.setWidth(100 + lineMax); // TODO: Unhardcode 100
+                line.rect.setWidth(contentOffset + lineMax);
 
                 hunk_h += m_fontHeight + 1;
 
@@ -330,7 +343,7 @@ void QGitDiffWidget::responseGitDiff(const QString &first, const QString &second
         m_private->files.push_back(file);
     }
 
-    newSize = QSize(contentsMargins().left() + 100 + lineMax + contentsMargins().right(), contentsMargins().top() + y + contentsMargins().bottom()); // TODO: Unhardcode 100
+    newSize = QSize(contentsMargins().left() + contentOffset + lineMax + contentsMargins().right(), contentsMargins().top() + y + contentsMargins().bottom());
 
     setMinimumSize(newSize);
     setMaximumSize(newSize);
@@ -344,6 +357,19 @@ void QGitDiffWidget::paintEvent(QPaintEvent *event)
     int fileIndex = 0, hunkIndex = 0, lineIndex = 0;
 
     const auto &files = m_private->files;
+
+    QFontMetrics fm(m_font);
+    int maxLineNum = 1;
+    for (const auto &f : files) {
+        for (const auto &h : f.hunks) {
+            for (const auto &l : h.lines) {
+                maxLineNum = qMax(maxLineNum, qMax(l.old_lineno, l.new_lineno));
+            }
+        }
+    }
+    const int numDigits = QString::number(maxLineNum).length();
+    const int lineNumWidth = fm.horizontalAdvance(QString(numDigits, '9')) + 10;
+
     for(const auto &file: files)
     {
         if (!event->region().intersected(file.rect).isEmpty())
@@ -403,15 +429,19 @@ void QGitDiffWidget::paintEvent(QPaintEvent *event)
                                 painter.setBrush(QBrush(QColor(Qt::black)));
                             }
 
-                            painter.drawText(10, yFont, old_lineNo); // TODO: Unhardcode 10
-                            painter.drawText(40, yFont, new_lineNo); // TODO: Unhardcode 40
-                            painter.drawText(100, yFont, line.content); // TODO: Unhardcode 100
+                            int oldColX = 10;
+                            int newColX = 10 + lineNumWidth + 5;
+                            int contentX = 10 + (lineNumWidth + 5) * 2;
+
+                            painter.drawText(oldColX, yFont, old_lineNo);
+                            painter.drawText(newColX, yFont, new_lineNo);
+                            painter.drawText(contentX, yFont, line.content);
 
                             if ((fileIndex == m_hoverFile)&&(hunkIndex == m_hoverHunk)&&(lineIndex == m_hoverLine))
                             {
                                 QStyleOptionFocusRect option;
                                 option.initFrom(this);
-                                option.rect = line.rect.adjusted(100 - contentsMargins().left(), 0, -1, -1);
+                                option.rect = line.rect.adjusted(contentX - contentsMargins().left(), 0, -1, -1);
                                 painter.setPen(Qt::SolidLine);
                                 painter.setBrush(Qt::NoBrush);
                                 painter.drawRect(option.rect);
@@ -485,6 +515,19 @@ void QGitDiffWidget::updatePosition()
     int file_index = 0;
     const auto &files = m_private->files;
 
+    QFontMetrics fm(m_font);
+    int maxLineNum = 1;
+    for (const auto &f : files) {
+        for (const auto &h : f.hunks) {
+            for (const auto &l : h.lines) {
+                maxLineNum = qMax(maxLineNum, qMax(l.old_lineno, l.new_lineno));
+            }
+        }
+    }
+    const int numDigits = QString::number(maxLineNum).length();
+    const int lineNumWidth = fm.horizontalAdvance(QString(numDigits, '9')) + 10;
+    const int contentX = 10 + (lineNumWidth + 5) * 2;
+
     for(const auto &file : files)
     {
         if (file.rect.contains(point))
@@ -512,7 +555,7 @@ void QGitDiffWidget::updatePosition()
                 {
                     l_hoverHunk = hunk_index;
 
-                    if (point.x() >= 100) // TODO Unhardcode magic number 100
+                    if (point.x() >= contentX)
                     {
                         int line_index = 0;
                         for(const auto &line : hunk.lines)
