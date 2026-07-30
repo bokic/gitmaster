@@ -566,6 +566,21 @@ static GitRepository openRepo(const QDir &dir)
     return repo;
 }
 
+static void peelToCommitDetails(const git_reference *ref, QString &outOidStr, git_time_t &outTime)
+{
+    GitObject obj;
+    int res = git_reference_peel(obj, const_cast<git_reference*>(ref), GIT_OBJ_COMMIT);
+    if (res)
+    {
+        throw QGitError("git_reference_peel", res);
+    }
+
+    outTime = git_commit_time(obj.asCommit());
+    char oid_str[GIT_OID_HEXSZ + 1];
+    git_oid_tostr(oid_str, sizeof(oid_str), git_object_id(obj));
+    outOidStr = QString::fromLatin1(oid_str);
+}
+
 QList<QGitRemote> QGit::remotes() const
 {
     QList<QGitRemote> ret;
@@ -823,18 +838,11 @@ QList<QGitBranch> QGit::branches(git_branch_t type) const
 
         if (git_reference_type(ref) == GIT_REFERENCE_DIRECT)
         {
-            GitObject obj;
-            res = git_reference_peel(obj, ref, GIT_OBJ_COMMIT);
-            if (res)
-            {
-                throw QGitError("git_reference_peel", res);
-            }
+            QString oidStr;
+            git_time_t commit_time = 0;
+            peelToCommitDetails(ref, oidStr, commit_time);
 
-            git_time_t commit_time = git_commit_time(obj.asCommit());
-            char oid_str[GIT_OID_HEXSZ + 1];
-            git_oid_tostr(oid_str, sizeof(oid_str), git_object_id(obj));
-
-            QGitBranch branch = QGitBranch(name, QString::fromLatin1(oid_str), commit_time, type);
+            QGitBranch branch = QGitBranch(name, oidStr, commit_time, type);
             ret.append(branch);
         }
     }
@@ -2365,16 +2373,9 @@ void QGit::listBranchesAndTags()
             {
                 const char *ref_name = git_reference_name(ref);
 
-                GitObject obj;
-                res = git_reference_peel(obj, ref, GIT_OBJ_COMMIT);
-                if (res)
-                {
-                    throw QGitError("git_reference_peel", res);
-                }
-
-                git_time_t commit_time = git_commit_time(obj.asCommit());
-                char oid_str[GIT_OID_HEXSZ + 1];
-                git_oid_tostr(oid_str, sizeof(oid_str), git_object_id(obj));
+                QString oidStr;
+                git_time_t commit_time = 0;
+                peelToCommitDetails(ref, oidStr, commit_time);
 
                 int ahead = 0;
                 int behind = 0;
@@ -2400,7 +2401,7 @@ void QGit::listBranchesAndTags()
                     }
                 }
 
-                QGitBranch branch = QGitBranch(ref_name, QString::fromLatin1(oid_str), commit_time, type, ahead, behind);
+                QGitBranch branch = QGitBranch(ref_name, oidStr, commit_time, type, ahead, behind);
                 branches.append(branch);
             }
         }
@@ -2417,8 +2418,6 @@ void QGit::listBranchesAndTags()
             const char *tag_name = tag_names.value.strings[c];
             git_time_t tag_time = 0;
             GitReference tag_ref;
-            GitObject git_obj;
-            GitTag tag_obj;
 
             QByteArray tagFullName = QByteArray("refs/tags/") + tag_name;
 
@@ -2428,17 +2427,10 @@ void QGit::listBranchesAndTags()
                 throw QGitError("git_reference_lookup", res);
             }
 
-            res = git_reference_peel(git_obj, tag_ref, GIT_OBJ_COMMIT);
-            if (res)
-            {
-                throw QGitError("git_reference_peel", res);
-            }
+            QString oidStr;
+            peelToCommitDetails(tag_ref, oidStr, tag_time);
 
-            tag_time = git_commit_time(git_obj.asCommit());
-            char oid_str[GIT_OID_HEXSZ + 1];
-            git_oid_tostr(oid_str, sizeof(oid_str), git_object_id(git_obj));
-
-            QGitTag tag(QString::fromUtf8(tag_name), QString::fromLatin1(oid_str), tag_time);
+            QGitTag tag(QString::fromUtf8(tag_name), oidStr, tag_time);
             tags.append(tag);
         }
 
