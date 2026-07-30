@@ -81,6 +81,10 @@ sudo make install
 
 This will install the binary and the `.desktop` file for system integration.
 
+## Roadmap
+
+Check out our [ROADMAP.md](ROADMAP.md) for upcoming features, development plans, and release milestones.
+
 ## License
 
 This project is licensed under the **GNU Lesser General Public License v3.0** - see the [LICENSE](LICENSE) file for details.
