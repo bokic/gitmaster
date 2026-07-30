@@ -2,6 +2,12 @@
 #include "ui_qgitclonerepositorydialog.h"
 #include <QShowEvent>
 
+static void updateProgressBar(QProgressBar *bar, size_t current, size_t total)
+{
+    if (!bar) return;
+    bar->setMaximum(static_cast<int>(qMin<size_t>(total, INT_MAX)));
+    bar->setValue(static_cast<int>(qMin<size_t>(current, INT_MAX)));
+}
 
 QGitCloneRepositoryDialog::QGitCloneRepositoryDialog(const QString &url, const QString &path, QWidget *parent)
     : QDialog(parent)
@@ -84,17 +90,13 @@ void QGitCloneRepositoryDialog::cloneTransferReply(unsigned int total_objects, u
 
     if (total_objects > 0)
     {
-        ui->progressBar_recievingObjects->setMaximum(static_cast<int>(qMin<unsigned int>(total_objects, INT_MAX)));
-        ui->progressBar_recievingObjects->setValue(static_cast<int>(qMin<unsigned int>(received_objects, INT_MAX)));
-
-        ui->progressBar_recievingIndexes->setMaximum(static_cast<int>(qMin<unsigned int>(total_objects, INT_MAX)));
-        ui->progressBar_recievingIndexes->setValue(static_cast<int>(qMin<unsigned int>(indexed_objects, INT_MAX)));
+        updateProgressBar(ui->progressBar_recievingObjects, received_objects, total_objects);
+        updateProgressBar(ui->progressBar_recievingIndexes, indexed_objects, total_objects);
     }
 
     if (total_deltas > 0)
     {
-        ui->progressBar_indexingDeltas->setMaximum(static_cast<int>(qMin<unsigned int>(total_deltas, INT_MAX)));
-        ui->progressBar_indexingDeltas->setValue(static_cast<int>(qMin<unsigned int>(indexed_deltas, INT_MAX)));
+        updateProgressBar(ui->progressBar_indexingDeltas, indexed_deltas, total_deltas);
     }
 
     ui->label_status->setText(tr("Received %1 bytes.").arg(received_bytes));
@@ -104,6 +106,5 @@ void QGitCloneRepositoryDialog::cloneProgressReply(const QString &path, size_t c
 {
     Q_UNUSED(path)
 
-    ui->progressBar_creatingFiles->setMaximum(static_cast<int>(qMin<size_t>(total_steps, INT_MAX)));
-    ui->progressBar_creatingFiles->setValue(static_cast<int>(qMin<size_t>(completed_steps, INT_MAX)));
+    updateProgressBar(ui->progressBar_creatingFiles, completed_steps, total_steps);
 }
