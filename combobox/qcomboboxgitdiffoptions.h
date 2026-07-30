@@ -1,19 +1,11 @@
-#pragma once
+#include "qcomboboxgitbase.h"
 
-#include <QComboBox>
-#include <QWidget>
-#include <QIcon>
-
-
-class QComboBoxGitDiffOptions : public QComboBox
+class QComboBoxGitDiffOptions : public QComboBoxGitBase
 {
     Q_OBJECT
 public:
     explicit QComboBoxGitDiffOptions(QWidget *parent = nullptr);
-    ~QComboBoxGitDiffOptions() = default;
-
-    QSize sizeHint() const override;
-    QSize minimumSizeHint() const override;
+    ~QComboBoxGitDiffOptions() override = default;
 
     bool ignoreWhitespace() const;
     int linesOfContent() const;
@@ -22,16 +14,12 @@ signals:
     void optionsChanged();
 
 protected:
-    void paintEvent(QPaintEvent *event) override;
-    void changeEvent(QEvent *event) override;
-    void showPopup() override;
+    void updateIconColor() override;
 
 private Q_SLOTS:
     void activated(int index);
 
 private:
-    void updateIconColor();
-
     QIcon m_icon;
     QIcon m_iconChecked;
     QIcon m_iconUnchecked;

@@ -28,7 +28,8 @@ enum {
 };
 
 QComboBoxGitStatusFiles::QComboBoxGitStatusFiles(QWidget *parent)
-    : QComboBox(parent)
+    : QComboBoxGitBase(parent)
+    , m_iconChecked(":/QCustomComboBox/check")
     , m_iconUnchecked(":/QCustomComboBox/uncheck")
 {
     QStandardItemModel *model = new QStandardItemModel();
@@ -142,72 +143,6 @@ QComboBoxGitStatusFiles::QComboBoxGitStatusFiles(QWidget *parent)
     updateText();
 }
 
-QSize QComboBoxGitStatusFiles::sizeHint() const
-{
-    return minimumSizeHint();
-}
-
-QSize QComboBoxGitStatusFiles::minimumSizeHint() const
-{
-    QStyleOptionComboBox opt;
-    opt.initFrom(this);
-
-    QSize contentSize;
-
-    opt.currentIcon = m_iconUnchecked;
-    opt.iconSize = iconSize();
-	
-    QFontMetrics fm = fontMetrics();
-
-    contentSize = fm.size(Qt::TextSingleLine, m_text);
-
-// TODO: Periodically check if we still need this Windows style fix.
-#ifdef Q_OS_WIN
-    contentSize.setWidth(contentSize.width() - iconSize().width());
-#endif
-
-    return style()->sizeFromContents(QStyle::CT_ComboBox, &opt, contentSize, this);
-}
-
-void QComboBoxGitStatusFiles::paintEvent(QPaintEvent *event)
-{
-    QStyleOptionComboBox opt;
-    QStylePainter p(this);
-
-    Q_UNUSED(event);
-
-    opt.initFrom(this);
-
-    opt.currentText = m_text;
-    opt.iconSize = iconSize();
-
-    p.drawComplexControl(QStyle::CC_ComboBox, opt);
-    p.drawControl(QStyle::CE_ComboBoxLabel, opt);
-}
-
-void QComboBoxGitStatusFiles::changeEvent(QEvent *event)
-{
-    if (event->type() == QEvent::ThemeChange)
-    {
-        updateIconColor();
-    }
-
-    QWidget::changeEvent(event);
-}
-
-void QComboBoxGitStatusFiles::showPopup()
-{
-    view()->selectionModel()->reset();
-
-    QComboBox::showPopup();
-
-    QWidget *popup = view()->parentWidget();
-    if (popup) {
-        QPoint pos = mapToGlobal(QPoint(0, height()));
-        popup->move(pos.x(), pos.y());
-    }
-}
-
 void QComboBoxGitStatusFiles::updateText()
 {
     QString show, sort;
@@ -270,6 +205,7 @@ void QComboBoxGitStatusFiles::updateText()
     }
 
     m_text = tr("%1 files, sorted by %2").arg(show, sort);
+    m_displayText = m_text;
     updateGeometry();
     update();
 }

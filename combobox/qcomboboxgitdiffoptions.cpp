@@ -25,8 +25,7 @@ enum {
 };
 
 QComboBoxGitDiffOptions::QComboBoxGitDiffOptions(QWidget *parent)
-    : QComboBox(parent)
-    , m_icon(":/QComboBoxGitDiffOptions/gear")
+    : QComboBoxGitBase(parent)
     , m_iconChecked(":/QCustomComboBox/check")
     , m_iconUnchecked(":/QCustomComboBox/uncheck")
 {
@@ -113,67 +112,6 @@ QComboBoxGitDiffOptions::QComboBoxGitDiffOptions(QWidget *parent)
     view()->setMinimumWidth(view()->sizeHintForColumn(0));
 
     connect(this, &QComboBox::activated, this,  &QComboBoxGitDiffOptions::activated);
-}
-
-QSize QComboBoxGitDiffOptions::sizeHint() const
-{
-    return minimumSizeHint();
-}
-
-QSize QComboBoxGitDiffOptions::minimumSizeHint() const
-{
-    QStyleOptionComboBox opt;
-    opt.initFrom(this);
-
-    QSize contentSize;
-
-// TODO: Periodically check if we still need this Windows style fix.
-#ifdef Q_OS_WIN
-    contentSize = QSize(0, iconSize().width());
-#else
-    contentSize = iconSize();
-#endif
-
-    return style()->sizeFromContents(QStyle::CT_ComboBox, &opt, contentSize, this);
-}
-
-void QComboBoxGitDiffOptions::paintEvent(QPaintEvent *event)
-{
-    QStyleOptionComboBox opt;
-    QStylePainter p(this);
-
-    Q_UNUSED(event);
-
-    opt.initFrom(this);
-
-    opt.currentIcon = m_icon;
-    opt.iconSize = iconSize();
-
-    p.drawComplexControl(QStyle::CC_ComboBox, opt);
-    p.drawControl(QStyle::CE_ComboBoxLabel, opt);
-}
-
-void QComboBoxGitDiffOptions::changeEvent(QEvent *event)
-{
-    if (event->type() == QEvent::ThemeChange)
-    {
-        updateIconColor();
-    }
-
-    QWidget::changeEvent(event);
-}
-
-void QComboBoxGitDiffOptions::showPopup()
-{
-    view()->selectionModel()->reset();
-
-    QComboBox::showPopup();
-
-    QWidget *popup = view()->parentWidget();
-    if (popup) {
-        QPoint pos = mapToGlobal(QPoint(0, height()));
-        popup->move(pos.x(), pos.y());
-    }
 }
 
 void QComboBoxGitDiffOptions::activated(int index)

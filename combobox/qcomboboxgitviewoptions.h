@@ -1,31 +1,20 @@
-#pragma once
+#include "qcomboboxgitbase.h"
 
-#include <QComboBox>
-#include <QWidget>
-#include <QIcon>
-
-
-class QComboBoxGitViewOptions : public QComboBox
+class QComboBoxGitViewOptions : public QComboBoxGitBase
 {
     Q_OBJECT
 public:
     explicit QComboBoxGitViewOptions(QWidget *parent = nullptr);
-    ~QComboBoxGitViewOptions() = default;
-
-    QSize sizeHint() const override;
-    QSize minimumSizeHint() const override;
+    ~QComboBoxGitViewOptions() override = default;
 
 protected:
-    void paintEvent(QPaintEvent *event) override;
-    void changeEvent(QEvent *event) override;
-    void showPopup() override;
+    void updateIconColor() override;
 
 private Q_SLOTS:
     void activated(int index);
 
 private:
     void setIcon(int index);
-    void updateIconColor();
 
     QIcon m_icon;
     QIcon m_iconFlatListSingleColumn;

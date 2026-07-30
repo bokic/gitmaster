@@ -147,6 +147,7 @@ set(PROJECT_SOURCES
     qloghistorytablewidget.cpp
     qexttextbrowser.cpp
 
+    combobox/qcomboboxgitbase.cpp
     combobox/qcomboboxgitdiffoptions.cpp
     combobox/qcomboboxgitstatusfiles.cpp
     combobox/qcomboboxgitviewoptions.cpp

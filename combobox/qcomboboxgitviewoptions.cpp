@@ -18,7 +18,7 @@ enum {
 };
 
 QComboBoxGitViewOptions::QComboBoxGitViewOptions(QWidget *parent)
-    : QComboBox(parent)
+    : QComboBoxGitBase(parent)
     , m_iconFlatListSingleColumn(":/QComboBoxGitViewOptions/flat_list_single_column")
     , m_iconFlatListMultipleColumn(":/QComboBoxGitViewOptions/flat_list_multiple_column")
     , m_iconTreeView(":/QComboBoxGitViewOptions/tree_view")
@@ -74,72 +74,6 @@ QComboBoxGitViewOptions::QComboBoxGitViewOptions(QWidget *parent)
     setIcon(0);
 
     connect(this, &QComboBox::activated, this,  &QComboBoxGitViewOptions::activated);
-}
-
-QSize QComboBoxGitViewOptions::sizeHint() const
-{
-    return minimumSizeHint();
-}
-
-QSize QComboBoxGitViewOptions::minimumSizeHint() const
-{
-    QStyleOptionComboBox opt;
-    opt.initFrom(this);
-
-    QSize contentSize;
-
-    opt.currentIcon = m_iconTreeView;
-    opt.iconSize = iconSize();
-
-// TODO: Periodically check if we still need this Windows style fix.
-#ifdef Q_OS_WIN
-    contentSize = QSize(0, iconSize().width());
-#else
-    contentSize = iconSize();
-#endif
-
-    return style()->sizeFromContents(QStyle::CT_ComboBox, &opt, contentSize, this);
-}
-
-void QComboBoxGitViewOptions::paintEvent(QPaintEvent *event)
-{
-    QStyleOptionComboBox opt;
-    QStylePainter p(this);
-
-    Q_UNUSED(event);
-
-    opt.initFrom(this);
-
-    opt.currentIcon = m_icon;
-    opt.iconSize = iconSize();
-
-    p.drawComplexControl(QStyle::CC_ComboBox, opt);
-    p.drawControl(QStyle::CE_ComboBoxLabel, opt);
-}
-
-void QComboBoxGitViewOptions::changeEvent(QEvent *event)
-{
-    if (event->type() == QEvent::ThemeChange)
-    {
-        updateIconColor();
-
-        setIcon(m_currentView);
-    }
-
-    QWidget::changeEvent(event);
-}
-
-void QComboBoxGitViewOptions::showPopup()
-{
-    view()->selectionModel()->reset();
-
-    QComboBox::showPopup();
-
-    QWidget *popup = view()->parentWidget();
-    if (popup) {
-        QPoint pos = mapToGlobal(QPoint(0, height()));
-        popup->move(pos.x(), pos.y());
-    }
 }
 
 void QComboBoxGitViewOptions::activated(int index)
