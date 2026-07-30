@@ -20,8 +20,15 @@ struct GitRepository {
     GitRepository() = default;
     GitRepository(const GitRepository&) = delete;
     GitRepository& operator=(const GitRepository&) = delete;
-    GitRepository(GitRepository&&) = delete;
-    GitRepository& operator=(GitRepository&&) = delete;
+    GitRepository(GitRepository&& other) noexcept : value(other.value) { other.value = nullptr; }
+    GitRepository& operator=(GitRepository&& other) noexcept {
+        if (this != &other) {
+            if (value) git_repository_free(value);
+            value = other.value;
+            other.value = nullptr;
+        }
+        return *this;
+    }
     operator git_repository*() { return value; }
     operator git_repository**() { return &value; }
     ~GitRepository() { if (value) { git_repository_free(value); value = nullptr; }}
@@ -548,6 +555,17 @@ QDir QGit::path()
     return m_path;
 }
 
+static GitRepository openRepo(const QDir &dir)
+{
+    GitRepository repo;
+    int res = git_repository_open(repo, dir.absolutePath().toUtf8().constData());
+    if (res)
+    {
+        throw QGitError("git_repository_open", res);
+    }
+    return repo;
+}
+
 QList<QGitRemote> QGit::remotes() const
 {
     QList<QGitRemote> ret;
@@ -922,17 +940,12 @@ void QGit::createLocalBranch(const QString &name, const QString &commit_id, bool
         throw QGitError("createLocalBranch", -1);
     }
 
-    GitRepository repo;
+    GitRepository repo = openRepo(m_path);
     GitReference branch;
     GitObject target_obj;
     GitCommit commit_obj;
     git_oid oid;
-
-    int res = git_repository_open(repo, m_path.absolutePath().toUtf8().constData());
-    if(res)
-    {
-        throw QGitError("git_repository_open", res);
-    }
+    int res = 0;
 
     QString effectiveCommitId = commit_id.isEmpty() ? QStringLiteral("HEAD") : commit_id;
     res = resolveToCommitOid(oid, repo, effectiveCommitId);
@@ -984,12 +997,7 @@ void QGit::createLocalBranch(const QString &name, const QString &commit_id, bool
 
 void QGit::cherrypick(const QString &commitId)
 {
-    GitRepository repo;
-    int res = git_repository_open(repo, m_path.absolutePath().toUtf8().constData());
-    if (res)
-    {
-        throw QGitError("git_repository_open", res);
-    }
+    GitRepository repo = openRepo(m_path);
 
     git_repository_state_t state = (git_repository_state_t)git_repository_state(repo);
     if (state != GIT_REPOSITORY_STATE_NONE)
@@ -998,7 +1006,7 @@ void QGit::cherrypick(const QString &commitId)
     }
 
     git_oid oid;
-    res = resolveToCommitOid(oid, repo, commitId);
+    int res = resolveToCommitOid(oid, repo, commitId);
     if (res)
     {
         throw QGitError("resolveToCommitOid", res);
@@ -1095,12 +1103,7 @@ void QGit::cherrypick(const QString &commitId)
 
 void QGit::revert(const QString &commitId)
 {
-    GitRepository repo;
-    int res = git_repository_open(repo, m_path.absolutePath().toUtf8().constData());
-    if (res)
-    {
-        throw QGitError("git_repository_open", res);
-    }
+    GitRepository repo = openRepo(m_path);
 
     git_repository_state_t state = (git_repository_state_t)git_repository_state(repo);
     if (state != GIT_REPOSITORY_STATE_NONE)
@@ -1109,7 +1112,7 @@ void QGit::revert(const QString &commitId)
     }
 
     git_oid oid;
-    res = resolveToCommitOid(oid, repo, commitId);
+    int res = resolveToCommitOid(oid, repo, commitId);
     if (res)
     {
         throw QGitError("resolveToCommitOid", res);
@@ -1218,15 +1221,10 @@ void QGit::revert(const QString &commitId)
 
 void QGit::reset(const QString &commitId, git_reset_t type)
 {
-    GitRepository repo;
-    int res = git_repository_open(repo, m_path.absolutePath().toUtf8().constData());
-    if (res)
-    {
-        throw QGitError("git_repository_open", res);
-    }
+    GitRepository repo = openRepo(m_path);
 
     git_oid oid;
-    res = resolveToCommitOid(oid, repo, commitId);
+    int res = resolveToCommitOid(oid, repo, commitId);
     if (res)
     {
         throw QGitError("resolveToCommitOid", res);
