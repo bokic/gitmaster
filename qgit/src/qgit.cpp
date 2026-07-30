@@ -2395,8 +2395,8 @@ void QGit::listBranchesAndTags()
                             size_t size_behind = 0;
                             if (git_graph_ahead_behind(&size_ahead, &size_behind, repo, local_oid, upstream_oid) == 0)
                             {
-                                ahead = static_cast<int>(size_ahead);
-                                behind = static_cast<int>(size_behind);
+                                ahead = static_cast<int>(qMin<size_t>(size_ahead, INT_MAX));
+                                behind = static_cast<int>(qMin<size_t>(size_behind, INT_MAX));
                             }
                         }
                     }

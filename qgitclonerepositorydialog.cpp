@@ -84,26 +84,26 @@ void QGitCloneRepositoryDialog::cloneTransferReply(unsigned int total_objects, u
 
     if (total_objects > 0)
     {
-        ui->progressBar_recievingObjects->setMaximum(static_cast<int>(total_objects));
-        ui->progressBar_recievingObjects->setValue(static_cast<int>(received_objects));
+        ui->progressBar_recievingObjects->setMaximum(static_cast<int>(qMin<unsigned int>(total_objects, INT_MAX)));
+        ui->progressBar_recievingObjects->setValue(static_cast<int>(qMin<unsigned int>(received_objects, INT_MAX)));
 
-        ui->progressBar_recievingIndexes->setMaximum(static_cast<int>(total_objects));
-        ui->progressBar_recievingIndexes->setValue(static_cast<int>(indexed_objects));
+        ui->progressBar_recievingIndexes->setMaximum(static_cast<int>(qMin<unsigned int>(total_objects, INT_MAX)));
+        ui->progressBar_recievingIndexes->setValue(static_cast<int>(qMin<unsigned int>(indexed_objects, INT_MAX)));
     }
 
     if (total_deltas > 0)
     {
-        ui->progressBar_indexingDeltas->setMaximum(static_cast<int>(total_deltas));
-        ui->progressBar_indexingDeltas->setValue(static_cast<int>(indexed_deltas));
+        ui->progressBar_indexingDeltas->setMaximum(static_cast<int>(qMin<unsigned int>(total_deltas, INT_MAX)));
+        ui->progressBar_indexingDeltas->setValue(static_cast<int>(qMin<unsigned int>(indexed_deltas, INT_MAX)));
     }
 
-    ui->label_status->setText(tr("Recieved %1 bytes.").arg(received_bytes));
+    ui->label_status->setText(tr("Received %1 bytes.").arg(received_bytes));
 }
 
 void QGitCloneRepositoryDialog::cloneProgressReply(const QString &path, size_t completed_steps, size_t total_steps)
 {
     Q_UNUSED(path)
 
-    ui->progressBar_creatingFiles->setMaximum(static_cast<int>(total_steps));
-    ui->progressBar_creatingFiles->setValue(static_cast<int>(completed_steps));
+    ui->progressBar_creatingFiles->setMaximum(static_cast<int>(qMin<size_t>(total_steps, INT_MAX)));
+    ui->progressBar_creatingFiles->setValue(static_cast<int>(qMin<size_t>(completed_steps, INT_MAX)));
 }

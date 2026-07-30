@@ -239,7 +239,7 @@ void QGitBlameDialog::showBlameForFile(const QString &relPath)
         const auto &hunk = hunks[h];
         for (size_t l = 0; l < hunk.linesInHunk; l++) {
             size_t lineNo = hunk.finalStartLineNumber + l;
-            if (lineNo >= 1 && static_cast<int>(lineNo) <= lines.size()) {
+            if (lineNo >= 1 && lineNo <= static_cast<size_t>(lines.size())) {
                 lineHunk[static_cast<int>(lineNo)] = h;
             }
         }
