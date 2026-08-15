@@ -1,6 +1,6 @@
 @echo off
 
-SET LIBGIT2_VERSION=1.9.4
+SET LIBGIT2_VERSION=1.9.7
 
 rmdir /s /q libgit2
 rmdir /s /q build
