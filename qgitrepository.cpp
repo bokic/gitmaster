@@ -280,17 +280,14 @@ QGitRepository::~QGitRepository()
     m_git->disconnect(this);
     this->disconnect(m_git);
 
+    m_thread.requestInterruption();
     m_thread.quit();
     m_thread.wait();
 
     delete m_git;
     m_git = nullptr;
 
-    QAbstractItemDelegate *delegate = ui->logHistory_commits->itemDelegate();
-
     delete ui;
-
-    delete delegate;
 }
 
 void QGitRepository::refreshData()
