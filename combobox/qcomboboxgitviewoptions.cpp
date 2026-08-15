@@ -25,55 +25,23 @@ QComboBoxGitViewOptions::QComboBoxGitViewOptions(QWidget *parent)
     , m_iconNoStaging(":/QComboBoxGitViewOptions/no_staging")
     , m_iconSplitViewStaging(":/QComboBoxGitViewOptions/split_view_staging")
 {
-    QStandardItemModel *model = new QStandardItemModel();
-    setModel(model);
-
-    if (QApplication::style()->name() == "fusion")
-    {
-        m_showIcons = true;
-    }
-
+    initStandardModel();
     updateIconColor();
 
-    QStandardItem* item = nullptr;
+    addOptionItem(tr("Flat list (single column)"), true, Qt::Checked, m_iconFlatListSingleColumn);
+    addOptionItem(tr("Flat list (multiple column)"), true, Qt::Unchecked, m_iconFlatListMultipleColumn);
+    addOptionItem(tr("Tree view"), true, Qt::Unchecked, m_iconTreeView);
 
-    item = new QStandardItem(tr("Flat list (single column)"));
-    item->setFlags(Qt::ItemIsSelectable | Qt::ItemIsEnabled);
-    item->setCheckState(Qt::Checked);
-    if (m_showIcons) item->setIcon(m_iconFlatListSingleColumn);
-    model->appendRow(item);
+    insertSeparator(count());
 
-    item = new QStandardItem(tr("Flat list (multiple column)"));
-    item->setFlags(Qt::ItemIsSelectable | Qt::ItemIsEnabled);
-    item->setCheckState(Qt::Unchecked);
-    if (m_showIcons) item->setIcon(m_iconFlatListMultipleColumn);
-    model->appendRow(item);
-
-    item = new QStandardItem(tr("Tree view"));
-    item->setFlags(Qt::ItemIsSelectable | Qt::ItemIsEnabled);
-    item->setCheckState(Qt::Unchecked);
-    if (m_showIcons) item->setIcon(m_iconTreeView);
-    model->appendRow(item);
-
-    insertSeparator(model->rowCount());
-
-    item = new QStandardItem(tr("No staging"));
-    item->setFlags(Qt::ItemIsSelectable | Qt::ItemIsEnabled);
-    item->setCheckState(Qt::Unchecked);
-    if (m_showIcons) item->setIcon(m_iconNoStaging);
-    model->appendRow(item);
-
-    item = new QStandardItem(tr("Split view staging"));
-    item->setFlags(Qt::ItemIsSelectable | Qt::ItemIsEnabled);
-    item->setCheckState(Qt::Checked);
-    if (m_showIcons) item->setIcon(m_iconSplitViewStaging);
-    model->appendRow(item);
+    addOptionItem(tr("No staging"), true, Qt::Unchecked, m_iconNoStaging);
+    addOptionItem(tr("Split view staging"), true, Qt::Checked, m_iconSplitViewStaging);
 
     view()->setMinimumWidth(view()->sizeHintForColumn(0));
 
     setIcon(0);
 
-    connect(this, &QComboBox::activated, this,  &QComboBoxGitViewOptions::activated);
+    connect(this, &QComboBox::activated, this, &QComboBoxGitViewOptions::activated);
 }
 
 void QComboBoxGitViewOptions::activated(int index)

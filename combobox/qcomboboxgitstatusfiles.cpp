@@ -32,113 +32,31 @@ QComboBoxGitStatusFiles::QComboBoxGitStatusFiles(QWidget *parent)
     , m_iconChecked(":/QCustomComboBox/check")
     , m_iconUnchecked(":/QCustomComboBox/uncheck")
 {
-    QStandardItemModel *model = new QStandardItemModel();
-    setModel(model);
-
-    if (QApplication::style()->name() == "fusion")
-    {
-        m_showIcons = true;
-    }
-
+    initStandardModel();
     updateIconColor();
 
-    QStandardItem* item = nullptr;
+    addHeaderItem(tr("Show only"), m_iconUnchecked);
+    addOptionItem(tr("Pending"), true, Qt::Checked, m_iconChecked);
+    addOptionItem(tr("Conflicts"), true, Qt::Unchecked, m_iconUnchecked);
+    addOptionItem(tr("Untracked"), true, Qt::Unchecked, m_iconUnchecked);
+    addOptionItem(tr("Ignored"), true, Qt::Unchecked, m_iconUnchecked);
+    addOptionItem(tr("Clean"), true, Qt::Unchecked, m_iconUnchecked);
+    addOptionItem(tr("Modified"), true, Qt::Unchecked, m_iconUnchecked);
+    addOptionItem(tr("All"), true, Qt::Unchecked, m_iconUnchecked);
 
-    item = new QStandardItem(tr("Show only"));
-    item->setFlags(Qt::NoItemFlags);
-    item->setData(Qt::Unchecked, Qt::CheckStateRole);
-    if (m_showIcons) item->setIcon(m_iconUnchecked);
-    model->appendRow(item);
+    insertSeparator(count());
 
-    item = new QStandardItem(tr("Pending"));
-    item->setFlags(Qt::ItemIsSelectable | Qt::ItemIsEnabled);
-    item->setCheckState(Qt::Checked);
-    if (m_showIcons) item->setIcon(m_iconChecked);
-    model->appendRow(item);
-
-    item = new QStandardItem(tr("Conflicts"));
-    item->setFlags(Qt::ItemIsSelectable | Qt::ItemIsEnabled);
-    item->setCheckState(Qt::Unchecked);
-    if (m_showIcons) item->setIcon(m_iconUnchecked);
-    model->appendRow(item);
-
-    item = new QStandardItem(tr("Untracked"));
-    item->setFlags(Qt::ItemIsSelectable | Qt::ItemIsEnabled);
-    item->setCheckState(Qt::Unchecked);
-    if (m_showIcons) item->setIcon(m_iconUnchecked);
-    model->appendRow(item);
-
-    item = new QStandardItem(tr("Ignored"));
-    item->setFlags(Qt::ItemIsSelectable | Qt::ItemIsEnabled);
-    item->setCheckState(Qt::Unchecked);
-    if (m_showIcons) item->setIcon(m_iconUnchecked);
-    model->appendRow(item);
-
-    item = new QStandardItem(tr("Clean"));
-    item->setFlags(Qt::ItemIsSelectable | Qt::ItemIsEnabled);
-    item->setCheckState(Qt::Unchecked);
-    if (m_showIcons) item->setIcon(m_iconUnchecked);
-    model->appendRow(item);
-
-    item = new QStandardItem(tr("Modified"));
-    item->setFlags(Qt::ItemIsSelectable | Qt::ItemIsEnabled);
-    item->setCheckState(Qt::Unchecked);
-    if (m_showIcons) item->setIcon(m_iconUnchecked);
-    model->appendRow(item);
-
-    item = new QStandardItem(tr("All"));
-    item->setFlags(Qt::ItemIsSelectable | Qt::ItemIsEnabled);
-    item->setCheckState(Qt::Unchecked);
-    if (m_showIcons) item->setIcon(m_iconUnchecked);
-    model->appendRow(item);
-
-    insertSeparator(model->rowCount());
-
-    item = new QStandardItem(tr("Sort by"));
-    item->setFlags(Qt::NoItemFlags);
-    item->setCheckState(Qt::Unchecked);
-    if (m_showIcons) item->setIcon(m_iconUnchecked);
-    model->appendRow(item);
-
-    item = new QStandardItem(tr("Path alphabetically"));
-    item->setFlags(Qt::ItemIsSelectable | Qt::ItemIsEnabled);
-    item->setCheckState(Qt::Unchecked);
-    if (m_showIcons) item->setIcon(m_iconUnchecked);
-    model->appendRow(item);
-
-    item = new QStandardItem(tr("Path alphabetically (reversed)"));
-    item->setFlags(Qt::ItemIsSelectable | Qt::ItemIsEnabled);
-    item->setCheckState(Qt::Unchecked);
-    if (m_showIcons) item->setIcon(m_iconUnchecked);
-    model->appendRow(item);
-
-    item = new QStandardItem(tr("File name alphabetically"));
-    item->setFlags(Qt::ItemIsSelectable | Qt::ItemIsEnabled);
-    item->setCheckState(Qt::Unchecked);
-    if (m_showIcons) item->setIcon(m_iconUnchecked);
-    model->appendRow(item);
-
-    item = new QStandardItem(tr("File name alphabetically (reversed)"));
-    item->setFlags(Qt::ItemIsSelectable | Qt::ItemIsEnabled);
-    item->setCheckState(Qt::Unchecked);
-    if (m_showIcons) item->setIcon(m_iconUnchecked);
-    model->appendRow(item);
-
-    item = new QStandardItem(tr("File status"));
-    item->setFlags(Qt::ItemIsSelectable | Qt::ItemIsEnabled);
-    item->setCheckState(Qt::Checked);
-    if (m_showIcons) item->setIcon(m_iconChecked);
-    model->appendRow(item);
-
-    item = new QStandardItem(tr("Checked / unchecked"));
-    item->setFlags(Qt::ItemIsSelectable | Qt::ItemIsEnabled);
-    item->setCheckState(Qt::Unchecked);
-    if (m_showIcons) item->setIcon(m_iconUnchecked);
-    model->appendRow(item);
+    addHeaderItem(tr("Sort by"), m_iconUnchecked);
+    addOptionItem(tr("Path alphabetically"), true, Qt::Unchecked, m_iconUnchecked);
+    addOptionItem(tr("Path alphabetically (reversed)"), true, Qt::Unchecked, m_iconUnchecked);
+    addOptionItem(tr("File name alphabetically"), true, Qt::Unchecked, m_iconUnchecked);
+    addOptionItem(tr("File name alphabetically (reversed)"), true, Qt::Unchecked, m_iconUnchecked);
+    addOptionItem(tr("File status"), true, Qt::Checked, m_iconChecked);
+    addOptionItem(tr("Checked / unchecked"), true, Qt::Unchecked, m_iconUnchecked);
 
     view()->setMinimumWidth(view()->sizeHintForColumn(0));
 
-    connect(this, &QComboBox::activated, this,  &QComboBoxGitStatusFiles::activated);
+    connect(this, &QComboBox::activated, this, &QComboBoxGitStatusFiles::activated);
 
     updateText();
 }

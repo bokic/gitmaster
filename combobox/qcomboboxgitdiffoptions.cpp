@@ -29,89 +29,30 @@ QComboBoxGitDiffOptions::QComboBoxGitDiffOptions(QWidget *parent)
     , m_iconChecked(":/QCustomComboBox/check")
     , m_iconUnchecked(":/QCustomComboBox/uncheck")
 {
-    QStandardItemModel *model = new QStandardItemModel();
-    setModel(model);
-
-    if (QApplication::style()->name() == "fusion")
-    {
-        m_showIcons = true;
-    }
-
+    initStandardModel();
     updateIconColor();
 
-    QStandardItem* item = nullptr;
+    addOptionItem(tr("External Diff"), true, Qt::Unchecked, m_iconUnchecked);
 
-    item = new QStandardItem(tr("External Diff"));
-    item->setFlags(Qt::ItemIsSelectable | Qt::ItemIsEnabled);
-    if (m_showIcons) item->setIcon(m_iconUnchecked);
-    model->appendRow(item);
+    insertSeparator(count());
 
-    insertSeparator(model->rowCount());
+    addOptionItem(tr("Ignore whitespace"), true, Qt::Unchecked, m_iconUnchecked);
+    addOptionItem(tr("Show whitespace"), true, Qt::Checked, m_iconChecked);
 
-    item = new QStandardItem(tr("Ignore whitespace"));
-    item->setFlags(Qt::ItemIsSelectable | Qt::ItemIsEnabled);
-    item->setData(Qt::Unchecked, Qt::CheckStateRole);
-    if (m_showIcons) item->setIcon(m_iconUnchecked);
-    model->appendRow(item);
+    insertSeparator(count());
 
-    item = new QStandardItem(tr("Show whitespace"));
-    item->setFlags(Qt::ItemIsSelectable | Qt::ItemIsEnabled);
-    item->setData(Qt::Checked, Qt::CheckStateRole);
-    if (m_showIcons) item->setIcon(m_iconChecked);
-    model->appendRow(item);
-
-    insertSeparator(model->rowCount());
-
-    item = new QStandardItem(tr("Lines of context"));
-    item->setFlags(Qt::NoItemFlags);
-    if (m_showIcons) item->setIcon(m_iconUnchecked);
-    model->appendRow(item);
-
-    item = new QStandardItem(tr("1"));
-    item->setFlags(Qt::ItemIsSelectable | Qt::ItemIsEnabled);
-    item->setData(Qt::Unchecked, Qt::CheckStateRole);
-    if (m_showIcons) item->setIcon(m_iconUnchecked);
-    model->appendRow(item);
-
-    item = new QStandardItem(tr("3"));
-    item->setFlags(Qt::ItemIsSelectable | Qt::ItemIsEnabled);
-    item->setData(Qt::Checked, Qt::CheckStateRole);
-    if (m_showIcons) item->setIcon(m_iconChecked);
-    model->appendRow(item);
-
-    item = new QStandardItem(tr("6"));
-    item->setFlags(Qt::ItemIsSelectable | Qt::ItemIsEnabled);
-    item->setData(Qt::Unchecked, Qt::CheckStateRole);
-    if (m_showIcons) item->setIcon(m_iconUnchecked);
-    model->appendRow(item);
-
-    item = new QStandardItem(tr("12"));
-    item->setFlags(Qt::ItemIsSelectable | Qt::ItemIsEnabled);
-    item->setData(Qt::Unchecked, Qt::CheckStateRole);
-    if (m_showIcons) item->setIcon(m_iconUnchecked);
-    model->appendRow(item);
-
-    item = new QStandardItem(tr("25"));
-    item->setFlags(Qt::ItemIsSelectable | Qt::ItemIsEnabled);
-    item->setData(Qt::Unchecked, Qt::CheckStateRole);
-    if (m_showIcons) item->setIcon(m_iconUnchecked);
-    model->appendRow(item);
-
-    item = new QStandardItem(tr("50"));
-    item->setFlags(Qt::ItemIsSelectable | Qt::ItemIsEnabled);
-    item->setData(Qt::Unchecked, Qt::CheckStateRole);
-    if (m_showIcons) item->setIcon(m_iconUnchecked);
-    model->appendRow(item);
-
-    item = new QStandardItem(tr("100"));
-    item->setFlags(Qt::ItemIsSelectable | Qt::ItemIsEnabled);
-    item->setData(Qt::Unchecked, Qt::CheckStateRole);
-    if (m_showIcons) item->setIcon(m_iconUnchecked);
-    model->appendRow(item);
+    addHeaderItem(tr("Lines of context"), m_iconUnchecked);
+    addOptionItem(tr("1"), true, Qt::Unchecked, m_iconUnchecked);
+    addOptionItem(tr("3"), true, Qt::Checked, m_iconChecked);
+    addOptionItem(tr("6"), true, Qt::Unchecked, m_iconUnchecked);
+    addOptionItem(tr("12"), true, Qt::Unchecked, m_iconUnchecked);
+    addOptionItem(tr("25"), true, Qt::Unchecked, m_iconUnchecked);
+    addOptionItem(tr("50"), true, Qt::Unchecked, m_iconUnchecked);
+    addOptionItem(tr("100"), true, Qt::Unchecked, m_iconUnchecked);
 
     view()->setMinimumWidth(view()->sizeHintForColumn(0));
 
-    connect(this, &QComboBox::activated, this,  &QComboBoxGitDiffOptions::activated);
+    connect(this, &QComboBox::activated, this, &QComboBoxGitDiffOptions::activated);
 }
 
 void QComboBoxGitDiffOptions::activated(int index)

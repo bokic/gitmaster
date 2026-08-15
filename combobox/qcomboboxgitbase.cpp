@@ -3,6 +3,8 @@
 #include <QStyleOptionComboBox>
 #include <QStylePainter>
 #include <QAbstractItemView>
+#include <QStandardItemModel>
+#include <QApplication>
 #include <QEvent>
 
 QComboBoxGitBase::QComboBoxGitBase(QWidget *parent)
@@ -84,4 +86,43 @@ void QComboBoxGitBase::showPopup()
             popup->move(pos.x(), pos.y());
         }
     }
+}
+
+QStandardItemModel *QComboBoxGitBase::initStandardModel()
+{
+    QStandardItemModel *model = new QStandardItemModel(this);
+    setModel(model);
+
+    if (QApplication::style()->name() == "fusion")
+    {
+        m_showIcons = true;
+    }
+
+    return model;
+}
+
+QStandardItem *QComboBoxGitBase::addOptionItem(const QString &text, bool isSelectable, Qt::CheckState checkState, const QIcon &icon)
+{
+    QStandardItemModel *stdModel = qobject_cast<QStandardItemModel *>(model());
+    if (!stdModel) return nullptr;
+
+    QStandardItem *item = new QStandardItem(text);
+    if (isSelectable) {
+        item->setFlags(Qt::ItemIsSelectable | Qt::ItemIsEnabled);
+    } else {
+        item->setFlags(Qt::NoItemFlags);
+    }
+    item->setData(checkState, Qt::CheckStateRole);
+
+    if (m_showIcons && !icon.isNull()) {
+        item->setIcon(icon);
+    }
+
+    stdModel->appendRow(item);
+    return item;
+}
+
+QStandardItem *QComboBoxGitBase::addHeaderItem(const QString &text, const QIcon &icon)
+{
+    return addOptionItem(text, false, Qt::Unchecked, icon);
 }
