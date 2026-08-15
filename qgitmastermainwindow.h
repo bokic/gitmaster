@@ -56,6 +56,7 @@ private slots:
 
 private:
     void readSettings();
+    void connectRepositorySignals(QGitRepository *widget);
 
     Ui::QGitMasterMainWindow *ui = nullptr;
     QString m_appTheme;

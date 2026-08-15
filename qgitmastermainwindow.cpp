@@ -327,26 +327,33 @@ void QGitMasterMainWindow::openRepository(const QString &repositoryPath)
     }
 
     auto widget = new QGitRepository(repositoryPath, this);
-    if (widget->git()) {
-        connect(widget->git(), &QGit::requestPassword, this, &QGitMasterMainWindow::getPassword);
-    }
-    connect(widget, &QGitRepository::statusMessage, this, &QGitMasterMainWindow::updateStatusBarText);
-    connect(widget, &QGitRepository::clearStatusMessage, this, &QGitMasterMainWindow::clearStatusBarText);
-    connect(widget, &QGitRepository::openRepositoryRequested, this, &QGitMasterMainWindow::openRepository);
-    connect(widget, &QGitRepository::updateRemoteActionsRequested, [this, widget]() {
-        if (ui->tabWidget->currentWidget() == widget) {
-            updateRemoteActions(widget);
-        }
-    });
-    connect(widget, &QGitRepository::setStashEnabledRequested, [this, widget](bool enabled) {
-        if (ui->tabWidget->currentWidget() == widget) {
-            setStashEnabled(widget, enabled);
-        }
-    });
-    connect(widget, &QGitRepository::refreshRepositoryTreeRequested, this, &QGitMasterMainWindow::refreshRepositoryTree);
+    connectRepositorySignals(widget);
 
     ui->tabWidget->addTab(widget, repositoryName);
     ui->tabWidget->setCurrentWidget(widget);
+}
+
+void QGitMasterMainWindow::connectRepositorySignals(QGitRepository *widget)
+{
+    if (!widget) return;
+
+    if (widget->git()) {
+        connect(widget->git(), &QGit::requestPassword, this, &QGitMasterMainWindow::getPassword, Qt::UniqueConnection);
+    }
+    connect(widget, &QGitRepository::statusMessage, this, &QGitMasterMainWindow::updateStatusBarText, Qt::UniqueConnection);
+    connect(widget, &QGitRepository::clearStatusMessage, this, &QGitMasterMainWindow::clearStatusBarText, Qt::UniqueConnection);
+    connect(widget, &QGitRepository::openRepositoryRequested, this, &QGitMasterMainWindow::openRepository, Qt::UniqueConnection);
+    connect(widget, &QGitRepository::updateRemoteActionsRequested, this, [this, widget]() {
+        if (ui->tabWidget->currentWidget() == widget) {
+            updateRemoteActions(widget);
+        }
+    }, Qt::UniqueConnection);
+    connect(widget, &QGitRepository::setStashEnabledRequested, this, [this, widget](bool enabled) {
+        if (ui->tabWidget->currentWidget() == widget) {
+            setStashEnabled(widget, enabled);
+        }
+    }, Qt::UniqueConnection);
+    connect(widget, &QGitRepository::refreshRepositoryTreeRequested, this, &QGitMasterMainWindow::refreshRepositoryTree, Qt::UniqueConnection);
 }
 
 void QGitMasterMainWindow::on_treeWidget_itemDoubleClicked(QTreeWidgetItem *item, int column)
@@ -365,23 +372,7 @@ void QGitMasterMainWindow::on_treeWidget_itemDoubleClicked(QTreeWidgetItem *item
     }
 
     auto widget = new QGitRepository(repositoryPath, this);
-    if (widget->git()) {
-        connect(widget->git(), &QGit::requestPassword, this, &QGitMasterMainWindow::getPassword);
-    }
-    connect(widget, &QGitRepository::statusMessage, this, &QGitMasterMainWindow::updateStatusBarText);
-    connect(widget, &QGitRepository::clearStatusMessage, this, &QGitMasterMainWindow::clearStatusBarText);
-    connect(widget, &QGitRepository::openRepositoryRequested, this, &QGitMasterMainWindow::openRepository);
-    connect(widget, &QGitRepository::updateRemoteActionsRequested, [this, widget]() {
-        if (ui->tabWidget->currentWidget() == widget) {
-            updateRemoteActions(widget);
-        }
-    });
-    connect(widget, &QGitRepository::setStashEnabledRequested, [this, widget](bool enabled) {
-        if (ui->tabWidget->currentWidget() == widget) {
-            setStashEnabled(widget, enabled);
-        }
-    });
-    connect(widget, &QGitRepository::refreshRepositoryTreeRequested, this, &QGitMasterMainWindow::refreshRepositoryTree);
+    connectRepositorySignals(widget);
 
     ui->tabWidget->addTab(widget, repositoryName);
 
