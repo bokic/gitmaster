@@ -201,12 +201,10 @@ void QGitMasterMainWindow::on_toolButton_NewRepository_clicked()
 
             if (res == QDialog::Accepted)
             {
-                auto item = new QTreeWidgetItem();
+                auto item = new QTreeWidgetItem(ui->treeWidget);
 
                 item->setData(0, Qt::DisplayRole, bookmarkStr);
                 item->setData(0, QGitRepoTreeItemDelegate::QItemPath, path);
-
-                ui->treeWidget->addTopLevelItem(item);
 
                 writeSettings();
 
@@ -219,12 +217,10 @@ void QGitMasterMainWindow::on_toolButton_NewRepository_clicked()
 
             if(!bookmarkStr.isEmpty())
             {
-                auto item = new QTreeWidgetItem();
+                auto item = new QTreeWidgetItem(ui->treeWidget);
 
                 item->setData(0, Qt::DisplayRole, bookmarkStr);
                 item->setData(0, QGitRepoTreeItemDelegate::QItemPath, dlg.addWorkingCopyPath());
-
-                ui->treeWidget->addTopLevelItem(item);
 
                 writeSettings();
 
@@ -239,12 +235,10 @@ void QGitMasterMainWindow::on_toolButton_NewRepository_clicked()
 
             if(!bookmarkStr.isEmpty())
             {
-                auto item = new QTreeWidgetItem();
+                auto item = new QTreeWidgetItem(ui->treeWidget);
 
                 item->setData(0, Qt::DisplayRole, bookmarkStr);
                 item->setData(0, QGitRepoTreeItemDelegate::QItemPath, dlg.createNewRepositoryPath());
-
-                ui->treeWidget->addTopLevelItem(item);
 
                 writeSettings();
 
