@@ -105,7 +105,7 @@ public:
     ~QGit() = default;
 
     bool setPath(const QDir &path);
-    QDir path();
+    QDir path() const;
     QList<QGitRemote> remotes() const;
     bool hasCommitsToPush() const;
     QString currentBranch() const;

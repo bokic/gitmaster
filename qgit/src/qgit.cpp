@@ -554,7 +554,7 @@ bool QGit::setPath(const QDir &path)
     return true;
 }
 
-QDir QGit::path()
+QDir QGit::path() const
 {
     return m_path;
 }
