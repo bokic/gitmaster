@@ -47,33 +47,7 @@
 #include <QToolButton>
 #include <QMouseEvent>
 #include <QFileInfo>
-#include <QSvgRenderer>
-#include <QPainter>
-
-
-
-class QGitBranchTreeItemDelegate : public QStyledItemDelegate
-{
-public:
-    explicit QGitBranchTreeItemDelegate(QObject *parent = nullptr) : QStyledItemDelegate(parent) {}
-
-    QWidget *createEditor(QWidget *parent, const QStyleOptionViewItem &option, const QModelIndex &index) const override
-    {
-        QWidget *editor = QStyledItemDelegate::createEditor(parent, option, index);
-        QLineEdit *lineEdit = qobject_cast<QLineEdit *>(editor);
-        if (lineEdit) {
-            QString text = lineEdit->text();
-            int suffixIndex = text.indexOf(QStringLiteral(" [↑"));
-            if (suffixIndex == -1) {
-                suffixIndex = text.indexOf(QStringLiteral(" [↓"));
-            }
-            if (suffixIndex != -1) {
-                lineEdit->setText(text.left(suffixIndex).trimmed());
-            }
-        }
-        return editor;
-    }
-};
+#include "qgitbranchtreewidget.h"
 
 QGitRepository::QGitRepository(const QString &path, QWidget *parent)
     : QWidget(parent)
@@ -124,7 +98,6 @@ QGitRepository::QGitRepository(const QString &path, QWidget *parent)
     ui->commit_diff->setContentsMargins(10, 10, 10, 10);
 
     ui->logHistory_commits->setItemDelegate(new QLogHistoryItemDelegate(ui->logHistory_commits));
-    ui->branchesTreeView->setItemDelegate(new QGitBranchTreeItemDelegate(this));
 
     m_git->moveToThread(&m_thread);
 
@@ -631,226 +604,9 @@ void QGitRepository::repositoryBranchesAndTagsReply(const QList<QGitBranch> &bra
 
     emit updateRemoteActionsRequested();
 
-    QList<QTreeWidgetItem *> items;
-    QTreeWidgetItem *itemWorkingCopy = new QTreeWidgetItem(QStringList() << tr("Working Copy"));
-    QTreeWidgetItem *itemFileStatus = new QTreeWidgetItem(QStringList() << tr("File Status"));
-    QTreeWidgetItem *itemLocalBranches = new QTreeWidgetItem(QStringList() << tr("Branches"));
-    QTreeWidgetItem *itemTags = new QTreeWidgetItem(QStringList() << tr("Tags"));
-    QTreeWidgetItem *itemRemoteBranches = new QTreeWidgetItem(QStringList() << tr("Remotes"));
-    itemRemoteBranches->setData(0, Qt::UserRole + 2, QStringLiteral("RemotesHeader"));
-
-
-    itemWorkingCopy->setData(0, Qt::UserRole + 2, "WorkingCopy");
-    itemWorkingCopy->setIcon(0, m_iconWhiteCheckbox);
-    itemFileStatus->addChild(itemWorkingCopy);
-
     auto current_branch = QGit::getBranchNameFromPath(m_git->path().path());
 
-    QList<QGitBranch> sortedBranches = branches;
-    std::sort(sortedBranches.begin(), sortedBranches.end(), [](const QGitBranch &a, const QGitBranch &b) {
-        return a.time() < b.time();
-    });
-
-    for(const auto &branch: sortedBranches)
-    {
-        QStringList items = branch.name().split('/');
-
-        if (branch.type() & GIT_BRANCH_LOCAL)
-        {
-            if ((items.count() >= 3)&&(items[0] == QStringLiteral("refs"))&&(items[1] == QStringLiteral("heads")))
-            {
-                QTreeWidgetItem *item = itemLocalBranches;
-
-                for(int depth = 2; depth < items.count(); depth++)
-                {
-                    const QString &name = items.at(depth);
-                    bool found = false;
-
-                    for(int c = 0; c < item->childCount(); c++)
-                    {
-                        if (item->child(c)->text(0) == name)
-                        {
-                            item = item->child(c);
-                            found = true;
-
-                            break;
-                        }
-                    }
-
-                        if (!found)
-                        {
-                            QString displayName = name;
-                            if (depth == items.count() - 1)
-                            {
-                                if (branch.ahead() > 0 || branch.behind() > 0)
-                                {
-                                    QStringList indicators;
-                                    if (branch.ahead() > 0) {
-                                        indicators << QStringLiteral("↑%1").arg(branch.ahead());
-                                    }
-                                    if (branch.behind() > 0) {
-                                        indicators << QStringLiteral("↓%1").arg(branch.behind());
-                                    }
-                                    displayName += QStringLiteral(" [%1]").arg(indicators.join(QStringLiteral(" ")));
-                                }
-                            }
-
-                            QTreeWidgetItem *child = new QTreeWidgetItem(QStringList() << displayName);
-                            child->setData(0, Qt::UserRole, branch.hash());
-                            if (depth == items.count() - 1) {
-                                child->setData(0, Qt::UserRole + 1, items.mid(2).join('/'));
-                                child->setData(0, Qt::UserRole + 2, "LocalBranch");
-                                child->setFlags(child->flags() | Qt::ItemIsEditable);
-                            }
-
-                            bool isCurrent = false;
-                            if (depth == items.count() - 1 && items.mid(2).join('/') == current_branch) {
-                                isCurrent = true;
-                            }
-
-                            if (isCurrent)
-                            {
-                                auto font = child->font(0);
-                                font.setBold(true);
-                                child->setFont(0, font);
-
-                                child->setIcon(0, m_iconCurrentBranch);
-                            }
-                            else
-                            {
-                                child->setIcon(0, m_iconBranch);
-                            }
-
-                        item->addChild(child);
-                        item = child;
-                    }
-                }
-            }
-        }
-        if (branch.type() & GIT_BRANCH_REMOTE)
-        {
-            if ((items.count() >= 4)&&(items[0] == QStringLiteral("refs"))&&(items[1] == QStringLiteral("remotes")))
-            {
-                QTreeWidgetItem *item = itemRemoteBranches;
-
-                for(int depth = 2; depth < items.count(); depth++)
-                {
-                    const QString &name = items.at(depth);
-                    bool found = false;
-
-                    for(int c = 0; c < item->childCount(); c++)
-                    {
-                        if (item->child(c)->text(0) == name)
-                        {
-                            item = item->child(c);
-                            found = true;
-
-                            break;
-                        }
-                    }
-
-                    if (!found)
-                    {
-                        QTreeWidgetItem *child = new QTreeWidgetItem(QStringList() << name);
-                        child->setData(0, Qt::UserRole, branch.hash());
-                        if (depth == items.count() - 1) {
-                            child->setData(0, Qt::UserRole + 1, items.mid(2).join('/'));
-                            child->setData(0, Qt::UserRole + 2, "RemoteBranch");
-                        }
-
-                        if (depth == 2)
-                            child->setIcon(0, m_iconRemote);
-                        else
-                            child->setIcon(0, m_iconRemoteBranch);
-
-                        item->addChild(child);
-                        item = child;
-                    }
-                }
-            }
-        }
-    }
-
-    QList<QGitTag> sortedTags = tags;
-    std::sort(sortedTags.begin(), sortedTags.end(), [](const QGitTag &a, const QGitTag &b) {
-        return a.time() > b.time();
-    });
-
-    for(const auto &tag: sortedTags)
-    {
-        QTreeWidgetItem *child = new QTreeWidgetItem(QStringList() << tag.name());
-        child->setData(0, Qt::UserRole, tag.hash());
-        child->setData(0, Qt::UserRole + 1, tag.name());
-        child->setData(0, Qt::UserRole + 2, "Tag");
-        child->setFlags(child->flags() | Qt::ItemIsEditable);
-
-        child->setIcon(0, m_iconTag);
-        itemTags->addChild(child);
-    }
-
-    const QList<QGitSubmodule> &submods = submodules;
-
-    QTreeWidgetItem *itemSubmodules = new QTreeWidgetItem(QStringList() << tr("Submodules"));
-    for (const auto &sub : submods) {
-        QString label = sub.name;
-        QString statusText;
-        if (sub.status & GIT_SUBMODULE_STATUS_WD_UNINITIALIZED) {
-            statusText = tr(" [Uninitialized]");
-        } else if (sub.status & (GIT_SUBMODULE_STATUS_WD_ADDED | GIT_SUBMODULE_STATUS_WD_DELETED | 
-                                 GIT_SUBMODULE_STATUS_WD_MODIFIED | GIT_SUBMODULE_STATUS_WD_INDEX_MODIFIED | 
-                                 GIT_SUBMODULE_STATUS_WD_WD_MODIFIED)) {
-            statusText = tr(" [Dirty]");
-        }
-
-        QTreeWidgetItem *child = new QTreeWidgetItem(QStringList() << (label + statusText));
-        child->setData(0, Qt::UserRole, sub.name);
-        child->setData(0, Qt::UserRole + 1, sub.path);
-        child->setData(0, Qt::UserRole + 2, QStringLiteral("Submodule"));
-        child->setIcon(0, m_iconSubmodule);
-        itemSubmodules->addChild(child);
-    }
-
-    // Worktrees group
-    const QList<QGitWorktree> &worktreeList = worktrees;
-
-    QTreeWidgetItem *itemWorktrees = new QTreeWidgetItem(QStringList() << tr("Worktrees"));
-    itemWorktrees->setData(0, Qt::UserRole + 2, QStringLiteral("WorktreesHeader"));
-    for (const auto &wt : worktreeList) {
-        if (wt.isMain())
-            continue; // main worktree is the current tab -- skip it
-        QString label = wt.name();
-        if (!wt.branch().isEmpty())
-            label += QStringLiteral(" [%1]").arg(wt.branch());
-        if (wt.isLocked())
-            label += tr(" [Locked]");
-        QTreeWidgetItem *child = new QTreeWidgetItem(QStringList() << label);
-        child->setData(0, Qt::UserRole,     wt.path());
-        child->setData(0, Qt::UserRole + 1, wt.branch());
-        child->setData(0, Qt::UserRole + 2, QStringLiteral("Worktree"));
-        child->setData(0, Qt::UserRole + 3, wt.name());
-        child->setData(0, Qt::UserRole + 4, wt.isLocked());
-        child->setIcon(0, m_iconWorktree);
-        itemWorktrees->addChild(child);
-    }
-
-    items.append(itemFileStatus);
-    items.append(itemLocalBranches);
-    items.append(itemTags);
-    items.append(itemRemoteBranches);
-    if (itemSubmodules->childCount() > 0) {
-        items.append(itemSubmodules);
-    } else {
-        delete itemSubmodules;
-    }
-    if (itemWorktrees->childCount() > 0) {
-        items.append(itemWorktrees);
-    } else {
-        delete itemWorktrees;
-    }
-
-    ui->branchesTreeView->clear();
-    ui->branchesTreeView->addTopLevelItems(items);
-    ui->branchesTreeView->expandAll();
+    ui->branchesTreeView->populateBranchesAndTags(branches, tags, submodules, worktrees, current_branch);
 
     // Populate the branch filter dropdown
     ui->comboBox_logBranchFilter->blockSignals(true);
@@ -897,43 +653,7 @@ void QGitRepository::repositoryBranchesAndTagsReply(const QList<QGitBranch> &bra
 void QGitRepository::repositoryStashesReply(const QStringList &stashes, const QGitError &error)
 {
     Q_UNUSED(error)
-
-    QTreeWidgetItem *stashGroupItem = nullptr;
-    for (int i = 0; i < ui->branchesTreeView->topLevelItemCount(); ++i) {
-        if (ui->branchesTreeView->topLevelItem(i)->text(0) == tr("Stashes")) {
-            stashGroupItem = ui->branchesTreeView->topLevelItem(i);
-            break;
-        }
-    }
-
-    if (stashes.isEmpty())
-    {
-        if (stashGroupItem) {
-            delete ui->branchesTreeView->takeTopLevelItem(ui->branchesTreeView->indexOfTopLevelItem(stashGroupItem));
-        }
-        return;
-    }
-
-    if (!stashGroupItem)
-    {
-        stashGroupItem = new QTreeWidgetItem(QStringList() << tr("Stashes"));
-        ui->branchesTreeView->addTopLevelItem(stashGroupItem);
-    }
-    else
-    {
-        stashGroupItem->takeChildren();
-    }
-
-    for(const auto &stash: stashes)
-    {
-        QTreeWidgetItem *item = new QTreeWidgetItem(QStringList() << stash);
-        item->setIcon(0, m_iconStash);
-        item->setData(0, Qt::UserRole + 1, stash);
-        item->setData(0, Qt::UserRole + 2, "Stash");
-        stashGroupItem->addChild(item);
-    }
-
-    ui->branchesTreeView->expandAll();
+    ui->branchesTreeView->populateStashes(stashes);
 }
 
 void QGitRepository::repositoryChangedFilesReply(const QList<QPair<QString, git_status_t>> &files, const QGitError &error)

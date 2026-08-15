@@ -31,7 +31,7 @@
      <property name="orientation">
       <enum>Qt::Orientation::Horizontal</enum>
      </property>
-     <widget class="QTreeWidget" name="branchesTreeView">
+     <widget class="QGitBranchTreeWidget" name="branchesTreeView">
       <attribute name="headerVisible">
        <bool>false</bool>
       </attribute>
@@ -814,6 +814,11 @@
   </layout>
  </widget>
  <customwidgets>
+  <customwidget>
+   <class>QGitBranchTreeWidget</class>
+   <extends>QTreeWidget</extends>
+   <header>qgitbranchtreewidget.h</header>
+  </customwidget>
   <customwidget>
    <class>QGitDiffWidget</class>
    <extends>QWidget</extends>

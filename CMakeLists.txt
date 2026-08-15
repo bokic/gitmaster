@@ -89,6 +89,7 @@ set(PROJECT_HEADERS
 
     qgitrepotreeitemdelegate.h
     qgitrepotreewidget.h
+    qgitbranchtreewidget.h
     qgitdiffwidget.h
     qadvplaintextedit.h
     qloghistoryitemdelegate.h
@@ -141,6 +142,7 @@ set(PROJECT_SOURCES
 
     qgitrepotreeitemdelegate.cpp
     qgitrepotreewidget.cpp
+    qgitbranchtreewidget.cpp
     qgitdiffwidget.cpp
     qadvplaintextedit.cpp
     qloghistoryitemdelegate.cpp
