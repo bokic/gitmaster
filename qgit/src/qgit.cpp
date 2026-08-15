@@ -529,10 +529,46 @@ static int sshKeyCredentialCallback(
             }
         }
 
-        return -1;
     } catch (...) {
         return -1;
     }
+
+    return -1;
+}
+
+static git_fetch_options makeFetchOptions(QGit *payload = nullptr)
+{
+    git_fetch_options opts = GIT_FETCH_OPTIONS_INIT;
+    opts.callbacks.credentials = sshKeyCredentialCallback;
+    opts.callbacks.payload = payload;
+    return opts;
+}
+
+static git_push_options makePushOptions(QGit *payload = nullptr)
+{
+    git_push_options opts = GIT_PUSH_OPTIONS_INIT;
+    opts.callbacks.credentials = sshKeyCredentialCallback;
+    opts.callbacks.payload = payload;
+    opts.callbacks.push_transfer_progress = [](unsigned int current, unsigned int total, size_t bytes, void *payload) -> int
+    {
+        try {
+            if (payload) {
+                QGit *_this = static_cast<QGit *>(payload);
+                emit _this->pushProgress(current, total, bytes);
+            }
+            return 0;
+        } catch (...) {
+            return -1;
+        }
+    };
+    return opts;
+}
+
+static git_checkout_options makeCheckoutOptions(git_checkout_strategy_t strategy = GIT_CHECKOUT_SAFE)
+{
+    git_checkout_options opts = GIT_CHECKOUT_OPTIONS_INIT;
+    opts.checkout_strategy = strategy;
+    return opts;
 }
 
 
@@ -981,9 +1017,7 @@ void QGit::createLocalBranch(const QString &name, const QString &commit_id, bool
     if (checkout)
     {
         GitObject treeish;
-        git_checkout_options opts = GIT_CHECKOUT_OPTIONS_INIT;
-
-        opts.checkout_strategy = GIT_CHECKOUT_SAFE;
+        git_checkout_options opts = makeCheckoutOptions(GIT_CHECKOUT_SAFE);
 
         QString refName = "refs/heads/" + name;
 
@@ -1249,8 +1283,7 @@ void QGit::reset(const QString &commitId, git_reset_t type)
         throw QGitError("git_object_lookup", res);
     }
 
-    git_checkout_options opts = GIT_CHECKOUT_OPTIONS_INIT;
-    opts.checkout_strategy = GIT_CHECKOUT_SAFE;
+    git_checkout_options opts = makeCheckoutOptions(GIT_CHECKOUT_SAFE);
 
     res = git_reset(repo, obj, type, &opts);
     if (res)
@@ -1861,8 +1894,7 @@ void QGit::checkoutBranch(const QString &name)
         if(res) throw QGitError("git_repository_open", res);
 
         GitObject treeish;
-        git_checkout_options opts = GIT_CHECKOUT_OPTIONS_INIT;
-        opts.checkout_strategy = GIT_CHECKOUT_SAFE;
+        git_checkout_options opts = makeCheckoutOptions(GIT_CHECKOUT_SAFE);
 
         QString refName = "refs/heads/" + name;
         res = git_revparse_single(treeish, repo, refName.toUtf8().constData());
@@ -2220,20 +2252,7 @@ void QGit::deleteBranches(const QList<QGitBranch> &branches, bool force)
                     QByteArray refspec = ":refs/heads/" + branchName.toUtf8();
                     SafeGitStrArray refspecs = SafeGitStrArray::fromSingle(refspec);
                     
-                    git_push_options push_opts = GIT_PUSH_OPTIONS_INIT;
-                    push_opts.callbacks.payload = this;
-                    push_opts.callbacks.push_transfer_progress = [](unsigned int current, unsigned int total, size_t bytes, void *payload)->int
-                    {
-                        try {
-                            QGit *_this = static_cast<QGit *>(payload);
-                            emit _this->pushProgress(current, total, bytes);
-                            return 0;
-                        } catch (...) {
-                            return -1;
-                        }
-                    };
-                    
-                    push_opts.callbacks.credentials = sshKeyCredentialCallback;
+                    git_push_options push_opts = makePushOptions(this);
                     
                     res = git_remote_push(remote, &refspecs.value, &push_opts);
                     if (res)
@@ -3592,8 +3611,7 @@ void QGit::discardFiles(const QStringList &items)
         {
             SafeGitStrArray paths = SafeGitStrArray::fromQStringList(filesToCheckout);
 
-            git_checkout_options opts = GIT_CHECKOUT_OPTIONS_INIT;
-            opts.checkout_strategy = GIT_CHECKOUT_FORCE;
+            git_checkout_options opts = makeCheckoutOptions(GIT_CHECKOUT_FORCE);
             opts.paths = paths.value;
 
             res = git_checkout_index(repo, nullptr, &opts);
@@ -3899,19 +3917,7 @@ void QGit::commit(const QString &message, bool withPush, bool amend)
             QByteArray refspec = QByteArray(localRefName) + ':' + QByteArray(upstreamRefName.value.ptr);
             SafeGitStrArray refspecs = SafeGitStrArray::fromSingle(refspec);
 
-            git_push_options push_opts = GIT_PUSH_OPTIONS_INIT;
-            push_opts.callbacks.payload = this;
-            push_opts.callbacks.push_transfer_progress = [](unsigned int current, unsigned int total, size_t bytes, void *payload) -> int
-            {
-                try {
-                    QGit *git = static_cast<QGit *>(payload);
-                    emit git->pushProgress(current, total, bytes);
-                    return 0;
-                } catch (...) {
-                    return -1;
-                }
-            };
-            push_opts.callbacks.credentials = sshKeyCredentialCallback;
+            git_push_options push_opts = makePushOptions(this);
             push_opts.callbacks.push_update_reference = [](const char *refname, const char *status, void *payload) -> int
             {
                 Q_UNUSED(refname);
@@ -4019,8 +4025,7 @@ void QGit::pull(const QString &remote, const QString &branch, bool rebase)
             }
         }
 
-        git_fetch_options fetch_opts = GIT_FETCH_OPTIONS_INIT;
-        fetch_opts.callbacks.credentials = sshKeyCredentialCallback;
+        git_fetch_options fetch_opts = makeFetchOptions(this);
 
         res = git_remote_fetch(libgit2_remote, nullptr, &fetch_opts, "pull");
         if (res)
@@ -4200,8 +4205,7 @@ void QGit::merge(const QString &branchName)
         } else if (analysis & GIT_MERGE_ANALYSIS_NORMAL) {
             // Normal merge
             git_merge_options merge_opts = GIT_MERGE_OPTIONS_INIT;
-            git_checkout_options checkout_opts = GIT_CHECKOUT_OPTIONS_INIT;
-            checkout_opts.checkout_strategy = GIT_CHECKOUT_SAFE;
+            git_checkout_options checkout_opts = makeCheckoutOptions(GIT_CHECKOUT_SAFE);
 
             res = git_merge(repo, sources, 1, &merge_opts, &checkout_opts);
             if(res) throw QGitError("git_merge", res);
@@ -4325,9 +4329,7 @@ void QGit::fetch(bool fetchFromAllRemotes, bool purgeDeletedBranches, bool fetch
             throw QGitError("git_remote_lookup", GIT_ENOTFOUND);
         }
 
-        git_fetch_options fetch_opts = GIT_FETCH_OPTIONS_INIT;
-
-        fetch_opts.callbacks.credentials = sshKeyCredentialCallback;
+        git_fetch_options fetch_opts = makeFetchOptions(this);
 
         fetch_opts.prune = purgeDeletedBranches ? GIT_FETCH_PRUNE : GIT_FETCH_NO_PRUNE;
         fetch_opts.download_tags = fetchAllTags ? GIT_REMOTE_DOWNLOAD_TAGS_ALL : GIT_REMOTE_DOWNLOAD_TAGS_AUTO;
@@ -4419,20 +4421,7 @@ void QGit::push(const QString &remote, const QStringList &branches, bool tags, b
         }
         SafeGitStrArray refspecs = SafeGitStrArray::fromQStringList(refspecList);
 
-        git_push_options push_opts = GIT_PUSH_OPTIONS_INIT;
-        push_opts.callbacks.payload = this;
-        push_opts.callbacks.push_transfer_progress = [](unsigned int current, unsigned int total, size_t bytes,void *payload)->int
-        {
-            try {
-                QGit *_this = static_cast<QGit *>(payload);
-                emit _this->pushProgress(current, total, bytes);
-                return 0;
-            } catch (...) {
-                return -1;
-            }
-        };
-
-        push_opts.callbacks.credentials = sshKeyCredentialCallback;
+        git_push_options push_opts = makePushOptions(this);
 
         push_opts.callbacks.push_update_reference = [](const char *refname, const char *status, void *payload) -> int
         {
