@@ -60,6 +60,7 @@ void QLogHistoryItemDelegate::paint(QPainter *painter, const QStyleOptionViewIte
         if (data.count() >= 4)
         {
             painter->save();
+            painter->setClipRect(option.rect);
             painter->setRenderHint(QPainter::Antialiasing, true);
 
             int commitLane = data.at(0).toInt();
