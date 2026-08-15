@@ -195,6 +195,5 @@ private:
     int m_layoutOption = 0;
     QList<QPair<QString, git_status_t>> m_changedFiles;
     void updateStatusViews();
-    void updateFolderCheckStates(QTreeWidgetItem *item);
     void collectFilePaths(QTreeWidgetItem *item, QStringList &paths);
 };

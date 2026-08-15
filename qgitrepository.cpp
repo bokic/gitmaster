@@ -686,283 +686,28 @@ void QGitRepository::updateStatusViews()
 {
     bool noStaging = (ui->stackedWidget_staging->currentIndex() == 1);
 
-    ui->treeWidget_staged->blockSignals(true);
-    ui->treeWidget_unstaged->blockSignals(true);
-    ui->treeWidget_pending->blockSignals(true);
-
-    ui->treeWidget_staged->clear();
-    ui->treeWidget_unstaged->clear();
-    ui->treeWidget_pending->clear();
-
-    ui->treeWidget_staged->setEnabled(true);
-    ui->treeWidget_unstaged->setEnabled(true);
-    ui->treeWidget_pending->setEnabled(true);
-
-    auto getFileIcon = [&](git_status_t status, bool isStaged) -> QIcon {
-        if (isStaged) {
-            if (status & GIT_STATUS_INDEX_NEW) return m_iconFileNew;
-            else if (status & GIT_STATUS_INDEX_DELETED) return m_iconFileRemoved;
-            else if (status & GIT_STATUS_INDEX_RENAMED) return m_iconFileRenamed;
-            else return m_iconFileModified;
-        } else {
-            uint32_t wt_status = status & (GIT_STATUS_CURRENT | GIT_STATUS_WT_NEW | GIT_STATUS_WT_MODIFIED | GIT_STATUS_WT_DELETED | GIT_STATUS_IGNORED | GIT_STATUS_CONFLICTED | GIT_STATUS_WT_RENAMED);
-            if (wt_status == GIT_STATUS_CURRENT) return m_iconFileClean;
-            else if (wt_status & GIT_STATUS_WT_NEW) return m_iconFileNew;
-            else if (wt_status & GIT_STATUS_WT_MODIFIED) return m_iconFileModified;
-            else if (wt_status & GIT_STATUS_WT_DELETED) return m_iconFileRemoved;
-            else if (wt_status & GIT_STATUS_WT_RENAMED) return m_iconFileRenamed;
-            else if (wt_status & GIT_STATUS_IGNORED) return m_iconFileIgnored;
-            else if (wt_status & GIT_STATUS_CONFLICTED) return m_iconFileConflict;
-            else return m_iconFileUnknown;
-        }
-    };
-
-    auto statusText = [&](git_status_t status) -> QString {
-        if (status & GIT_STATUS_CONFLICTED) return tr("Conflicted");
-        if (status & (GIT_STATUS_INDEX_NEW | GIT_STATUS_WT_NEW)) return tr("Added");
-        if (status & (GIT_STATUS_INDEX_MODIFIED | GIT_STATUS_WT_MODIFIED)) return tr("Modified");
-        if (status & (GIT_STATUS_INDEX_DELETED | GIT_STATUS_WT_DELETED)) return tr("Deleted");
-        if (status & (GIT_STATUS_INDEX_RENAMED | GIT_STATUS_WT_RENAMED)) return tr("Renamed");
-        if (status & (GIT_STATUS_INDEX_TYPECHANGE | GIT_STATUS_WT_TYPECHANGE)) return tr("Typechange");
-        if (status & GIT_STATUS_IGNORED) return tr("Ignored");
-        return tr("Unknown");
-    };
+    auto layoutMode = static_cast<QGitFileStatusTreeWidget::ViewLayoutMode>(m_layoutOption);
+    ui->treeWidget_staged->setViewLayoutMode(layoutMode);
+    ui->treeWidget_unstaged->setViewLayoutMode(layoutMode);
+    ui->treeWidget_pending->setViewLayoutMode(layoutMode);
 
     int stagedCnt = 0;
-
-    for (int c = 0; c < m_changedFiles.count(); c++)
-    {
-        const QString &file = m_changedFiles.at(c).first;
-        git_status_t status = m_changedFiles.at(c).second;
-
-        bool hasStaged = status & (GIT_STATUS_INDEX_NEW | GIT_STATUS_INDEX_MODIFIED | GIT_STATUS_INDEX_DELETED | GIT_STATUS_INDEX_RENAMED | GIT_STATUS_INDEX_TYPECHANGE);
-        bool hasUnstaged = (status == GIT_STATUS_CURRENT) || (status & (GIT_STATUS_WT_NEW | GIT_STATUS_WT_MODIFIED | GIT_STATUS_WT_DELETED | GIT_STATUS_WT_TYPECHANGE | GIT_STATUS_WT_RENAMED | GIT_STATUS_WT_UNREADABLE | GIT_STATUS_IGNORED | GIT_STATUS_CONFLICTED));
-
-        if (hasStaged) stagedCnt++;
-
-        if (noStaging)
-        {
-            Qt::CheckState state = Qt::PartiallyChecked;
-            if (hasStaged && !hasUnstaged) state = Qt::Checked;
-            else if (!hasStaged && hasUnstaged) state = Qt::Unchecked;
-
-            QIcon icon = getFileIcon(status, hasStaged);
-
-            if (m_layoutOption == 0) // Flat Single
-            {
-                QTreeWidgetItem *item = new QTreeWidgetItem(ui->treeWidget_pending);
-                item->setFlags(item->flags() | Qt::ItemIsUserCheckable);
-                item->setCheckState(0, state);
-                item->setData(0, Qt::UserRole, file);
-                item->setData(0, Qt::UserRole + 1, (int)status);
-                item->setText(0, file);
-                item->setIcon(0, icon);
-            }
-            else if (m_layoutOption == 1) // Flat Multi
-            {
-                QTreeWidgetItem *item = new QTreeWidgetItem(ui->treeWidget_pending);
-                item->setFlags(item->flags() | Qt::ItemIsUserCheckable);
-                item->setCheckState(0, state);
-                item->setData(0, Qt::UserRole, file);
-                item->setData(0, Qt::UserRole + 1, (int)status);
-
-                QFileInfo info(file);
-                item->setText(0, info.fileName());
-                item->setIcon(0, icon);
-                item->setText(1, info.path() == "." ? "" : info.path());
-                item->setText(2, statusText(status));
-            }
-            else if (m_layoutOption == 2) // Tree View
-            {
-                QStringList parts = file.split('/');
-                QTreeWidgetItem *parent = nullptr;
-                for (int i = 0; i < parts.size() - 1; ++i)
-                {
-                    QString dirName = parts.at(i);
-                    QTreeWidgetItem *found = nullptr;
-                    int childCount = parent ? parent->childCount() : ui->treeWidget_pending->topLevelItemCount();
-                    for (int j = 0; j < childCount; ++j)
-                    {
-                        QTreeWidgetItem *child = parent ? parent->child(j) : ui->treeWidget_pending->topLevelItem(j);
-                        if (child->text(0) == dirName && child->data(0, Qt::UserRole).toString().isEmpty())
-                        {
-                            found = child;
-                            break;
-                        }
-                    }
-                    if (!found)
-                    {
-                        if (parent) {
-                            found = new QTreeWidgetItem(parent);
-                        } else {
-                            found = new QTreeWidgetItem(ui->treeWidget_pending);
-                        }
-                        found->setText(0, dirName);
-                        found->setIcon(0, QApplication::style()->standardIcon(QStyle::SP_DirIcon));
-                        found->setFlags(found->flags() | Qt::ItemIsUserCheckable);
-                        found->setCheckState(0, Qt::Unchecked);
-                    }
-                    parent = found;
-                }
-
-                QTreeWidgetItem *item = parent ? new QTreeWidgetItem(parent) : new QTreeWidgetItem(ui->treeWidget_pending);
-                item->setFlags(item->flags() | Qt::ItemIsUserCheckable);
-                item->setCheckState(0, state);
-                item->setData(0, Qt::UserRole, file);
-                item->setData(0, Qt::UserRole + 1, (int)status);
-                item->setText(0, parts.last());
-                item->setIcon(0, icon);
-            }
-        }
-        else
-        {
-            // --- Staged files ---
-            if (hasStaged)
-            {
-                if (m_layoutOption == 0) // Flat Single
-                {
-                    QTreeWidgetItem *item = new QTreeWidgetItem(ui->treeWidget_staged);
-                    item->setFlags(item->flags() | Qt::ItemIsUserCheckable);
-                    item->setCheckState(0, Qt::Checked);
-                    item->setData(0, Qt::UserRole, file);
-                    item->setData(0, Qt::UserRole + 1, (int)status);
-                    item->setText(0, file);
-                    item->setIcon(0, getFileIcon(status, true));
-                }
-                else if (m_layoutOption == 1) // Flat Multi
-                {
-                    QTreeWidgetItem *item = new QTreeWidgetItem(ui->treeWidget_staged);
-                    item->setFlags(item->flags() | Qt::ItemIsUserCheckable);
-                    item->setCheckState(0, Qt::Checked);
-                    item->setData(0, Qt::UserRole, file);
-                    item->setData(0, Qt::UserRole + 1, (int)status);
-
-                    QFileInfo info(file);
-                    item->setText(0, info.fileName());
-                    item->setIcon(0, getFileIcon(status, true));
-                    item->setText(1, info.path() == "." ? "" : info.path());
-                    item->setText(2, statusText(status));
-                }
-                else if (m_layoutOption == 2) // Tree View
-                {
-                    QStringList parts = file.split('/');
-                    QTreeWidgetItem *parent = nullptr;
-                    for (int i = 0; i < parts.size() - 1; ++i)
-                    {
-                        QString dirName = parts.at(i);
-                        QTreeWidgetItem *found = nullptr;
-                        int childCount = parent ? parent->childCount() : ui->treeWidget_staged->topLevelItemCount();
-                        for (int j = 0; j < childCount; ++j)
-                        {
-                            QTreeWidgetItem *child = parent ? parent->child(j) : ui->treeWidget_staged->topLevelItem(j);
-                            if (child->text(0) == dirName && child->data(0, Qt::UserRole).toString().isEmpty())
-                            {
-                                found = child;
-                                break;
-                            }
-                        }
-                        if (!found)
-                        {
-                            if (parent) {
-                                found = new QTreeWidgetItem(parent);
-                            } else {
-                                found = new QTreeWidgetItem(ui->treeWidget_staged);
-                            }
-                            found->setText(0, dirName);
-                            found->setIcon(0, QApplication::style()->standardIcon(QStyle::SP_DirIcon));
-                        }
-                        parent = found;
-                    }
-
-                    QTreeWidgetItem *item = parent ? new QTreeWidgetItem(parent) : new QTreeWidgetItem(ui->treeWidget_staged);
-                    item->setFlags(item->flags() | Qt::ItemIsUserCheckable);
-                    item->setCheckState(0, Qt::Checked);
-                    item->setData(0, Qt::UserRole, file);
-                    item->setData(0, Qt::UserRole + 1, (int)status);
-                    item->setText(0, parts.last());
-                    item->setIcon(0, getFileIcon(status, true));
-                }
-            }
-
-            // --- Unstaged files ---
-            if (hasUnstaged)
-            {
-                if (m_layoutOption == 0) // Flat Single
-                {
-                    QTreeWidgetItem *item = new QTreeWidgetItem(ui->treeWidget_unstaged);
-                    item->setFlags(item->flags() | Qt::ItemIsUserCheckable);
-                    item->setCheckState(0, Qt::Unchecked);
-                    item->setData(0, Qt::UserRole, file);
-                    item->setData(0, Qt::UserRole + 1, (int)status);
-                    item->setText(0, file);
-                    item->setIcon(0, getFileIcon(status, false));
-                }
-                else if (m_layoutOption == 1) // Flat Multi
-                {
-                    QTreeWidgetItem *item = new QTreeWidgetItem(ui->treeWidget_unstaged);
-                    item->setFlags(item->flags() | Qt::ItemIsUserCheckable);
-                    item->setCheckState(0, Qt::Unchecked);
-                    item->setData(0, Qt::UserRole, file);
-                    item->setData(0, Qt::UserRole + 1, (int)status);
-
-                    QFileInfo info(file);
-                    item->setText(0, info.fileName());
-                    item->setIcon(0, getFileIcon(status, false));
-                    item->setText(1, info.path() == "." ? "" : info.path());
-                    item->setText(2, statusText(status));
-                }
-                else if (m_layoutOption == 2) // Tree View
-                {
-                    QStringList parts = file.split('/');
-                    QTreeWidgetItem *parent = nullptr;
-                    for (int i = 0; i < parts.size() - 1; ++i)
-                    {
-                        QString dirName = parts.at(i);
-                        QTreeWidgetItem *found = nullptr;
-                        int childCount = parent ? parent->childCount() : ui->treeWidget_unstaged->topLevelItemCount();
-                        for (int j = 0; j < childCount; ++j)
-                        {
-                            QTreeWidgetItem *child = parent ? parent->child(j) : ui->treeWidget_unstaged->topLevelItem(j);
-                            if (child->text(0) == dirName && child->data(0, Qt::UserRole).toString().isEmpty())
-                            {
-                                found = child;
-                                break;
-                            }
-                        }
-                        if (!found)
-                        {
-                            if (parent) {
-                                found = new QTreeWidgetItem(parent);
-                            } else {
-                                found = new QTreeWidgetItem(ui->treeWidget_unstaged);
-                            }
-                            found->setText(0, dirName);
-                            found->setIcon(0, QApplication::style()->standardIcon(QStyle::SP_DirIcon));
-                        }
-                        parent = found;
-                    }
-
-                    QTreeWidgetItem *item = parent ? new QTreeWidgetItem(parent) : new QTreeWidgetItem(ui->treeWidget_unstaged);
-                    item->setFlags(item->flags() | Qt::ItemIsUserCheckable);
-                    item->setCheckState(0, Qt::Unchecked);
-                    item->setData(0, Qt::UserRole, file);
-                    item->setData(0, Qt::UserRole + 1, (int)status);
-                    item->setText(0, parts.last());
-                    item->setIcon(0, getFileIcon(status, false));
-                }
-            }
+    for (const auto &filePair : m_changedFiles) {
+        if (filePair.second & (GIT_STATUS_INDEX_NEW | GIT_STATUS_INDEX_MODIFIED | GIT_STATUS_INDEX_DELETED | GIT_STATUS_INDEX_RENAMED | GIT_STATUS_INDEX_TYPECHANGE)) {
+            stagedCnt++;
         }
     }
 
     if (noStaging)
     {
-        if (m_layoutOption == 2)
+        ui->treeWidget_pending->populateFiles(m_changedFiles, false, true);
+
+        if (layoutMode == QGitFileStatusTreeWidget::TreeView)
         {
             for (int i = 0; i < ui->treeWidget_pending->topLevelItemCount(); ++i)
             {
-                updateFolderCheckStates(ui->treeWidget_pending->topLevelItem(i));
+                ui->treeWidget_pending->updateFolderCheckStates(ui->treeWidget_pending->topLevelItem(i));
             }
-            ui->treeWidget_pending->expandAll();
         }
 
         ui->checkBox_PendingFiles->blockSignals(true);
@@ -983,16 +728,9 @@ void QGitRepository::updateStatusViews()
     }
     else
     {
-        if (m_layoutOption == 2)
-        {
-            ui->treeWidget_staged->expandAll();
-            ui->treeWidget_unstaged->expandAll();
-        }
+        ui->treeWidget_staged->populateFiles(m_changedFiles, true, false);
+        ui->treeWidget_unstaged->populateFiles(m_changedFiles, false, false);
     }
-
-    ui->treeWidget_staged->blockSignals(false);
-    ui->treeWidget_unstaged->blockSignals(false);
-    ui->treeWidget_pending->blockSignals(false);
 
     ui->commit_diff->refresh();
 
@@ -3002,44 +2740,7 @@ void QGitRepository::on_branchesTreeView_itemChanged(QTreeWidgetItem *item, int 
     }
 }
 
-void QGitRepository::updateFolderCheckStates(QTreeWidgetItem *item)
-{
-    if (!item) return;
 
-    for (int i = 0; i < item->childCount(); ++i)
-    {
-        updateFolderCheckStates(item->child(i));
-    }
-
-    if (item->data(0, Qt::UserRole).toString().isEmpty() && item->childCount() > 0)
-    {
-        bool hasChecked = false;
-        bool hasUnchecked = false;
-        bool hasPartiallyChecked = false;
-
-        for (int i = 0; i < item->childCount(); ++i)
-        {
-            QTreeWidgetItem *child = item->child(i);
-            Qt::CheckState childState = child->checkState(0);
-            if (childState == Qt::Checked) hasChecked = true;
-            else if (childState == Qt::Unchecked) hasUnchecked = true;
-            else if (childState == Qt::PartiallyChecked) hasPartiallyChecked = true;
-        }
-
-        if (hasPartiallyChecked || (hasChecked && hasUnchecked))
-        {
-            item->setCheckState(0, Qt::PartiallyChecked);
-        }
-        else if (hasChecked)
-        {
-            item->setCheckState(0, Qt::Checked);
-        }
-        else
-        {
-            item->setCheckState(0, Qt::Unchecked);
-        }
-    }
-}
 
 void QGitRepository::collectFilePaths(QTreeWidgetItem *item, QStringList &paths)
 {

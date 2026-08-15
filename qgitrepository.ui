@@ -193,7 +193,7 @@
                   </widget>
                  </item>
                  <item>
-                  <widget class="QTreeWidget" name="treeWidget_staged">
+                  <widget class="QGitFileStatusTreeWidget" name="treeWidget_staged">
                    <property name="selectionMode">
                     <enum>QAbstractItemView::SelectionMode::ExtendedSelection</enum>
                    </property>
@@ -223,7 +223,7 @@
                   </widget>
                  </item>
                  <item>
-                  <widget class="QTreeWidget" name="treeWidget_unstaged">
+                  <widget class="QGitFileStatusTreeWidget" name="treeWidget_unstaged">
                    <property name="selectionMode">
                     <enum>QAbstractItemView::SelectionMode::ExtendedSelection</enum>
                    </property>
@@ -257,7 +257,7 @@
               </widget>
              </item>
              <item>
-              <widget class="QTreeWidget" name="treeWidget_pending">
+              <widget class="QGitFileStatusTreeWidget" name="treeWidget_pending">
                <property name="selectionMode">
                 <enum>QAbstractItemView::SelectionMode::ExtendedSelection</enum>
                </property>
@@ -814,6 +814,11 @@
   </layout>
  </widget>
  <customwidgets>
+  <customwidget>
+   <class>QGitFileStatusTreeWidget</class>
+   <extends>QTreeWidget</extends>
+   <header>qgitfilestatustreewidget.h</header>
+  </customwidget>
   <customwidget>
    <class>QGitBranchTreeWidget</class>
    <extends>QTreeWidget</extends>
