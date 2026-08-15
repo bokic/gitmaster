@@ -2448,11 +2448,19 @@ void QGit::listBranchesAndTags()
 
         try {
             submods = submodules();
-        } catch (...) {}
+        } catch (const std::exception &ex) {
+            qWarning("QGit::listBranchesAndTags: Failed to retrieve submodules: %s", ex.what());
+        } catch (...) {
+            qWarning("QGit::listBranchesAndTags: Failed to retrieve submodules (unknown error).");
+        }
 
         try {
             worktreeList = worktrees();
-        } catch (...) {}
+        } catch (const std::exception &ex) {
+            qWarning("QGit::listBranchesAndTags: Failed to retrieve worktrees: %s", ex.what());
+        } catch (...) {
+            qWarning("QGit::listBranchesAndTags: Failed to retrieve worktrees (unknown error).");
+        }
 
     } catch(const QGitError &ex) {
         error = ex;
@@ -4828,8 +4836,10 @@ QString QGit::getNote(const QString &commitHash) const
             noteText = QString::fromUtf8(git_note_message(note));
             git_note_free(note);
         }
+    } catch (const std::exception &ex) {
+        qWarning("QGit::getNote: %s", ex.what());
     } catch (...) {
-        // Silently catch errors during synchronous retrieval
+        qWarning("QGit::getNote: Unknown exception while reading note.");
     }
     return noteText;
 }
@@ -4895,7 +4905,10 @@ QList<QGitReflogEntry> QGit::getReflog(const QString &refName) const
                 }
             }
         }
+    } catch (const std::exception &ex) {
+        qWarning("QGit::getReflog: %s", ex.what());
     } catch (...) {
+        qWarning("QGit::getReflog: Unknown error while retrieving reflog.");
     }
     return entries;
 }
@@ -4968,7 +4981,10 @@ QList<QGitBlameHunk> QGit::blameFile(const QString &filePath, const QString &com
 
             hunks.append(qHunk);
         }
+    } catch (const std::exception &ex) {
+        qWarning("QGit::blameFile: %s", ex.what());
     } catch (...) {
+        qWarning("QGit::blameFile: Unknown error during file blame calculation.");
     }
     return hunks;
 }
