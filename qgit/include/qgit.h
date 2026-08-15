@@ -189,6 +189,7 @@ public slots:
     void removeNote(const QString &commitHash);
 
 signals:
+    void requestPassword(QString &password);
     void initReply(const QGitError &error);
     void signatureReply(const QString &name, const QString &email, const QGitError &error);
     void updateSubmoduleReply(const QGitError &error);

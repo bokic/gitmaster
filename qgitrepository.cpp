@@ -311,11 +311,7 @@ void QGitRepository::refreshData()
     emit repositoryBranches();
     emit repositoryStashes();
 
-    auto *mainWindow = QGitMasterMainWindow::instance();
-    if (mainWindow)
-    {
-        mainWindow->updateRemoteActions(this);
-    }
+    emit updateRemoteActionsRequested();
 }
 
 void QGitRepository::stash(const QString &name, bool keepIndex, bool includeUntracked, bool includeIgnored)
@@ -388,7 +384,7 @@ void QGitRepository::fetch()
         bool purgeDeletedBranches = dlg.purgeDeletedBranches();
         bool fetchAllTags = dlg.fetchAllTags();
 
-        QGitMasterMainWindow::instance()->updateStatusBarText("Fetching...");
+        emit statusMessage("Fetching...");
         emit repositoryFetch(fetchFromAllRemotes, purgeDeletedBranches, fetchAllTags);
     }
 }
@@ -407,7 +403,7 @@ void QGitRepository::pull()
         QString branchName = dlg.branch();
         bool rebase = dlg.rebase();
 
-        QGitMasterMainWindow::instance()->updateStatusBarText(tr("Pulling..."));
+        emit statusMessage(tr("Pulling..."));
         emit repositoryPull(remoteName, branchName, rebase);
     }
 }
@@ -427,7 +423,7 @@ void QGitRepository::push()
         m_lastBranches = branches;
         m_lastTags = tags;
 
-        QGitMasterMainWindow::instance()->updateStatusBarText(tr("Pushing..."));
+        emit statusMessage(tr("Pushing..."));
         emit repositoryPush(remote, branches, tags, force);
     }
 }
@@ -441,10 +437,10 @@ void QGitRepository::merge()
         QString branchName = dlg.selectedBranch();
         if (!branchName.isEmpty()) {
             if (dlg.rebaseInsteadOfMerge()) {
-                QGitMasterMainWindow::instance()->updateStatusBarText(tr("Rebasing current branch onto %1...").arg(branchName));
+                emit statusMessage(tr("Rebasing current branch onto %1...").arg(branchName));
                 emit repositoryRebase(branchName);
             } else {
-                QGitMasterMainWindow::instance()->updateStatusBarText(tr("Merging branch %1...").arg(branchName));
+                emit statusMessage(tr("Merging branch %1...").arg(branchName));
                 emit repositoryMerge(branchName);
             }
         }
@@ -460,7 +456,7 @@ void QGitRepository::rebase()
     {
         QString branchName = dlg.selectedBranch();
         if (!branchName.isEmpty()) {
-            QGitMasterMainWindow::instance()->updateStatusBarText(tr("Rebasing current branch onto %1...").arg(branchName));
+            emit statusMessage(tr("Rebasing current branch onto %1...").arg(branchName));
             emit repositoryRebase(branchName);
         }
     }
@@ -468,7 +464,7 @@ void QGitRepository::rebase()
 
 void QGitRepository::repositoryMergeReply(const QGitError &error)
 {
-    QGitMasterMainWindow::instance()->clearStatusBarText();
+    emit clearStatusMessage();
 
     if (error.errorCode()) {
         QMessageBox::critical(this, tr("Merge Error"), 
@@ -480,7 +476,7 @@ void QGitRepository::repositoryMergeReply(const QGitError &error)
 
 void QGitRepository::repositoryRebaseReply(const QGitError &error)
 {
-    QGitMasterMainWindow::instance()->clearStatusBarText();
+    emit clearStatusMessage();
 
     if (error.errorCode()) {
         QMessageBox::critical(this, tr("Rebase Error"), 
@@ -507,7 +503,7 @@ void QGitRepository::navigateToCommit(const QString &hash)
         } else {
             m_searchingCommitHash = hash;
             fetchCommits();
-            QGitMasterMainWindow::instance()->updateStatusBarText(tr("Searching for commit %1...").arg(hash.left(10)));
+            emit statusMessage(tr("Searching for commit %1...").arg(hash.left(10)));
         }
     }
 }
@@ -560,11 +556,11 @@ void QGitRepository::repositoryFetchReply(const QGitError &error)
 {
     if (error.errorCode())
     {
-        QGitMasterMainWindow::instance()->updateStatusBarText(error.functionName());
+        emit statusMessage(error.functionName());
     }
     else
     {
-        QGitMasterMainWindow::instance()->clearStatusBarText();
+        emit clearStatusMessage();
     }
 }
 
@@ -572,12 +568,12 @@ void QGitRepository::repositoryPullReply(const QGitError &error)
 {
     if (error.errorCode())
     {
-        QGitMasterMainWindow::instance()->updateStatusBarText(error.errorString());
+        emit statusMessage(error.errorString());
         QMessageBox::critical(this, tr("Pull Error"), error.errorString());
     }
     else
     {
-        QGitMasterMainWindow::instance()->clearStatusBarText();
+        emit clearStatusMessage();
         refreshData();
     }
 }
@@ -586,12 +582,12 @@ void QGitRepository::repositoryUpdateSubmoduleReply(const QGitError &error)
 {
     if (error.errorCode())
     {
-        QGitMasterMainWindow::instance()->updateStatusBarText(error.errorString());
+        emit statusMessage(error.errorString());
         QMessageBox::critical(this, tr("Submodule Update Error"), error.errorString());
     }
     else
     {
-        QGitMasterMainWindow::instance()->clearStatusBarText();
+        emit clearStatusMessage();
         refreshData();
         QMessageBox::information(this, tr("Submodule Updated"), tr("Submodule updated successfully."));
     }
@@ -602,7 +598,7 @@ void QGitRepository::repositoryPushReply(const QGitError &error)
     if (error.errorCode())
     {
         QString errStr = error.errorString();
-        QGitMasterMainWindow::instance()->updateStatusBarText(errStr);
+        emit statusMessage(errStr);
 
         if (errStr.contains(QStringLiteral("rejected"), Qt::CaseInsensitive) || errStr.contains(QStringLiteral("non-fast-forward"), Qt::CaseInsensitive))
         {
@@ -611,7 +607,7 @@ void QGitRepository::repositoryPushReply(const QGitError &error)
                                              QMessageBox::Yes | QMessageBox::No);
             if (res == QMessageBox::Yes)
             {
-                QGitMasterMainWindow::instance()->updateStatusBarText(tr("Force Pushing..."));
+                emit statusMessage(tr("Force Pushing..."));
                 emit repositoryPush(m_lastRemote, m_lastBranches, m_lastTags, true);
                 return;
             }
@@ -619,28 +615,21 @@ void QGitRepository::repositoryPushReply(const QGitError &error)
     }
     else
     {
-        QGitMasterMainWindow::instance()->clearStatusBarText();
+        emit clearStatusMessage();
     }
 }
 
 void QGitRepository::repositoryBranchesAndTagsReply(const QList<QGitBranch> &branches, const QList<QGitTag> &tags, const QList<QGitSubmodule> &submodules, const QList<QGitWorktree> &worktrees, bool hasRemotes, bool hasCommitsToPush, const QGitError &error)
 {
-    auto *mainWindow = QGitMasterMainWindow::instance();
     if (error.errorCode())
     {
-        if (mainWindow)
-        {
-            mainWindow->updateStatusBarText(tr("Error loading branches/tags: %1").arg(error.errorString()));
-        }
+        emit statusMessage(tr("Error loading branches/tags: %1").arg(error.errorString()));
     }
 
     m_hasRemotes = hasRemotes;
     m_hasCommitsToPush = hasCommitsToPush;
 
-    if (mainWindow)
-    {
-        mainWindow->updateRemoteActions(this);
-    }
+    emit updateRemoteActionsRequested();
 
     QList<QTreeWidgetItem *> items;
     QTreeWidgetItem *itemWorkingCopy = new QTreeWidgetItem(QStringList() << tr("Working Copy"));
@@ -969,12 +958,8 @@ void QGitRepository::repositoryChangedFilesReply(const QList<QPair<QString, git_
         }
     }
 
-    auto *mainWindow = QGitMasterMainWindow::instance();
-    if (mainWindow)
-    {
-        mainWindow->setStashEnabled(this, hasStashableChanges);
-        mainWindow->refreshRepositoryTree();
-    }
+    emit setStashEnabledRequested(hasStashableChanges);
+    emit refreshRepositoryTreeRequested();
 }
 
 void QGitRepository::updateStatusViews()
@@ -1362,22 +1347,22 @@ void QGitRepository::repositoryGetCommitsReply(const QList<QGitCommit> &commits,
     {
         if (ui->logHistory_commits->selectCommit(m_searchingCommitHash)) {
             m_searchingCommitHash = "";
-            QGitMasterMainWindow::instance()->clearStatusBarText();
+            emit clearStatusMessage();
         } else {
             if (m_allCommitsLoaded) {
                 QMessageBox::information(this, tr("Commit not found"), 
                                          tr("The commit [%1] was not found in the repository history.").arg(m_searchingCommitHash.left(10)));
                 m_searchingCommitHash = "";
-                QGitMasterMainWindow::instance()->clearStatusBarText();
+                emit clearStatusMessage();
             } else {
                 fetchCommits();
-                QGitMasterMainWindow::instance()->updateStatusBarText(tr("Searching for commit %1...").arg(m_searchingCommitHash.left(10)));
+                emit statusMessage(tr("Searching for commit %1...").arg(m_searchingCommitHash.left(10)));
             }
         }
     }
     else
     {
-        QGitMasterMainWindow::instance()->clearStatusBarText();
+        emit clearStatusMessage();
     }
 }
 
@@ -1618,7 +1603,7 @@ void QGitRepository::on_branchesTreeView_itemDoubleClicked(QTreeWidgetItem *item
     {
         QString subPath = item->data(0, Qt::UserRole + 1).toString();
         QString fullSubPath = m_git->path().absoluteFilePath(subPath);
-        QGitMasterMainWindow::instance()->openRepository(fullSubPath);
+        emit openRepositoryRequested(fullSubPath);
         return;
     }
 
@@ -1634,7 +1619,7 @@ void QGitRepository::on_branchesTreeView_itemDoubleClicked(QTreeWidgetItem *item
             } else {
                 m_searchingCommitHash = hash;
                 fetchCommits();
-                QGitMasterMainWindow::instance()->updateStatusBarText(tr("Searching for commit %1...").arg(hash.left(10)));
+                emit statusMessage(tr("Searching for commit %1...").arg(hash.left(10)));
             }
         }
     }
@@ -1669,7 +1654,7 @@ void QGitRepository::on_branchesTreeView_customContextMenuRequested(const QPoint
             );
             if (!patchPath.isEmpty())
             {
-                QGitMasterMainWindow::instance()->updateStatusBarText(tr("Applying patch..."));
+                emit statusMessage(tr("Applying patch..."));
                 emit repositoryApplyPatch(patchPath);
             }
         }
@@ -1677,7 +1662,7 @@ void QGitRepository::on_branchesTreeView_customContextMenuRequested(const QPoint
         {
             QGitCleanDialog dlg(this);
             if (dlg.exec() == QDialog::Accepted) {
-                QGitMasterMainWindow::instance()->updateStatusBarText(tr("Cleaning working directory..."));
+                emit statusMessage(tr("Cleaning working directory..."));
                 emit repositoryClean(dlg.removeIgnored(), dlg.removeDirectories());
             }
         }
@@ -1739,7 +1724,7 @@ void QGitRepository::on_branchesTreeView_customContextMenuRequested(const QPoint
         QAction *selectedAction = menu.exec(ui->branchesTreeView->viewport()->mapToGlobal(pos));
         if (selectedAction == openAction)
         {
-            QGitMasterMainWindow::instance()->openRepository(wtPath);
+            emit openRepositoryRequested(wtPath);
         }
         else if (selectedAction == lockAction)
         {
@@ -1785,11 +1770,11 @@ void QGitRepository::on_branchesTreeView_customContextMenuRequested(const QPoint
         if (selectedAction == openAction)
         {
             QString fullSubPath = m_git->path().absoluteFilePath(subPath);
-            QGitMasterMainWindow::instance()->openRepository(fullSubPath);
+            emit openRepositoryRequested(fullSubPath);
         }
         else if (selectedAction == updateAction)
         {
-            QGitMasterMainWindow::instance()->updateStatusBarText(tr("Updating submodule %1...").arg(subName));
+            emit statusMessage(tr("Updating submodule %1...").arg(subName));
             emit repositoryUpdateSubmodule(subName);
         }
         else if (selectedAction == initAction)
@@ -1825,12 +1810,12 @@ void QGitRepository::on_branchesTreeView_customContextMenuRequested(const QPoint
         QAction *selectedAction = menu.exec(ui->branchesTreeView->viewport()->mapToGlobal(pos));
         if (selectedAction == applyAction)
         {
-            QGitMasterMainWindow::instance()->updateStatusBarText(tr("Applying stash %1...").arg(fullName));
+            emit statusMessage(tr("Applying stash %1...").arg(fullName));
             m_git->stashApply(fullName);
         }
         else if (selectedAction == popAction)
         {
-            QGitMasterMainWindow::instance()->updateStatusBarText(tr("Popping stash %1...").arg(fullName));
+            emit statusMessage(tr("Popping stash %1...").arg(fullName));
             m_git->stashPop(fullName);
         }
         else if (selectedAction == dropAction)
@@ -1840,7 +1825,7 @@ void QGitRepository::on_branchesTreeView_customContextMenuRequested(const QPoint
                                              QMessageBox::Yes | QMessageBox::No);
             if (res == QMessageBox::Yes)
             {
-                QGitMasterMainWindow::instance()->updateStatusBarText(tr("Dropping stash %1...").arg(fullName));
+                emit statusMessage(tr("Dropping stash %1...").arg(fullName));
                 m_git->stashRemove(fullName);
             }
         }
@@ -1864,7 +1849,7 @@ void QGitRepository::on_branchesTreeView_customContextMenuRequested(const QPoint
         QAction *selectedAction = menu.exec(ui->branchesTreeView->viewport()->mapToGlobal(pos));
         if (selectedAction == checkoutAction)
         {
-            QGitMasterMainWindow::instance()->updateStatusBarText(tr("Checking out branch %1...").arg(fullName));
+            emit statusMessage(tr("Checking out branch %1...").arg(fullName));
             m_git->checkoutBranch(fullName);
         }
         else if (selectedAction == renameAction)
@@ -1988,11 +1973,11 @@ void QGitRepository::stashApplyReply(const QGitError &error)
     {
         QMessageBox::critical(this, tr("Stash Apply Error"), 
                               tr("Could not apply stash. This might be due to merge conflicts or local changes.\n\nDetails: %1").arg(error.errorString()));
-        QGitMasterMainWindow::instance()->updateStatusBarText(tr("Stash apply failed."));
+        emit statusMessage(tr("Stash apply failed."));
     }
     else
     {
-        QGitMasterMainWindow::instance()->updateStatusBarText(tr("Stash applied successfully."));
+        emit statusMessage(tr("Stash applied successfully."));
         refreshData();
     }
 }
@@ -2003,11 +1988,11 @@ void QGitRepository::stashPopReply(const QGitError &error)
     {
         QMessageBox::critical(this, tr("Stash Pop Error"), 
                               tr("Could not pop stash. Changes might have conflicts with your working copy.\n\nDetails: %1").arg(error.errorString()));
-        QGitMasterMainWindow::instance()->updateStatusBarText(tr("Stash pop failed."));
+        emit statusMessage(tr("Stash pop failed."));
     }
     else
     {
-        QGitMasterMainWindow::instance()->updateStatusBarText(tr("Stash popped successfully."));
+        emit statusMessage(tr("Stash popped successfully."));
         refreshData();
     }
 }
@@ -2288,7 +2273,7 @@ void QGitRepository::fetchCommits()
     if (!m_allCommitsLoaded)
     {
         emit repositoryGetCommits(m_currentLogBranchFilter, m_logCommitsOffset, COMMIT_COUNT_TO_LOAD);
-        QGitMasterMainWindow::instance()->updateStatusBarText(tr("Fetching commits..."));
+        emit statusMessage(tr("Fetching commits..."));
     }
 }
 
@@ -2565,7 +2550,7 @@ void QGitRepository::on_treeWidget_unstaged_customContextMenuRequested(const QPo
       } else if (res == cleanAction) {
           QGitCleanDialog dlg(this);
           if (dlg.exec() == QDialog::Accepted) {
-              QGitMasterMainWindow::instance()->updateStatusBarText(tr("Cleaning working directory..."));
+              emit statusMessage(tr("Cleaning working directory..."));
               emit repositoryClean(dlg.removeIgnored(), dlg.removeDirectories());
           }
       }
@@ -2659,7 +2644,7 @@ void QGitRepository::on_treeWidget_pending_customContextMenuRequested(const QPoi
       } else if (res == cleanAction) {
           QGitCleanDialog dlg(this);
           if (dlg.exec() == QDialog::Accepted) {
-              QGitMasterMainWindow::instance()->updateStatusBarText(tr("Cleaning working directory..."));
+              emit statusMessage(tr("Cleaning working directory..."));
               emit repositoryClean(dlg.removeIgnored(), dlg.removeDirectories());
           }
       }
@@ -2769,7 +2754,7 @@ void QGitRepository::on_logHistory_commits_customContextMenuRequested(const QPoi
                                                  tr("Are you sure you want to rebase the current branch onto '%1'?").arg(targetName),
                                                  QMessageBox::Yes | QMessageBox::No);
             if (confirm == QMessageBox::Yes) {
-                QGitMasterMainWindow::instance()->updateStatusBarText(tr("Rebasing current branch..."));
+                emit statusMessage(tr("Rebasing current branch..."));
                 emit repositoryRebase(selectedHash);
             }
         } else if (res == cherrypickAction) {
@@ -2777,14 +2762,14 @@ void QGitRepository::on_logHistory_commits_customContextMenuRequested(const QPoi
                                                  tr("Are you sure you want to cherry-pick commit '%1' onto the current branch?").arg(shortHash),
                                                  QMessageBox::Yes | QMessageBox::No);
             if (confirm == QMessageBox::Yes) {
-                QGitMasterMainWindow::instance()->updateStatusBarText(tr("Cherry-picking commit..."));
+                emit statusMessage(tr("Cherry-picking commit..."));
                 try {
                     m_git->cherrypick(selectedHash);
                     QMessageBox::information(this, tr("Cherry-pick"), tr("Commit '%1' cherry-picked successfully.").arg(shortHash));
                 } catch (const QGitError &error) {
                     QMessageBox::warning(this, tr("Cherry-pick"), error.errorString());
                 }
-                QGitMasterMainWindow::instance()->updateStatusBarText(tr("Ready"));
+                emit statusMessage(tr("Ready"));
                 refreshData();
             }
         } else if (res == revertAction) {
@@ -2792,14 +2777,14 @@ void QGitRepository::on_logHistory_commits_customContextMenuRequested(const QPoi
                                                  tr("Are you sure you want to revert commit '%1'? This will apply the inverse changes onto your current branch.").arg(shortHash),
                                                  QMessageBox::Yes | QMessageBox::No);
             if (confirm == QMessageBox::Yes) {
-                QGitMasterMainWindow::instance()->updateStatusBarText(tr("Reverting commit..."));
+                emit statusMessage(tr("Reverting commit..."));
                 try {
                     m_git->revert(selectedHash);
                     QMessageBox::information(this, tr("Revert"), tr("Commit '%1' reverted successfully.").arg(shortHash));
                 } catch (const QGitError &error) {
                     QMessageBox::warning(this, tr("Revert"), error.errorString());
                 }
-                QGitMasterMainWindow::instance()->updateStatusBarText(tr("Ready"));
+                emit statusMessage(tr("Ready"));
                 refreshData();
             }
         } else if (res == softResetAction) {
@@ -2807,14 +2792,14 @@ void QGitRepository::on_logHistory_commits_customContextMenuRequested(const QPoi
                                                  tr("Are you sure you want to perform a soft reset to '%1'?\n\nThis will move the branch pointer, but keep all modifications staged.").arg(shortHash),
                                                  QMessageBox::Yes | QMessageBox::No);
             if (confirm == QMessageBox::Yes) {
-                QGitMasterMainWindow::instance()->updateStatusBarText(tr("Resetting current branch (soft)..."));
+                emit statusMessage(tr("Resetting current branch (soft)..."));
                 try {
                     m_git->reset(selectedHash, GIT_RESET_SOFT);
                     QMessageBox::information(this, tr("Reset"), tr("Branch reset to '%1' successfully (soft).").arg(shortHash));
                 } catch (const QGitError &error) {
                     QMessageBox::critical(this, tr("Reset Error"), error.errorString());
                 }
-                QGitMasterMainWindow::instance()->updateStatusBarText(tr("Ready"));
+                emit statusMessage(tr("Ready"));
                 refreshData();
             }
         } else if (res == mixedResetAction) {
@@ -2822,14 +2807,14 @@ void QGitRepository::on_logHistory_commits_customContextMenuRequested(const QPoi
                                                  tr("Are you sure you want to perform a mixed reset to '%1'?\n\nThis will move the branch pointer and unstage changes, but keep them in your working directory.").arg(shortHash),
                                                  QMessageBox::Yes | QMessageBox::No);
             if (confirm == QMessageBox::Yes) {
-                QGitMasterMainWindow::instance()->updateStatusBarText(tr("Resetting current branch (mixed)..."));
+                emit statusMessage(tr("Resetting current branch (mixed)..."));
                 try {
                     m_git->reset(selectedHash, GIT_RESET_MIXED);
                     QMessageBox::information(this, tr("Reset"), tr("Branch reset to '%1' successfully (mixed).").arg(shortHash));
                 } catch (const QGitError &error) {
                     QMessageBox::critical(this, tr("Reset Error"), error.errorString());
                 }
-                QGitMasterMainWindow::instance()->updateStatusBarText(tr("Ready"));
+                emit statusMessage(tr("Ready"));
                 refreshData();
             }
         } else if (res == hardResetAction) {
@@ -2837,20 +2822,20 @@ void QGitRepository::on_logHistory_commits_customContextMenuRequested(const QPoi
                                                  tr("WARNING: Are you sure you want to perform a hard reset to '%1'?\n\nThis will move the branch pointer and discard ALL staged and unstaged changes. This cannot be undone!").arg(shortHash),
                                                  QMessageBox::Yes | QMessageBox::No);
             if (confirm == QMessageBox::Yes) {
-                QGitMasterMainWindow::instance()->updateStatusBarText(tr("Resetting current branch (hard)..."));
+                emit statusMessage(tr("Resetting current branch (hard)..."));
                 try {
                     m_git->reset(selectedHash, GIT_RESET_HARD);
                     QMessageBox::information(this, tr("Reset"), tr("Branch reset to '%1' successfully (hard).").arg(shortHash));
                 } catch (const QGitError &error) {
                     QMessageBox::critical(this, tr("Reset Error"), error.errorString());
                 }
-                QGitMasterMainWindow::instance()->updateStatusBarText(tr("Ready"));
+                emit statusMessage(tr("Ready"));
                 refreshData();
             }
         } else if (res == createTagAction) {
             QGitCreateTagDialog dlg(selectedHash, this);
             if (dlg.exec() == QDialog::Accepted) {
-                QGitMasterMainWindow::instance()->updateStatusBarText(tr("Creating tag..."));
+                emit statusMessage(tr("Creating tag..."));
                 emit repositoryCreateTag(dlg.tagName(), selectedHash, dlg.tagMessage(), dlg.forceCreate());
             }
         } else if (res == editNoteAction) {
@@ -2864,7 +2849,7 @@ void QGitRepository::on_logHistory_commits_customContextMenuRequested(const QPoi
                 &ok
             );
             if (ok) {
-                QGitMasterMainWindow::instance()->updateStatusBarText(tr("Setting Git Note..."));
+                emit statusMessage(tr("Setting Git Note..."));
                 emit repositorySetNote(selectedHash, noteText);
             }
         } else if (res == deleteNoteAction) {
@@ -2872,7 +2857,7 @@ void QGitRepository::on_logHistory_commits_customContextMenuRequested(const QPoi
                                                  tr("Are you sure you want to delete the Git Note for commit %1?").arg(shortHash),
                                                  QMessageBox::Yes | QMessageBox::No);
             if (confirm == QMessageBox::Yes) {
-                QGitMasterMainWindow::instance()->updateStatusBarText(tr("Deleting Git Note..."));
+                emit statusMessage(tr("Deleting Git Note..."));
                 emit repositoryRemoveNote(selectedHash);
             }
         }
@@ -2890,7 +2875,7 @@ void QGitRepository::deleteTagReply(const QGitError &error)
 
 void QGitRepository::createTagReply(const QGitError &error)
 {
-    QGitMasterMainWindow::instance()->updateStatusBarText(tr("Ready"));
+    emit statusMessage(tr("Ready"));
     if (error.errorCode() != 0) {
         QMessageBox::critical(this, tr("Create Tag Error"), error.errorString());
     } else {
@@ -2901,7 +2886,7 @@ void QGitRepository::createTagReply(const QGitError &error)
 
 void QGitRepository::repositoryCleanReply(const QGitError &error)
 {
-    QGitMasterMainWindow::instance()->updateStatusBarText(tr("Ready"));
+    emit statusMessage(tr("Ready"));
     if (error.errorCode() != 0) {
         QMessageBox::critical(this, tr("Clean Error"), error.errorString());
     } else {
@@ -2912,7 +2897,7 @@ void QGitRepository::repositoryCleanReply(const QGitError &error)
 
 void QGitRepository::repositoryApplyPatchReply(const QGitError &error)
 {
-    QGitMasterMainWindow::instance()->updateStatusBarText(tr("Ready"));
+    emit statusMessage(tr("Ready"));
     if (error.errorCode() != 0) {
         QMessageBox::critical(this, tr("Apply Patch Error"), error.errorString());
     } else {
@@ -2923,7 +2908,7 @@ void QGitRepository::repositoryApplyPatchReply(const QGitError &error)
 
 void QGitRepository::repositorySetNoteReply(const QGitError &error)
 {
-    QGitMasterMainWindow::instance()->updateStatusBarText(tr("Ready"));
+    emit statusMessage(tr("Ready"));
     if (error.errorCode() != 0) {
         QMessageBox::critical(this, tr("Note Error"), error.errorString());
     } else {
@@ -2936,7 +2921,7 @@ void QGitRepository::repositorySetNoteReply(const QGitError &error)
 
 void QGitRepository::repositoryRemoveNoteReply(const QGitError &error)
 {
-    QGitMasterMainWindow::instance()->updateStatusBarText(tr("Ready"));
+    emit statusMessage(tr("Ready"));
     if (error.errorCode() != 0) {
         QMessageBox::critical(this, tr("Note Error"), error.errorString());
     } else {
@@ -2992,7 +2977,7 @@ void QGitRepository::keyPressEvent(QKeyEvent *event)
                                              tr("Are you sure you want to drop stash '%1'?").arg(fullName),
                                              QMessageBox::Yes | QMessageBox::No);
             if (res == QMessageBox::Yes) {
-                QGitMasterMainWindow::instance()->updateStatusBarText(tr("Dropping stash %1...").arg(fullName));
+                emit statusMessage(tr("Dropping stash %1...").arg(fullName));
                 m_git->stashRemove(fullName);
             }
         } else if (type == "Tag") {
@@ -3203,7 +3188,7 @@ void QGitRepository::on_lineEdit_search_returnPressed()
             type = "author";
         }
 
-        QGitMasterMainWindow::instance()->updateStatusBarText(tr("Searching commits..."));
+        emit statusMessage(tr("Searching commits..."));
         emit repositorySearchCommits(text, type);
     }
 }
@@ -3216,7 +3201,7 @@ void QGitRepository::onCommitFound(const QGitCommit &commit)
 void QGitRepository::onSearchFinished()
 {
     m_searchingCommits = false;
-    QGitMasterMainWindow::instance()->clearStatusBarText();
+    emit clearStatusMessage();
     ui->lineEdit_search->setEnabled(true);
     ui->lineEdit_search->setFocus();
 }
@@ -3287,12 +3272,12 @@ void QGitRepository::on_branchesTreeView_itemChanged(QTreeWidgetItem *item, int 
 
     if (type == "LocalBranch")
     {
-        QGitMasterMainWindow::instance()->updateStatusBarText(tr("Renaming branch %1 to %2...").arg(oldFullName, newFullName));
+        emit statusMessage(tr("Renaming branch %1 to %2...").arg(oldFullName, newFullName));
         emit repositoryRenameBranch(oldFullName, newFullName);
     }
     else if (type == "Tag")
     {
-        QGitMasterMainWindow::instance()->updateStatusBarText(tr("Renaming tag %1 to %2...").arg(oldFullName, newFullName));
+        emit statusMessage(tr("Renaming tag %1 to %2...").arg(oldFullName, newFullName));
         emit repositoryRenameTag(oldFullName, newFullName);
     }
 }

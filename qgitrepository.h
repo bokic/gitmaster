@@ -70,6 +70,12 @@ signals:
     void repositoryApplyPatch(const QString &patchPath);
     void repositorySetNote(const QString &commitHash, const QString &note);
     void repositoryRemoveNote(const QString &commitHash);
+    void statusMessage(const QString &text);
+    void clearStatusMessage();
+    void openRepositoryRequested(const QString &path);
+    void updateRemoteActionsRequested();
+    void setStashEnabledRequested(bool enabled);
+    void refreshRepositoryTreeRequested();
 
 protected:
     void keyPressEvent(QKeyEvent *event) override;

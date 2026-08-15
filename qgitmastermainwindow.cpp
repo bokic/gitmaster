@@ -18,13 +18,10 @@
 #include <QStandardPaths>
 
 
-QGitMasterMainWindow *QGitMasterMainWindow::s_instance = nullptr;
-
 QGitMasterMainWindow::QGitMasterMainWindow(QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::QGitMasterMainWindow)
 {
-    s_instance = this;
     ui->setupUi(this);
 
     QCoreApplication::setOrganizationName("BorisBarbulovski");
@@ -63,12 +60,6 @@ QGitMasterMainWindow::QGitMasterMainWindow(QWidget *parent)
 QGitMasterMainWindow::~QGitMasterMainWindow()
 {
     delete ui;
-    s_instance = nullptr;
-}
-
-QGitMasterMainWindow *QGitMasterMainWindow::instance()
-{
-    return s_instance;
 }
 
 bool QGitMasterMainWindow::event(QEvent *event)
@@ -168,9 +159,9 @@ void QGitMasterMainWindow::clearStatusBarText()
     ui->statusBar->clearMessage();
 }
 
-QString QGitMasterMainWindow::getPassword()
+void QGitMasterMainWindow::getPassword(QString &password)
 {
-    return QInputDialog::getText(this, tr("SSh password"), tr("Enter password"), QLineEdit::Password);
+    password = QInputDialog::getText(this, tr("SSH Passphrase"), tr("Enter passphrase"), QLineEdit::Password);
 }
 
 void QGitMasterMainWindow::on_treeWidget_itemSelectionChanged()
@@ -201,6 +192,10 @@ void QGitMasterMainWindow::on_toolButton_NewRepository_clicked()
             url = dlg.cloneRepositorySourceURL();
 
             QGitCloneRepositoryDialog cloneDlg(url, path, this);
+            if (cloneDlg.git()) {
+                connect(cloneDlg.git(), &QGit::requestPassword, this, &QGitMasterMainWindow::getPassword);
+            }
+            connect(&cloneDlg, &QGitCloneRepositoryDialog::statusMessage, this, &QGitMasterMainWindow::updateStatusBarText);
 
             res = cloneDlg.exec();
 
@@ -332,6 +327,24 @@ void QGitMasterMainWindow::openRepository(const QString &repositoryPath)
     }
 
     auto widget = new QGitRepository(repositoryPath, this);
+    if (widget->git()) {
+        connect(widget->git(), &QGit::requestPassword, this, &QGitMasterMainWindow::getPassword);
+    }
+    connect(widget, &QGitRepository::statusMessage, this, &QGitMasterMainWindow::updateStatusBarText);
+    connect(widget, &QGitRepository::clearStatusMessage, this, &QGitMasterMainWindow::clearStatusBarText);
+    connect(widget, &QGitRepository::openRepositoryRequested, this, &QGitMasterMainWindow::openRepository);
+    connect(widget, &QGitRepository::updateRemoteActionsRequested, [this, widget]() {
+        if (ui->tabWidget->currentWidget() == widget) {
+            updateRemoteActions(widget);
+        }
+    });
+    connect(widget, &QGitRepository::setStashEnabledRequested, [this, widget](bool enabled) {
+        if (ui->tabWidget->currentWidget() == widget) {
+            setStashEnabled(widget, enabled);
+        }
+    });
+    connect(widget, &QGitRepository::refreshRepositoryTreeRequested, this, &QGitMasterMainWindow::refreshRepositoryTree);
+
     ui->tabWidget->addTab(widget, repositoryName);
     ui->tabWidget->setCurrentWidget(widget);
 }
@@ -352,6 +365,23 @@ void QGitMasterMainWindow::on_treeWidget_itemDoubleClicked(QTreeWidgetItem *item
     }
 
     auto widget = new QGitRepository(repositoryPath, this);
+    if (widget->git()) {
+        connect(widget->git(), &QGit::requestPassword, this, &QGitMasterMainWindow::getPassword);
+    }
+    connect(widget, &QGitRepository::statusMessage, this, &QGitMasterMainWindow::updateStatusBarText);
+    connect(widget, &QGitRepository::clearStatusMessage, this, &QGitMasterMainWindow::clearStatusBarText);
+    connect(widget, &QGitRepository::openRepositoryRequested, this, &QGitMasterMainWindow::openRepository);
+    connect(widget, &QGitRepository::updateRemoteActionsRequested, [this, widget]() {
+        if (ui->tabWidget->currentWidget() == widget) {
+            updateRemoteActions(widget);
+        }
+    });
+    connect(widget, &QGitRepository::setStashEnabledRequested, [this, widget](bool enabled) {
+        if (ui->tabWidget->currentWidget() == widget) {
+            setStashEnabled(widget, enabled);
+        }
+    });
+    connect(widget, &QGitRepository::refreshRepositoryTreeRequested, this, &QGitMasterMainWindow::refreshRepositoryTree);
 
     ui->tabWidget->addTab(widget, repositoryName);
 

@@ -18,6 +18,8 @@ public:
     explicit QGitCloneRepositoryDialog(const QString &url, const QString &path, QWidget *parent = nullptr);
     ~QGitCloneRepositoryDialog();
 
+    QGit *git() const { return m_git; }
+
 protected:
     void showEvent(QShowEvent *event) override;
 
@@ -29,6 +31,7 @@ private slots:
 
 signals:
 	void clone(const QUrl &url);
+	void statusMessage(const QString &text);
 
 private:
     Ui::QGitCloneRepositoryDialog *ui = nullptr;

@@ -478,8 +478,12 @@ static int sshKeyCredentialCallback(
             }
 
             QString pass;
-            QMetaObject::invokeMethod(QGitMasterMainWindow::instance(), &QGitMasterMainWindow::getPassword, 
-                                      Qt::BlockingQueuedConnection, Q_RETURN_ARG(QString, pass));
+            auto _this = static_cast<QGit *>(payload);
+            if (_this)
+            {
+                QMetaObject::invokeMethod(_this, "requestPassword",
+                                          Qt::BlockingQueuedConnection, Q_ARG(QString&, pass));
+            }
 
             if (!pass.isEmpty())
             {

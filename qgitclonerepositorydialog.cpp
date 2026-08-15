@@ -1,6 +1,5 @@
 #include "qgitclonerepositorydialog.h"
 #include "ui_qgitclonerepositorydialog.h"
-#include "qgitmastermainwindow.h"
 #include <QShowEvent>
 
 static void updateProgressBar(QProgressBar *bar, size_t current, size_t total)
@@ -68,10 +67,7 @@ void QGitCloneRepositoryDialog::on_pushButton_close_clicked()
         ui->pushButton_close->setEnabled(false);
         ui->label_status->setText(tr("Aborting repository clone operation..."));
 
-        if (auto mainWindow = QGitMasterMainWindow::instance())
-        {
-            mainWindow->updateStatusBarText(tr("Aborting..."));
-        }
+        emit statusMessage(tr("Aborting..."));
 
         m_thread.requestInterruption();
     }

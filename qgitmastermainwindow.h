@@ -16,8 +16,6 @@ public:
     explicit QGitMasterMainWindow(QWidget *parent = nullptr);
     ~QGitMasterMainWindow();
 
-    static QGitMasterMainWindow *instance();
-
     void writeSettings();
     bool hasRepositoryWithName(const QString &name);
     void updateStatusBarText(const QString &text);
@@ -28,7 +26,7 @@ public:
     void openRepository(const QString &path);
 
 public slots:
-    QString getPassword();
+    void getPassword(QString &password);
 
 protected:
     bool event(QEvent *event) override;
@@ -61,5 +59,4 @@ private:
 
     Ui::QGitMasterMainWindow *ui = nullptr;
     QString m_appTheme;
-    static QGitMasterMainWindow *s_instance;
 };
