@@ -29,6 +29,7 @@ public:
 
     void addCommit(const QGitCommit &commit);
     bool selectCommit(const QString &hash);
+    void clearCommits();
 
     void setReferences(const QList<QGitBranch> &branches, const QList<QGitTag> &tags, const QString &currentBranch);
     QList<QGitRef> getReferences(const QString &sha) const;

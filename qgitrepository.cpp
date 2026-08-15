@@ -2553,7 +2553,7 @@ void QGitRepository::on_comboBox_logBranchFilter_currentTextChanged(const QStrin
     m_currentLogBranchFilter = data.toString();
     m_logCommitsOffset = 0;
     m_allCommitsLoaded = false;
-    ui->logHistory_commits->setRowCount(0);
+    ui->logHistory_commits->clearCommits();
     fetchCommits();
 }
 

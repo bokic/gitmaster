@@ -6,6 +6,13 @@ QLogHistoryTableWidget::QLogHistoryTableWidget(QWidget *parent)
 {
 }
 
+void QLogHistoryTableWidget::clearCommits()
+{
+    clearContents();
+    setRowCount(0);
+    m_hashIndex.clear();
+}
+
 void QLogHistoryTableWidget::addCommit(const QGitCommit &commit)
 {
     if (columnCount() == 4)
