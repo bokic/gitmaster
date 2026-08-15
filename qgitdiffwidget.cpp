@@ -57,10 +57,16 @@ public:
     {
         files.clear();
         rect = QRect();
+        maxLineNum = 1;
+        lineNumWidth = 0;
+        contentOffset = 0;
     }
 
     QVector<QGitDiffWidgetPrivateFile> files;
     QRect rect;
+    int maxLineNum = 1;
+    int lineNumWidth = 0;
+    int contentOffset = 0;
 };
 
 QGitDiffWidget::QGitDiffWidget(QWidget *parent)
@@ -265,9 +271,11 @@ void QGitDiffWidget::responseGitDiff(const QString &first, const QString &second
             }
         }
     }
-    const int numDigits = QString::number(maxLineNum).length();
-    const int lineNumWidth = fm.horizontalAdvance(QString(numDigits, '9')) + 10;
-    const int contentOffset = lineNumWidth * 2 + 20;
+    m_private->maxLineNum = maxLineNum;
+    m_private->lineNumWidth = fm.horizontalAdvance(QString(QString::number(maxLineNum).length(), '9')) + 10;
+    m_private->contentOffset = m_private->lineNumWidth * 2 + 20;
+
+    const int contentOffset = m_private->contentOffset;
 
     for(int c = 0; c < diff.count(); c++)
     {
@@ -357,18 +365,7 @@ void QGitDiffWidget::paintEvent(QPaintEvent *event)
     int fileIndex = 0, hunkIndex = 0, lineIndex = 0;
 
     const auto &files = m_private->files;
-
-    QFontMetrics fm(m_font);
-    int maxLineNum = 1;
-    for (const auto &f : files) {
-        for (const auto &h : f.hunks) {
-            for (const auto &l : h.lines) {
-                maxLineNum = qMax(maxLineNum, qMax(l.old_lineno, l.new_lineno));
-            }
-        }
-    }
-    const int numDigits = QString::number(maxLineNum).length();
-    const int lineNumWidth = fm.horizontalAdvance(QString(numDigits, '9')) + 10;
+    const int lineNumWidth = m_private->lineNumWidth;
 
     for(const auto &file: files)
     {
@@ -514,19 +511,7 @@ void QGitDiffWidget::updatePosition()
 
     int file_index = 0;
     const auto &files = m_private->files;
-
-    QFontMetrics fm(m_font);
-    int maxLineNum = 1;
-    for (const auto &f : files) {
-        for (const auto &h : f.hunks) {
-            for (const auto &l : h.lines) {
-                maxLineNum = qMax(maxLineNum, qMax(l.old_lineno, l.new_lineno));
-            }
-        }
-    }
-    const int numDigits = QString::number(maxLineNum).length();
-    const int lineNumWidth = fm.horizontalAdvance(QString(numDigits, '9')) + 10;
-    const int contentX = 10 + (lineNumWidth + 5) * 2;
+    const int contentX = 10 + (m_private->lineNumWidth + 5) * 2;
 
     for(const auto &file : files)
     {
