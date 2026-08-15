@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created for GitMaster -->
+<svg
+   width="32.0px"
+   height="32.0px"
+   viewBox="0 0 32.0 32.0"
+   version="1.1"
+   id="SVGRoot"
+   xml:space="preserve"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <g id="layer1">
+    <!-- Main stem line -->
+    <path
+       style="fill:none;stroke:#31465d;stroke-width:2;stroke-linecap:round;stroke-linejoin:round"
+       d="M 10 7.5 L 10 24.5" />
+    <!-- Rebase curve leading out and reconnecting higher up -->
+    <path
+       style="fill:none;stroke:#31465d;stroke-width:2;stroke-linecap:round;stroke-linejoin:round"
+       d="M 10 24 C 17 24 22 20 22 14.5 C 22 9 17 8 10 8" />
+    <!-- Rebase target arrow tip pointing back into stem -->
+    <path
+       d="M 13 6 L 9 8 L 13 10 Z"
+       style="fill:#31465d;stroke:#31465d;stroke-width:1;stroke-linejoin:round" />
+    <!-- Node circles with matching colors (#6383a4 fill, #31465d stroke) -->
+    <circle
+       cx="10"
+       cy="8"
+       r="3.5"
+       style="fill:#6383a4;stroke:#31465d;stroke-width:1" />
+    <circle
+       cx="10"
+       cy="24"
+       r="3.5"
+       style="fill:#6383a4;stroke:#31465d;stroke-width:1" />
+    <circle
+       cx="22"
+       cy="16"
+       r="3"
+       style="fill:#6383a4;stroke:#31465d;stroke-width:1" />
+  </g>
+</svg>

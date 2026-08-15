@@ -257,7 +257,7 @@
    </property>
    <property name="icon">
     <iconset resource="resource.qrc">
-     <normaloff>:/images/gray_branch.svg</normaloff>:/images/gray_branch.svg</iconset>
+     <normaloff>:/toolbar/rebase</normaloff>:/toolbar/rebase</iconset>
    </property>
    <property name="text">
     <string>Rebase</string>
@@ -269,7 +269,7 @@
    </property>
    <property name="icon">
     <iconset resource="resource.qrc">
-     <normaloff>:/small/worktree</normaloff>:/small/worktree</iconset>
+     <normaloff>:/toolbar/worktrees</normaloff>:/toolbar/worktrees</iconset>
    </property>
    <property name="text">
     <string>Worktrees</string>

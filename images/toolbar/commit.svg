@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created for GitMaster -->
+<svg
+   width="32.0px"
+   height="32.0px"
+   viewBox="0 0 32.0 32.0"
+   version="1.1"
+   id="SVGRoot"
+   xml:space="preserve"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <g id="layer1">
+    <!-- Main commit ring -->
+    <path
+       style="fill:#6383a4;fill-opacity:1;stroke:#31465d;stroke-width:1;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       d="M 13.616 2.48 C 9.359 3.592 5.86 6.965 4.743 11.23 C 3.626 15.495 5.048 20.038 8.358 22.784 C 11.668 25.53 16.332 26.066 20.216 24.148 L 18.943 21.595 C 16.035 22.955 12.537 22.553 10.055 20.493 C 7.572 18.434 6.506 15.027 7.344 11.828 C 8.182 8.629 10.806 6.1 14.001 5.266 C 17.195 4.432 20.505 5.405 22.6 7.794 L 20.2 10.2 L 27.2 10.2 L 27.2 3.2 L 24.6 5.8 C 21.758 2.627 17.473 1.368 13.616 2.48 Z"
+       id="circle_path" />
+    <!-- Downward check arrow for commit -->
+    <path
+       id="arrow_path"
+       d="M 16.125 21.028 L 13.433 15.635 L 14.642 15.03 L 16.125 18 L 22.858 11.268 L 24.067 12.476 Z"
+       style="fill:#1da738;fill-opacity:1;stroke:#076b1c;stroke-width:1;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
+  </g>
+</svg>

@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created for GitMaster -->
+<svg
+   width="32.0px"
+   height="32.0px"
+   viewBox="0 0 32.0 32.0"
+   version="1.1"
+   id="SVGRoot"
+   xml:space="preserve"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <g id="layer1">
+    <!-- Stash box container -->
+    <path
+       style="fill:#6383a4;fill-opacity:1;stroke:#31465d;stroke-width:1;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       d="M 16.0 6.0 L 5.28 10.76 L 5.28 21.31 L 16.0 26.08 L 26.72 21.31 L 26.72 10.76 Z M 16.0 7.82 L 24.0 11.38 L 16.0 14.93 L 8.0 11.38 Z M 6.78 12.63 L 15.33 16.43 L 15.33 24.38 L 6.78 20.58 Z M 16.67 16.43 L 25.22 12.63 L 25.22 20.58 L 16.67 24.38 Z"
+       id="box_path" />
+  </g>
+</svg>
