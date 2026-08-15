@@ -17,10 +17,10 @@ QGitError::QGitError(const QString &functionName, int errorCode)
     , m_errorCode(errorCode)
 {
     const git_error *err = git_error_last();
-    if (err) {
+    if (err && err->message) {
         m_errorString = QString::fromUtf8(err->message);
     } else {
-        m_errorString = QStringLiteral("Unknown Git error");
+        m_errorString = QString("Git error %1: %2").arg(errorCode).arg(functionName);
     }
 }
 
