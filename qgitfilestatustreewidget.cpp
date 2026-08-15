@@ -21,8 +21,10 @@ void QGitFileStatusTreeWidget::setViewLayoutMode(ViewLayoutMode mode)
         setColumnCount(3);
         QStringList headers = { tr("Name"), tr("Path"), tr("Status") };
         setHeaderLabels(headers);
-        setColumnWidth(0, 200);
-        setColumnWidth(1, 300);
+
+        header()->setSectionResizeMode(0, QHeaderView::Interactive);
+        header()->setSectionResizeMode(1, QHeaderView::Stretch);
+        header()->setSectionResizeMode(2, QHeaderView::ResizeToContents);
     }
     else
     {

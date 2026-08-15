@@ -2463,42 +2463,10 @@ void QGitRepository::on_comboBox_gitViewOptions_activated(int index)
     {
         m_layoutOption = index;
 
-        if (m_layoutOption == 0) {
-            ui->treeWidget_staged->setHeaderHidden(true);
-            ui->treeWidget_staged->setColumnCount(1);
-            ui->treeWidget_unstaged->setHeaderHidden(true);
-            ui->treeWidget_unstaged->setColumnCount(1);
-            ui->treeWidget_pending->setHeaderHidden(true);
-            ui->treeWidget_pending->setColumnCount(1);
-        }
-        else if (m_layoutOption == 1) {
-            ui->treeWidget_staged->setHeaderHidden(false);
-            ui->treeWidget_staged->setColumnCount(3);
-            ui->treeWidget_unstaged->setHeaderHidden(false);
-            ui->treeWidget_unstaged->setColumnCount(3);
-            ui->treeWidget_pending->setHeaderHidden(false);
-            ui->treeWidget_pending->setColumnCount(3);
-
-            QStringList headers = { tr("Name"), tr("Path"), tr("Status") };
-            ui->treeWidget_staged->setHeaderLabels(headers);
-            ui->treeWidget_unstaged->setHeaderLabels(headers);
-            ui->treeWidget_pending->setHeaderLabels(headers);
-
-            ui->treeWidget_staged->setColumnWidth(0, 200);
-            ui->treeWidget_staged->setColumnWidth(1, 300);
-            ui->treeWidget_unstaged->setColumnWidth(0, 200);
-            ui->treeWidget_unstaged->setColumnWidth(1, 300);
-            ui->treeWidget_pending->setColumnWidth(0, 200);
-            ui->treeWidget_pending->setColumnWidth(1, 300);
-        }
-        else if (m_layoutOption == 2) {
-            ui->treeWidget_staged->setHeaderHidden(true);
-            ui->treeWidget_staged->setColumnCount(1);
-            ui->treeWidget_unstaged->setHeaderHidden(true);
-            ui->treeWidget_unstaged->setColumnCount(1);
-            ui->treeWidget_pending->setHeaderHidden(true);
-            ui->treeWidget_pending->setColumnCount(1);
-        }
+        auto layoutMode = static_cast<QGitFileStatusTreeWidget::ViewLayoutMode>(m_layoutOption);
+        ui->treeWidget_staged->setViewLayoutMode(layoutMode);
+        ui->treeWidget_unstaged->setViewLayoutMode(layoutMode);
+        ui->treeWidget_pending->setViewLayoutMode(layoutMode);
 
         updateStatusViews();
     }
@@ -2513,22 +2481,8 @@ void QGitRepository::on_comboBox_gitViewOptions_activated(int index)
             ui->stackedWidget_staging->setCurrentIndex(0);
         }
 
-        if (m_layoutOption == 0) {
-            ui->treeWidget_pending->setHeaderHidden(true);
-            ui->treeWidget_pending->setColumnCount(1);
-        }
-        else if (m_layoutOption == 1) {
-            ui->treeWidget_pending->setHeaderHidden(false);
-            ui->treeWidget_pending->setColumnCount(3);
-            QStringList headers = { tr("Name"), tr("Path"), tr("Status") };
-            ui->treeWidget_pending->setHeaderLabels(headers);
-            ui->treeWidget_pending->setColumnWidth(0, 200);
-            ui->treeWidget_pending->setColumnWidth(1, 300);
-        }
-        else if (m_layoutOption == 2) {
-            ui->treeWidget_pending->setHeaderHidden(true);
-            ui->treeWidget_pending->setColumnCount(1);
-        }
+        auto layoutMode = static_cast<QGitFileStatusTreeWidget::ViewLayoutMode>(m_layoutOption);
+        ui->treeWidget_pending->setViewLayoutMode(layoutMode);
 
         updateStatusViews();
     }
