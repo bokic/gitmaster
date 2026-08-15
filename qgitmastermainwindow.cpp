@@ -76,7 +76,7 @@ bool QGitMasterMainWindow::event(QEvent *event)
     if (event->type() == QEvent::WindowActivate)
     {
         ui->treeWidget->refreshItems();
-        on_tabWidget_currentChanged(-1);
+        on_tabWidget_currentChanged(ui->tabWidget->currentIndex());
     }
 
     return QMainWindow::event(event);
