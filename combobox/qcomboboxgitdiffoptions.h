@@ -1,3 +1,5 @@
+#pragma once
+
 #include "qcomboboxgitbase.h"
 
 class QComboBoxGitDiffOptions : public QComboBoxGitBase
