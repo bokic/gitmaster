@@ -990,8 +990,12 @@ void QGitRepository::repositoryGetCommitDiffReply(const QString &commitId, const
             int currentRow = ui->search_commits->currentRow();
             if (currentRow < 0) return;
 
-            const QString commit_id = ui->search_commits->item(currentRow, 3)->data(Qt::UserRole).toString();
-            const QString email = ui->search_commits->item(currentRow, 2)->data(Qt::UserRole + 1).toString();
+            QTableWidgetItem *commitItem = ui->search_commits->item(currentRow, 3);
+            if (!commitItem) return;
+            const QString commit_id = commitItem->data(Qt::UserRole).toString();
+
+            QTableWidgetItem *authorItem = ui->search_commits->item(currentRow, 2);
+            const QString email = authorItem ? authorItem->data(Qt::UserRole + 1).toString() : QString();
 
             QString html;
             QStringList parentsHtml;
@@ -1085,8 +1089,12 @@ void QGitRepository::repositoryGetCommitDiffReply(const QString &commitId, const
             int currentRow = ui->logHistory_commits->currentRow();
             if (currentRow < 0) return;
 
-            const QString commit_id = ui->logHistory_commits->item(currentRow, 4)->data(Qt::UserRole).toString();
-            const QString email = ui->logHistory_commits->item(currentRow, 3)->data(Qt::UserRole + 1).toString();
+            QTableWidgetItem *commitItem = ui->logHistory_commits->item(currentRow, 4);
+            if (!commitItem) return;
+            const QString commit_id = commitItem->data(Qt::UserRole).toString();
+
+            QTableWidgetItem *authorItem = ui->logHistory_commits->item(currentRow, 3);
+            const QString email = authorItem ? authorItem->data(Qt::UserRole + 1).toString() : QString();
 
             QString html;
             QStringList parentsHtml;
@@ -1866,22 +1874,22 @@ void QGitRepository::on_logHistory_commits_currentCellChanged(int currentRow, in
     Q_UNUSED(previousRow)
     Q_UNUSED(previousColumn)
 
-    QString commit_id;
-    int rows = 0;
-
     if (currentRow < 0)
     {
         return;
     }
 
-    commit_id = ui->logHistory_commits->item(currentRow, 4)->data(Qt::UserRole).toString();
+    QTableWidgetItem *item = ui->logHistory_commits->item(currentRow, 4);
+    if (!item) return;
+
+    QString commit_id = item->data(Qt::UserRole).toString();
 
     if (!commit_id.isEmpty())
     {
         emit repositoryGetCommitDiff(commit_id, ui->comboBox_gitDiffOptions->ignoreWhitespace());
     }
 
-    rows = ui->logHistory_commits->rowCount();
+    int rows = ui->logHistory_commits->rowCount();
 
     if (currentRow == rows - 1)
     {
@@ -2762,7 +2770,10 @@ void QGitRepository::on_search_commits_currentCellChanged(int currentRow, int cu
         return;
     }
 
-    QString commit_id = ui->search_commits->item(currentRow, 3)->data(Qt::UserRole).toString();
+    QTableWidgetItem *item = ui->search_commits->item(currentRow, 3);
+    if (!item) return;
+
+    QString commit_id = item->data(Qt::UserRole).toString();
 
     if (!commit_id.isEmpty())
     {

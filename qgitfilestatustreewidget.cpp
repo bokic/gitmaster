@@ -91,212 +91,99 @@ void QGitFileStatusTreeWidget::populateFiles(
         bool hasStaged = status & (GIT_STATUS_INDEX_NEW | GIT_STATUS_INDEX_MODIFIED | GIT_STATUS_INDEX_DELETED | GIT_STATUS_INDEX_RENAMED | GIT_STATUS_INDEX_TYPECHANGE);
         bool hasUnstaged = (status == GIT_STATUS_CURRENT) || (status & (GIT_STATUS_WT_NEW | GIT_STATUS_WT_MODIFIED | GIT_STATUS_WT_DELETED | GIT_STATUS_WT_TYPECHANGE | GIT_STATUS_WT_RENAMED | GIT_STATUS_WT_UNREADABLE | GIT_STATUS_IGNORED | GIT_STATUS_CONFLICTED));
 
+        Qt::CheckState state = Qt::Unchecked;
+        QIcon icon;
+
         if (isPendingCategory)
         {
-            Qt::CheckState state = Qt::PartiallyChecked;
+            state = Qt::PartiallyChecked;
             if (hasStaged && !hasUnstaged) state = Qt::Checked;
             else if (!hasStaged && hasUnstaged) state = Qt::Unchecked;
-
-            QIcon icon = getFileIcon(status, hasStaged);
-
-            if (m_layoutMode == FlatSingle)
-            {
-                QTreeWidgetItem *item = new QTreeWidgetItem(this);
-                item->setFlags(item->flags() | Qt::ItemIsUserCheckable);
-                item->setCheckState(0, state);
-                item->setData(0, Qt::UserRole, file);
-                item->setData(0, Qt::UserRole + 1, (int)status);
-                item->setText(0, file);
-                item->setIcon(0, icon);
-            }
-            else if (m_layoutMode == FlatMulti)
-            {
-                QTreeWidgetItem *item = new QTreeWidgetItem(this);
-                item->setFlags(item->flags() | Qt::ItemIsUserCheckable);
-                item->setCheckState(0, state);
-                item->setData(0, Qt::UserRole, file);
-                item->setData(0, Qt::UserRole + 1, (int)status);
-
-                QFileInfo info(file);
-                item->setText(0, info.fileName());
-                item->setIcon(0, icon);
-                item->setText(1, info.path() == "." ? "" : info.path());
-                item->setText(2, getStatusText(status));
-            }
-            else if (m_layoutMode == TreeView)
-            {
-                QStringList parts = file.split('/');
-                QTreeWidgetItem *parent = nullptr;
-                for (int i = 0; i < parts.size() - 1; ++i)
-                {
-                    QString dirName = parts.at(i);
-                    QTreeWidgetItem *found = nullptr;
-                    int childCount = parent ? parent->childCount() : topLevelItemCount();
-                    for (int j = 0; j < childCount; ++j)
-                    {
-                        QTreeWidgetItem *child = parent ? parent->child(j) : topLevelItem(j);
-                        if (child->text(0) == dirName && child->data(0, Qt::UserRole).toString().isEmpty())
-                        {
-                            found = child;
-                            break;
-                        }
-                    }
-                    if (!found)
-                    {
-                        parent = parent ? new QTreeWidgetItem(parent) : new QTreeWidgetItem(this);
-                        parent->setText(0, dirName);
-                        parent->setIcon(0, QApplication::style()->standardIcon(QStyle::SP_DirIcon));
-                        parent->setFlags(parent->flags() | Qt::ItemIsUserCheckable);
-                        parent->setCheckState(0, Qt::Unchecked);
-                    }
-                    else
-                    {
-                        parent = found;
-                    }
-                }
-
-                QTreeWidgetItem *item = parent ? new QTreeWidgetItem(parent) : new QTreeWidgetItem(this);
-                item->setFlags(item->flags() | Qt::ItemIsUserCheckable);
-                item->setCheckState(0, state);
-                item->setData(0, Qt::UserRole, file);
-                item->setData(0, Qt::UserRole + 1, (int)status);
-                item->setText(0, parts.last());
-                item->setIcon(0, icon);
-            }
+            icon = getFileIcon(status, hasStaged);
         }
-        else if (isStagedCategory && hasStaged)
+        else if (isStagedCategory)
         {
-            if (m_layoutMode == FlatSingle)
-            {
-                QTreeWidgetItem *item = new QTreeWidgetItem(this);
-                item->setFlags(item->flags() | Qt::ItemIsUserCheckable);
-                item->setCheckState(0, Qt::Checked);
-                item->setData(0, Qt::UserRole, file);
-                item->setData(0, Qt::UserRole + 1, (int)status);
-                item->setText(0, file);
-                item->setIcon(0, getFileIcon(status, true));
-            }
-            else if (m_layoutMode == FlatMulti)
-            {
-                QTreeWidgetItem *item = new QTreeWidgetItem(this);
-                item->setFlags(item->flags() | Qt::ItemIsUserCheckable);
-                item->setCheckState(0, Qt::Checked);
-                item->setData(0, Qt::UserRole, file);
-                item->setData(0, Qt::UserRole + 1, (int)status);
-
-                QFileInfo info(file);
-                item->setText(0, info.fileName());
-                item->setIcon(0, getFileIcon(status, true));
-                item->setText(1, info.path() == "." ? "" : info.path());
-                item->setText(2, getStatusText(status));
-            }
-            else if (m_layoutMode == TreeView)
-            {
-                QStringList parts = file.split('/');
-                QTreeWidgetItem *parent = nullptr;
-                for (int i = 0; i < parts.size() - 1; ++i)
-                {
-                    QString dirName = parts.at(i);
-                    QTreeWidgetItem *found = nullptr;
-                    int childCount = parent ? parent->childCount() : topLevelItemCount();
-                    for (int j = 0; j < childCount; ++j)
-                    {
-                        QTreeWidgetItem *child = parent ? parent->child(j) : topLevelItem(j);
-                        if (child->text(0) == dirName && child->data(0, Qt::UserRole).toString().isEmpty())
-                        {
-                            found = child;
-                            break;
-                        }
-                    }
-                    if (!found)
-                    {
-                        parent = parent ? new QTreeWidgetItem(parent) : new QTreeWidgetItem(this);
-                        parent->setText(0, dirName);
-                        parent->setIcon(0, QApplication::style()->standardIcon(QStyle::SP_DirIcon));
-                    }
-                    else
-                    {
-                        parent = found;
-                    }
-                }
-
-                QTreeWidgetItem *item = parent ? new QTreeWidgetItem(parent) : new QTreeWidgetItem(this);
-                item->setFlags(item->flags() | Qt::ItemIsUserCheckable);
-                item->setCheckState(0, Qt::Checked);
-                item->setData(0, Qt::UserRole, file);
-                item->setData(0, Qt::UserRole + 1, (int)status);
-                item->setText(0, parts.last());
-                item->setIcon(0, getFileIcon(status, true));
-            }
+            if (!hasStaged) continue;
+            state = Qt::Checked;
+            icon = getFileIcon(status, true);
         }
-        else if (!isStagedCategory && !isPendingCategory && hasUnstaged)
+        else
         {
-            if (m_layoutMode == FlatSingle)
-            {
-                QTreeWidgetItem *item = new QTreeWidgetItem(this);
-                item->setFlags(item->flags() | Qt::ItemIsUserCheckable);
-                item->setCheckState(0, Qt::Unchecked);
-                item->setData(0, Qt::UserRole, file);
-                item->setData(0, Qt::UserRole + 1, (int)status);
-                item->setText(0, file);
-                item->setIcon(0, getFileIcon(status, false));
-            }
-            else if (m_layoutMode == FlatMulti)
-            {
-                QTreeWidgetItem *item = new QTreeWidgetItem(this);
-                item->setFlags(item->flags() | Qt::ItemIsUserCheckable);
-                item->setCheckState(0, Qt::Unchecked);
-                item->setData(0, Qt::UserRole, file);
-                item->setData(0, Qt::UserRole + 1, (int)status);
+            if (!hasUnstaged) continue;
+            state = Qt::Unchecked;
+            icon = getFileIcon(status, false);
+        }
 
-                QFileInfo info(file);
-                item->setText(0, info.fileName());
-                item->setIcon(0, getFileIcon(status, false));
-                item->setText(1, info.path() == "." ? "" : info.path());
-                item->setText(2, getStatusText(status));
-            }
-            else if (m_layoutMode == TreeView)
+        if (m_layoutMode == FlatSingle)
+        {
+            QTreeWidgetItem *item = new QTreeWidgetItem(this);
+            item->setFlags(item->flags() | Qt::ItemIsUserCheckable);
+            item->setCheckState(0, state);
+            item->setData(0, Qt::UserRole, file);
+            item->setData(0, Qt::UserRole + 1, (int)status);
+            item->setText(0, file);
+            item->setIcon(0, icon);
+        }
+        else if (m_layoutMode == FlatMulti)
+        {
+            QTreeWidgetItem *item = new QTreeWidgetItem(this);
+            item->setFlags(item->flags() | Qt::ItemIsUserCheckable);
+            item->setCheckState(0, state);
+            item->setData(0, Qt::UserRole, file);
+            item->setData(0, Qt::UserRole + 1, (int)status);
+
+            QFileInfo info(file);
+            item->setText(0, info.fileName());
+            item->setIcon(0, icon);
+            item->setText(1, info.path() == "." ? "" : info.path());
+            item->setText(2, getStatusText(status));
+        }
+        else if (m_layoutMode == TreeView)
+        {
+            QStringList parts = file.split('/');
+            QTreeWidgetItem *parent = nullptr;
+            for (int i = 0; i < parts.size() - 1; ++i)
             {
-                QStringList parts = file.split('/');
-                QTreeWidgetItem *parent = nullptr;
-                for (int i = 0; i < parts.size() - 1; ++i)
+                QString dirName = parts.at(i);
+                QTreeWidgetItem *found = nullptr;
+                int childCount = parent ? parent->childCount() : topLevelItemCount();
+                for (int j = 0; j < childCount; ++j)
                 {
-                    QString dirName = parts.at(i);
-                    QTreeWidgetItem *found = nullptr;
-                    int childCount = parent ? parent->childCount() : topLevelItemCount();
-                    for (int j = 0; j < childCount; ++j)
+                    QTreeWidgetItem *child = parent ? parent->child(j) : topLevelItem(j);
+                    if (child->text(0) == dirName && child->data(0, Qt::UserRole).toString().isEmpty())
                     {
-                        QTreeWidgetItem *child = parent ? parent->child(j) : topLevelItem(j);
-                        if (child->text(0) == dirName && child->data(0, Qt::UserRole).toString().isEmpty())
-                        {
-                            found = child;
-                            break;
-                        }
-                    }
-                    if (!found)
-                    {
-                        parent = parent ? new QTreeWidgetItem(parent) : new QTreeWidgetItem(this);
-                        parent->setText(0, dirName);
-                        parent->setIcon(0, QApplication::style()->standardIcon(QStyle::SP_DirIcon));
-                    }
-                    else
-                    {
-                        parent = found;
+                        found = child;
+                        break;
                     }
                 }
-
-                QTreeWidgetItem *item = parent ? new QTreeWidgetItem(parent) : new QTreeWidgetItem(this);
-                item->setFlags(item->flags() | Qt::ItemIsUserCheckable);
-                item->setCheckState(0, Qt::Unchecked);
-                item->setData(0, Qt::UserRole, file);
-                item->setData(0, Qt::UserRole + 1, (int)status);
-                item->setText(0, parts.last());
-                item->setIcon(0, getFileIcon(status, false));
+                if (!found)
+                {
+                    parent = parent ? new QTreeWidgetItem(parent) : new QTreeWidgetItem(this);
+                    parent->setText(0, dirName);
+                    parent->setIcon(0, QApplication::style()->standardIcon(QStyle::SP_DirIcon));
+                    parent->setFlags(parent->flags() | Qt::ItemIsUserCheckable);
+                    parent->setCheckState(0, Qt::Unchecked);
+                }
+                else
+                {
+                    parent = found;
+                }
             }
+
+            QTreeWidgetItem *item = parent ? new QTreeWidgetItem(parent) : new QTreeWidgetItem(this);
+            item->setFlags(item->flags() | Qt::ItemIsUserCheckable);
+            item->setCheckState(0, state);
+            item->setData(0, Qt::UserRole, file);
+            item->setData(0, Qt::UserRole + 1, (int)status);
+            item->setText(0, parts.last());
+            item->setIcon(0, icon);
         }
     }
 
     if (m_layoutMode == TreeView) {
+        for (int i = 0; i < topLevelItemCount(); ++i) {
+            updateFolderCheckStates(topLevelItem(i));
+        }
         expandAll();
     }
 

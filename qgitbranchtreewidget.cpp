@@ -264,7 +264,7 @@ void QGitBranchTreeWidget::populateStashes(const QStringList &stashes)
     }
     else
     {
-        stashGroupItem->takeChildren();
+        qDeleteAll(stashGroupItem->takeChildren());
     }
 
     for (const auto &stash : stashes)

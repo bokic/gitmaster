@@ -153,6 +153,7 @@ QVector<QGitDiffWidgetLine> QGitDiffWidget::linesAt(int fileIdx, int hunkIdx, in
 
     if (hunkIdx < 0 || hunkIdx >= file.hunks.count()) return lines;
     const auto &hunk = file.hunks.at(hunkIdx);
+    if (hunk.lines.isEmpty()) return lines;
 
     if (lineIdx < 0) {
         // Collect whole hunk
