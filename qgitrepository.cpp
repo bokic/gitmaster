@@ -529,11 +529,13 @@ void QGitRepository::repositoryFetchReply(const QGitError &error)
 {
     if (error.errorCode())
     {
-        emit statusMessage(error.functionName());
+        emit statusMessage(error.errorString());
+        QMessageBox::critical(this, tr("Fetch Error"), error.errorString());
     }
     else
     {
         emit clearStatusMessage();
+        refreshData();
     }
 }
 
