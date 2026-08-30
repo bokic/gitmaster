@@ -776,14 +776,19 @@ void QGitRepository::repositoryDiscardFilesReply(const QGitError &error)
 
 void QGitRepository::repositoryCommitReply(const QString &commit_id, const QGitError &error)
 {
-    Q_UNUSED(commit_id)
-
     ui->plainTextEdit_commitMessage->setEnabled(true);
     ui->pushButton_commit->setEnabled(true);
 
     if (error.errorCode() != 0) {
-        QMessageBox::critical(this, tr("Commit Error"), error.errorString());
-        // A post-commit push can fail after the local commit has succeeded.
+        if (!commit_id.isEmpty()) {
+            QMessageBox::warning(this, tr("Commit Succeeded (Push Failed)"),
+                                 tr("Commit succeeded (%1), but pushing changes failed:\n\n%2").arg(commit_id.left(7), error.errorString()));
+            ui->plainTextEdit_commitMessage->clear();
+            ui->checkBox_amendCommit->setChecked(false);
+            m_draftCommitMessage.clear();
+        } else {
+            QMessageBox::critical(this, tr("Commit Error"), error.errorString());
+        }
         refreshData();
     } else {
         ui->plainTextEdit_commitMessage->clear();

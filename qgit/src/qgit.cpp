@@ -3957,26 +3957,68 @@ void QGit::commit(const QString &message, bool withPush, bool amend)
 
             GitBuf remoteName;
             res = git_branch_upstream_remote(remoteName, repo, localRefName);
-            if (res)
-            {
-                throw QGitError("git_branch_upstream_remote", res);
-            }
-
-            GitBuf upstreamRefName;
-            res = git_branch_upstream_merge(upstreamRefName, repo, localRefName);
-            if (res)
-            {
-                throw QGitError("git_branch_upstream_merge", res);
-            }
 
             GitRemote remote;
-            res = git_remote_lookup(remote, repo, remoteName.value.ptr);
-            if (res)
+            QByteArray refspec;
+            bool setUpstreamNeeded = false;
+            QString targetRemoteName;
+            QString branchShortName;
+
+            if (res == 0)
             {
-                throw QGitError("git_remote_lookup", res);
+                GitBuf upstreamRefName;
+                res = git_branch_upstream_merge(upstreamRefName, repo, localRefName);
+                if (res)
+                {
+                    throw QGitError("git_branch_upstream_merge", res);
+                }
+
+                res = git_remote_lookup(remote, repo, remoteName.value.ptr);
+                if (res)
+                {
+                    throw QGitError("git_remote_lookup", res);
+                }
+
+                refspec = QByteArray(localRefName) + ':' + QByteArray(upstreamRefName.value.ptr);
+            }
+            else
+            {
+                git_strarray remoteList = {nullptr, 0};
+                int remListRes = git_remote_list(&remoteList, repo);
+                if (remListRes == 0 && remoteList.count > 0)
+                {
+                    const char *selectedRemote = remoteList.strings[0];
+                    for (size_t i = 0; i < remoteList.count; ++i) {
+                        if (strcmp(remoteList.strings[i], "origin") == 0) {
+                            selectedRemote = remoteList.strings[i];
+                            break;
+                        }
+                    }
+                    targetRemoteName = QString::fromUtf8(selectedRemote);
+                    res = git_remote_lookup(remote, repo, selectedRemote);
+                    git_strarray_free(&remoteList);
+
+                    if (res)
+                    {
+                        throw QGitError("git_remote_lookup", res);
+                    }
+
+                    refspec = QByteArray(localRefName) + ':' + QByteArray(localRefName);
+                    setUpstreamNeeded = true;
+
+                    const char *branchNamePtr = nullptr;
+                    if (git_branch_name(&branchNamePtr, head) == 0 && branchNamePtr) {
+                        branchShortName = QString::fromUtf8(branchNamePtr);
+                    }
+                }
+                else
+                {
+                    if (remListRes == 0) git_strarray_free(&remoteList);
+                    giterr_set_str(GITERR_INVALID, "No remote repository configured to push to");
+                    throw QGitError("git_remote_push", GITERR_INVALID, "No remote repository configured to push to");
+                }
             }
 
-            QByteArray refspec = QByteArray(localRefName) + ':' + QByteArray(upstreamRefName.value.ptr);
             SafeGitStrArray refspecs = SafeGitStrArray::fromSingle(refspec);
 
             git_push_options push_opts = makePushOptions(this);
@@ -3989,6 +4031,12 @@ void QGit::commit(const QString &message, bool withPush, bool amend)
                     throw QGitError("git_remote_push", res, m_lastPushError);
                 }
                 throw QGitError("git_remote_push", res);
+            }
+
+            if (setUpstreamNeeded && !branchShortName.isEmpty() && !targetRemoteName.isEmpty())
+            {
+                QString upstreamTrackingRef = targetRemoteName + "/" + branchShortName;
+                git_branch_set_upstream(head, upstreamTrackingRef.toUtf8().constData());
             }
         }
 
