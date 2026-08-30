@@ -56,7 +56,7 @@ jobs:
 
     - name: Setup Qt on Windows
       if: runner.os == 'Windows'
-      uses: jurplel/install-qt-action@v3
+      uses: jurplel/install-qt-action@v4
       with:
         version: '6.*'
         host: 'windows'
