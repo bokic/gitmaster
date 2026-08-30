@@ -33,7 +33,7 @@ jobs:
             build_type: Release
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v5
       with:
         fetch-depth: 0
 
@@ -58,7 +58,7 @@ jobs:
       if: runner.os == 'Windows'
       uses: jurplel/install-qt-action@v4
       with:
-        version: '6.*'
+        version: '6.11.*'
         host: 'windows'
         target: 'desktop'
         arch: 'win64_msvc2022_64'
