@@ -527,8 +527,13 @@ static int gitCredentialCallback(
                 QString pass;
                 auto _this = static_cast<QGit *>(payload);
                 if (_this) {
-                    QMetaObject::invokeMethod(_this, "requestPassword",
-                                              Qt::BlockingQueuedConnection, Q_ARG(QString&, pass));
+                    QObject *handler = _this->credentialHandler();
+                    if (handler) {
+                        QMetaObject::invokeMethod(handler, "getPassword",
+                                                  Qt::BlockingQueuedConnection, Q_ARG(QString&, pass));
+                    } else {
+                        emit _this->requestPassword(pass);
+                    }
                 }
 
                 auto privkeyPathname = privkeyFileInfo.absoluteFilePath().toUtf8();
@@ -554,12 +559,17 @@ static int gitCredentialCallback(
             if (_this) {
                 QString urlStr = url ? QString::fromUtf8(url) : QString();
                 QString usernameFromUrlStr = username;
-                QMetaObject::invokeMethod(_this, "requestUserCredentials",
-                                          Qt::BlockingQueuedConnection,
-                                          Q_ARG(QString, urlStr),
-                                          Q_ARG(QString, usernameFromUrlStr),
-                                          Q_ARG(QString&, username),
-                                          Q_ARG(QString&, password));
+                QObject *handler = _this->credentialHandler();
+                if (handler) {
+                    QMetaObject::invokeMethod(handler, "getUserCredentials",
+                                              Qt::BlockingQueuedConnection,
+                                              Q_ARG(QString, urlStr),
+                                              Q_ARG(QString, usernameFromUrlStr),
+                                              Q_ARG(QString&, username),
+                                              Q_ARG(QString&, password));
+                } else {
+                    emit _this->requestUserCredentials(urlStr, usernameFromUrlStr, username, password);
+                }
             }
 
             if (!username.isEmpty() || !password.isEmpty()) {
@@ -640,8 +650,27 @@ QGit::QGit(QObject *parent)
 {
 }
 
+void QGit::setLastPushError(const QString &err)
+{
+    QMutexLocker locker(&m_mutex);
+    m_lastPushError = err;
+}
+
+QString QGit::lastPushError() const
+{
+    QMutexLocker locker(&m_mutex);
+    return m_lastPushError;
+}
+
+void QGit::clearLastPushError()
+{
+    QMutexLocker locker(&m_mutex);
+    m_lastPushError.clear();
+}
+
 bool QGit::setPath(const QDir &path)
 {
+    QMutexLocker locker(&m_mutex);
     m_path = path;
 
     return true;
@@ -649,6 +678,7 @@ bool QGit::setPath(const QDir &path)
 
 QDir QGit::path() const
 {
+    QMutexLocker locker(&m_mutex);
     return m_path;
 }
 
@@ -1039,319 +1069,347 @@ bool QGit::gitRepositoryDefaultSignature(const QDir &path, QString &name, QStrin
 
 void QGit::createLocalBranch(const QString &name, const QString &commit_id, bool checkout, bool force)
 {
-    if (!isValidRefName(QStringLiteral("refs/heads/"), name))
+    QGitError error;
+    try
     {
-        giterr_set_str(GITERR_INVALID, "Invalid branch name");
-        throw QGitError("createLocalBranch", -1);
-    }
-
-    GitRepository repo = openRepo(m_path);
-    GitReference branch;
-    GitObject target_obj;
-    GitCommit commit_obj;
-    git_oid oid;
-    int res = 0;
-
-    QString effectiveCommitId = commit_id.isEmpty() ? QStringLiteral("HEAD") : commit_id;
-    res = resolveToCommitOid(oid, repo, effectiveCommitId);
-    if(res)
-    {
-        throw QGitError("resolveToCommitOid", res);
-    }
-
-    res = git_commit_lookup(commit_obj, repo, &oid);
-    if(res)
-    {
-        throw QGitError("git_commit_lookup", res);
-    }
-
-    res = git_branch_create(branch, repo, name.toUtf8().constData(), commit_obj, force);
-    if(res)
-    {
-        throw QGitError("git_branch_create", res);
-    }
-
-    if (checkout)
-    {
-        GitObject treeish;
-        git_checkout_options opts = makeCheckoutOptions(GIT_CHECKOUT_SAFE);
-
-        QString refName = "refs/heads/" + name;
-
-        res = git_revparse_single(treeish, repo, refName.toUtf8().constData());
-        if(res)
+        if (!isValidRefName(QStringLiteral("refs/heads/"), name))
         {
-            throw QGitError("git_revparse_single", res);
+            giterr_set_str(GITERR_INVALID, "Invalid branch name");
+            throw QGitError("createLocalBranch", -1);
         }
 
-        res = git_checkout_tree(repo, treeish, &opts);
+        GitRepository repo = openRepo(m_path);
+        GitReference branch;
+        GitObject target_obj;
+        GitCommit commit_obj;
+        git_oid oid;
+        int res = 0;
+
+        QString effectiveCommitId = commit_id.isEmpty() ? QStringLiteral("HEAD") : commit_id;
+        res = resolveToCommitOid(oid, repo, effectiveCommitId);
         if(res)
         {
-            throw QGitError("git_checkout_tree", res);
+            throw QGitError("resolveToCommitOid", res);
         }
 
-        res = git_repository_set_head(repo, refName.toUtf8().constData());
+        res = git_commit_lookup(commit_obj, repo, &oid);
         if(res)
         {
-            throw QGitError("git_repository_set_head", res);
+            throw QGitError("git_commit_lookup", res);
         }
+
+        res = git_branch_create(branch, repo, name.toUtf8().constData(), commit_obj, force);
+        if(res)
+        {
+            throw QGitError("git_branch_create", res);
+        }
+
+        if (checkout)
+        {
+            GitObject treeish;
+            git_checkout_options opts = makeCheckoutOptions(GIT_CHECKOUT_SAFE);
+
+            QString refName = "refs/heads/" + name;
+
+            res = git_revparse_single(treeish, repo, refName.toUtf8().constData());
+            if(res)
+            {
+                throw QGitError("git_revparse_single", res);
+            }
+
+            res = git_checkout_tree(repo, treeish, &opts);
+            if(res)
+            {
+                throw QGitError("git_checkout_tree", res);
+            }
+
+            res = git_repository_set_head(repo, refName.toUtf8().constData());
+            if(res)
+            {
+                throw QGitError("git_repository_set_head", res);
+            }
+        }
+    } catch (const QGitError &ex) {
+        error = ex;
     }
+    emit createLocalBranchReply(error);
 }
 
 void QGit::cherrypick(const QString &commitId)
 {
-    GitRepository repo = openRepo(m_path);
-
-    git_repository_state_t state = (git_repository_state_t)git_repository_state(repo);
-    if (state != GIT_REPOSITORY_STATE_NONE)
+    QGitError error;
+    try
     {
-        throw QGitError(tr("Repository is not in a clean state. Please resolve or abort the active merge, rebase, or cherry-pick first."), -1);
+        GitRepository repo = openRepo(m_path);
+
+        git_repository_state_t state = (git_repository_state_t)git_repository_state(repo);
+        if (state != GIT_REPOSITORY_STATE_NONE)
+        {
+            throw QGitError(tr("Repository is not in a clean state. Please resolve or abort the active merge, rebase, or cherry-pick first."), -1);
+        }
+
+        git_oid oid;
+        int res = resolveToCommitOid(oid, repo, commitId);
+        if (res)
+        {
+            throw QGitError("resolveToCommitOid", res);
+        }
+
+        GitCommit commit;
+        res = git_commit_lookup(commit, repo, &oid);
+        if (res)
+        {
+            throw QGitError("git_commit_lookup", res);
+        }
+
+        git_cherrypick_options opts = GIT_CHERRYPICK_OPTIONS_INIT;
+        opts.checkout_opts.checkout_strategy = GIT_CHECKOUT_SAFE;
+
+        res = git_cherrypick(repo, commit, &opts);
+        if (res)
+        {
+            throw QGitError("git_cherrypick", res);
+        }
+
+        GitIndex index;
+        res = git_repository_index(index, repo);
+        if (res)
+        {
+            throw QGitError("git_repository_index", res);
+        }
+
+        if (git_index_has_conflicts(index))
+        {
+            throw QGitError(tr("Cherry-pick completed with conflicts. Please resolve conflicts and commit manually."), -1);
+        }
+
+        // No conflicts, auto-commit
+        git_oid tree_id;
+        res = git_index_write_tree(&tree_id, index);
+        if (res)
+        {
+            throw QGitError("git_index_write_tree", res);
+        }
+
+        GitTree tree;
+        res = git_tree_lookup(tree, repo, &tree_id);
+        if (res)
+        {
+            throw QGitError("git_tree_lookup", res);
+        }
+
+        GitSignature committer;
+        res = git_signature_default(committer, repo);
+        if (res)
+        {
+            throw QGitError("git_signature_default", res);
+        }
+
+        const git_signature *author = git_commit_author(commit);
+        const char *message = git_commit_message(commit);
+
+        GitReference head_ref;
+        res = git_repository_head(head_ref, repo);
+        if (res)
+        {
+            throw QGitError("git_repository_head", res);
+        }
+
+        GitCommit parent;
+        res = git_commit_lookup(parent, repo, git_reference_target(head_ref));
+        if (res)
+        {
+            throw QGitError("git_commit_lookup (HEAD)", res);
+        }
+
+        git_oid new_commit_id;
+        const git_commit *parents[] = { parent.value };
+        res = git_commit_create(
+            &new_commit_id,
+            repo,
+            "HEAD",
+            author,
+            committer,
+            nullptr,
+            message,
+            tree,
+            1,
+            parents
+        );
+        if (res)
+        {
+            throw QGitError("git_commit_create", res);
+        }
+
+        git_repository_state_cleanup(repo);
+    } catch (const QGitError &ex) {
+        error = ex;
     }
-
-    git_oid oid;
-    int res = resolveToCommitOid(oid, repo, commitId);
-    if (res)
-    {
-        throw QGitError("resolveToCommitOid", res);
-    }
-
-    GitCommit commit;
-    res = git_commit_lookup(commit, repo, &oid);
-    if (res)
-    {
-        throw QGitError("git_commit_lookup", res);
-    }
-
-    git_cherrypick_options opts = GIT_CHERRYPICK_OPTIONS_INIT;
-    opts.checkout_opts.checkout_strategy = GIT_CHECKOUT_SAFE;
-
-    res = git_cherrypick(repo, commit, &opts);
-    if (res)
-    {
-        throw QGitError("git_cherrypick", res);
-    }
-
-    GitIndex index;
-    res = git_repository_index(index, repo);
-    if (res)
-    {
-        throw QGitError("git_repository_index", res);
-    }
-
-    if (git_index_has_conflicts(index))
-    {
-        throw QGitError(tr("Cherry-pick completed with conflicts. Please resolve conflicts and commit manually."), -1);
-    }
-
-    // No conflicts, auto-commit
-    git_oid tree_id;
-    res = git_index_write_tree(&tree_id, index);
-    if (res)
-    {
-        throw QGitError("git_index_write_tree", res);
-    }
-
-    GitTree tree;
-    res = git_tree_lookup(tree, repo, &tree_id);
-    if (res)
-    {
-        throw QGitError("git_tree_lookup", res);
-    }
-
-    GitSignature committer;
-    res = git_signature_default(committer, repo);
-    if (res)
-    {
-        throw QGitError("git_signature_default", res);
-    }
-
-    const git_signature *author = git_commit_author(commit);
-    const char *message = git_commit_message(commit);
-
-    GitReference head_ref;
-    res = git_repository_head(head_ref, repo);
-    if (res)
-    {
-        throw QGitError("git_repository_head", res);
-    }
-
-    GitCommit parent;
-    res = git_commit_lookup(parent, repo, git_reference_target(head_ref));
-    if (res)
-    {
-        throw QGitError("git_commit_lookup (HEAD)", res);
-    }
-
-    git_oid new_commit_id;
-    const git_commit *parents[] = { parent.value };
-    res = git_commit_create(
-        &new_commit_id,
-        repo,
-        "HEAD",
-        author,
-        committer,
-        nullptr,
-        message,
-        tree,
-        1,
-        parents
-    );
-    if (res)
-    {
-        throw QGitError("git_commit_create", res);
-    }
-
-    git_repository_state_cleanup(repo);
+    emit cherrypickReply(error);
 }
 
 void QGit::revert(const QString &commitId)
 {
-    GitRepository repo = openRepo(m_path);
-
-    git_repository_state_t state = (git_repository_state_t)git_repository_state(repo);
-    if (state != GIT_REPOSITORY_STATE_NONE)
+    QGitError error;
+    try
     {
-        throw QGitError(tr("Repository is not in a clean state. Please resolve or abort the active merge, rebase, or cherry-pick first."), -1);
+        GitRepository repo = openRepo(m_path);
+
+        git_repository_state_t state = (git_repository_state_t)git_repository_state(repo);
+        if (state != GIT_REPOSITORY_STATE_NONE)
+        {
+            throw QGitError(tr("Repository is not in a clean state. Please resolve or abort the active merge, rebase, or cherry-pick first."), -1);
+        }
+
+        git_oid oid;
+        int res = resolveToCommitOid(oid, repo, commitId);
+        if (res)
+        {
+            throw QGitError("resolveToCommitOid", res);
+        }
+
+        GitCommit commit;
+        res = git_commit_lookup(commit, repo, &oid);
+        if (res)
+        {
+            throw QGitError("git_commit_lookup", res);
+        }
+
+        git_revert_options opts = GIT_REVERT_OPTIONS_INIT;
+        opts.checkout_opts.checkout_strategy = GIT_CHECKOUT_SAFE;
+
+        res = git_revert(repo, commit, &opts);
+        if (res)
+        {
+            throw QGitError("git_revert", res);
+        }
+
+        GitIndex index;
+        res = git_repository_index(index, repo);
+        if (res)
+        {
+            throw QGitError("git_repository_index", res);
+        }
+
+        if (git_index_has_conflicts(index))
+        {
+            throw QGitError(tr("Revert completed with conflicts. Please resolve conflicts and commit manually."), -1);
+        }
+
+        // No conflicts, auto-commit
+        git_oid tree_id;
+        res = git_index_write_tree(&tree_id, index);
+        if (res)
+        {
+            throw QGitError("git_index_write_tree", res);
+        }
+
+        GitTree tree;
+        res = git_tree_lookup(tree, repo, &tree_id);
+        if (res)
+        {
+            throw QGitError("git_tree_lookup", res);
+        }
+
+        GitSignature me;
+        res = git_signature_default(me, repo);
+        if (res)
+        {
+            throw QGitError("git_signature_default", res);
+        }
+
+        // Extract summary of the reverted commit's message
+        const char *orig_message = git_commit_message(commit);
+        QString summary;
+        if (orig_message)
+        {
+            QString fullMsg = QString::fromUtf8(orig_message);
+            summary = fullMsg.section('\n', 0, 0).trimmed();
+        }
+        else
+        {
+            summary = "unknown commit";
+        }
+
+        QString revertMsg = QString("Revert \"%1\"\n\nThis reverts commit %2.\n").arg(summary, commitId);
+
+        GitReference head_ref;
+        res = git_repository_head(head_ref, repo);
+        if (res)
+        {
+            throw QGitError("git_repository_head", res);
+        }
+
+        GitCommit parent;
+        res = git_commit_lookup(parent, repo, git_reference_target(head_ref));
+        if (res)
+        {
+            throw QGitError("git_commit_lookup (HEAD)", res);
+        }
+
+        git_oid new_commit_id;
+        const git_commit *parents[] = { parent.value };
+        res = git_commit_create(
+            &new_commit_id,
+            repo,
+            "HEAD",
+            me,
+            me,
+            nullptr,
+            revertMsg.toUtf8().constData(),
+            tree,
+            1,
+            parents
+        );
+        if (res)
+        {
+            throw QGitError("git_commit_create", res);
+        }
+
+        git_repository_state_cleanup(repo);
+    } catch (const QGitError &ex) {
+        error = ex;
     }
-
-    git_oid oid;
-    int res = resolveToCommitOid(oid, repo, commitId);
-    if (res)
-    {
-        throw QGitError("resolveToCommitOid", res);
-    }
-
-    GitCommit commit;
-    res = git_commit_lookup(commit, repo, &oid);
-    if (res)
-    {
-        throw QGitError("git_commit_lookup", res);
-    }
-
-    git_revert_options opts = GIT_REVERT_OPTIONS_INIT;
-    opts.checkout_opts.checkout_strategy = GIT_CHECKOUT_SAFE;
-
-    res = git_revert(repo, commit, &opts);
-    if (res)
-    {
-        throw QGitError("git_revert", res);
-    }
-
-    GitIndex index;
-    res = git_repository_index(index, repo);
-    if (res)
-    {
-        throw QGitError("git_repository_index", res);
-    }
-
-    if (git_index_has_conflicts(index))
-    {
-        throw QGitError(tr("Revert completed with conflicts. Please resolve conflicts and commit manually."), -1);
-    }
-
-    // No conflicts, auto-commit
-    git_oid tree_id;
-    res = git_index_write_tree(&tree_id, index);
-    if (res)
-    {
-        throw QGitError("git_index_write_tree", res);
-    }
-
-    GitTree tree;
-    res = git_tree_lookup(tree, repo, &tree_id);
-    if (res)
-    {
-        throw QGitError("git_tree_lookup", res);
-    }
-
-    GitSignature me;
-    res = git_signature_default(me, repo);
-    if (res)
-    {
-        throw QGitError("git_signature_default", res);
-    }
-
-    // Extract summary of the reverted commit's message
-    const char *orig_message = git_commit_message(commit);
-    QString summary;
-    if (orig_message)
-    {
-        QString fullMsg = QString::fromUtf8(orig_message);
-        summary = fullMsg.section('\n', 0, 0).trimmed();
-    }
-    else
-    {
-        summary = "unknown commit";
-    }
-
-    QString revertMsg = QString("Revert \"%1\"\n\nThis reverts commit %2.\n").arg(summary, commitId);
-
-    GitReference head_ref;
-    res = git_repository_head(head_ref, repo);
-    if (res)
-    {
-        throw QGitError("git_repository_head", res);
-    }
-
-    GitCommit parent;
-    res = git_commit_lookup(parent, repo, git_reference_target(head_ref));
-    if (res)
-    {
-        throw QGitError("git_commit_lookup (HEAD)", res);
-    }
-
-    git_oid new_commit_id;
-    const git_commit *parents[] = { parent.value };
-    res = git_commit_create(
-        &new_commit_id,
-        repo,
-        "HEAD",
-        me,
-        me,
-        nullptr,
-        revertMsg.toUtf8().constData(),
-        tree,
-        1,
-        parents
-    );
-    if (res)
-    {
-        throw QGitError("git_commit_create", res);
-    }
-
-    git_repository_state_cleanup(repo);
+    emit revertReply(error);
 }
 
 void QGit::reset(const QString &commitId, git_reset_t type)
 {
-    GitRepository repo = openRepo(m_path);
-
-    git_oid oid;
-    int res = resolveToCommitOid(oid, repo, commitId);
-    if (res)
+    QGitError error;
+    try
     {
-        throw QGitError("resolveToCommitOid", res);
-    }
+        GitRepository repo = openRepo(m_path);
 
-    GitObject obj;
-    res = git_object_lookup(obj, repo, &oid, GIT_OBJECT_COMMIT);
-    if (res)
-    {
-        throw QGitError("git_object_lookup", res);
-    }
+        git_oid oid;
+        int res = resolveToCommitOid(oid, repo, commitId);
+        if (res)
+        {
+            throw QGitError("resolveToCommitOid", res);
+        }
 
-    git_checkout_options opts = makeCheckoutOptions(GIT_CHECKOUT_SAFE);
+        GitObject obj;
+        res = git_object_lookup(obj, repo, &oid, GIT_OBJECT_COMMIT);
+        if (res)
+        {
+            throw QGitError("git_object_lookup", res);
+        }
 
-    res = git_reset(repo, obj, type, &opts);
-    if (res)
-    {
-        throw QGitError("git_reset", res);
-    }
+        git_checkout_options opts = makeCheckoutOptions(GIT_CHECKOUT_SAFE);
 
-    if (type == GIT_RESET_HARD || type == GIT_RESET_MIXED)
-    {
-        git_repository_state_cleanup(repo);
+        res = git_reset(repo, obj, type, &opts);
+        if (res)
+        {
+            throw QGitError("git_reset", res);
+        }
+
+        if (type == GIT_RESET_HARD || type == GIT_RESET_MIXED)
+        {
+            git_repository_state_cleanup(repo);
+        }
+    } catch (const QGitError &ex) {
+        error = ex;
     }
+    emit resetReply(error);
 }
 
 QString QGit::configString(const QString &key) const
@@ -1662,30 +1720,42 @@ QList<QGitSubmodule> QGit::submodules() const
 
 void QGit::initSubmodule(const QString &name)
 {
-    GitRepository repo;
-    int res = git_repository_open(repo, m_path.absolutePath().toUtf8().constData());
-    if (res) throw QGitError("git_repository_open", res);
+    QGitError error;
+    try {
+        GitRepository repo;
+        int res = git_repository_open(repo, m_path.absolutePath().toUtf8().constData());
+        if (res) throw QGitError("git_repository_open", res);
 
-    GitSubmodule sm;
-    res = git_submodule_lookup(sm, repo, name.toUtf8().constData());
-    if (res) throw QGitError("git_submodule_lookup", res);
+        GitSubmodule sm;
+        res = git_submodule_lookup(sm, repo, name.toUtf8().constData());
+        if (res) throw QGitError("git_submodule_lookup", res);
 
-    res = git_submodule_init(sm, 0);
-    if (res) throw QGitError("git_submodule_init", res);
+        res = git_submodule_init(sm, 0);
+        if (res) throw QGitError("git_submodule_init", res);
+    } catch (const QGitError &ex) {
+        error = ex;
+    }
+    emit initSubmoduleReply(error);
 }
 
 void QGit::syncSubmodule(const QString &name)
 {
-    GitRepository repo;
-    int res = git_repository_open(repo, m_path.absolutePath().toUtf8().constData());
-    if (res) throw QGitError("git_repository_open", res);
+    QGitError error;
+    try {
+        GitRepository repo;
+        int res = git_repository_open(repo, m_path.absolutePath().toUtf8().constData());
+        if (res) throw QGitError("git_repository_open", res);
 
-    GitSubmodule sm;
-    res = git_submodule_lookup(sm, repo, name.toUtf8().constData());
-    if (res) throw QGitError("git_submodule_lookup", res);
+        GitSubmodule sm;
+        res = git_submodule_lookup(sm, repo, name.toUtf8().constData());
+        if (res) throw QGitError("git_submodule_lookup", res);
 
-    res = git_submodule_sync(sm);
-    if (res) throw QGitError("git_submodule_sync", res);
+        res = git_submodule_sync(sm);
+        if (res) throw QGitError("git_submodule_sync", res);
+    } catch (const QGitError &ex) {
+        error = ex;
+    }
+    emit syncSubmoduleReply(error);
 }
 
 void QGit::addRemote(const QString &name, const QString &url)
@@ -1858,63 +1928,81 @@ QList<QGitWorktree> QGit::worktrees() const
 
 void QGit::addWorktree(const QString &name, const QString &path, const QString &branch, bool newBranch)
 {
-    GitRepository repo;
-    int res = git_repository_open(repo, m_path.absolutePath().toUtf8().constData());
-    if (res) throw QGitError("git_repository_open", res);
+    QGitError error;
+    try {
+        GitRepository repo;
+        int res = git_repository_open(repo, m_path.absolutePath().toUtf8().constData());
+        if (res) throw QGitError("git_repository_open", res);
 
-    git_worktree_add_options opts = GIT_WORKTREE_ADD_OPTIONS_INIT;
+        git_worktree_add_options opts = GIT_WORKTREE_ADD_OPTIONS_INIT;
 
-    if (!branch.isEmpty() && !newBranch) {
-        // Checkout an existing branch: resolve it to a reference
-        GitReference ref;
-        QString refName = QStringLiteral("refs/heads/") + branch;
-        res = git_reference_lookup(ref, repo, refName.toUtf8().constData());
-        if (res) throw QGitError("git_reference_lookup", res);
-        opts.ref = ref.value;
+        if (!branch.isEmpty() && !newBranch) {
+            // Checkout an existing branch: resolve it to a reference
+            GitReference ref;
+            QString refName = QStringLiteral("refs/heads/") + branch;
+            res = git_reference_lookup(ref, repo, refName.toUtf8().constData());
+            if (res) throw QGitError("git_reference_lookup", res);
+            opts.ref = ref.value;
+        }
+
+        // When newBranch is true, opts.ref stays null and libgit2 creates a new branch
+        // named after `name` at HEAD.
+
+        GitWorktree wt;
+        res = git_worktree_add(wt, repo, name.toUtf8().constData(), path.toUtf8().constData(), &opts);
+        if (res) throw QGitError("git_worktree_add", res);
+    } catch (const QGitError &ex) {
+        error = ex;
     }
-
-    // When newBranch is true, opts.ref stays null and libgit2 creates a new branch
-    // named after `name` at HEAD.
-
-    GitWorktree wt;
-    res = git_worktree_add(wt, repo, name.toUtf8().constData(), path.toUtf8().constData(), &opts);
-    if (res) throw QGitError("git_worktree_add", res);
+    emit addWorktreeReply(error);
 }
 
 void QGit::removeWorktree(const QString &name)
 {
-    GitRepository repo;
-    int res = git_repository_open(repo, m_path.absolutePath().toUtf8().constData());
-    if (res) throw QGitError("git_repository_open", res);
+    QGitError error;
+    try {
+        GitRepository repo;
+        int res = git_repository_open(repo, m_path.absolutePath().toUtf8().constData());
+        if (res) throw QGitError("git_repository_open", res);
 
-    GitWorktree wt;
-    res = git_worktree_lookup(wt, repo, name.toUtf8().constData());
-    if (res) throw QGitError("git_worktree_lookup", res);
+        GitWorktree wt;
+        res = git_worktree_lookup(wt, repo, name.toUtf8().constData());
+        if (res) throw QGitError("git_worktree_lookup", res);
 
-    git_worktree_prune_options opts = GIT_WORKTREE_PRUNE_OPTIONS_INIT;
-    opts.flags = GIT_WORKTREE_PRUNE_VALID | GIT_WORKTREE_PRUNE_LOCKED | GIT_WORKTREE_PRUNE_WORKING_TREE;
+        git_worktree_prune_options opts = GIT_WORKTREE_PRUNE_OPTIONS_INIT;
+        opts.flags = GIT_WORKTREE_PRUNE_VALID | GIT_WORKTREE_PRUNE_LOCKED | GIT_WORKTREE_PRUNE_WORKING_TREE;
 
-    res = git_worktree_prune(wt, &opts);
-    if (res) throw QGitError("git_worktree_prune", res);
+        res = git_worktree_prune(wt, &opts);
+        if (res) throw QGitError("git_worktree_prune", res);
+    } catch (const QGitError &ex) {
+        error = ex;
+    }
+    emit removeWorktreeReply(error);
 }
 
 void QGit::lockWorktree(const QString &name, bool lock)
 {
-    GitRepository repo;
-    int res = git_repository_open(repo, m_path.absolutePath().toUtf8().constData());
-    if (res) throw QGitError("git_repository_open", res);
+    QGitError error;
+    try {
+        GitRepository repo;
+        int res = git_repository_open(repo, m_path.absolutePath().toUtf8().constData());
+        if (res) throw QGitError("git_repository_open", res);
 
-    GitWorktree wt;
-    res = git_worktree_lookup(wt, repo, name.toUtf8().constData());
-    if (res) throw QGitError("git_worktree_lookup", res);
+        GitWorktree wt;
+        res = git_worktree_lookup(wt, repo, name.toUtf8().constData());
+        if (res) throw QGitError("git_worktree_lookup", res);
 
-    if (lock) {
-        res = git_worktree_lock(wt, nullptr);
-        if (res) throw QGitError("git_worktree_lock", res);
-    } else {
-        res = git_worktree_unlock(wt);
-        if (res) throw QGitError("git_worktree_unlock", res);
+        if (lock) {
+            res = git_worktree_lock(wt, nullptr);
+            if (res) throw QGitError("git_worktree_lock", res);
+        } else {
+            res = git_worktree_unlock(wt);
+            if (res) throw QGitError("git_worktree_unlock", res);
+        }
+    } catch (const QGitError &ex) {
+        error = ex;
     }
+    emit lockWorktreeReply(error);
 }
 
 void QGit::updateSubmodule(const QString &name)

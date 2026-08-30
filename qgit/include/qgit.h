@@ -15,6 +15,8 @@
 #include <QMap>
 #include <QDir>
 #include <QUrl>
+#include <QMutex>
+#include <QMutexLocker>
 #include <atomic>
 
 
@@ -117,10 +119,6 @@ public:
     QList<QGitBlameHunk> blameFile(const QString &filePath, const QString &commitId = QString()) const;
     QList<QGitBranch> branches(git_branch_t type) const;
     bool hasCommitId(const QString &commitId) const;
-    void createLocalBranch(const QString &name, const QString &commit_id  = "", bool checkout = false, bool force = false);
-    void cherrypick(const QString &commitId);
-    void revert(const QString &commitId);
-    void reset(const QString &commitId, git_reset_t type);
     QString configString(const QString &key) const;
     void setConfigString(const QString &key, const QString &value, bool global = false);
     void deleteConfigEntry(const QString &key, bool global = false);
@@ -130,16 +128,14 @@ public:
     bool conflictContents(const QString &path, QString &ancestor, QString &ours, QString &theirs) const;
     void resolveConflict(const QString &path, const QString &resolvedContent);
     QList<QGitSubmodule> submodules() const;
-    void initSubmodule(const QString &name);
-    void syncSubmodule(const QString &name);
     void addRemote(const QString &name, const QString &url);
     void deleteRemote(const QString &name);
     void renameRemote(const QString &oldName, const QString &newName);
     void setRemoteUrl(const QString &name, const QString &url, bool isPushUrl = false);
     QList<QGitWorktree> worktrees() const;
-    void addWorktree(const QString &name, const QString &path, const QString &branch, bool newBranch = false);
-    void removeWorktree(const QString &name);
-    void lockWorktree(const QString &name, bool lock);
+
+    void setCredentialHandler(QObject *handler) { m_credentialHandler = handler; }
+    QObject *credentialHandler() const { return m_credentialHandler; }
 
     static QString getBranchNameFromPath(const QString &path);
     static int createLocalRepository(const QDir &path);
@@ -150,6 +146,15 @@ public slots:
     void init();
     void signature();
     void updateSubmodule(const QString &name);
+    void initSubmodule(const QString &name);
+    void syncSubmodule(const QString &name);
+    void createLocalBranch(const QString &name, const QString &commit_id = "", bool checkout = false, bool force = false);
+    void cherrypick(const QString &commitId);
+    void revert(const QString &commitId);
+    void reset(const QString &commitId, git_reset_t type);
+    void addWorktree(const QString &name, const QString &path, const QString &branch, bool newBranch = false);
+    void removeWorktree(const QString &name);
+    void lockWorktree(const QString &name, bool lock);
     void deleteBranches(const QList<QGitBranch> &branches, bool force);
     void status();
     void listBranchesAndTags();
@@ -188,9 +193,9 @@ public slots:
     void applyPatch(const QString &patchPath);
     void setNote(const QString &commitHash, const QString &note);
     void removeNote(const QString &commitHash);
-    void setLastPushError(const QString &err) { m_lastPushError = err; }
-    QString lastPushError() const { return m_lastPushError; }
-    void clearLastPushError() { m_lastPushError.clear(); }
+    void setLastPushError(const QString &err);
+    QString lastPushError() const;
+    void clearLastPushError();
 
 signals:
     void requestPassword(QString &password);
@@ -198,6 +203,8 @@ signals:
     void initReply(const QGitError &error);
     void signatureReply(const QString &name, const QString &email, const QGitError &error);
     void updateSubmoduleReply(const QGitError &error);
+    void initSubmoduleReply(const QGitError &error);
+    void syncSubmoduleReply(const QGitError &error);
     void statusReply(const QMap<git_status_t, int> &items, const QGitError &error);
     void listBranchesAndTagsReply(const QList<QGitBranch> &branches, const QList<QGitTag> &tags, const QList<QGitSubmodule> &submodules, const QList<QGitWorktree> &worktrees, bool hasRemotes, bool hasCommitsToPush, const QGitError &error);
     void stashSaveReply(const QGitError &error);
@@ -235,9 +242,18 @@ signals:
     void applyPatchReply(const QGitError &error);
     void setNoteReply(const QGitError &error);
     void removeNoteReply(const QGitError &error);
+    void cherrypickReply(const QGitError &error);
+    void revertReply(const QGitError &error);
+    void resetReply(const QGitError &error);
+    void createLocalBranchReply(const QGitError &error);
+    void addWorktreeReply(const QGitError &error);
+    void removeWorktreeReply(const QGitError &error);
+    void lockWorktreeReply(const QGitError &error);
 
 private:
+    mutable QMutex m_mutex;
     QDir m_path;
     std::atomic<bool> m_abortSearch{false};
     QString m_lastPushError;
+    QObject *m_credentialHandler = nullptr;
 };

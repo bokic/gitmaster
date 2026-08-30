@@ -75,17 +75,15 @@ void QGitCloneRepositoryDialog::on_pushButton_close_clicked()
 
 void QGitCloneRepositoryDialog::cloneReply(const QGitError &error)
 {
-    Q_UNUSED(error)
-
-    if (m_thread.isRunning())
+    if (error.errorCode() != 0)
     {
-       reject();
-
-       return;
+        ui->label_status->setText(tr("Clone failed: %1").arg(error.errorString()));
+        ui->pushButton_close->setText(tr("&Close"));
+        ui->pushButton_close->setEnabled(true);
+        return;
     }
 
-    ui->pushButton_close->setText(tr("&Close"));
-    ui->pushButton_close->setEnabled(true);
+    accept();
 }
 
 void QGitCloneRepositoryDialog::cloneTransferReply(unsigned int total_objects, unsigned int indexed_objects, unsigned int received_objects, unsigned int local_objects, unsigned int total_deltas, unsigned int indexed_deltas, size_t received_bytes)

@@ -235,6 +235,31 @@ QGitRepository::QGitRepository(const QString &path, QWidget *parent)
     connect(this, &QGitRepository::repositoryRemoveNote, m_git, &QGit::removeNote);
     connect(m_git, &QGit::removeNoteReply, this, &QGitRepository::repositoryRemoveNoteReply);
 
+    connect(this, &QGitRepository::repositoryCherrypick, m_git, &QGit::cherrypick);
+    connect(m_git, &QGit::cherrypickReply, this, &QGitRepository::repositoryCherrypickReply);
+    connect(this, &QGitRepository::repositoryRevert, m_git, &QGit::revert);
+    connect(m_git, &QGit::revertReply, this, &QGitRepository::repositoryRevertReply);
+    connect(this, &QGitRepository::repositoryReset, m_git, &QGit::reset);
+    connect(m_git, &QGit::resetReply, this, &QGitRepository::repositoryResetReply);
+    connect(this, &QGitRepository::repositoryCreateLocalBranch, m_git, &QGit::createLocalBranch);
+    connect(m_git, &QGit::createLocalBranchReply, this, &QGitRepository::repositoryCreateLocalBranchReply);
+    connect(this, &QGitRepository::repositoryAddWorktree, m_git, &QGit::addWorktree);
+    connect(m_git, &QGit::addWorktreeReply, this, &QGitRepository::repositoryAddWorktreeReply);
+    connect(this, &QGitRepository::repositoryRemoveWorktree, m_git, &QGit::removeWorktree);
+    connect(m_git, &QGit::removeWorktreeReply, this, &QGitRepository::repositoryRemoveWorktreeReply);
+    connect(this, &QGitRepository::repositoryLockWorktree, m_git, &QGit::lockWorktree);
+    connect(m_git, &QGit::lockWorktreeReply, this, &QGitRepository::repositoryLockWorktreeReply);
+    connect(this, &QGitRepository::repositoryInitSubmodule, m_git, &QGit::initSubmodule);
+    connect(m_git, &QGit::initSubmoduleReply, this, &QGitRepository::repositoryInitSubmoduleReply);
+    connect(this, &QGitRepository::repositorySyncSubmodule, m_git, &QGit::syncSubmodule);
+    connect(m_git, &QGit::syncSubmoduleReply, this, &QGitRepository::repositorySyncSubmoduleReply);
+    connect(this, &QGitRepository::repositoryCheckoutBranch, m_git, &QGit::checkoutBranch);
+    connect(this, &QGitRepository::repositorySetUpstream, m_git, &QGit::setUpstream);
+    connect(this, &QGitRepository::repositoryDeleteTag, m_git, &QGit::deleteTag);
+    connect(this, &QGitRepository::repositoryStashApply, m_git, &QGit::stashApply);
+    connect(this, &QGitRepository::repositoryStashPop, m_git, &QGit::stashPop);
+    connect(this, &QGitRepository::repositoryStashRemove, m_git, &QGit::stashRemove);
+
     ui->branchesTreeView->setContextMenuPolicy(Qt::CustomContextMenu);
     ui->branchesTreeView->setEditTriggers(QAbstractItemView::NoEditTriggers);
 
@@ -304,12 +329,8 @@ void QGitRepository::branchDialog()
             auto branchName = dlg.newBranchName();
             auto commitId = dlg.newBranchCommitId();
             auto checkout = dlg.newBranchCheckout();
-            try {
-                m_git->createLocalBranch(branchName, commitId, checkout);
-                emit repositoryBranches();
-            } catch (const QGitError &error) {
-                QMessageBox::critical(this, tr("Error creating branch"), error.errorString());
-            }
+            emit statusMessage(tr("Creating branch %1...").arg(branchName));
+            emit repositoryCreateLocalBranch(branchName, commitId, checkout, false);
         }
         else if (dlg.operation() == QGitBranchDialog::DeleteBranchesOperation)
         {
@@ -325,13 +346,9 @@ void QGitRepository::worktreeDialog()
 {
     QGitWorktreeDialog dlg(this);
     if (dlg.exec() == QDialog::Accepted) {
-        try {
-            m_git->addWorktree(dlg.worktreeName(), dlg.worktreePath(),
-                               dlg.worktreeBranch(), dlg.createNewBranch());
-            refreshData();
-        } catch (const QGitError &error) {
-            QMessageBox::critical(this, tr("Error adding worktree"), error.errorString());
-        }
+        emit statusMessage(tr("Adding worktree %1...").arg(dlg.worktreeName()));
+        emit repositoryAddWorktree(dlg.worktreeName(), dlg.worktreePath(),
+                                   dlg.worktreeBranch(), dlg.createNewBranch());
     }
 }
 
@@ -466,6 +483,100 @@ void QGitRepository::repositoryRebaseReply(const QGitError &error)
                               tr("Could not rebase onto the specified branch. Details: %1").arg(error.errorString()));
     } else {
         refreshData();
+    }
+}
+
+void QGitRepository::repositoryCreateLocalBranchReply(const QGitError &error)
+{
+    emit clearStatusMessage();
+    if (error.errorCode() != 0) {
+        QMessageBox::critical(this, tr("Error creating branch"), error.errorString());
+    } else {
+        refreshData();
+    }
+}
+
+void QGitRepository::repositoryCherrypickReply(const QGitError &error)
+{
+    emit clearStatusMessage();
+    if (error.errorCode() != 0) {
+        QMessageBox::warning(this, tr("Cherry-pick"), error.errorString());
+    } else {
+        QMessageBox::information(this, tr("Cherry-pick"), tr("Commit cherry-picked successfully."));
+    }
+    refreshData();
+}
+
+void QGitRepository::repositoryRevertReply(const QGitError &error)
+{
+    emit clearStatusMessage();
+    if (error.errorCode() != 0) {
+        QMessageBox::warning(this, tr("Revert"), error.errorString());
+    } else {
+        QMessageBox::information(this, tr("Revert"), tr("Commit reverted successfully."));
+    }
+    refreshData();
+}
+
+void QGitRepository::repositoryResetReply(const QGitError &error)
+{
+    emit clearStatusMessage();
+    if (error.errorCode() != 0) {
+        QMessageBox::critical(this, tr("Reset Error"), error.errorString());
+    } else {
+        QMessageBox::information(this, tr("Reset"), tr("Branch reset successfully."));
+    }
+    refreshData();
+}
+
+void QGitRepository::repositoryAddWorktreeReply(const QGitError &error)
+{
+    emit clearStatusMessage();
+    if (error.errorCode() != 0) {
+        QMessageBox::critical(this, tr("Error adding worktree"), error.errorString());
+    } else {
+        refreshData();
+    }
+}
+
+void QGitRepository::repositoryRemoveWorktreeReply(const QGitError &error)
+{
+    emit clearStatusMessage();
+    if (error.errorCode() != 0) {
+        QMessageBox::critical(this, tr("Worktree Error"), error.errorString());
+    } else {
+        refreshData();
+    }
+}
+
+void QGitRepository::repositoryLockWorktreeReply(const QGitError &error)
+{
+    emit clearStatusMessage();
+    if (error.errorCode() != 0) {
+        QMessageBox::critical(this, tr("Worktree Error"), error.errorString());
+    } else {
+        refreshData();
+    }
+}
+
+void QGitRepository::repositoryInitSubmoduleReply(const QGitError &error)
+{
+    emit clearStatusMessage();
+    if (error.errorCode() != 0) {
+        QMessageBox::critical(this, tr("Error"), error.errorString());
+    } else {
+        refreshData();
+        QMessageBox::information(this, tr("Submodule Initialized"), tr("Submodule initialized successfully."));
+    }
+}
+
+void QGitRepository::repositorySyncSubmoduleReply(const QGitError &error)
+{
+    emit clearStatusMessage();
+    if (error.errorCode() != 0) {
+        QMessageBox::critical(this, tr("Error"), error.errorString());
+    } else {
+        QMessageBox::information(this, tr("Submodule Synced"), tr("Submodule URL synchronized successfully."));
     }
 }
 
@@ -1218,12 +1329,8 @@ void QGitRepository::on_branchesTreeView_customContextMenuRequested(const QPoint
         }
         else if (selectedAction == lockAction)
         {
-            try {
-                m_git->lockWorktree(wtName, !wtLocked);
-                refreshData();
-            } catch (const QGitError &error) {
-                QMessageBox::critical(this, tr("Worktree Error"), error.errorString());
-            }
+            emit statusMessage(tr("%1 worktree %2...").arg(wtLocked ? tr("Unlocking") : tr("Locking"), wtName));
+            emit repositoryLockWorktree(wtName, !wtLocked);
         }
         else if (selectedAction == removeAction)
         {
@@ -1233,12 +1340,8 @@ void QGitRepository::on_branchesTreeView_customContextMenuRequested(const QPoint
                    "The directory itself will not be deleted.").arg(wtName),
                 QMessageBox::Yes | QMessageBox::No);
             if (res == QMessageBox::Yes) {
-                try {
-                    m_git->removeWorktree(wtName);
-                    refreshData();
-                } catch (const QGitError &error) {
-                    QMessageBox::critical(this, tr("Worktree Error"), error.errorString());
-                }
+                emit statusMessage(tr("Removing worktree %1...").arg(wtName));
+                emit repositoryRemoveWorktree(wtName);
             }
         }
         return;
@@ -1269,22 +1372,13 @@ void QGitRepository::on_branchesTreeView_customContextMenuRequested(const QPoint
         }
         else if (selectedAction == initAction)
         {
-            try {
-                m_git->initSubmodule(subName);
-                refreshData();
-                QMessageBox::information(this, tr("Submodule Initialized"), tr("Submodule '%1' initialized successfully.").arg(subName));
-            } catch (const QGitError &error) {
-                QMessageBox::critical(this, tr("Error"), error.errorString());
-            }
+            emit statusMessage(tr("Initializing submodule %1...").arg(subName));
+            emit repositoryInitSubmodule(subName);
         }
         else if (selectedAction == syncAction)
         {
-            try {
-                m_git->syncSubmodule(subName);
-                QMessageBox::information(this, tr("Submodule Synced"), tr("Submodule '%1' URL synchronized successfully.").arg(subName));
-            } catch (const QGitError &error) {
-                QMessageBox::critical(this, tr("Error"), error.errorString());
-            }
+            emit statusMessage(tr("Synchronizing submodule %1...").arg(subName));
+            emit repositorySyncSubmodule(subName);
         }
         return;
     }
@@ -1301,12 +1395,12 @@ void QGitRepository::on_branchesTreeView_customContextMenuRequested(const QPoint
         if (selectedAction == applyAction)
         {
             emit statusMessage(tr("Applying stash %1...").arg(fullName));
-            m_git->stashApply(fullName);
+            emit repositoryStashApply(fullName);
         }
         else if (selectedAction == popAction)
         {
             emit statusMessage(tr("Popping stash %1...").arg(fullName));
-            m_git->stashPop(fullName);
+            emit repositoryStashPop(fullName);
         }
         else if (selectedAction == dropAction)
         {
@@ -1316,7 +1410,7 @@ void QGitRepository::on_branchesTreeView_customContextMenuRequested(const QPoint
             if (res == QMessageBox::Yes)
             {
                 emit statusMessage(tr("Dropping stash %1...").arg(fullName));
-                m_git->stashRemove(fullName);
+                emit repositoryStashRemove(fullName);
             }
         }
     }
@@ -1340,7 +1434,7 @@ void QGitRepository::on_branchesTreeView_customContextMenuRequested(const QPoint
         if (selectedAction == checkoutAction)
         {
             emit statusMessage(tr("Checking out branch %1...").arg(fullName));
-            m_git->checkoutBranch(fullName);
+            emit repositoryCheckoutBranch(fullName);
         }
         else if (selectedAction == renameAction)
         {
@@ -1350,7 +1444,7 @@ void QGitRepository::on_branchesTreeView_customContextMenuRequested(const QPoint
         {
             QString upstream = QInputDialog::getText(this, tr("Set Upstream"), tr("Enter upstream for branch %1:").arg(fullName));
             if (!upstream.isEmpty()) {
-                m_git->setUpstream(fullName, upstream);
+                emit repositorySetUpstream(fullName, upstream);
             }
         }
         else if (selectedAction == showReflogAction)
@@ -1366,7 +1460,7 @@ void QGitRepository::on_branchesTreeView_customContextMenuRequested(const QPoint
             if (res == QMessageBox::Yes) {
                 QList<QGitBranch> toDelete;
                 toDelete << QGitBranch(fullName, "", 0, GIT_BRANCH_LOCAL);
-                m_git->deleteBranches(toDelete, false);
+                emit deleteBranches(toDelete, false);
             }
         }
     }
@@ -1430,7 +1524,8 @@ void QGitRepository::on_branchesTreeView_customContextMenuRequested(const QPoint
                                                  tr("Enter local branch name:"), QLineEdit::Normal, 
                                                   localName, &ok);
             if (ok && !name.isEmpty()) {
-                m_git->checkoutBranch(fullName); // Simplified for now
+                emit statusMessage(tr("Checking out %1...").arg(fullName));
+                emit repositoryCheckoutBranch(fullName);
             }
         }
         else if (selectedAction == showReflogAction)
@@ -1456,7 +1551,7 @@ void QGitRepository::on_branchesTreeView_customContextMenuRequested(const QPoint
                                              tr("Are you sure you want to delete tag '%1'?").arg(fullName),
                                              QMessageBox::Yes | QMessageBox::No);
             if (res == QMessageBox::Yes) {
-                m_git->deleteTag(fullName);
+                emit repositoryDeleteTag(fullName);
             }
         }
     }
@@ -2294,14 +2389,7 @@ void QGitRepository::on_logHistory_commits_customContextMenuRequested(const QPoi
                                                  QMessageBox::Yes | QMessageBox::No);
             if (confirm == QMessageBox::Yes) {
                 emit statusMessage(tr("Cherry-picking commit..."));
-                try {
-                    m_git->cherrypick(selectedHash);
-                    QMessageBox::information(this, tr("Cherry-pick"), tr("Commit '%1' cherry-picked successfully.").arg(shortHash));
-                } catch (const QGitError &error) {
-                    QMessageBox::warning(this, tr("Cherry-pick"), error.errorString());
-                }
-                emit statusMessage(tr("Ready"));
-                refreshData();
+                emit repositoryCherrypick(selectedHash);
             }
         } else if (res == revertAction) {
             auto confirm = QMessageBox::question(this, tr("Revert"),
@@ -2309,14 +2397,7 @@ void QGitRepository::on_logHistory_commits_customContextMenuRequested(const QPoi
                                                  QMessageBox::Yes | QMessageBox::No);
             if (confirm == QMessageBox::Yes) {
                 emit statusMessage(tr("Reverting commit..."));
-                try {
-                    m_git->revert(selectedHash);
-                    QMessageBox::information(this, tr("Revert"), tr("Commit '%1' reverted successfully.").arg(shortHash));
-                } catch (const QGitError &error) {
-                    QMessageBox::warning(this, tr("Revert"), error.errorString());
-                }
-                emit statusMessage(tr("Ready"));
-                refreshData();
+                emit repositoryRevert(selectedHash);
             }
         } else if (res == softResetAction) {
             auto confirm = QMessageBox::question(this, tr("Soft Reset"),
@@ -2324,14 +2405,7 @@ void QGitRepository::on_logHistory_commits_customContextMenuRequested(const QPoi
                                                  QMessageBox::Yes | QMessageBox::No);
             if (confirm == QMessageBox::Yes) {
                 emit statusMessage(tr("Resetting current branch (soft)..."));
-                try {
-                    m_git->reset(selectedHash, GIT_RESET_SOFT);
-                    QMessageBox::information(this, tr("Reset"), tr("Branch reset to '%1' successfully (soft).").arg(shortHash));
-                } catch (const QGitError &error) {
-                    QMessageBox::critical(this, tr("Reset Error"), error.errorString());
-                }
-                emit statusMessage(tr("Ready"));
-                refreshData();
+                emit repositoryReset(selectedHash, GIT_RESET_SOFT);
             }
         } else if (res == mixedResetAction) {
             auto confirm = QMessageBox::question(this, tr("Mixed Reset"),
@@ -2339,14 +2413,7 @@ void QGitRepository::on_logHistory_commits_customContextMenuRequested(const QPoi
                                                  QMessageBox::Yes | QMessageBox::No);
             if (confirm == QMessageBox::Yes) {
                 emit statusMessage(tr("Resetting current branch (mixed)..."));
-                try {
-                    m_git->reset(selectedHash, GIT_RESET_MIXED);
-                    QMessageBox::information(this, tr("Reset"), tr("Branch reset to '%1' successfully (mixed).").arg(shortHash));
-                } catch (const QGitError &error) {
-                    QMessageBox::critical(this, tr("Reset Error"), error.errorString());
-                }
-                emit statusMessage(tr("Ready"));
-                refreshData();
+                emit repositoryReset(selectedHash, GIT_RESET_MIXED);
             }
         } else if (res == hardResetAction) {
             auto confirm = QMessageBox::question(this, tr("Hard Reset"),
@@ -2354,14 +2421,7 @@ void QGitRepository::on_logHistory_commits_customContextMenuRequested(const QPoi
                                                  QMessageBox::Yes | QMessageBox::No);
             if (confirm == QMessageBox::Yes) {
                 emit statusMessage(tr("Resetting current branch (hard)..."));
-                try {
-                    m_git->reset(selectedHash, GIT_RESET_HARD);
-                    QMessageBox::information(this, tr("Reset"), tr("Branch reset to '%1' successfully (hard).").arg(shortHash));
-                } catch (const QGitError &error) {
-                    QMessageBox::critical(this, tr("Reset Error"), error.errorString());
-                }
-                emit statusMessage(tr("Ready"));
-                refreshData();
+                emit repositoryReset(selectedHash, GIT_RESET_HARD);
             }
         } else if (res == createTagAction) {
             QGitCreateTagDialog dlg(selectedHash, this);
@@ -2501,7 +2561,7 @@ void QGitRepository::keyPressEvent(QKeyEvent *event)
             if (res == QMessageBox::Yes) {
                 QList<QGitBranch> toDelete;
                 toDelete << QGitBranch(fullName, "", 0, GIT_BRANCH_LOCAL);
-                m_git->deleteBranches(toDelete, false);
+                emit deleteBranches(toDelete, false);
             }
         } else if (type == "Stash") {
             auto res = QMessageBox::question(this, tr("Drop Stash"), 
@@ -2509,14 +2569,14 @@ void QGitRepository::keyPressEvent(QKeyEvent *event)
                                              QMessageBox::Yes | QMessageBox::No);
             if (res == QMessageBox::Yes) {
                 emit statusMessage(tr("Dropping stash %1...").arg(fullName));
-                m_git->stashRemove(fullName);
+                emit repositoryStashRemove(fullName);
             }
         } else if (type == "Tag") {
             auto res = QMessageBox::question(this, tr("Delete Tag"), 
                                              tr("Are you sure you want to delete tag '%1'?").arg(fullName),
                                              QMessageBox::Yes | QMessageBox::No);
             if (res == QMessageBox::Yes) {
-                m_git->deleteTag(fullName);
+                emit repositoryDeleteTag(fullName);
             }
         }
     }

@@ -161,7 +161,13 @@ void QGitMasterMainWindow::clearStatusBarText()
 
 void QGitMasterMainWindow::getPassword(QString &password)
 {
-    password = QInputDialog::getText(this, tr("SSH Passphrase"), tr("Enter passphrase"), QLineEdit::Password);
+    bool ok = false;
+    QString pass = QInputDialog::getText(this, tr("SSH Passphrase"), tr("Enter passphrase:"), QLineEdit::Password, QString(), &ok);
+    if (ok) {
+        password = pass;
+    } else {
+        password.clear();
+    }
 }
 
 void QGitMasterMainWindow::getUserCredentials(const QString &url, const QString &usernameFromUrl, QString &username, QString &password)
@@ -173,6 +179,10 @@ void QGitMasterMainWindow::getUserCredentials(const QString &url, const QString 
                                              QLineEdit::Normal, QString(), &ok);
         if (ok) {
             username = user;
+        } else {
+            username.clear();
+            password.clear();
+            return;
         }
     } else {
         username = usernameFromUrl;
@@ -183,6 +193,8 @@ void QGitMasterMainWindow::getUserCredentials(const QString &url, const QString 
                                          QLineEdit::Password, QString(), &ok);
     if (ok) {
         password = pass;
+    } else {
+        password.clear();
     }
 }
 
@@ -215,6 +227,7 @@ void QGitMasterMainWindow::on_toolButton_NewRepository_clicked()
 
             QGitCloneRepositoryDialog cloneDlg(url, path, this);
             if (cloneDlg.git()) {
+                cloneDlg.git()->setCredentialHandler(this);
                 connect(cloneDlg.git(), &QGit::requestPassword, this, &QGitMasterMainWindow::getPassword);
                 connect(cloneDlg.git(), &QGit::requestUserCredentials, this, &QGitMasterMainWindow::getUserCredentials);
             }
@@ -352,6 +365,7 @@ void QGitMasterMainWindow::connectRepositorySignals(QGitRepository *widget)
     if (!widget) return;
 
     if (widget->git()) {
+        widget->git()->setCredentialHandler(this);
         connect(widget->git(), &QGit::requestPassword, this, &QGitMasterMainWindow::getPassword, Qt::UniqueConnection);
         connect(widget->git(), &QGit::requestUserCredentials, this, &QGitMasterMainWindow::getUserCredentials, Qt::UniqueConnection);
     }
