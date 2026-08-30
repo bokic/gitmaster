@@ -27,6 +27,7 @@ public:
 
 public slots:
     void getPassword(QString &password);
+    void getUserCredentials(const QString &url, const QString &usernameFromUrl, QString &username, QString &password);
 
 protected:
     bool event(QEvent *event) override;

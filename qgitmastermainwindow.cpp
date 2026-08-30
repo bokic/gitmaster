@@ -164,6 +164,28 @@ void QGitMasterMainWindow::getPassword(QString &password)
     password = QInputDialog::getText(this, tr("SSH Passphrase"), tr("Enter passphrase"), QLineEdit::Password);
 }
 
+void QGitMasterMainWindow::getUserCredentials(const QString &url, const QString &usernameFromUrl, QString &username, QString &password)
+{
+    bool ok = false;
+    if (usernameFromUrl.isEmpty()) {
+        QString user = QInputDialog::getText(this, tr("Authentication"),
+                                             tr("Enter username for %1:").arg(url),
+                                             QLineEdit::Normal, QString(), &ok);
+        if (ok) {
+            username = user;
+        }
+    } else {
+        username = usernameFromUrl;
+    }
+
+    QString pass = QInputDialog::getText(this, tr("Authentication"),
+                                         tr("Enter password / access token for %1:").arg(url),
+                                         QLineEdit::Password, QString(), &ok);
+    if (ok) {
+        password = pass;
+    }
+}
+
 void QGitMasterMainWindow::on_treeWidget_itemSelectionChanged()
 {
     bool newState = ui->treeWidget->selectedItems().size() > 0;
@@ -194,6 +216,7 @@ void QGitMasterMainWindow::on_toolButton_NewRepository_clicked()
             QGitCloneRepositoryDialog cloneDlg(url, path, this);
             if (cloneDlg.git()) {
                 connect(cloneDlg.git(), &QGit::requestPassword, this, &QGitMasterMainWindow::getPassword);
+                connect(cloneDlg.git(), &QGit::requestUserCredentials, this, &QGitMasterMainWindow::getUserCredentials);
             }
             connect(&cloneDlg, &QGitCloneRepositoryDialog::statusMessage, this, &QGitMasterMainWindow::updateStatusBarText);
 
@@ -333,6 +356,7 @@ void QGitMasterMainWindow::connectRepositorySignals(QGitRepository *widget)
 
     if (widget->git()) {
         connect(widget->git(), &QGit::requestPassword, this, &QGitMasterMainWindow::getPassword, Qt::UniqueConnection);
+        connect(widget->git(), &QGit::requestUserCredentials, this, &QGitMasterMainWindow::getUserCredentials, Qt::UniqueConnection);
     }
     connect(widget, &QGitRepository::statusMessage, this, &QGitMasterMainWindow::updateStatusBarText, Qt::UniqueConnection);
     connect(widget, &QGitRepository::clearStatusMessage, this, &QGitMasterMainWindow::clearStatusBarText, Qt::UniqueConnection);

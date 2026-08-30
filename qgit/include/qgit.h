@@ -190,6 +190,7 @@ public slots:
 
 signals:
     void requestPassword(QString &password);
+    void requestUserCredentials(const QString &url, const QString &usernameFromUrl, QString &username, QString &password);
     void initReply(const QGitError &error);
     void signatureReply(const QString &name, const QString &email, const QGitError &error);
     void updateSubmoduleReply(const QGitError &error);

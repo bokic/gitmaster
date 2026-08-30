@@ -460,7 +460,7 @@ struct GitWorktree {
 #define LINE_END '\n'
 
 
-static int sshKeyCredentialCallback(
+static int gitCredentialCallback(
     git_credential **out, 
     const char *url, 
     const char *username_from_url, 
@@ -468,62 +468,103 @@ static int sshKeyCredentialCallback(
     void *payload)
 {
     try {
-        Q_UNUSED(url);
-        Q_UNUSED(payload);
+        if (!out) return -1;
+
+        if (allowed_types & GIT_CREDENTIAL_DEFAULT) {
+            if (git_credential_default_new(out) == 0) {
+                return 0;
+            }
+        }
 
         if (allowed_types & GIT_CREDENTIAL_SSH_KEY) {
-            int agent_res = git_credential_ssh_key_from_agent(out, username_from_url);
+            const char *username = (username_from_url && *username_from_url) ? username_from_url : "git";
+
+            int agent_res = git_credential_ssh_key_from_agent(out, username);
             if (agent_res == 0) {
                 return 0;
             }
 
-            QString pass;
-            auto _this = static_cast<QGit *>(payload);
-            if (_this)
-            {
-                QMetaObject::invokeMethod(_this, "requestPassword",
-                                          Qt::BlockingQueuedConnection, Q_ARG(QString&, pass));
+            QString sshDir = QDir::homePath() + "/.ssh";
+            QDir dir(sshDir);
+            
+            QStringList preferredKeys = {"id_ed25519", "id_ecdsa", "id_rsa", "id_dsa"};
+            QFileInfo privkeyFileInfo;
+            QFileInfo pubkeyFileInfo;
+            bool found = false;
+
+            for (const QString &keyName : preferredKeys) {
+                QFileInfo privKey(dir, keyName);
+                QFileInfo pubKey(dir, keyName + ".pub");
+                if (privKey.exists()) {
+                    privkeyFileInfo = privKey;
+                    if (pubKey.exists()) {
+                        pubkeyFileInfo = pubKey;
+                    }
+                    found = true;
+                    break;
+                }
             }
 
-            if (!pass.isEmpty())
-            {
-                QString sshDir = QDir::homePath() + "/.ssh";
-                QDir dir(sshDir);
-                
-                QStringList preferredKeys = {"id_ed25519", "id_rsa", "id_ecdsa", "id_dsa"};
-                QFileInfo pubkeyFileInfo;
-                QFileInfo privkeyFileInfo;
-                bool found = false;
-
-                for (const QString &keyName : preferredKeys) {
-                    QFileInfo privKey(dir, keyName);
-                    QFileInfo pubKey(dir, keyName + ".pub");
-                    if (privKey.exists() && pubKey.exists()) {
-                        pubkeyFileInfo = pubKey;
-                        privkeyFileInfo = privKey;
+            if (!found) {
+                auto keys = dir.entryInfoList(QDir::Files);
+                for (const auto &fileInfo : keys) {
+                    if (fileInfo.fileName().endsWith(".pub")) {
+                        continue;
+                    }
+                    if (fileInfo.fileName().startsWith("id_")) {
+                        privkeyFileInfo = fileInfo;
+                        QFileInfo pubKey(dir, fileInfo.fileName() + ".pub");
+                        if (pubKey.exists()) {
+                            pubkeyFileInfo = pubKey;
+                        }
                         found = true;
                         break;
                     }
                 }
+            }
 
-                if (!found) {
-                    auto keys = dir.entryInfoList({"*.pub"});
-                    if (keys.size() == 1)
-                    {
-                        pubkeyFileInfo = keys.first();
-                        privkeyFileInfo = QFileInfo(pubkeyFileInfo.dir(), pubkeyFileInfo.completeBaseName());
-                        if (privkeyFileInfo.exists()) {
-                            found = true;
-                        }
-                    }
+            if (found) {
+                QString pass;
+                auto _this = static_cast<QGit *>(payload);
+                if (_this) {
+                    QMetaObject::invokeMethod(_this, "requestPassword",
+                                              Qt::BlockingQueuedConnection, Q_ARG(QString&, pass));
                 }
 
-                if (found)
-                {
-                    auto pubkeyPathname = pubkeyFileInfo.absoluteFilePath().toUtf8();
-                    auto privkeyPathname = privkeyFileInfo.absoluteFilePath().toUtf8();
+                auto privkeyPathname = privkeyFileInfo.absoluteFilePath().toUtf8();
+                QByteArray pubkeyPathname;
+                const char *pubkeyPtr = nullptr;
+                if (pubkeyFileInfo.exists()) {
+                    pubkeyPathname = pubkeyFileInfo.absoluteFilePath().toUtf8();
+                    pubkeyPtr = pubkeyPathname.constData();
+                }
 
-                    git_credential_ssh_key_new(out, username_from_url, pubkeyPathname, privkeyPathname, pass.toUtf8().constData());
+                const char *passphrase = pass.isEmpty() ? nullptr : pass.toUtf8().constData();
+                int res = git_credential_ssh_key_new(out, username, pubkeyPtr, privkeyPathname.constData(), passphrase);
+                if (res == 0) {
+                    return 0;
+                }
+            }
+        }
+
+        if (allowed_types & GIT_CREDENTIAL_USERPASS_PLAINTEXT) {
+            QString username = (username_from_url && *username_from_url) ? QString::fromUtf8(username_from_url) : QString();
+            QString password;
+            auto _this = static_cast<QGit *>(payload);
+            if (_this) {
+                QString urlStr = url ? QString::fromUtf8(url) : QString();
+                QString usernameFromUrlStr = username;
+                QMetaObject::invokeMethod(_this, "requestUserCredentials",
+                                          Qt::BlockingQueuedConnection,
+                                          Q_ARG(QString, urlStr),
+                                          Q_ARG(QString, usernameFromUrlStr),
+                                          Q_ARG(QString&, username),
+                                          Q_ARG(QString&, password));
+            }
+
+            if (!username.isEmpty() || !password.isEmpty()) {
+                int res = git_credential_userpass_plaintext_new(out, username.toUtf8().constData(), password.toUtf8().constData());
+                if (res == 0) {
                     return 0;
                 }
             }
@@ -539,7 +580,7 @@ static int sshKeyCredentialCallback(
 static git_fetch_options makeFetchOptions(QGit *payload = nullptr)
 {
     git_fetch_options opts = GIT_FETCH_OPTIONS_INIT;
-    opts.callbacks.credentials = sshKeyCredentialCallback;
+    opts.callbacks.credentials = gitCredentialCallback;
     opts.callbacks.payload = payload;
     return opts;
 }
@@ -547,7 +588,7 @@ static git_fetch_options makeFetchOptions(QGit *payload = nullptr)
 static git_push_options makePushOptions(QGit *payload = nullptr)
 {
     git_push_options opts = GIT_PUSH_OPTIONS_INIT;
-    opts.callbacks.credentials = sshKeyCredentialCallback;
+    opts.callbacks.credentials = gitCredentialCallback;
     opts.callbacks.payload = payload;
     opts.callbacks.push_transfer_progress = [](unsigned int current, unsigned int total, size_t bytes, void *payload) -> int
     {
@@ -1874,7 +1915,8 @@ void QGit::updateSubmodule(const QString &name)
 
         git_submodule_update_options opts = GIT_SUBMODULE_UPDATE_OPTIONS_INIT;
         opts.checkout_opts.checkout_strategy = GIT_CHECKOUT_SAFE;
-        opts.fetch_opts.callbacks.credentials = sshKeyCredentialCallback;
+        opts.fetch_opts.callbacks.credentials = gitCredentialCallback;
+        opts.fetch_opts.callbacks.payload = this;
 
         res = git_submodule_update(sm, 1, &opts);
         if (res) throw QGitError("git_submodule_update", res);
@@ -3953,6 +3995,7 @@ void QGit::clone(const QUrl &url)
         }
 
         opts.fetch_opts.callbacks.payload = this;
+        opts.fetch_opts.callbacks.credentials = gitCredentialCallback;
 
         opts.fetch_opts.callbacks.transfer_progress = [](const git_transfer_progress *stats, void *payload) -> int {
 
