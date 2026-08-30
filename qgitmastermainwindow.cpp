@@ -324,7 +324,6 @@ void QGitMasterMainWindow::on_actionPush_triggered()
     if (panel)
     {
         panel->push();
-        panel->refreshData();
     }
 }
 

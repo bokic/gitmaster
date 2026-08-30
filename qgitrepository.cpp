@@ -596,6 +596,8 @@ void QGitRepository::repositoryPushReply(const QGitError &error)
     {
         emit clearStatusMessage();
     }
+
+    refreshData();
 }
 
 void QGitRepository::repositoryBranchesAndTagsReply(const QList<QGitBranch> &branches, const QList<QGitTag> &tags, const QList<QGitSubmodule> &submodules, const QList<QGitWorktree> &worktrees, bool hasRemotes, bool hasCommitsToPush, const QGitError &error)
