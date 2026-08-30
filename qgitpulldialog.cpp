@@ -10,48 +10,116 @@
 QGitPullDialog::QGitPullDialog(QGitRepository *parent)
     : QDialog(parent)
     , ui(new Ui::QGitPullDialog)
+    , m_repository(parent)
 {
     ui->setupUi(this);
 
-    QGit *git = static_cast<QGitRepository *>(parent)->git();
-
-    auto remotes = git->remotes();
-    for(const auto &remote: std::as_const(remotes))
+    if (m_repository && m_repository->git())
     {
-        const auto name = remote.name;
-        const auto url = remote.url;
+        QGit *git = m_repository->git();
 
-        ui->remote_comboBox->addItem(name, url);
-    }
-    ui->remote_comboBox->addItem(tr("custom"));
-
-    auto branches = git->branches(GIT_BRANCH_LOCAL);
-    auto currentBranch = git->currentBranch();
-
-    auto branch_comboBox_model = qobject_cast<QStandardItemModel *>(ui->branch_comboBox->model());
-    if (branch_comboBox_model)
-    {
-        for(const auto &branch: std::as_const(branches))
+        auto remotes = git->remotes();
+        for (const auto &remote : std::as_const(remotes))
         {
-            QStandardItem *item = new QStandardItem(branch.name());
-
-            if (branch.name() == currentBranch)
-            {
-                auto font = item->font();
-                font.setBold(true);
-                item->setFont(font);
-            }
-
-            branch_comboBox_model->appendRow(item);
+            ui->remote_comboBox->addItem(remote.name, remote.url);
         }
-    }
+        ui->remote_comboBox->addItem(tr("custom"));
 
-    ui->branch_comboBox->setCurrentText(currentBranch);
+        ui->label_4->setText(git->currentBranch());
+        ui->branch_comboBox->setEditable(true);
+
+        loadBranches();
+    }
 }
 
 QGitPullDialog::~QGitPullDialog()
 {
     delete ui;
+}
+
+void QGitPullDialog::loadBranches()
+{
+    if (!m_repository || !m_repository->git()) return;
+
+    QString currentSelected = ui->branch_comboBox->currentText();
+    ui->branch_comboBox->clear();
+
+    QGit *git = m_repository->git();
+    QString selectedRemote = ui->remote_comboBox->currentText();
+    QString remotePrefix = selectedRemote + "/";
+
+    auto branches = git->branches(GIT_BRANCH_REMOTE);
+    auto currentLocalBranch = git->currentBranch();
+
+    auto branch_comboBox_model = qobject_cast<QStandardItemModel *>(ui->branch_comboBox->model());
+    QString defaultBranch;
+
+    for (const auto &branch : std::as_const(branches))
+    {
+        QString branchName = branch.name();
+        if (selectedRemote != tr("custom") && !selectedRemote.isEmpty())
+        {
+            if (branchName.startsWith(remotePrefix))
+            {
+                QString shortName = branchName.mid(remotePrefix.length());
+                if (shortName == QStringLiteral("HEAD")) continue;
+
+                QStandardItem *item = new QStandardItem(shortName);
+                if (shortName == currentLocalBranch)
+                {
+                    auto font = item->font();
+                    font.setBold(true);
+                    item->setFont(font);
+                    defaultBranch = shortName;
+                }
+                if (branch_comboBox_model)
+                    branch_comboBox_model->appendRow(item);
+                else
+                    ui->branch_comboBox->addItem(shortName);
+            }
+        }
+        else
+        {
+            QStandardItem *item = new QStandardItem(branchName);
+            if (branch_comboBox_model)
+                branch_comboBox_model->appendRow(item);
+            else
+                ui->branch_comboBox->addItem(branchName);
+        }
+    }
+
+    if (ui->branch_comboBox->count() == 0)
+    {
+        auto localBranches = git->branches(GIT_BRANCH_LOCAL);
+        for (const auto &branch : std::as_const(localBranches))
+        {
+            QStandardItem *item = new QStandardItem(branch.name());
+            if (branch.name() == currentLocalBranch)
+            {
+                auto font = item->font();
+                font.setBold(true);
+                item->setFont(font);
+                defaultBranch = branch.name();
+            }
+            if (branch_comboBox_model)
+                branch_comboBox_model->appendRow(item);
+            else
+                ui->branch_comboBox->addItem(branch.name());
+        }
+    }
+
+    if (!currentSelected.isEmpty() && ui->branch_comboBox->findText(currentSelected) >= 0)
+    {
+        ui->branch_comboBox->setCurrentText(currentSelected);
+    }
+    else if (!defaultBranch.isEmpty())
+    {
+        ui->branch_comboBox->setCurrentText(defaultBranch);
+    }
+    else if (ui->branch_comboBox->findText(currentLocalBranch) >= 0)
+    {
+        ui->branch_comboBox->setCurrentText(currentLocalBranch);
+    }
 }
 
 QGitRemote QGitPullDialog::remote() const
@@ -108,4 +176,11 @@ void QGitPullDialog::on_remote_comboBox_currentIndexChanged(int index)
         ui->url_lineEdit->setEnabled(true);
         ui->url_lineEdit->setFocus();
     }
+
+    loadBranches();
+}
+
+void QGitPullDialog::on_pushButton_clicked()
+{
+    loadBranches();
 }

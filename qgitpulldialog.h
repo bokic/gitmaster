@@ -27,7 +27,11 @@ public:
 
 private slots:
     void on_remote_comboBox_currentIndexChanged(int index);
+    void on_pushButton_clicked();
 
 private:
+    void loadBranches();
+
     Ui::QGitPullDialog *ui = nullptr;
+    QGitRepository *m_repository = nullptr;
 };
