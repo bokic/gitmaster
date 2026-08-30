@@ -205,6 +205,10 @@ endif()
 target_include_directories(gitmaster PRIVATE combobox qgit/include)
 target_compile_definitions(gitmaster PRIVATE GITMASTER_VERSION="${PROJECT_VERSION}")
 
+if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+    target_compile_options(gitmaster PRIVATE -Wno-documentation-deprecated-sync)
+endif()
+
 if (WIN32)
     target_include_directories(gitmaster PRIVATE include)
 endif()
