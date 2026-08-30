@@ -6,12 +6,12 @@
 
 
 QGitDiffFile::QGitDiffFile(const git_diff_delta *file)
-    : m_new_file(file->new_file)
-    , m_old_file(file->old_file)
-    , m_flags(file->flags)
-    , m_nfiles(file->nfiles)
-    , m_simularity(file->similarity)
-    , m_status(file->status)
+    : m_new_file(file ? file->new_file : git_diff_file{})
+    , m_old_file(file ? file->old_file : git_diff_file{})
+    , m_flags(file ? file->flags : 0)
+    , m_nfiles(file ? file->nfiles : 0)
+    , m_simularity(file ? file->similarity : 0)
+    , m_status(file ? file->status : GIT_DELTA_UNMODIFIED)
 {
 }
 

@@ -15,6 +15,16 @@
 #include <functional>
 #include <limits>
 
+#ifndef GIT_ERROR_INVALID
+#define GIT_ERROR_INVALID GITERR_INVALID
+#endif
+#ifndef GIT_ERROR_NET
+#define GIT_ERROR_NET GITERR_NET
+#endif
+#ifndef git_error_set_str
+#define git_error_set_str giterr_set_str
+#endif
+
 
 struct GitRepository {
     GitRepository() = default;
@@ -344,6 +354,30 @@ struct GitRevWalk {
     git_revwalk *value = nullptr;
 };
 
+struct GitNote {
+    GitNote() = default;
+    GitNote(const GitNote&) = delete;
+    GitNote& operator=(const GitNote&) = delete;
+    GitNote(GitNote&&) = delete;
+    GitNote& operator=(GitNote&&) = delete;
+    operator git_note*() { return value; }
+    operator git_note**() { return &value; }
+    ~GitNote() { if (value) { git_note_free(value); value = nullptr; }}
+    git_note *value = nullptr;
+};
+
+struct GitRebase {
+    GitRebase() = default;
+    GitRebase(const GitRebase&) = delete;
+    GitRebase& operator=(const GitRebase&) = delete;
+    GitRebase(GitRebase&&) = delete;
+    GitRebase& operator=(GitRebase&&) = delete;
+    operator git_rebase*() { return value; }
+    operator git_rebase**() { return &value; }
+    ~GitRebase() { if (value) { git_rebase_free(value); value = nullptr; }}
+    git_rebase *value = nullptr;
+};
+
 struct GitStrArray {
     GitStrArray() = default;
     GitStrArray(const GitStrArray&) = delete;
@@ -366,13 +400,13 @@ struct SafeGitStrArray {
         arr.value.count = static_cast<size_t>(list.count());
         arr.value.strings = static_cast<char **>(calloc(arr.value.count, sizeof(char *)));
         if (!arr.value.strings) {
-            throw QGitError("malloc", 0);
+            throw QGitError("malloc", -1, "Memory allocation failed");
         }
 
         for (int i = 0; i < list.count(); ++i) {
             arr.value.strings[i] = strdup(list.at(i).toUtf8().constData());
             if (!arr.value.strings[i]) {
-                throw QGitError("strdup", 0);
+                throw QGitError("strdup", -1, "Memory allocation failed");
             }
         }
         return arr;
@@ -387,11 +421,11 @@ struct SafeGitStrArray {
         arr.value.count = 1;
         arr.value.strings = static_cast<char **>(calloc(1, sizeof(char *)));
         if (!arr.value.strings) {
-            throw QGitError("malloc", 0);
+            throw QGitError("malloc", -1, "Memory allocation failed");
         }
         arr.value.strings[0] = strdup(bytes.constData());
         if (!arr.value.strings[0]) {
-            throw QGitError("strdup", 0);
+            throw QGitError("strdup", -1, "Memory allocation failed");
         }
         return arr;
     }
@@ -620,7 +654,7 @@ static git_push_options makePushOptions(QGit *payload = nullptr)
                     QGit *_this = static_cast<QGit *>(payload);
                     _this->setLastPushError(QString("Push rejected for %1: %2").arg(refname ? refname : "ref", status));
                 }
-                giterr_set_str(GITERR_NET, status);
+                git_error_set_str(GIT_ERROR_NET, status);
                 return -1;
             }
             return 0;
@@ -693,16 +727,20 @@ static GitRepository openRepo(const QDir &dir)
     return repo;
 }
 
-static void peelToCommitDetails(const git_reference *ref, QString &outOidStr, git_time_t &outTime)
+static void peelToCommitDetails(git_reference *ref, QString &outOidStr, git_time_t &outCommitTime)
 {
+    outOidStr.clear();
+    outCommitTime = 0;
+
     GitObject obj;
-    int res = git_reference_peel(obj, const_cast<git_reference*>(ref), GIT_OBJ_COMMIT);
-    if (res)
+    if (git_reference_peel(obj, ref, GIT_OBJ_COMMIT) != 0)
     {
-        throw QGitError("git_reference_peel", res);
+        return;
     }
 
-    outTime = git_commit_time(obj.asCommit());
+    const git_commit *commit = reinterpret_cast<const git_commit *>(obj.value);
+    outCommitTime = git_commit_time(commit);
+
     char oid_str[GIT_OID_HEXSZ + 1];
     git_oid_tostr(oid_str, sizeof(oid_str), git_object_id(obj));
     outOidStr = QString::fromLatin1(oid_str);
@@ -720,7 +758,10 @@ QList<QGitRemote> QGit::remotes() const
     }
 
     GitStrArray remotes;
-    git_remote_list(remotes, repo);
+    if (git_remote_list(remotes, repo) != 0)
+    {
+        return ret;
+    }
 
     for(size_t c = 0; c < remotes.value.count; c++)
     {
@@ -761,7 +802,8 @@ static bool hasCommitsToPushHelper(git_repository *repo)
     forever
     {
         GitReference ref;
-        if (git_branch_next(ref, &type, it) != 0)
+        res = git_branch_next(ref, &type, it);
+        if (res == GIT_ITEROVER || res != 0)
         {
             break;
         }
@@ -786,18 +828,15 @@ static bool hasCommitsToPushHelper(git_repository *repo)
         }
 
         const git_oid *upstream_oid = git_reference_target(upstream);
-        if (upstream_oid)
+        if (!upstream_oid)
         {
-            size_t ahead = 0;
-            size_t behind = 0;
-            res = git_graph_ahead_behind(&ahead, &behind, repo, local_oid, upstream_oid);
-            if (res == 0 && ahead > 0)
-            {
-                hasCommits = true;
-                break;
-            }
+            continue;
         }
-        else
+
+        size_t ahead = 0;
+        size_t behind = 0;
+        res = git_graph_ahead_behind(&ahead, &behind, repo, local_oid, upstream_oid);
+        if (res == 0 && ahead > 0)
         {
             hasCommits = true;
             break;
@@ -1074,7 +1113,7 @@ void QGit::createLocalBranch(const QString &name, const QString &commit_id, bool
     {
         if (!isValidRefName(QStringLiteral("refs/heads/"), name))
         {
-            giterr_set_str(GITERR_INVALID, "Invalid branch name");
+            git_error_set_str(GIT_ERROR_INVALID, "Invalid branch name");
             throw QGitError("createLocalBranch", -1);
         }
 
@@ -1623,12 +1662,11 @@ bool QGit::conflictContents(const QString &path, QString &ancestor, QString &our
 
     auto readBlob = [&](const git_index_entry *entry, QString &outText) {
         if (!entry) return;
-        git_blob *blob = nullptr;
-        int r = git_blob_lookup(&blob, repo, &entry->id);
+        GitBlob blob;
+        int r = git_blob_lookup(blob, repo, &entry->id);
         if (r == 0)
         {
             outText = QString::fromUtf8((const char *)git_blob_rawcontent(blob), git_blob_rawsize(blob));
-            git_blob_free(blob);
         }
     };
 
@@ -1762,12 +1800,12 @@ void QGit::addRemote(const QString &name, const QString &url)
 {
     if (!isValidRemoteName(name))
     {
-        giterr_set_str(GITERR_INVALID, "Invalid remote name");
+        git_error_set_str(GIT_ERROR_INVALID, "Invalid remote name");
         throw QGitError("addRemote", -1);
     }
     if (!isValidUrl(url))
     {
-        giterr_set_str(GITERR_INVALID, "Invalid remote URL");
+        git_error_set_str(GIT_ERROR_INVALID, "Invalid remote URL");
         throw QGitError("addRemote", -1);
     }
 
@@ -1794,7 +1832,7 @@ void QGit::renameRemote(const QString &oldName, const QString &newName)
 {
     if (!isValidRemoteName(newName))
     {
-        giterr_set_str(GITERR_INVALID, "Invalid remote name");
+        git_error_set_str(GIT_ERROR_INVALID, "Invalid remote name");
         throw QGitError("renameRemote", -1);
     }
 
@@ -1802,9 +1840,8 @@ void QGit::renameRemote(const QString &oldName, const QString &newName)
     int res = git_repository_open(repo, m_path.absolutePath().toUtf8().constData());
     if (res) throw QGitError("git_repository_open", res);
 
-    git_strarray problems = {nullptr, 0};
-    res = git_remote_rename(&problems, repo, oldName.toUtf8().constData(), newName.toUtf8().constData());
-    git_strarray_free(&problems);
+    GitStrArray problems;
+    res = git_remote_rename(problems, repo, oldName.toUtf8().constData(), newName.toUtf8().constData());
     if (res) throw QGitError("git_remote_rename", res);
 }
 
@@ -1812,7 +1849,7 @@ void QGit::setRemoteUrl(const QString &name, const QString &url, bool isPushUrl)
 {
     if (!isValidUrl(url))
     {
-        giterr_set_str(GITERR_INVALID, "Invalid remote URL");
+        git_error_set_str(GIT_ERROR_INVALID, "Invalid remote URL");
         throw QGitError("setRemoteUrl", -1);
     }
 
@@ -1856,12 +1893,12 @@ QList<QGitWorktree> QGit::worktrees() const
         list.append(QGitWorktree(QStringLiteral("(main)"), mainPath, branch, true, false, false));
     }
 
-    git_strarray names = {nullptr, 0};
-    if (git_worktree_list(&names, repo) != 0)
+    GitStrArray names;
+    if (git_worktree_list(names, repo) != 0)
         return list;
 
-    for (size_t i = 0; i < names.count; ++i) {
-        const char *wtName = names.strings[i];
+    for (size_t i = 0; i < names.value.count; ++i) {
+        const char *wtName = names.value.strings[i];
         GitWorktree wt;
         if (git_worktree_lookup(wt, repo, wtName) != 0)
             continue;
@@ -1922,7 +1959,6 @@ QList<QGitWorktree> QGit::worktrees() const
         list.append(QGitWorktree(QString::fromUtf8(wtName), path, branch, false, locked, prunable));
     }
 
-    git_strarray_dispose(&names);
     return list;
 }
 
@@ -1935,18 +1971,26 @@ void QGit::addWorktree(const QString &name, const QString &path, const QString &
         if (res) throw QGitError("git_repository_open", res);
 
         git_worktree_add_options opts = GIT_WORKTREE_ADD_OPTIONS_INIT;
+        opts.lock = 0;
 
-        if (!branch.isEmpty() && !newBranch) {
-            // Checkout an existing branch: resolve it to a reference
-            GitReference ref;
-            QString refName = QStringLiteral("refs/heads/") + branch;
-            res = git_reference_lookup(ref, repo, refName.toUtf8().constData());
-            if (res) throw QGitError("git_reference_lookup", res);
-            opts.ref = ref.value;
+        GitReference targetBranch;
+        if (newBranch) {
+            GitReference headRef;
+            res = git_repository_head(headRef, repo);
+            if (res) throw QGitError("git_repository_head", res);
+
+            GitCommit headCommit;
+            res = git_reference_peel(reinterpret_cast<git_object**>(&headCommit.value), headRef, GIT_OBJ_COMMIT);
+            if (res) throw QGitError("git_reference_peel", res);
+
+            res = git_branch_create(targetBranch, repo, branch.toUtf8().constData(), headCommit, 0);
+            if (res) throw QGitError("git_branch_create", res);
+            opts.ref = targetBranch;
+        } else if (!branch.isEmpty()) {
+            res = git_branch_lookup(targetBranch, repo, branch.toUtf8().constData(), GIT_BRANCH_LOCAL);
+            if (res) throw QGitError("git_branch_lookup", res);
+            opts.ref = targetBranch;
         }
-
-        // When newBranch is true, opts.ref stays null and libgit2 creates a new branch
-        // named after `name` at HEAD.
 
         GitWorktree wt;
         res = git_worktree_add(wt, repo, name.toUtf8().constData(), path.toUtf8().constData(), &opts);
@@ -1970,8 +2014,7 @@ void QGit::removeWorktree(const QString &name)
         if (res) throw QGitError("git_worktree_lookup", res);
 
         git_worktree_prune_options opts = GIT_WORKTREE_PRUNE_OPTIONS_INIT;
-        opts.flags = GIT_WORKTREE_PRUNE_VALID | GIT_WORKTREE_PRUNE_LOCKED | GIT_WORKTREE_PRUNE_WORKING_TREE;
-
+        opts.flags = GIT_WORKTREE_PRUNE_VALID | GIT_WORKTREE_PRUNE_LOCKED;
         res = git_worktree_prune(wt, &opts);
         if (res) throw QGitError("git_worktree_prune", res);
     } catch (const QGitError &ex) {
@@ -1993,7 +2036,7 @@ void QGit::lockWorktree(const QString &name, bool lock)
         if (res) throw QGitError("git_worktree_lookup", res);
 
         if (lock) {
-            res = git_worktree_lock(wt, nullptr);
+            res = git_worktree_lock(wt, "Locked by user");
             if (res) throw QGitError("git_worktree_lock", res);
         } else {
             res = git_worktree_unlock(wt);
@@ -2064,7 +2107,7 @@ void QGit::renameBranch(const QString &oldName, const QString &newName)
     try {
         if (!isValidRefName(QStringLiteral("refs/heads/"), newName))
         {
-            giterr_set_str(GITERR_INVALID, "Invalid branch name");
+            git_error_set_str(GIT_ERROR_INVALID, "Invalid branch name");
             throw QGitError("renameBranch", -1);
         }
 
@@ -2087,15 +2130,14 @@ void QGit::renameBranch(const QString &oldName, const QString &newName)
         int is_head = git_branch_is_head(branch);
 
         // 3. Create new branch on same commit
-        git_object *target_obj = nullptr;
-        res = git_reference_peel(&target_obj, branch, GIT_OBJ_COMMIT);
+        GitObject target_obj;
+        res = git_reference_peel(target_obj, branch, GIT_OBJ_COMMIT);
         if (res) throw QGitError("git_reference_peel", res);
 
-        git_commit *commit = (git_commit *)target_obj;
+        git_commit *commit = reinterpret_cast<git_commit *>(target_obj.value);
 
         GitReference new_branch;
         res = git_branch_create(new_branch, repo, newName.toUtf8().constData(), commit, 0);
-        git_object_free(target_obj);
         if (res) throw QGitError("git_branch_create", res);
 
         // 4. Update HEAD if we renamed current branch
@@ -2120,7 +2162,7 @@ void QGit::renameTag(const QString &oldName, const QString &newName)
     try {
         if (!isValidRefName(QStringLiteral("refs/tags/"), newName))
         {
-            giterr_set_str(GITERR_INVALID, "Invalid tag name");
+            git_error_set_str(GIT_ERROR_INVALID, "Invalid tag name");
             throw QGitError("renameTag", -1);
         }
 
@@ -2143,14 +2185,13 @@ void QGit::renameTag(const QString &oldName, const QString &newName)
         if (res) throw QGitError("git_reference_lookup", res);
 
         // 3. Get target object of old tag
-        git_object *target_obj = nullptr;
-        res = git_reference_peel(&target_obj, tag_ref, GIT_OBJ_ANY);
+        GitObject target_obj;
+        res = git_reference_peel(target_obj, tag_ref, GIT_OBJ_ANY);
         if (res) throw QGitError("git_reference_peel", res);
 
         // 4. Create new tag pointing to same target object
         git_oid new_tag_oid;
         res = git_tag_create_lightweight(&new_tag_oid, repo, newName.toUtf8().constData(), target_obj, 0);
-        git_object_free(target_obj);
         if (res) throw QGitError("git_tag_create_lightweight", res);
 
         // 5. Delete old tag
@@ -2186,7 +2227,7 @@ void QGit::createTag(const QString &name, const QString &targetObjectId, const Q
     try {
         if (!isValidRefName(QStringLiteral("refs/tags/"), name))
         {
-            giterr_set_str(GITERR_INVALID, "Invalid tag name");
+            git_error_set_str(GIT_ERROR_INVALID, "Invalid tag name");
             throw QGitError("createTag", -1);
         }
 
@@ -2537,7 +2578,8 @@ void QGit::listBranchesAndTags()
             git_branch_t type = GIT_BRANCH_ALL;
 
             GitReference ref;
-            if (git_branch_next(ref, &type, it) != 0)
+            res = git_branch_next(ref, &type, it);
+            if (res == GIT_ITEROVER || res != 0)
             {
                 break;
             }
@@ -3049,29 +3091,33 @@ void QGit::commitDiff(const QString &commitId, bool ignoreWhitespace)
             throw QGitError("git_commit_tree", res);
         }
 
-        QString authorName = QString::fromUtf8(git_commit_author(commit)->name);
-        QString authorEmail = QString::fromUtf8(git_commit_author(commit)->email);
+        const git_signature *authorSig = git_commit_author(commit);
+        QString authorName = authorSig && authorSig->name ? QString::fromUtf8(authorSig->name) : QString();
+        QString authorEmail = authorSig && authorSig->email ? QString::fromUtf8(authorSig->email) : QString();
         resolveMailmap(repo, authorName, authorEmail);
-        commitAuthor = QGitSignature(authorName, authorEmail, QDateTime::fromMSecsSinceEpoch(git_commit_author(commit)->when.time * 1000));
+        commitAuthor = QGitSignature(authorName, authorEmail, authorSig ? QDateTime::fromMSecsSinceEpoch(authorSig->when.time * 1000) : QDateTime());
 
-        QString committerName = QString::fromUtf8(git_commit_committer(commit)->name);
-        QString committerEmail = QString::fromUtf8(git_commit_committer(commit)->email);
+        const git_signature *committerSig = git_commit_committer(commit);
+        QString committerName = committerSig && committerSig->name ? QString::fromUtf8(committerSig->name) : QString();
+        QString committerEmail = committerSig && committerSig->email ? QString::fromUtf8(committerSig->email) : QString();
         resolveMailmap(repo, committerName, committerEmail);
-        commitCommiter = QGitSignature(committerName, committerEmail, QDateTime::fromMSecsSinceEpoch(git_commit_committer(commit)->when.time * 1000));
+        commitCommiter = QGitSignature(committerName, committerEmail, committerSig ? QDateTime::fromMSecsSinceEpoch(committerSig->when.time * 1000) : QDateTime());
 
         auto time = git_commit_time(commit);
         auto timeOffset = git_commit_time_offset(commit);
         commitTime = QDateTime::fromMSecsSinceEpoch(time * 1000);
         commitTime.setTimeZone(QTimeZone(timeOffset * 60));
 
-        commitMessage = QString::fromUtf8(git_commit_message(commit));
+        const char *commitMsgRaw = git_commit_message(commit);
+        commitMessage = commitMsgRaw ? QString::fromUtf8(commitMsgRaw) : QString();
 
         {
-            git_note *note = nullptr;
-            if (git_note_read(&note, repo, nullptr, git_object_id(obj)) == 0)
+            GitNote note;
+            if (git_note_read(note, repo, nullptr, git_object_id(obj)) == 0)
             {
-                commitNote = QString::fromUtf8(git_note_message(note));
-                git_note_free(note);
+                const char *noteMsg = git_note_message(note);
+                if (noteMsg)
+                    commitNote = QString::fromUtf8(noteMsg);
             }
         }
 
@@ -3464,7 +3510,7 @@ void QGit::stageFileLines(const QString &filename, const QVector<QGitDiffWidgetL
     {
         if (lines.count() == 0)
         {
-            throw QGitError(tr("No lines selected to stage"), 0);
+            throw QGitError(tr("No lines selected to stage"), -1);
         }
 
         GitRepository repo;
@@ -3498,7 +3544,7 @@ void QGit::stageFileLines(const QString &filename, const QVector<QGitDiffWidgetL
         git_off_t blob_size = git_blob_rawsize(blob);
         if (blob_size > std::numeric_limits<int>::max())
         {
-            throw QGitError("File size exceeds 2GB limit for QByteArray", 0);
+            throw QGitError("File size exceeds 2GB limit for QByteArray", -1);
         }
         QByteArray buffer = QByteArray(blob_content, static_cast<int>(blob_size));
         auto bufferLines = buffer.split(LINE_END);
@@ -3518,12 +3564,15 @@ void QGit::stageFileLines(const QString &filename, const QVector<QGitDiffWidgetL
             case '-':
                 {
                     int pos = line.old_lineno + added - 1;
-                    bool wasLast = (pos == bufferLines.size() - 1);
-                    bufferLines.removeAt(pos);
-                    if (wasLast && !bufferLines.isEmpty()) {
-                        bufferLines.append("");
+                    if (pos >= 0 && pos < bufferLines.size())
+                    {
+                        bool wasLast = (pos == bufferLines.size() - 1);
+                        bufferLines.removeAt(pos);
+                        if (wasLast && !bufferLines.isEmpty()) {
+                            bufferLines.append("");
+                        }
+                        added--;
                     }
-                    added--;
                 }
                 break;
             case '+':
@@ -3533,26 +3582,29 @@ void QGit::stageFileLines(const QString &filename, const QVector<QGitDiffWidgetL
                     if (endsWithNL) content.chop(1);
 
                     int pos = line.old_lineno + added - 1;
-                    bufferLines.insert(pos, content);
-                    if (endsWithNL)
+                    if (pos >= 0 && pos <= bufferLines.size())
                     {
-                        if (pos == bufferLines.size() - 1)
+                        bufferLines.insert(pos, content);
+                        if (endsWithNL)
                         {
-                            bufferLines.append("");
+                            if (pos == bufferLines.size() - 1)
+                            {
+                                bufferLines.append("");
+                            }
                         }
-                    }
-                    else
-                    {
-                        if (pos == bufferLines.size() - 2 && bufferLines.last() == "")
+                        else
                         {
-                            bufferLines.removeLast();
+                            if (pos == bufferLines.size() - 2 && bufferLines.last() == "")
+                            {
+                                bufferLines.removeLast();
+                            }
                         }
+                        added++;
                     }
-                    added++;
                 }
                 break;
             default:
-                throw QGitError("Unknown operation", 0);
+                throw QGitError("Unknown operation", -1);
             }
         }
 
@@ -3584,7 +3636,7 @@ void QGit::unstageFileLines(const QString &filename, const QVector<QGitDiffWidge
     {
         if (lines.count() == 0)
         {
-            throw QGitError(tr("No lines selected to unstage"), 0);
+            throw QGitError(tr("No lines selected to unstage"), -1);
         }
 
         GitRepository repo;
@@ -3618,7 +3670,7 @@ void QGit::unstageFileLines(const QString &filename, const QVector<QGitDiffWidge
         git_off_t blob_size = git_blob_rawsize(blob);
         if (blob_size > std::numeric_limits<int>::max())
         {
-            throw QGitError("File size exceeds 2GB limit for QByteArray", 0);
+            throw QGitError("File size exceeds 2GB limit for QByteArray", -1);
         }
         QByteArray buffer = QByteArray(blob_content, static_cast<int>(blob_size));
         auto bufferLines = buffer.split(LINE_END);
@@ -3638,12 +3690,15 @@ void QGit::unstageFileLines(const QString &filename, const QVector<QGitDiffWidge
             case '+':
                 {
                     int pos = line.new_lineno + added - 1;
-                    bool wasLast = (pos == bufferLines.size() - 1);
-                    bufferLines.removeAt(pos);
-                    if (wasLast && !bufferLines.isEmpty()) {
-                        bufferLines.append("");
+                    if (pos >= 0 && pos < bufferLines.size())
+                    {
+                        bool wasLast = (pos == bufferLines.size() - 1);
+                        bufferLines.removeAt(pos);
+                        if (wasLast && !bufferLines.isEmpty()) {
+                            bufferLines.append("");
+                        }
+                        added--;
                     }
-                    added--;
                 }
                 break;
             case '-':
@@ -3653,26 +3708,29 @@ void QGit::unstageFileLines(const QString &filename, const QVector<QGitDiffWidge
                     if (endsWithNL) content.chop(1);
 
                     int pos = line.new_lineno + added - 1;
-                    bufferLines.insert(pos, content);
-                    if (endsWithNL)
+                    if (pos >= 0 && pos <= bufferLines.size())
                     {
-                        if (pos == bufferLines.size() - 1)
+                        bufferLines.insert(pos, content);
+                        if (endsWithNL)
                         {
-                            bufferLines.append("");
+                            if (pos == bufferLines.size() - 1)
+                            {
+                                bufferLines.append("");
+                            }
                         }
-                    }
-                    else
-                    {
-                        if (pos == bufferLines.size() - 2 && bufferLines.last() == "")
+                        else
                         {
-                            bufferLines.removeLast();
+                            if (pos == bufferLines.size() - 2 && bufferLines.last() == "")
+                            {
+                                bufferLines.removeLast();
+                            }
                         }
+                        added++;
                     }
-                    added++;
                 }
                 break;
             default:
-                throw QGitError("Unknown operation", 0);
+                throw QGitError("Unknown operation", -1);
             }
         }
         buffer = bufferLines.join(LINE_END);
@@ -3688,6 +3746,7 @@ void QGit::unstageFileLines(const QString &filename, const QVector<QGitDiffWidge
         {
             throw QGitError("git_index_write", res);
         }
+
     } catch(const QGitError &ex) {
         error = ex;
     }
@@ -3703,7 +3762,7 @@ void QGit::discardFiles(const QStringList &items)
     {
         if (items.count() == 0)
         {
-            throw QGitError(tr("No files selected to discard"), 0);
+            throw QGitError(tr("No files selected to discard"), -1);
         }
 
         GitRepository repo;
@@ -3770,7 +3829,6 @@ void QGit::discardFiles(const QStringList &items)
                 throw QGitError("git_checkout_index", res);
             }
         }
-
     } catch(const QGitError &ex) {
         error = ex;
     }
@@ -3786,14 +3844,14 @@ void QGit::discardFileLines(const QString &filename, const QVector<QGitDiffWidge
     {
         if (lines.count() == 0)
         {
-            throw QGitError(tr("No lines selected to discard"), 0);
+            throw QGitError(tr("No lines selected to discard"), -1);
         }
 
         QString filePath = m_path.absoluteFilePath(filename);
         QFile file(filePath);
         if (!file.open(QIODevice::ReadOnly))
         {
-            throw QGitError("QFile::open(ReadOnly)", 0);
+            throw QGitError("QFile::open(ReadOnly)", -1);
         }
 
         QByteArray buffer = file.readAll();
@@ -3816,12 +3874,15 @@ void QGit::discardFileLines(const QString &filename, const QVector<QGitDiffWidge
             case '+':
                 {
                     int pos = line.new_lineno + added - 1;
-                    bool wasLast = (pos == bufferLines.size() - 1);
-                    bufferLines.removeAt(pos);
-                    if (wasLast && !bufferLines.isEmpty()) {
-                        bufferLines.append("");
+                    if (pos >= 0 && pos < bufferLines.size())
+                    {
+                        bool wasLast = (pos == bufferLines.size() - 1);
+                        bufferLines.removeAt(pos);
+                        if (wasLast && !bufferLines.isEmpty()) {
+                            bufferLines.append("");
+                        }
+                        added--;
                     }
-                    added--;
                 }
                 break;
             case '-':
@@ -3831,26 +3892,29 @@ void QGit::discardFileLines(const QString &filename, const QVector<QGitDiffWidge
                     if (endsWithNL) content.chop(1);
 
                     int pos = line.new_lineno + added - 1;
-                    bufferLines.insert(pos, content);
-                    if (endsWithNL)
+                    if (pos >= 0 && pos <= bufferLines.size())
                     {
-                        if (pos == bufferLines.size() - 1)
+                        bufferLines.insert(pos, content);
+                        if (endsWithNL)
                         {
-                            bufferLines.append("");
+                            if (pos == bufferLines.size() - 1)
+                            {
+                                bufferLines.append("");
+                            }
                         }
-                    }
-                    else
-                    {
-                        if (pos == bufferLines.size() - 2 && bufferLines.last() == "")
+                        else
                         {
-                            bufferLines.removeLast();
+                            if (pos == bufferLines.size() - 2 && bufferLines.last() == "")
+                            {
+                                bufferLines.removeLast();
+                            }
                         }
+                        added++;
                     }
-                    added++;
                 }
                 break;
             default:
-                throw QGitError("Unknown operation", 0);
+                throw QGitError("Unknown operation", -1);
             }
         }
 
@@ -3858,7 +3922,7 @@ void QGit::discardFileLines(const QString &filename, const QVector<QGitDiffWidge
 
         if (!file.open(QIODevice::WriteOnly | QIODevice::Truncate))
         {
-            throw QGitError("QFile::open(WriteOnly)", 0);
+            throw QGitError("QFile::open(WriteOnly)", -1);
         }
 
         file.write(buffer);
@@ -4071,20 +4135,19 @@ void QGit::commit(const QString &message, bool withPush, bool amend)
             }
             else
             {
-                git_strarray remoteList = {nullptr, 0};
-                int remListRes = git_remote_list(&remoteList, repo);
-                if (remListRes == 0 && remoteList.count > 0)
+                GitStrArray remoteList;
+                int remListRes = git_remote_list(remoteList, repo);
+                if (remListRes == 0 && remoteList.value.count > 0)
                 {
-                    const char *selectedRemote = remoteList.strings[0];
-                    for (size_t i = 0; i < remoteList.count; ++i) {
-                        if (strcmp(remoteList.strings[i], "origin") == 0) {
-                            selectedRemote = remoteList.strings[i];
+                    const char *selectedRemote = remoteList.value.strings[0];
+                    for (size_t i = 0; i < remoteList.value.count; ++i) {
+                        if (strcmp(remoteList.value.strings[i], "origin") == 0) {
+                            selectedRemote = remoteList.value.strings[i];
                             break;
                         }
                     }
                     targetRemoteName = QString::fromUtf8(selectedRemote);
                     res = git_remote_lookup(remote, repo, selectedRemote);
-                    git_strarray_free(&remoteList);
 
                     if (res)
                     {
@@ -4101,9 +4164,8 @@ void QGit::commit(const QString &message, bool withPush, bool amend)
                 }
                 else
                 {
-                    if (remListRes == 0) git_strarray_free(&remoteList);
-                    giterr_set_str(GITERR_INVALID, "No remote repository configured to push to");
-                    throw QGitError("git_remote_push", GITERR_INVALID, "No remote repository configured to push to");
+                    git_error_set_str(GIT_ERROR_INVALID, "No remote repository configured to push to");
+                    throw QGitError("git_remote_push", GIT_ERROR_INVALID, "No remote repository configured to push to");
                 }
             }
 
@@ -4248,7 +4310,7 @@ void QGit::pull(const QString &remote, const QString &branch, bool rebase)
 void QGit::rebase(const QString &upstream, const QString &branch, const QString &onto)
 {
     QGitError error;
-    git_rebase *rebase_ptr = nullptr;
+    GitRebase rebase;
 
     try
     {
@@ -4291,7 +4353,7 @@ void QGit::rebase(const QString &upstream, const QString &branch, const QString 
         }
 
         git_rebase_options opts = GIT_REBASE_OPTIONS_INIT;
-        res = git_rebase_init(&rebase_ptr, repo, branch_ptr, upstream_annotated.value, onto_ptr, &opts);
+        res = git_rebase_init(rebase, repo, branch_ptr, upstream_annotated.value, onto_ptr, &opts);
         if (res)
         {
             throw QGitError("git_rebase_init", res);
@@ -4301,19 +4363,17 @@ void QGit::rebase(const QString &upstream, const QString &branch, const QString 
         res = git_signature_default(committer, repo);
         if (res)
         {
-            git_rebase_abort(rebase_ptr);
-            git_rebase_free(rebase_ptr);
-            rebase_ptr = nullptr;
+            git_rebase_abort(rebase);
             throw QGitError("git_signature_default", res);
         }
 
         git_rebase_operation *op = nullptr;
         bool has_conflict = false;
 
-        while ((res = git_rebase_next(&op, rebase_ptr)) == 0)
+        while ((res = git_rebase_next(&op, rebase)) == 0)
         {
             git_oid commit_id;
-            res = git_rebase_commit(&commit_id, rebase_ptr, nullptr, committer, nullptr, nullptr);
+            res = git_rebase_commit(&commit_id, rebase, nullptr, committer, nullptr, nullptr);
             if (res == GIT_EUNMERGED)
             {
                 has_conflict = true;
@@ -4321,31 +4381,23 @@ void QGit::rebase(const QString &upstream, const QString &branch, const QString 
             }
             else if (res < 0)
             {
-                git_rebase_abort(rebase_ptr);
-                git_rebase_free(rebase_ptr);
-                rebase_ptr = nullptr;
+                git_rebase_abort(rebase);
                 throw QGitError("git_rebase_commit", res);
             }
         }
 
         if (has_conflict)
         {
-            git_rebase_free(rebase_ptr);
-            rebase_ptr = nullptr;
             throw QGitError("Rebase conflicts detected. Please resolve conflicts or abort rebase.", -1);
         }
 
         if (res != GIT_ITEROVER && res != 0)
         {
-            git_rebase_abort(rebase_ptr);
-            git_rebase_free(rebase_ptr);
-            rebase_ptr = nullptr;
+            git_rebase_abort(rebase);
             throw QGitError("git_rebase_next", res);
         }
 
-        res = git_rebase_finish(rebase_ptr, committer);
-        git_rebase_free(rebase_ptr);
-        rebase_ptr = nullptr;
+        res = git_rebase_finish(rebase, committer);
         if (res)
         {
             throw QGitError("git_rebase_finish", res);
@@ -4607,7 +4659,7 @@ void QGit::push(const QString &remote, const QStringList &branches, bool tags, b
         const int refspecCount = branches.size() + (tags ? 1 : 0);
         if (refspecCount == 0)
         {
-            giterr_set_str(GIT_ERROR_INVALID, "No branches or tags selected to push");
+            git_error_set_str(GIT_ERROR_INVALID, "No branches or tags selected to push");
             throw QGitError("git_remote_push", GIT_ERROR_INVALID);
         }
 
@@ -5043,11 +5095,12 @@ QString QGit::getNote(const QString &commitHash) const
         res = git_oid_fromstr(&oid, commitHash.toUtf8().constData());
         if (res) throw QGitError("git_oid_fromstr", res);
 
-        git_note *note = nullptr;
-        if (git_note_read(&note, repo, nullptr, &oid) == 0)
+        GitNote note;
+        if (git_note_read(note, repo, nullptr, &oid) == 0)
         {
-            noteText = QString::fromUtf8(git_note_message(note));
-            git_note_free(note);
+            const char *msg = git_note_message(note);
+            if (msg)
+                noteText = QString::fromUtf8(msg);
         }
     } catch (const std::exception &ex) {
         qWarning("QGit::getNote: %s", ex.what());

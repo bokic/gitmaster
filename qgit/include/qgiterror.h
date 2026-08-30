@@ -19,6 +19,9 @@ public:
     QString functionName() const;
     QString errorString() const;
     int errorCode() const;
+    bool hasError() const { return m_errorCode != 0; }
+    bool isOk() const { return m_errorCode == 0; }
+    explicit operator bool() const { return hasError(); }
 
 private:
     QString m_functionName;

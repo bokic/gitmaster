@@ -12,12 +12,12 @@ QGitDiffLine::QGitDiffLine(const QByteArray &content, git_off_t offset, int new_
 }
 
 QGitDiffLine::QGitDiffLine(const git_diff_line *line)
-    : m_content(QByteArray(line->content, static_cast<int>(line->content_len)))
-    , m_offset(line->content_offset)
-    , m_new_lineno(line->new_lineno)
-    , m_num_lines(line->num_lines)
-    , m_old_lineno(line->old_lineno)
-    , m_origin(line->origin)
+    : m_content(line && line->content ? QByteArray(line->content, static_cast<int>(line->content_len)) : QByteArray())
+    , m_offset(line ? line->content_offset : 0)
+    , m_new_lineno(line ? line->new_lineno : 0)
+    , m_num_lines(line ? line->num_lines : 0)
+    , m_old_lineno(line ? line->old_lineno : 0)
+    , m_origin(line ? line->origin : ' ')
 {
 }
 

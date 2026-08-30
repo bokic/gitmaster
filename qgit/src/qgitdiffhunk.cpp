@@ -7,11 +7,11 @@
 
 
 QGitDiffHunk::QGitDiffHunk(const git_diff_hunk *hunk)
-    : m_header(QString::fromUtf8(hunk->header, static_cast<int>(hunk->header_len)))
-    , m_new_lines(hunk->new_lines)
-    , m_new_start(hunk->new_start)
-    , m_old_lines(hunk->old_lines)
-    , m_old_start(hunk->old_start)
+    : m_header(hunk && hunk->header ? QString::fromUtf8(hunk->header, static_cast<int>(hunk->header_len)) : QString())
+    , m_new_lines(hunk ? hunk->new_lines : 0)
+    , m_new_start(hunk ? hunk->new_start : 0)
+    , m_old_lines(hunk ? hunk->old_lines : 0)
+    , m_old_start(hunk ? hunk->old_start : 0)
 {
 }
 
