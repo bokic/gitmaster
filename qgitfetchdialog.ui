@@ -22,6 +22,27 @@
     </widget>
    </item>
    <item>
+    <layout class="QHBoxLayout" name="horizontalLayout_remote">
+     <item>
+      <widget class="QLabel" name="label_remote">
+       <property name="text">
+        <string>Remote:</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QComboBox" name="comboBox_remote">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+   <item>
     <widget class="QCheckBox" name="checkBox_PurgeDeletedBranches">
      <property name="text">
       <string>Purge tracking branches no longer present on remote(s)</string>

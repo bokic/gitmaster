@@ -357,9 +357,18 @@ void QGitRepository::fetch()
         bool fetchFromAllRemotes = dlg.fetchFromAllRemotes();
         bool purgeDeletedBranches = dlg.purgeDeletedBranches();
         bool fetchAllTags = dlg.fetchAllTags();
+        QString remote = dlg.remote();
 
-        emit statusMessage("Fetching...");
-        emit repositoryFetch(fetchFromAllRemotes, purgeDeletedBranches, fetchAllTags);
+        if (fetchFromAllRemotes || remote.isEmpty())
+        {
+            emit statusMessage(tr("Fetching all remotes..."));
+            emit repositoryFetch(true, purgeDeletedBranches, fetchAllTags);
+        }
+        else
+        {
+            emit statusMessage(tr("Fetching from %1...").arg(remote));
+            emit repositoryFetchRemote(remote, purgeDeletedBranches, fetchAllTags);
+        }
     }
 }
 
