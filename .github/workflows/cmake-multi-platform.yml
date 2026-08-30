@@ -74,13 +74,14 @@ jobs:
         tar -xf libgit2.zip
         del libgit2.zip
         ren libgit2-%LIBGIT2_VERSION% libgit2
-        cmake -S libgit2 -B build-libgit2 -DBUILD_TESTS=OFF -DCMAKE_BUILD_TYPE=Release -G Ninja
-        cmake --build build-libgit2 --target libgit2package --config Release
+        cmake -S libgit2 -B build-libgit2 -DBUILD_TESTS=OFF -DBUILD_CLI=OFF -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=install -G Ninja
+        cmake --build build-libgit2 --config Release
+        cmake --install build-libgit2 --config Release
         if not exist "..\bin" mkdir ..\bin
         if not exist "..\include" mkdir ..\include
-        xcopy /y /e libgit2\include ..\include
-        xcopy /y /e build-libgit2\git2.dll ..\bin
-        xcopy /y /e build-libgit2\git2.lib ..\bin
+        xcopy /y /e install\include ..\include
+        xcopy /y /e install\bin\git2.dll ..\bin
+        xcopy /y /e install\lib\git2.lib ..\bin
 
     - name: Configure CMake (Linux)
       if: runner.os == 'Linux'
