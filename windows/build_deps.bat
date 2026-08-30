@@ -12,7 +12,7 @@ del libgit2.zip
 ren libgit2-%LIBGIT2_VERSION% libgit2
 
 call "C:\Program Files\Microsoft Visual Studio\18\Community\VC\Auxiliary\Build\vcvarsall.bat" x64
-cmake.exe -S libgit2 -B build -DBUILD_TESTS=OFF -DBUILD_CLI=OFF -DLIBGIT2_FILENAME=git2 -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=install -G Ninja
+cmake.exe -S libgit2 -B build -DBUILD_TESTS=OFF -DBUILD_CLI=OFF -DLIBGIT2_FILENAME=git2 -DCMAKE_INSTALL_PREFIX=install -A x64
 cmake.exe --build build --config Release --verbose
 cmake.exe --install build --config Release
 
@@ -21,8 +21,8 @@ mkdir ..\bin
 mkdir ..\include
 
 xcopy /y /e install\include ..\include
-xcopy /y /e install\bin\git2.dll ..\bin
-xcopy /y /e install\lib\git2.lib ..\bin
+copy /y install\bin\git2.dll ..\bin\
+copy /y install\lib\git2.lib ..\bin\
 
 rmdir /s /q install
 rmdir /s /q libgit2
