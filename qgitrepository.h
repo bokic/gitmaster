@@ -45,6 +45,7 @@ signals:
     void repositoryPush(const QString &remote, const QStringList &branches, bool tags, bool force);
     void repositoryPull(const QString &remote, const QString &branch, bool rebase);
     void repositoryFetch(bool fetchFromAllRemotes, bool purgeDeletedBranches, bool fetchAllTags);
+    void repositoryFetchRemote(const QString &remote, bool purgeDeletedBranches, bool fetchAllTags);
     void repositoryBranches();
     void repositoryStashes();
     void repositoryChangedFiles(int show, int sort, bool reversed);

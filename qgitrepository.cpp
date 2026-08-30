@@ -150,6 +150,7 @@ QGitRepository::QGitRepository(const QString &path, QWidget *parent)
     connect(m_git, &QGit::stashRemoveReply, this, &QGitRepository::localStashRemoveReply);
 
     connect(this, &QGitRepository::repositoryFetch, m_git, &QGit::fetch);
+    connect(this, &QGitRepository::repositoryFetchRemote, m_git, &QGit::fetchRemote);
     connect(m_git, &QGit::fetchReply, this, &QGitRepository::repositoryFetchReply);
 
     connect(this, &QGitRepository::repositoryPull, m_git, &QGit::pull);
@@ -1157,10 +1158,17 @@ void QGitRepository::on_branchesTreeView_customContextMenuRequested(const QPoint
     if (type == "RemotesHeader")
     {
         QMenu menu(this);
+        QAction *fetchAction = menu.addAction(tr("Fetch All Remotes"));
+        menu.addSeparator();
         QAction *manageAction = menu.addAction(tr("Manage Remotes..."));
 
         QAction *selectedAction = menu.exec(ui->branchesTreeView->viewport()->mapToGlobal(pos));
-        if (selectedAction == manageAction)
+        if (selectedAction == fetchAction)
+        {
+            emit statusMessage(tr("Fetching all remotes..."));
+            emit repositoryFetch(true, false, false);
+        }
+        else if (selectedAction == manageAction)
         {
             QGitRemotesDialog dlg(this, this);
             dlg.exec();
@@ -1353,15 +1361,56 @@ void QGitRepository::on_branchesTreeView_customContextMenuRequested(const QPoint
             }
         }
     }
-    else if (type == "RemoteBranch")
+    else if (type == "Remote")
     {
         QMenu menu(this);
+        QAction *fetchAction = menu.addAction(tr("Fetch from '%1'").arg(fullName));
+        menu.addSeparator();
+        QAction *manageAction = menu.addAction(tr("Manage Remotes..."));
+
+        QAction *selectedAction = menu.exec(ui->branchesTreeView->viewport()->mapToGlobal(pos));
+        if (selectedAction == fetchAction)
+        {
+            emit statusMessage(tr("Fetching from %1...").arg(fullName));
+            emit repositoryFetchRemote(fullName, false, false);
+        }
+        else if (selectedAction == manageAction)
+        {
+            QGitRemotesDialog dlg(this, this);
+            dlg.exec();
+        }
+    }
+    else if (type == "RemoteBranch")
+    {
+        QString remoteName = fullName.section('/', 0, 0);
+        QString branchName = fullName.section('/', 1);
+
+        QMenu menu(this);
+        QAction *pullAction = menu.addAction(tr("Pull into Current Branch (Merge)"));
+        QAction *pullRebaseAction = menu.addAction(tr("Pull into Current Branch (Rebase)"));
+        QAction *fetchAction = menu.addAction(tr("Fetch from '%1'").arg(remoteName));
+        menu.addSeparator();
         QAction *checkoutAction = menu.addAction(tr("Checkout as Local Branch..."));
         menu.addSeparator();
         QAction *showReflogAction = menu.addAction(tr("Show Reference Log (Reflog)..."));
         
         QAction *selectedAction = menu.exec(ui->branchesTreeView->viewport()->mapToGlobal(pos));
-        if (selectedAction == checkoutAction)
+        if (selectedAction == pullAction)
+        {
+            emit statusMessage(tr("Pulling %1...").arg(fullName));
+            emit repositoryPull(remoteName, branchName, false);
+        }
+        else if (selectedAction == pullRebaseAction)
+        {
+            emit statusMessage(tr("Pulling (Rebase) %1...").arg(fullName));
+            emit repositoryPull(remoteName, branchName, true);
+        }
+        else if (selectedAction == fetchAction)
+        {
+            emit statusMessage(tr("Fetching from %1...").arg(remoteName));
+            emit repositoryFetchRemote(remoteName, false, false);
+        }
+        else if (selectedAction == checkoutAction)
         {
             QString localName = fullName;
             if (localName.contains('/'))

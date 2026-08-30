@@ -139,15 +139,20 @@ void QGitBranchTreeWidget::populateBranchesAndTags(
                     {
                         QTreeWidgetItem *child = new QTreeWidgetItem(QStringList() << name);
                         child->setData(0, Qt::UserRole, branch.hash());
-                        if (depth == branchItems.count() - 1) {
-                            child->setData(0, Qt::UserRole + 1, branchItems.mid(2).join('/'));
-                            child->setData(0, Qt::UserRole + 2, "RemoteBranch");
-                        }
-
                         if (depth == 2)
+                        {
+                            child->setData(0, Qt::UserRole + 1, name);
+                            child->setData(0, Qt::UserRole + 2, "Remote");
                             child->setIcon(0, m_iconRemote);
+                        }
                         else
+                        {
                             child->setIcon(0, m_iconRemoteBranch);
+                            if (depth == branchItems.count() - 1) {
+                                child->setData(0, Qt::UserRole + 1, branchItems.mid(2).join('/'));
+                                child->setData(0, Qt::UserRole + 2, "RemoteBranch");
+                            }
+                        }
 
                         item->addChild(child);
                         item = child;

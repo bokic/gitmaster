@@ -171,6 +171,7 @@ public slots:
     void clone(const QUrl &url);
     void pull(const QString &remote, const QString &branch, bool rebase);
     void fetch(bool fetchFromAllRemotes, bool purgeDeletedBranches, bool fetchAllTags);
+    void fetchRemote(const QString &remote, bool purgeDeletedBranches = false, bool fetchAllTags = false);
     void push(const QString &remote, const QStringList &branches, bool tags, bool force);
     void listCommits(const QString &branchRef, int offset, int length);
     void searchCommits(const QString &text, const QString &type);

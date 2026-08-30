@@ -4466,6 +4466,43 @@ void QGit::fetch(bool fetchFromAllRemotes, bool purgeDeletedBranches, bool fetch
     emit fetchReply(error);
 }
 
+void QGit::fetchRemote(const QString &remoteName, bool purgeDeletedBranches, bool fetchAllTags)
+{
+    QGitError error;
+
+    try
+    {
+        GitRepository repo;
+        int res = git_repository_open(repo, m_path.absolutePath().toUtf8().constData());
+        if (res)
+        {
+            throw QGitError("git_repository_open", res);
+        }
+
+        git_fetch_options fetch_opts = makeFetchOptions(this);
+        fetch_opts.prune = purgeDeletedBranches ? GIT_FETCH_PRUNE : GIT_FETCH_NO_PRUNE;
+        fetch_opts.download_tags = fetchAllTags ? GIT_REMOTE_DOWNLOAD_TAGS_ALL : GIT_REMOTE_DOWNLOAD_TAGS_AUTO;
+
+        GitRemote remote;
+        res = git_remote_lookup(remote, repo, remoteName.toUtf8().constData());
+        if (res)
+        {
+            throw QGitError("git_remote_lookup", res);
+        }
+
+        res = git_remote_fetch(remote, nullptr, &fetch_opts, "fetch");
+        if (res)
+        {
+            throw QGitError("git_remote_fetch", res);
+        }
+
+    } catch(const QGitError &ex) {
+        error = ex;
+    }
+
+    emit fetchReply(error);
+}
+
 void QGit::push(const QString &remote, const QStringList &branches, bool tags, bool force)
 {
     QGitError error;
