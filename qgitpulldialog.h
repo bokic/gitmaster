@@ -20,9 +20,6 @@ public:
 
     QGitRemote remote() const;
     QString branch() const;
-    bool commitMergedChanges() const;
-    bool includeMessages() const;
-    bool createNewCommit() const;
     bool rebase() const;
 
 private slots:

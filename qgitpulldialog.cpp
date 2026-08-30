@@ -137,21 +137,6 @@ QString QGitPullDialog::branch() const
     return ui->branch_comboBox->currentText();
 }
 
-bool QGitPullDialog::commitMergedChanges() const
-{
-    return ui->commit_merged_checkBox->isChecked();
-}
-
-bool QGitPullDialog::includeMessages() const
-{
-    return ui->include_messages_checkBox->isChecked();
-}
-
-bool QGitPullDialog::createNewCommit() const
-{
-    return ui->create_new_commit_checkBox->isChecked();
-}
-
 bool QGitPullDialog::rebase() const
 {
     return ui->rebase_checkBox->isChecked();

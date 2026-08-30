@@ -69,27 +69,6 @@
      </property>
      <layout class="QVBoxLayout" name="verticalLayout_2">
       <item>
-       <widget class="QCheckBox" name="commit_merged_checkBox">
-        <property name="text">
-         <string>Commit merged changes immediately</string>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QCheckBox" name="include_messages_checkBox">
-        <property name="text">
-         <string>Include messages from commits being merged in merge commit</string>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QCheckBox" name="create_new_commit_checkBox">
-        <property name="text">
-         <string>Create a new commit even if fast-forward possible</string>
-        </property>
-       </widget>
-      </item>
-      <item>
        <widget class="QCheckBox" name="rebase_checkBox">
         <property name="text">
          <string>Rebase instead of merge (WARNING: make sure you haven't pushed your changes)</string>
