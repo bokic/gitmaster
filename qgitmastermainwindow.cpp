@@ -304,7 +304,6 @@ void QGitMasterMainWindow::on_actionFetch_triggered()
     if (panel)
     {
         panel->fetch();
-        panel->refreshData();
     }
 }
 
@@ -314,7 +313,6 @@ void QGitMasterMainWindow::on_actionPull_triggered()
     if (panel)
     {
         panel->pull();
-        panel->refreshData();
     }
 }
 
