@@ -9,6 +9,7 @@
 
 #include <QStringList>
 #include <QDateTime>
+#include <QTimeZone>
 #include <QObject>
 #include <QString>
 #include <QList>
