@@ -4203,6 +4203,15 @@ void QGit::clone(const QUrl &url)
 
     try
     {
+        if (url.isEmpty() || !url.isValid())
+        {
+            throw QGitError("Invalid clone URL", -1);
+        }
+        if (m_path.absolutePath().isEmpty())
+        {
+            throw QGitError("Invalid clone destination path", -1);
+        }
+
         git_clone_options opts;
         int res = git_clone_init_options(&opts, GIT_CLONE_OPTIONS_VERSION);
         if (res)

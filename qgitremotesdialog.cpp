@@ -83,7 +83,8 @@ void QGitRemotesDialog::on_editUrlButton_clicked()
 
     // Get current URL from row
     int row = ui->tableWidget->currentRow();
-    QString currentUrl = ui->tableWidget->item(row, 1)->text();
+    QTableWidgetItem *urlItem = ui->tableWidget->item(row, 1);
+    QString currentUrl = urlItem ? urlItem->text() : QString();
 
     bool ok;
     QString newUrl = QInputDialog::getText(this, tr("Edit Remote URL"),

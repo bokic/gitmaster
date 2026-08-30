@@ -41,8 +41,12 @@ if(NOT GITMASTER_VERSION_TAG)
     endif()
 endif()
 
+if(NOT GITMASTER_VERSION_TAG)
+    message(FATAL_ERROR "GITMASTER_VERSION_TAG is not set and could not be determined from git repository. Please provide it via -DGITMASTER_VERSION_TAG=X.Y.Z")
+endif()
+
 if(NOT GITMASTER_VERSION_TAG MATCHES "^[0-9]+\\.[0-9]+\\.[0-9]+$")
-    message(FATAL_ERROR "Git last tag '${GITMASTER_VERSION_TAG}' is not in format X.Y.Z")
+    message(FATAL_ERROR "Version tag '${GITMASTER_VERSION_TAG}' is not in format X.Y.Z")
 endif()
 
 string(REGEX REPLACE "^([0-9]+\\.[0-9]+)\\..*$" "\\1" GITMASTER_VERSION_TAG_SHORT ${GITMASTER_VERSION_TAG})
