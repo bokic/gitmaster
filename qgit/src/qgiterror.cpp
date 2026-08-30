@@ -24,6 +24,13 @@ QGitError::QGitError(const QString &functionName, int errorCode)
     }
 }
 
+QGitError::QGitError(const QString &functionName, int errorCode, const QString &customMessage)
+    : m_functionName(functionName)
+    , m_errorString(customMessage.isEmpty() ? QString("Git error %1: %2").arg(errorCode).arg(functionName) : customMessage)
+    , m_errorCode(errorCode)
+{
+}
+
 QGitError::QGitError(QGitError &&other) noexcept
 {
     std::swap(m_functionName, other.m_functionName);

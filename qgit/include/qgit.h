@@ -187,6 +187,9 @@ public slots:
     void applyPatch(const QString &patchPath);
     void setNote(const QString &commitHash, const QString &note);
     void removeNote(const QString &commitHash);
+    void setLastPushError(const QString &err) { m_lastPushError = err; }
+    QString lastPushError() const { return m_lastPushError; }
+    void clearLastPushError() { m_lastPushError.clear(); }
 
 signals:
     void requestPassword(QString &password);
@@ -235,4 +238,5 @@ signals:
 private:
     QDir m_path;
     std::atomic<bool> m_abortSearch{false};
+    QString m_lastPushError;
 };

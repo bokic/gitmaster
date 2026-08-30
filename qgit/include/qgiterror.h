@@ -8,6 +8,7 @@ class QGitError
 public:
     QGitError();
     QGitError(const QString &functionName, int errorCode);
+    QGitError(const QString &functionName, int errorCode, const QString &customMessage);
     QGitError(const QGitError &other) = default;
     QGitError(QGitError &&other) noexcept;
     virtual ~QGitError() = default;

@@ -602,6 +602,22 @@ static git_push_options makePushOptions(QGit *payload = nullptr)
             return -1;
         }
     };
+    opts.callbacks.push_update_reference = [](const char *refname, const char *status, void *payload) -> int
+    {
+        try {
+            if (status) {
+                if (payload) {
+                    QGit *_this = static_cast<QGit *>(payload);
+                    _this->setLastPushError(QString("Push rejected for %1: %2").arg(refname ? refname : "ref", status));
+                }
+                giterr_set_str(GITERR_NET, status);
+                return -1;
+            }
+            return 0;
+        } catch (...) {
+            return -1;
+        }
+    };
     return opts;
 }
 
@@ -2295,10 +2311,14 @@ void QGit::deleteBranches(const QList<QGitBranch> &branches, bool force)
                     SafeGitStrArray refspecs = SafeGitStrArray::fromSingle(refspec);
                     
                     git_push_options push_opts = makePushOptions(this);
+                    clearLastPushError();
                     
                     res = git_remote_push(remote, &refspecs.value, &push_opts);
                     if (res)
                     {
+                        if (!m_lastPushError.isEmpty()) {
+                            throw QGitError("git_remote_push", res, m_lastPushError);
+                        }
                         throw QGitError("git_remote_push", res);
                     }
                 }
@@ -3960,16 +3980,14 @@ void QGit::commit(const QString &message, bool withPush, bool amend)
             SafeGitStrArray refspecs = SafeGitStrArray::fromSingle(refspec);
 
             git_push_options push_opts = makePushOptions(this);
-            push_opts.callbacks.push_update_reference = [](const char *refname, const char *status, void *payload) -> int
-            {
-                Q_UNUSED(refname);
-                Q_UNUSED(payload);
-                return status ? -1 : 0;
-            };
+            clearLastPushError();
 
             res = git_remote_push(remote, &refspecs.value, &push_opts);
             if (res)
             {
+                if (!m_lastPushError.isEmpty()) {
+                    throw QGitError("git_remote_push", res, m_lastPushError);
+                }
                 throw QGitError("git_remote_push", res);
             }
         }
@@ -4465,24 +4483,14 @@ void QGit::push(const QString &remote, const QStringList &branches, bool tags, b
         SafeGitStrArray refspecs = SafeGitStrArray::fromQStringList(refspecList);
 
         git_push_options push_opts = makePushOptions(this);
-
-        push_opts.callbacks.push_update_reference = [](const char *refname, const char *status, void *payload) -> int
-        {
-            try {
-                Q_UNUSED(payload);
-                Q_UNUSED(refname);
-                if (status) {
-                    return -1; // Returning non-zero will fail the push operation locally as well
-                }
-                return 0;
-            } catch (...) {
-                return -1;
-            }
-        };
+        clearLastPushError();
 
         res = git_remote_push(libgit2_remote, &refspecs.value, &push_opts);
         if (res)
         {
+            if (!m_lastPushError.isEmpty()) {
+                throw QGitError("git_remote_push", res, m_lastPushError);
+            }
             throw QGitError("git_remote_push", res);
         }
 
