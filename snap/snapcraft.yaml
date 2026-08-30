@@ -16,6 +16,9 @@ apps:
     plugs:
       - home
       - removable-media
+      - network
+      - network-bind
+      - ssh-keys
 
 parts:
   gitmaster:
