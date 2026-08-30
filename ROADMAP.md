@@ -4,11 +4,6 @@ Development plan and upcoming features for GitMaster.
 
 ---
 
-## 🌍 Version 0.8 - Finalizing work & Branding
-*Desloping/bugfixing codebase.*
-
----
-
 ## 📦 Version 0.9 - Feature Enhancements & Advanced Git Tools
 
 ### Interactive Staging & Diffing
