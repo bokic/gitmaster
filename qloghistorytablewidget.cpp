@@ -325,3 +325,18 @@ QList<QGitRef> QLogHistoryTableWidget::getReferences(const QString &sha) const
     return m_refMap.value(sha.toLower());
 }
 
+void QLogHistoryTableWidget::setHighlightedCommits(const QSet<QString> &shas)
+{
+    m_highlightedCommits.clear();
+    for (const auto &sha : shas)
+    {
+        m_highlightedCommits.insert(sha.toLower());
+    }
+    viewport()->update();
+}
+
+bool QLogHistoryTableWidget::isCommitHighlighted(const QString &sha) const
+{
+    return m_highlightedCommits.contains(sha.toLower());
+}
+

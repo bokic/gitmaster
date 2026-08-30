@@ -85,6 +85,7 @@ set(PROJECT_HEADERS
     qgitcreatetagdialog.h
     qgitcleandialog.h
     qgitstashdialog.h
+    qgitstashinspectdialog.h
     qgitreflogdialog.h
     qgitremotesdialog.h
     qgitblamedialog.h
@@ -139,6 +140,7 @@ set(PROJECT_SOURCES
     qgitcreatetagdialog.cpp        qgitcreatetagdialog.ui
     qgitcleandialog.cpp            qgitcleandialog.ui
     qgitstashdialog.cpp            qgitstashdialog.ui
+    qgitstashinspectdialog.cpp     qgitstashinspectdialog.ui
     qgitreflogdialog.cpp           qgitreflogdialog.ui
     qgitremotesdialog.cpp          qgitremotesdialog.ui
     qgitblamedialog.cpp            qgitblamedialog.ui

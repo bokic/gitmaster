@@ -270,7 +270,7 @@ void QLogHistoryItemDelegate::paint(QPainter *painter, const QStyleOptionViewIte
             painter->restore();
         }
 
-        // Check if this commit represents the current checked-out HEAD
+        // Check if this commit represents the current checked-out HEAD or is highlighted
         bool isCurrentCommit = false;
         for (const auto &ref : refs)
         {
@@ -280,6 +280,7 @@ void QLogHistoryItemDelegate::paint(QPainter *painter, const QStyleOptionViewIte
                 break;
             }
         }
+        bool isBold = isCurrentCommit || (table && !sha.isEmpty() && table->isCommitHighlighted(sha));
 
         QRect textRect = option.rect;
         textRect.setLeft(startX + 2);
@@ -294,7 +295,7 @@ void QLogHistoryItemDelegate::paint(QPainter *painter, const QStyleOptionViewIte
         textOpt.text = elidedMsg;
         textOpt.icon = QIcon();
         textOpt.features = QStyleOptionViewItem::HasDisplay;
-        if (isCurrentCommit)
+        if (isBold)
         {
             textOpt.font.setBold(true);
         }
@@ -303,7 +304,44 @@ void QLogHistoryItemDelegate::paint(QPainter *painter, const QStyleOptionViewIte
     }
     else
     {
-        QStyledItemDelegate::paint(painter, option, index);
+        auto *table = qobject_cast<const QLogHistoryTableWidget*>(option.widget);
+        if (!table) {
+            table = qobject_cast<const QLogHistoryTableWidget*>(parent());
+        }
+
+        QString sha;
+        if (table)
+        {
+            auto sibling = index.sibling(index.row(), 1);
+            sha = sibling.data(Qt::UserRole + 1).toString();
+        }
+
+        bool isCurrentCommit = false;
+        if (table && !sha.isEmpty())
+        {
+            auto refs = table->getReferences(sha);
+            for (const auto &ref : refs)
+            {
+                if (ref.type == QGitRef::CurrentBranch)
+                {
+                    isCurrentCommit = true;
+                    break;
+                }
+            }
+        }
+        bool isBold = isCurrentCommit || (table && !sha.isEmpty() && table->isCommitHighlighted(sha));
+
+        if (isBold)
+        {
+            QStyleOptionViewItem opt = option;
+            initStyleOption(&opt, index);
+            opt.font.setBold(true);
+            QStyledItemDelegate::paint(painter, opt, index);
+        }
+        else
+        {
+            QStyledItemDelegate::paint(painter, option, index);
+        }
     }
 }
 

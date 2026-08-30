@@ -3084,6 +3084,10 @@ void QGit::commitDiff(const QString &commitId, bool ignoreWhitespace)
             throw QGitError("git_commit_lookup", res);
         }
 
+        char commit_id_buf[GIT_OID_HEXSZ + 1] = {0, };
+        git_oid_tostr(commit_id_buf, sizeof(commit_id_buf), git_commit_id(commit));
+        effectiveCommitId = QString::fromUtf8(commit_id_buf);
+
         GitTree commit_tree;
         res = git_commit_tree(commit_tree, commit);
         if (res)

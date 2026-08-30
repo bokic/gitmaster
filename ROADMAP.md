@@ -7,7 +7,7 @@ Development plan and upcoming features for GitMaster.
 ## 📦 Version 0.9 - Feature Enhancements & Advanced Git Tools
 
 ### Interactive Staging & Diffing
-- [ ] **Stash Inspection**: Allow double-clicking stashes in the stash dialog to view file diffs directly in the main diff widget.
+- [x] **Stash Inspection**: Allow double-clicking stashes in the stash dialog to view file diffs directly in the main diff widget.
 
 ### Advanced Commit & Rebase Tools
 - [ ] **Commit Reword & Amend UI**: Enable instant commit message editing for HEAD and UI options for amending.

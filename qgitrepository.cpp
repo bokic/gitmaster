@@ -15,6 +15,7 @@
 #include "qgitblamedialog.h"
 #include "qgitworktreedialog.h"
 #include "qgitflowdialog.h"
+#include "qgitstashinspectdialog.h"
 #include <qgitbranch.h>
 
 #include <QDebug>
@@ -800,7 +801,7 @@ void QGitRepository::repositoryChangedFilesReply(const QList<QPair<QString, git_
         git_status_t status = filePair.second;
         if (status & (GIT_STATUS_INDEX_NEW | GIT_STATUS_INDEX_MODIFIED | GIT_STATUS_INDEX_DELETED | 
                       GIT_STATUS_INDEX_RENAMED | GIT_STATUS_INDEX_TYPECHANGE | 
-                      GIT_STATUS_WT_MODIFIED | GIT_STATUS_WT_DELETED | 
+                      GIT_STATUS_WT_NEW | GIT_STATUS_WT_MODIFIED | GIT_STATUS_WT_DELETED | 
                       GIT_STATUS_WT_RENAMED | GIT_STATUS_WT_TYPECHANGE | 
                       GIT_STATUS_CONFLICTED))
         {
@@ -809,6 +810,7 @@ void QGitRepository::repositoryChangedFilesReply(const QList<QPair<QString, git_
         }
     }
 
+    m_hasStashableChanges = hasStashableChanges;
     emit setStashEnabledRequested(hasStashableChanges);
     emit refreshRepositoryTreeRequested();
 }
@@ -1087,14 +1089,11 @@ void QGitRepository::repositoryGetCommitDiffReply(const QString &commitId, const
         else
         {
             int currentRow = ui->logHistory_commits->currentRow();
-            if (currentRow < 0) return;
+            QTableWidgetItem *commitItem = (currentRow >= 0) ? ui->logHistory_commits->item(currentRow, 4) : nullptr;
+            const QString commit_id = commitItem ? commitItem->data(Qt::UserRole).toString() : m_commitDiff.id();
 
-            QTableWidgetItem *commitItem = ui->logHistory_commits->item(currentRow, 4);
-            if (!commitItem) return;
-            const QString commit_id = commitItem->data(Qt::UserRole).toString();
-
-            QTableWidgetItem *authorItem = ui->logHistory_commits->item(currentRow, 3);
-            const QString email = authorItem ? authorItem->data(Qt::UserRole + 1).toString() : QString();
+            QTableWidgetItem *authorItem = (currentRow >= 0) ? ui->logHistory_commits->item(currentRow, 3) : nullptr;
+            const QString email = authorItem ? authorItem->data(Qt::UserRole + 1).toString() : m_commitDiff.author().email();
 
             QString html;
             QStringList parentsHtml;
@@ -1206,6 +1205,15 @@ void QGitRepository::on_branchesTreeView_itemDoubleClicked(QTreeWidgetItem *item
         QString subPath = item->data(0, Qt::UserRole + 1).toString();
         QString fullSubPath = m_git->path().absoluteFilePath(subPath);
         emit openRepositoryRequested(fullSubPath);
+        return;
+    }
+
+    if (type == "Stash")
+    {
+        QString stashRef = item->data(0, Qt::UserRole).toString();
+        QString stashName = item->data(0, Qt::UserRole + 1).toString();
+        QGitStashInspectDialog dlg(m_git, stashRef, stashName, this);
+        dlg.exec();
         return;
     }
 
@@ -1394,13 +1402,22 @@ void QGitRepository::on_branchesTreeView_customContextMenuRequested(const QPoint
     if (type == "Stash")
     {
         QMenu menu(this);
+        QAction *inspectAction = menu.addAction(tr("Inspect Stash..."));
+        menu.addSeparator();
         QAction *applyAction = menu.addAction(tr("Apply Stash"));
         QAction *popAction = menu.addAction(tr("Pop Stash"));
         menu.addSeparator();
         QAction *dropAction = menu.addAction(tr("Drop Stash"));
 
         QAction *selectedAction = menu.exec(ui->branchesTreeView->viewport()->mapToGlobal(pos));
-        if (selectedAction == applyAction)
+        if (selectedAction == inspectAction)
+        {
+            QString stashRef = item->data(0, Qt::UserRole).toString();
+            QString stashName = item->data(0, Qt::UserRole + 1).toString();
+            QGitStashInspectDialog dlg(m_git, stashRef, stashName, this);
+            dlg.exec();
+        }
+        else if (selectedAction == applyAction)
         {
             emit statusMessage(tr("Applying stash %1...").arg(fullName));
             emit repositoryStashApply(fullName);

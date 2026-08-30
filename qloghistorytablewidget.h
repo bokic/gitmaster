@@ -8,6 +8,7 @@
 #include <QString>
 #include <QList>
 #include <QHash>
+#include <QSet>
 
 
 struct QGitRef {
@@ -34,8 +35,12 @@ public:
     void setReferences(const QList<QGitBranch> &branches, const QList<QGitTag> &tags, const QString &currentBranch);
     QList<QGitRef> getReferences(const QString &sha) const;
 
+    void setHighlightedCommits(const QSet<QString> &shas);
+    bool isCommitHighlighted(const QString &sha) const;
+
 private:
     QList<QString> m_hashIndex;
     QHash<QString, QList<QGitRef>> m_refMap;
+    QSet<QString> m_highlightedCommits;
 };
 

@@ -267,10 +267,12 @@ void QGitBranchTreeWidget::populateStashes(const QStringList &stashes)
         qDeleteAll(stashGroupItem->takeChildren());
     }
 
-    for (const auto &stash : stashes)
+    for (int i = 0; i < stashes.size(); ++i)
     {
+        const QString &stash = stashes.at(i);
         QTreeWidgetItem *item = new QTreeWidgetItem(QStringList() << stash);
         item->setIcon(0, m_iconStash);
+        item->setData(0, Qt::UserRole, QStringLiteral("stash@{%1}").arg(i));
         item->setData(0, Qt::UserRole + 1, stash);
         item->setData(0, Qt::UserRole + 2, "Stash");
         stashGroupItem->addChild(item);

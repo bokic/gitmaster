@@ -39,6 +39,7 @@ public:
     void navigateToCommit(const QString &hash);
     bool hasRemotes() const { return m_hasRemotes; }
     bool hasCommitsToPush() const { return m_hasCommitsToPush; }
+    bool hasStashableChanges() const { return m_hasStashableChanges; }
 
 signals:
     void localStash(const QString &name, bool keepIndex, bool includeUntracked, bool includeIgnored);
@@ -217,6 +218,7 @@ private:
     bool m_refreshing = false;
     bool m_hasRemotes = false;
     bool m_hasCommitsToPush = false;
+    bool m_hasStashableChanges = false;
     int m_layoutOption = 0;
     QList<QPair<QString, git_status_t>> m_changedFiles;
     QString m_headCommitId;

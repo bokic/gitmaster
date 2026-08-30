@@ -429,7 +429,7 @@ void QGitMasterMainWindow::on_tabWidget_currentChanged(int index)
         ui->actionMerge->setEnabled(true);
         ui->actionRebase->setEnabled(true);
         ui->actionWorktrees->setEnabled(true);
-        ui->actionStash->setEnabled(false);
+        ui->actionStash->setEnabled(panel ? panel->hasStashableChanges() : false);
         ui->actionGit_Flow->setEnabled(true);
         ui->actionTerminal->setEnabled(true);
     }
