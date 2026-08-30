@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.12)
+cmake_minimum_required(VERSION 3.16)
 
 # Can be one of thoese: address, thread, memory, undefined, leak
 #add_compile_options(-fsanitize=address)
@@ -216,11 +216,22 @@ else()
 endif()
 
 if (APPLE)
-    target_link_libraries(gitmaster PRIVATE -L/opt/homebrew/lib)
+    find_library(LIBGIT2_LIB git2 HINTS /opt/homebrew/lib /usr/local/lib /opt/local/lib)
+    if (LIBGIT2_LIB)
+        target_link_libraries(gitmaster PRIVATE ${LIBGIT2_LIB})
+    else()
+        target_link_libraries(gitmaster PRIVATE git2)
+    endif()
+    find_path(LIBGIT2_INCLUDE_DIR git2.h HINTS /opt/homebrew/include /usr/local/include /opt/local/include)
+    if (LIBGIT2_INCLUDE_DIR)
+        target_include_directories(gitmaster PRIVATE ${LIBGIT2_INCLUDE_DIR})
+    endif()
     target_sources(gitmaster PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/macos/gitmaster.icns)
     set_source_files_properties(${CMAKE_CURRENT_SOURCE_DIR}/macos/gitmaster.icns PROPERTIES
         MACOSX_PACKAGE_LOCATION "Resources"
     )
+else()
+    target_link_libraries(gitmaster PRIVATE git2)
 endif()
 
 target_link_libraries(gitmaster PRIVATE
@@ -228,7 +239,6 @@ target_link_libraries(gitmaster PRIVATE
     Qt6::Gui
     Qt6::Network
     Qt6::Svg
-    git2
 )
 
 if (WIN32)
@@ -269,7 +279,9 @@ endif()
 
 qt_finalize_executable(gitmaster)
 
-set(CMAKE_INSTALL_PREFIX /usr)
+if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
+    set(CMAKE_INSTALL_PREFIX "/usr" CACHE PATH "Default install prefix" FORCE)
+endif()
 install(
     TARGETS gitmaster
     RUNTIME DESTINATION bin
