@@ -376,12 +376,12 @@ void QGitMasterMainWindow::connectRepositorySignals(QGitRepository *widget)
         if (ui->tabWidget->currentWidget() == widget) {
             updateRemoteActions(widget);
         }
-    }, Qt::UniqueConnection);
+    });
     connect(widget, &QGitRepository::setStashEnabledRequested, this, [this, widget](bool enabled) {
         if (ui->tabWidget->currentWidget() == widget) {
             setStashEnabled(widget, enabled);
         }
-    }, Qt::UniqueConnection);
+    });
     connect(widget, &QGitRepository::refreshRepositoryTreeRequested, this, &QGitMasterMainWindow::refreshRepositoryTree, Qt::UniqueConnection);
 }
 
