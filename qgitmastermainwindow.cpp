@@ -48,6 +48,7 @@ QGitMasterMainWindow::QGitMasterMainWindow(QWidget *parent)
                 QImage(":/images/branch_icon"));
 
     ui->treeWidget->setItemDelegate(treeDelegate);
+    connect(ui->treeWidget, &QGitRepoTreeWidget::repositoriesDropped, this, &QGitMasterMainWindow::addRepositories);
 
     readSettings();
 
@@ -82,10 +83,20 @@ void QGitMasterMainWindow::dragEnterEvent(QDragEnterEvent *event)
     if (event->mimeData()->hasUrls()) {
         const QList<QUrl> urls = event->mimeData()->urls();
         for (const QUrl &url : urls) {
+            if (!url.isLocalFile())
+                continue;
             QString fn = url.toLocalFile();
             if (fn.endsWith(".patch", Qt::CaseInsensitive) || fn.endsWith(".diff", Qt::CaseInsensitive)) {
                 event->acceptProposedAction();
                 return;
+            }
+            QFileInfo fi(fn);
+            if (fi.isDir()) {
+                QFileInfo gitInfo(QDir(fn).filePath(".git"));
+                if (gitInfo.exists() || QGit::isGitRepository(QDir(fn))) {
+                    event->acceptProposedAction();
+                    return;
+                }
             }
         }
     }
@@ -96,9 +107,32 @@ void QGitMasterMainWindow::dragMoveEvent(QDragMoveEvent *event)
 {
     if (event->mimeData()->hasUrls()) {
         const QList<QUrl> urls = event->mimeData()->urls();
+        bool hasPatches = false;
+        bool hasGitDirs = false;
         for (const QUrl &url : urls) {
+            if (!url.isLocalFile())
+                continue;
             QString fn = url.toLocalFile();
             if (fn.endsWith(".patch", Qt::CaseInsensitive) || fn.endsWith(".diff", Qt::CaseInsensitive)) {
+                hasPatches = true;
+            }
+            QFileInfo fi(fn);
+            if (fi.isDir()) {
+                QFileInfo gitInfo(QDir(fn).filePath(".git"));
+                if (gitInfo.exists() || QGit::isGitRepository(QDir(fn))) {
+                    hasGitDirs = true;
+                }
+            }
+        }
+
+        if (hasPatches) {
+            event->acceptProposedAction();
+            return;
+        }
+
+        if (hasGitDirs) {
+            QRect leftPanelRect = QRect(ui->layoutWidget->mapTo(this, QPoint(0, 0)), ui->layoutWidget->size());
+            if (leftPanelRect.contains(event->position().toPoint())) {
                 event->acceptProposedAction();
                 return;
             }
@@ -112,27 +146,43 @@ void QGitMasterMainWindow::dropEvent(QDropEvent *event)
     const QMimeData *mimeData = event->mimeData();
     if (!mimeData->hasUrls()) return;
 
+    QRect leftPanelRect = QRect(ui->layoutWidget->mapTo(this, QPoint(0, 0)), ui->layoutWidget->size());
+    bool isOverLeftPanel = leftPanelRect.contains(event->position().toPoint());
+
+    QStringList gitFolders;
     QStringList patchFiles;
+
     for (const QUrl &url : mimeData->urls()) {
         if (url.isLocalFile()) {
             QString localPath = url.toLocalFile();
-            if (localPath.endsWith(".patch", Qt::CaseInsensitive) || localPath.endsWith(".diff", Qt::CaseInsensitive)) {
+            QFileInfo fi(localPath);
+            if (fi.isDir()) {
+                QFileInfo gitInfo(QDir(localPath).filePath(".git"));
+                if (gitInfo.exists() || QGit::isGitRepository(QDir(localPath))) {
+                    gitFolders.append(localPath);
+                }
+            } else if (localPath.endsWith(".patch", Qt::CaseInsensitive) || localPath.endsWith(".diff", Qt::CaseInsensitive)) {
                 patchFiles.append(localPath);
             }
         }
     }
 
-    if (patchFiles.isEmpty()) return;
-
-    event->acceptProposedAction();
-
-    auto panel = dynamic_cast<QGitRepository *>(ui->tabWidget->currentWidget());
-    if (!panel) {
-        QMessageBox::warning(this, tr("Apply Patch"), tr("Please open or select a repository tab before dropping patch files to apply."));
+    if (isOverLeftPanel && !gitFolders.isEmpty()) {
+        event->acceptProposedAction();
+        addRepositories(gitFolders);
         return;
     }
 
-    panel->applyPatchesPrompt(patchFiles);
+    if (!patchFiles.isEmpty()) {
+        event->acceptProposedAction();
+        auto panel = dynamic_cast<QGitRepository *>(ui->tabWidget->currentWidget());
+        if (!panel) {
+            QMessageBox::warning(this, tr("Apply Patch"), tr("Please open or select a repository tab before dropping patch files to apply."));
+            return;
+        }
+        panel->applyPatchesPrompt(patchFiles);
+        return;
+    }
 }
 
 void QGitMasterMainWindow::readSettings()
@@ -209,6 +259,69 @@ bool QGitMasterMainWindow::hasRepositoryWithName(const QString &name)
     }
 
     return false;
+}
+
+bool QGitMasterMainWindow::hasRepositoryWithPath(const QString &path)
+{
+    QFileInfo newInfo(path);
+    QString canonicalNew = newInfo.canonicalFilePath();
+    if (canonicalNew.isEmpty())
+        canonicalNew = QDir::cleanPath(newInfo.absoluteFilePath());
+
+    for (int c = 0; c < ui->treeWidget->topLevelItemCount(); c++)
+    {
+        QString itemPath = ui->treeWidget->topLevelItem(c)->data(0, QGitRepoTreeItemDelegate::QItemPath).toString();
+        QFileInfo itemInfo(itemPath);
+        QString canonicalItem = itemInfo.canonicalFilePath();
+        if (canonicalItem.isEmpty())
+            canonicalItem = QDir::cleanPath(itemInfo.absoluteFilePath());
+
+        if (canonicalNew == canonicalItem)
+        {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+void QGitMasterMainWindow::addRepositories(const QStringList &paths)
+{
+    int addedCount = 0;
+    for (const QString &path : paths)
+    {
+        QDir dir(path);
+        QFileInfo gitInfo(dir.filePath(".git"));
+        if (!gitInfo.exists() && !QGit::isGitRepository(dir)) {
+            continue;
+        }
+
+        if (hasRepositoryWithPath(dir.absolutePath())) {
+            continue;
+        }
+
+        QString baseName = dir.dirName();
+        if (baseName.isEmpty()) {
+            baseName = "repository";
+        }
+
+        QString repoName = baseName;
+        int suffix = 2;
+        while (hasRepositoryWithName(repoName)) {
+            repoName = QString("%1_%2").arg(baseName).arg(suffix++);
+        }
+
+        auto item = new QTreeWidgetItem(ui->treeWidget);
+        item->setData(0, Qt::DisplayRole, repoName);
+        item->setData(0, QGitRepoTreeItemDelegate::QItemPath, QDir::toNativeSeparators(dir.absolutePath()));
+        addedCount++;
+    }
+
+    if (addedCount > 0)
+    {
+        writeSettings();
+        ui->treeWidget->refreshItems();
+    }
 }
 
 void QGitMasterMainWindow::updateStatusBarText(const QString &text)

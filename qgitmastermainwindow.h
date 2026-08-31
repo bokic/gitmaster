@@ -18,6 +18,8 @@ public:
 
     void writeSettings();
     bool hasRepositoryWithName(const QString &name);
+    bool hasRepositoryWithPath(const QString &path);
+    void addRepositories(const QStringList &paths);
     void updateStatusBarText(const QString &text);
     void clearStatusBarText();
     void setStashEnabled(class QGitRepository *panel, bool enabled);

@@ -1,5 +1,10 @@
 #include "qgitrepotreewidget.h"
 #include "qgitrepotreeitemdelegate.h"
+#include <QDragEnterEvent>
+#include <QDragMoveEvent>
+#include <QDropEvent>
+#include <QMimeData>
+#include <QFileInfo>
 
 
 QGitRepoTreeWidget::QGitRepoTreeWidget(QWidget *parent)
@@ -7,6 +12,8 @@ QGitRepoTreeWidget::QGitRepoTreeWidget(QWidget *parent)
     , m_thread(this)
     , m_git(new QGit())
 {
+    setAcceptDrops(true);
+
     m_git->moveToThread(&m_thread);
 
     connect(this, &QGitRepoTreeWidget::repositoryStatus, m_git, &QGit::status);
@@ -95,3 +102,69 @@ void QGitRepoTreeWidget::refreshItem()
 
     emit repositoryStatus();
 }
+
+void QGitRepoTreeWidget::dragEnterEvent(QDragEnterEvent *event)
+{
+    if (event->mimeData()->hasUrls()) {
+        for (const QUrl &url : event->mimeData()->urls()) {
+            if (url.isLocalFile()) {
+                QString localPath = url.toLocalFile();
+                QFileInfo fi(localPath);
+                if (fi.isDir()) {
+                    QFileInfo gitInfo(QDir(localPath).filePath(".git"));
+                    if (gitInfo.exists() || QGit::isGitRepository(QDir(localPath))) {
+                        event->acceptProposedAction();
+                        return;
+                    }
+                }
+            }
+        }
+    }
+    QTreeWidget::dragEnterEvent(event);
+}
+
+void QGitRepoTreeWidget::dragMoveEvent(QDragMoveEvent *event)
+{
+    if (event->mimeData()->hasUrls()) {
+        for (const QUrl &url : event->mimeData()->urls()) {
+            if (url.isLocalFile()) {
+                QString localPath = url.toLocalFile();
+                QFileInfo fi(localPath);
+                if (fi.isDir()) {
+                    QFileInfo gitInfo(QDir(localPath).filePath(".git"));
+                    if (gitInfo.exists() || QGit::isGitRepository(QDir(localPath))) {
+                        event->acceptProposedAction();
+                        return;
+                    }
+                }
+            }
+        }
+    }
+    QTreeWidget::dragMoveEvent(event);
+}
+
+void QGitRepoTreeWidget::dropEvent(QDropEvent *event)
+{
+    if (event->mimeData()->hasUrls()) {
+        QStringList paths;
+        for (const QUrl &url : event->mimeData()->urls()) {
+            if (url.isLocalFile()) {
+                QString localPath = url.toLocalFile();
+                QFileInfo fi(localPath);
+                if (fi.isDir()) {
+                    QFileInfo gitInfo(QDir(localPath).filePath(".git"));
+                    if (gitInfo.exists() || QGit::isGitRepository(QDir(localPath))) {
+                        paths.append(localPath);
+                    }
+                }
+            }
+        }
+        if (!paths.isEmpty()) {
+            event->acceptProposedAction();
+            emit repositoriesDropped(paths);
+            return;
+        }
+    }
+    QTreeWidget::dropEvent(event);
+}
+
