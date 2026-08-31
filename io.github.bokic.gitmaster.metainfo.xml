@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <component type="desktop-application">
-  <id>org.gitmaster.GitMaster</id>
+  <id>io.github.bokic.gitmaster</id>
   
   <name>GitMaster</name>
   <summary>Lightweight and fast cross-platform Git GUI client</summary>
@@ -28,7 +28,7 @@
     </ul>
   </description>
   
-  <launchable type="desktop-id">org.gitmaster.GitMaster.desktop</launchable>
+  <launchable type="desktop-id">io.github.bokic.gitmaster.desktop</launchable>
   
   <screenshots>
     <screenshot type="default">

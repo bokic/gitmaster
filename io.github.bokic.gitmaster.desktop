@@ -4,5 +4,5 @@ Comment=Git repository browser
 Exec=gitmaster
 Terminal=false
 Type=Application
-Icon=org.gitmaster.GitMaster
+Icon=io.github.bokic.gitmaster
 Categories=Development;

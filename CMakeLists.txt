@@ -295,16 +295,16 @@ install(
 )
 
 install(
-    FILES org.gitmaster.GitMaster.desktop
+    FILES io.github.bokic.gitmaster.desktop
     DESTINATION share/applications
 )
 
 install(
-    FILES org.gitmaster.GitMaster.svg
+    FILES io.github.bokic.gitmaster.svg
     DESTINATION share/icons/hicolor/scalable/apps
 )
 
 install(
-    FILES org.gitmaster.GitMaster.metainfo.xml
+    FILES io.github.bokic.gitmaster.metainfo.xml
     DESTINATION share/metainfo
 )
