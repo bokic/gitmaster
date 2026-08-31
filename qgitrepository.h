@@ -39,6 +39,9 @@ public:
     void addSubmoduleDialog();
     void removeSubmoduleDialog(const QString &subName = QString());
     void submodulePointerDialog(const QString &subName = QString());
+    void exportPatchDialog(const QString &commitHash = QString());
+    void applyPatchDialog();
+    void applyPatchesPrompt(const QStringList &patchFiles);
     void continueOperation();
     void abortOperation();
     void skipRebase();
@@ -87,6 +90,8 @@ signals:
     void repositorySetSubmodulePointer(const QString &name, const QString &targetRefOrCommit, const QString &branch);
     void repositoryClean(bool includeIgnored, bool removeDirectories);
     void repositoryApplyPatch(const QString &patchPath);
+    void repositoryApplyPatches(const QStringList &patchPaths);
+    void repositoryExportPatches(const QStringList &commitIds, const QString &outputDir, const QString &customFilePath, const QString &subjectPrefix, bool numbered, bool detectRenames);
     void repositorySetNote(const QString &commitHash, const QString &note);
     void repositoryRemoveNote(const QString &commitHash);
     void repositoryCreateLocalBranch(const QString &name, const QString &commit_id, bool checkout, bool force);
@@ -151,6 +156,8 @@ private slots:
     void repositoryDiscardFilesReply(const QGitError &error);
     void repositoryCleanReply(const QGitError &error);
     void repositoryApplyPatchReply(const QGitError &error);
+    void repositoryApplyPatchesReply(const QStringList &appliedFiles, const QGitError &error);
+    void repositoryExportPatchesReply(const QStringList &createdFiles, const QGitError &error);
     void repositorySetNoteReply(const QGitError &error);
     void repositoryRemoveNoteReply(const QGitError &error);
     void repositoryCommitReply(const QString &commit_id, const QGitError &error);
@@ -205,6 +212,11 @@ private slots:
     void on_pushButton_continueOperation_clicked();
     void on_pushButton_skipOperation_clicked();
     void on_pushButton_abortOperation_clicked();
+
+protected:
+    void dragEnterEvent(QDragEnterEvent *event) override;
+    void dragMoveEvent(QDragMoveEvent *event) override;
+    void dropEvent(QDropEvent *event) override;
 
 private:
     void fetchCommits();

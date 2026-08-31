@@ -5,6 +5,8 @@
 #include <qgitdiffline.h>
 #include <qgiterror.h>
 #include <git2/worktree.h>
+#include <git2/email.h>
+#include <git2/apply.h>
 
 #include <QThread>
 #include <QString>
@@ -1068,6 +1070,185 @@ QList<QGitCommit> QGit::getCommitsForRebase(const QString &baseCommitId, const Q
     catch (const QGitError &)
     {
     }
+    return commits;
+}
+
+static QGitCommit commitFromGitCommit(git_commit *commit, const git_oid &oid, git_mailmap *mailmap)
+{
+    QString commit_id = QByteArray(git_oid_tostr_s(&oid));
+    QList<QGitCommitDiffParent> commit_parents;
+    unsigned int pcount = git_commit_parentcount(commit);
+    for (unsigned int p = 0; p < pcount; ++p) {
+        const git_oid *parent_oid = git_commit_parent_id(commit, p);
+        if (parent_oid) {
+            commit_parents.append(QGitCommitDiffParent(QByteArray(git_oid_tostr_s(parent_oid))));
+        }
+    }
+
+    auto time = git_commit_time(commit);
+    auto timeOffset = git_commit_time_offset(commit);
+    QDateTime commit_time = QDateTime::fromMSecsSinceEpoch(time * 1000);
+    commit_time.setTimeZone(QTimeZone(timeOffset * 60));
+
+    QString author_name = QString::fromUtf8(git_commit_author(commit)->name);
+    QString author_email = QString::fromUtf8(git_commit_author(commit)->email);
+    if (mailmap) resolveMailmap(mailmap, author_name, author_email);
+    QDateTime author_when = QDateTime::fromMSecsSinceEpoch(git_commit_author(commit)->when.time * 1000);
+    author_when.setTimeZone(QTimeZone(git_commit_author(commit)->when.offset * 60));
+    QGitSignature commit_author(author_name, author_email, author_when);
+
+    QString commiter_name = QString::fromUtf8(git_commit_committer(commit)->name);
+    QString commiter_email = QString::fromUtf8(git_commit_committer(commit)->email);
+    if (mailmap) resolveMailmap(mailmap, commiter_name, commiter_email);
+    QDateTime commiter_when = QDateTime::fromMSecsSinceEpoch(git_commit_committer(commit)->when.time * 1000);
+    commiter_when.setTimeZone(QTimeZone(git_commit_committer(commit)->when.offset * 60));
+    QGitSignature commit_commiter(commiter_name, commiter_email, commiter_when);
+
+    QString commit_message = QString::fromUtf8(git_commit_message(commit));
+
+    return QGitCommit(commit_id, commit_parents, commit_time, commit_author, commit_commiter, commit_message);
+}
+
+QList<QGitCommit> QGit::getCommitList(const QStringList &commitIds) const
+{
+    QList<QGitCommit> commits;
+    try {
+        GitRepository repo = openRepo(m_path);
+        GitMailmap mailmap;
+        git_mailmap_from_repository(mailmap, repo);
+
+        for (const QString &cid : commitIds) {
+            git_oid oid;
+            if (resolveToCommitOid(oid, repo, cid) == 0) {
+                GitCommit commit;
+                if (git_commit_lookup(commit, repo, &oid) == 0) {
+                    commits.append(commitFromGitCommit(commit, oid, mailmap));
+                }
+            }
+        }
+    } catch (...) {}
+    return commits;
+}
+
+QList<QGitCommit> QGit::getCommitsFromCommitToHead(const QString &commitHash) const
+{
+    QList<QGitCommit> commits;
+    try {
+        GitRepository repo = openRepo(m_path);
+        GitRevWalk walker;
+        int res = git_revwalk_new(walker, repo);
+        if (res) return commits;
+
+        git_revwalk_sorting(walker, GIT_SORT_TOPOLOGICAL | GIT_SORT_REVERSE);
+
+        git_oid head_oid;
+        if (resolveToCommitOid(head_oid, repo, "HEAD") != 0) return commits;
+        git_revwalk_push(walker, &head_oid);
+
+        if (!commitHash.isEmpty()) {
+            git_oid target_oid;
+            if (resolveToCommitOid(target_oid, repo, commitHash) == 0) {
+                GitCommit target_commit;
+                if (git_commit_lookup(target_commit, repo, &target_oid) == 0) {
+                    unsigned int pcount = git_commit_parentcount(target_commit);
+                    for (unsigned int p = 0; p < pcount; ++p) {
+                        const git_oid *poid = git_commit_parent_id(target_commit, p);
+                        if (poid) {
+                            git_revwalk_hide(walker, poid);
+                        }
+                    }
+                }
+            }
+        }
+
+        GitMailmap mailmap;
+        git_mailmap_from_repository(mailmap, repo);
+
+        git_oid oid;
+        while (git_revwalk_next(&oid, walker) == 0) {
+            GitCommit commit;
+            if (git_commit_lookup(commit, repo, &oid) == 0) {
+                commits.append(commitFromGitCommit(commit, oid, mailmap));
+            }
+        }
+    } catch (...) {}
+    return commits;
+}
+
+QList<QGitCommit> QGit::getLastNCommits(int count) const
+{
+    QList<QGitCommit> commits;
+    if (count <= 0) return commits;
+
+    try {
+        GitRepository repo = openRepo(m_path);
+        GitRevWalk walker;
+        int res = git_revwalk_new(walker, repo);
+        if (res) return commits;
+
+        git_revwalk_sorting(walker, GIT_SORT_TOPOLOGICAL);
+
+        git_oid head_oid;
+        if (resolveToCommitOid(head_oid, repo, "HEAD") != 0) return commits;
+        git_revwalk_push(walker, &head_oid);
+
+        GitMailmap mailmap;
+        git_mailmap_from_repository(mailmap, repo);
+
+        git_oid oid;
+        while (commits.size() < count && git_revwalk_next(&oid, walker) == 0) {
+            GitCommit commit;
+            if (git_commit_lookup(commit, repo, &oid) == 0) {
+                commits.append(commitFromGitCommit(commit, oid, mailmap));
+            }
+        }
+        std::reverse(commits.begin(), commits.end());
+    } catch (...) {}
+    return commits;
+}
+
+QList<QGitCommit> QGit::getCommitsFromRevSpec(const QString &spec) const
+{
+    QList<QGitCommit> commits;
+    if (spec.trimmed().isEmpty()) return commits;
+
+    try {
+        GitRepository repo = openRepo(m_path);
+        git_revspec rev;
+        int res = git_revparse(&rev, repo, spec.toUtf8().constData());
+        if (res != 0) return commits;
+
+        GitRevWalk walker;
+        res = git_revwalk_new(walker, repo);
+        if (res != 0) {
+            if (rev.from) git_object_free(rev.from);
+            if (rev.to) git_object_free(rev.to);
+            return commits;
+        }
+
+        git_revwalk_sorting(walker, GIT_SORT_TOPOLOGICAL | GIT_SORT_REVERSE);
+
+        if (rev.flags & GIT_REVSPEC_RANGE) {
+            if (rev.to) git_revwalk_push(walker, git_object_id(rev.to));
+            if (rev.from) git_revwalk_hide(walker, git_object_id(rev.from));
+        } else if (rev.flags & GIT_REVSPEC_SINGLE) {
+            if (rev.from) git_revwalk_push(walker, git_object_id(rev.from));
+        }
+
+        GitMailmap mailmap;
+        git_mailmap_from_repository(mailmap, repo);
+
+        git_oid oid;
+        while (git_revwalk_next(&oid, walker) == 0) {
+            GitCommit commit;
+            if (git_commit_lookup(commit, repo, &oid) == 0) {
+                commits.append(commitFromGitCommit(commit, oid, mailmap));
+            }
+        }
+
+        if (rev.from) git_object_free(rev.from);
+        if (rev.to) git_object_free(rev.to);
+    } catch (...) {}
     return commits;
 }
 
@@ -2866,35 +3047,166 @@ void QGit::clean(bool includeIgnored, bool removeDirectories)
     emit cleanReply(error);
 }
 
-void QGit::applyPatch(const QString &patchPath)
+static QString slugifyPatchSubject(const QString &subject)
+{
+    QString s = subject.section('\n', 0, 0).trimmed();
+    QString slug;
+    for (const QChar &ch : s) {
+        if (ch.isLetterOrNumber() || ch == '_' || ch == '-') {
+            slug.append(ch);
+        } else if (!slug.isEmpty() && !slug.endsWith('-')) {
+            slug.append('-');
+        }
+    }
+    while (slug.endsWith('-')) {
+        slug.chop(1);
+    }
+    if (slug.length() > 50) {
+        slug = slug.left(50);
+        while (slug.endsWith('-')) {
+            slug.chop(1);
+        }
+    }
+    if (slug.isEmpty()) {
+        slug = "patch";
+    }
+    return slug;
+}
+
+void QGit::exportPatches(const QStringList &commitIds, const QString &outputDir, const QString &customFilePath, const QString &subjectPrefix, bool numbered, bool detectRenames)
 {
     QGitError error;
+    QStringList createdFiles;
     try {
         GitRepository repo;
         int res = git_repository_open(repo, m_path.absolutePath().toUtf8().constData());
         if (res) throw QGitError("git_repository_open", res);
 
-        QFile file(patchPath);
-        if (!file.open(QIODevice::ReadOnly | QIODevice::Text))
-        {
-            throw QGitError(QString("Could not open patch file: %1").arg(patchPath), -1);
+        QDir dir(outputDir);
+        if (!customFilePath.isEmpty() && commitIds.size() == 1) {
+            dir = QFileInfo(customFilePath).dir();
+        }
+        if (!dir.exists()) {
+            if (!dir.mkpath(".")) {
+                throw QGitError(QString("Failed to create destination directory: %1").arg(dir.absolutePath()), -1);
+            }
         }
 
-        QByteArray content = file.readAll();
-        file.close();
+        int totalCommits = commitIds.size();
+        for (int i = 0; i < totalCommits; ++i) {
+            const QString &commitId = commitIds.at(i);
+            git_oid oid;
+            res = resolveToCommitOid(oid, repo, commitId);
+            if (res) throw QGitError(QString("resolveToCommitOid (%1)").arg(commitId), res);
 
-        GitDiff diff;
-        res = git_diff_from_buffer(diff, content.constData(), content.length());
-        if (res) throw QGitError("git_diff_from_buffer", res);
+            GitCommit commit;
+            res = git_commit_lookup(commit, repo, &oid);
+            if (res) throw QGitError(QString("git_commit_lookup (%1)").arg(commitId), res);
 
-        git_apply_options opts = GIT_APPLY_OPTIONS_INIT;
-        res = git_apply(repo, diff, GIT_APPLY_LOCATION_WORKDIR, &opts);
-        if (res) throw QGitError("git_apply", res);
+            unsigned int parentCount = git_commit_parentcount(commit);
+            if (parentCount > 1) {
+                throw QGitError(QString("Commit %1 is a merge commit. Git format-patch cannot generate patches for merge commits.").arg(commitId.left(7)), -1);
+            }
+
+            git_email_create_options opts = GIT_EMAIL_CREATE_OPTIONS_INIT;
+            QByteArray prefixBytes = subjectPrefix.toUtf8();
+            if (!subjectPrefix.isEmpty()) {
+                opts.subject_prefix = prefixBytes.constData();
+            }
+            opts.start_number = i + 1;
+            opts.reroll_number = 0;
+
+            if (!numbered && totalCommits == 1) {
+                opts.flags |= GIT_EMAIL_CREATE_OMIT_NUMBERS;
+            } else if (totalCommits == 1 && numbered) {
+                opts.flags |= GIT_EMAIL_CREATE_ALWAYS_NUMBER;
+            }
+
+            if (detectRenames) {
+                opts.diff_find_opts.flags = GIT_DIFF_FIND_RENAMES | GIT_DIFF_FIND_COPIES;
+            } else {
+                opts.flags |= GIT_EMAIL_CREATE_NO_RENAMES;
+            }
+
+            GitBuf buf;
+            res = git_email_create_from_commit(buf, commit, &opts);
+            if (res) throw QGitError("git_email_create_from_commit", res);
+
+            QString filePath;
+            if (!customFilePath.isEmpty() && totalCommits == 1) {
+                filePath = customFilePath;
+            } else {
+                const char *summary = git_commit_summary(commit);
+                QString summaryStr = summary ? QString::fromUtf8(summary) : QString();
+                QString slug = slugifyPatchSubject(summaryStr);
+                QString fileName = QString("%1-%2.patch").arg(i + 1, 4, 10, QChar('0')).arg(slug);
+                filePath = dir.filePath(fileName);
+            }
+
+            QFile outFile(filePath);
+            if (!outFile.open(QIODevice::WriteOnly | QIODevice::Text | QIODevice::Truncate)) {
+                throw QGitError(QString("Could not open file for writing: %1").arg(filePath), -1);
+            }
+
+            if (buf.value.ptr && buf.value.size > 0) {
+                outFile.write(buf.value.ptr, buf.value.size);
+            }
+            outFile.close();
+
+            createdFiles.append(filePath);
+        }
+    } catch (const QGitError &ex) {
+        error = ex;
+    }
+    emit exportPatchesReply(createdFiles, error);
+}
+
+void QGit::applyPatches(const QStringList &patchPaths)
+{
+    QGitError error;
+    QStringList successfullyApplied;
+    try {
+        GitRepository repo;
+        int res = git_repository_open(repo, m_path.absolutePath().toUtf8().constData());
+        if (res) throw QGitError("git_repository_open", res);
+
+        for (const QString &patchPath : patchPaths)
+        {
+            QFile file(patchPath);
+            if (!file.open(QIODevice::ReadOnly | QIODevice::Text))
+            {
+                throw QGitError(QString("Could not open patch file: %1").arg(patchPath), -1);
+            }
+
+            QByteArray content = file.readAll();
+            file.close();
+
+            GitDiff diff;
+            res = git_diff_from_buffer(diff, content.constData(), content.length());
+            if (res) {
+                QFileInfo fi(patchPath);
+                throw QGitError(QString("Failed to parse patch '%1': %2").arg(fi.fileName(), git_error_last() ? QString::fromUtf8(git_error_last()->message) : tr("Invalid patch format")), res);
+            }
+
+            git_apply_options opts = GIT_APPLY_OPTIONS_INIT;
+            res = git_apply(repo, diff, GIT_APPLY_LOCATION_WORKDIR, &opts);
+            if (res) {
+                QFileInfo fi(patchPath);
+                throw QGitError(QString("Failed to apply patch '%1': %2").arg(fi.fileName(), git_error_last() ? QString::fromUtf8(git_error_last()->message) : tr("Application error / conflict")), res);
+            }
+            successfullyApplied.append(patchPath);
+        }
 
     } catch (const QGitError &ex) {
         error = ex;
     }
+    emit applyPatchesReply(successfullyApplied, error);
     emit applyPatchReply(error);
+}
+
+void QGit::applyPatch(const QString &patchPath)
+{
+    applyPatches(QStringList() << patchPath);
 }
 
 void QGit::setUpstream(const QString &branchName, const QString &upstreamBranchName)

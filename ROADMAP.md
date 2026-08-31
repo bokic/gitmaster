@@ -18,7 +18,7 @@ Development plan and upcoming features for GitMaster.
 - [x] **Recursive Submodule Fetch/Pull**: Option to automatically fetch and update submodules recursively.
 
 ### Repository Management
-- [ ] **Patch Export & Import**: Export commits as `.patch` files (`git format-patch`) and apply external patches via file selection.
+- [x] **Patch Export & Import**: Export commits as `.patch` files (`git format-patch`) and apply external patches via file selection.
 - [ ] **Archive Export**: Export repository tree at specific tags or commits as `.zip` or `.tar.gz` (`git archive`).
 
 ---

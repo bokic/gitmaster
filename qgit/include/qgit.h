@@ -139,6 +139,10 @@ public:
     QString commitSummary(const QString &commitId) const;
     QStringList getCommitParents(const QString &commitId) const;
     QList<QGitCommit> getCommitsForRebase(const QString &baseCommitId, const QString &target = QString()) const;
+    QList<QGitCommit> getCommitList(const QStringList &commitIds) const;
+    QList<QGitCommit> getCommitsFromCommitToHead(const QString &commitHash) const;
+    QList<QGitCommit> getLastNCommits(int count) const;
+    QList<QGitCommit> getCommitsFromRevSpec(const QString &spec) const;
     git_repository_state_t repositoryState() const;
     QString repositoryStateDescription() const;
 
@@ -204,6 +208,8 @@ public slots:
     void createTag(const QString &name, const QString &targetObjectId, const QString &message, bool force);
     void clean(bool includeIgnored, bool removeDirectories);
     void applyPatch(const QString &patchPath);
+    void applyPatches(const QStringList &patchPaths);
+    void exportPatches(const QStringList &commitIds, const QString &outputDir, const QString &customFilePath = QString(), const QString &subjectPrefix = QString("PATCH"), bool numbered = true, bool detectRenames = true);
     void continueOperation();
     void abortOperation();
     void skipRebase();
@@ -261,6 +267,8 @@ signals:
     void interactiveRebaseReply(const QGitError &error);
     void cleanReply(const QGitError &error);
     void applyPatchReply(const QGitError &error);
+    void applyPatchesReply(const QStringList &appliedFiles, const QGitError &error);
+    void exportPatchesReply(const QStringList &createdFiles, const QGitError &error);
     void setNoteReply(const QGitError &error);
     void removeNoteReply(const QGitError &error);
     void cherrypickReply(const QGitError &error);

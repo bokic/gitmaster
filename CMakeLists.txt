@@ -95,6 +95,7 @@ set(PROJECT_HEADERS
     qgitaddsubmoduledialog.h
     qgitsubmodulepointerdialog.h
     qgitremovesubmoduledialog.h
+    qgitexportpatchdialog.h
 
     qgitrepotreeitemdelegate.h
     qgitrepotreewidget.h
@@ -155,6 +156,7 @@ set(PROJECT_SOURCES
     qgitaddsubmoduledialog.cpp     qgitaddsubmoduledialog.ui
     qgitsubmodulepointerdialog.cpp qgitsubmodulepointerdialog.ui
     qgitremovesubmoduledialog.cpp  qgitremovesubmoduledialog.ui
+    qgitexportpatchdialog.cpp      qgitexportpatchdialog.ui
 
     qgitrepotreeitemdelegate.cpp
     qgitrepotreewidget.cpp

@@ -16,6 +16,9 @@
 #include <QSettings>
 #include <QProcess>
 #include <QStandardPaths>
+#include <QDragEnterEvent>
+#include <QDropEvent>
+#include <QMimeData>
 
 
 QGitMasterMainWindow::QGitMasterMainWindow(QWidget *parent)
@@ -55,6 +58,7 @@ QGitMasterMainWindow::QGitMasterMainWindow(QWidget *parent)
     else
         QApplication::setStyle(QStyleFactory::create(m_appTheme));
 
+    setAcceptDrops(true);
 }
 
 QGitMasterMainWindow::~QGitMasterMainWindow()
@@ -71,6 +75,64 @@ bool QGitMasterMainWindow::event(QEvent *event)
     }
 
     return QMainWindow::event(event);
+}
+
+void QGitMasterMainWindow::dragEnterEvent(QDragEnterEvent *event)
+{
+    if (event->mimeData()->hasUrls()) {
+        const QList<QUrl> urls = event->mimeData()->urls();
+        for (const QUrl &url : urls) {
+            QString fn = url.toLocalFile();
+            if (fn.endsWith(".patch", Qt::CaseInsensitive) || fn.endsWith(".diff", Qt::CaseInsensitive)) {
+                event->acceptProposedAction();
+                return;
+            }
+        }
+    }
+    QMainWindow::dragEnterEvent(event);
+}
+
+void QGitMasterMainWindow::dragMoveEvent(QDragMoveEvent *event)
+{
+    if (event->mimeData()->hasUrls()) {
+        const QList<QUrl> urls = event->mimeData()->urls();
+        for (const QUrl &url : urls) {
+            QString fn = url.toLocalFile();
+            if (fn.endsWith(".patch", Qt::CaseInsensitive) || fn.endsWith(".diff", Qt::CaseInsensitive)) {
+                event->acceptProposedAction();
+                return;
+            }
+        }
+    }
+    QMainWindow::dragMoveEvent(event);
+}
+
+void QGitMasterMainWindow::dropEvent(QDropEvent *event)
+{
+    const QMimeData *mimeData = event->mimeData();
+    if (!mimeData->hasUrls()) return;
+
+    QStringList patchFiles;
+    for (const QUrl &url : mimeData->urls()) {
+        if (url.isLocalFile()) {
+            QString localPath = url.toLocalFile();
+            if (localPath.endsWith(".patch", Qt::CaseInsensitive) || localPath.endsWith(".diff", Qt::CaseInsensitive)) {
+                patchFiles.append(localPath);
+            }
+        }
+    }
+
+    if (patchFiles.isEmpty()) return;
+
+    event->acceptProposedAction();
+
+    auto panel = dynamic_cast<QGitRepository *>(ui->tabWidget->currentWidget());
+    if (!panel) {
+        QMessageBox::warning(this, tr("Apply Patch"), tr("Please open or select a repository tab before dropping patch files to apply."));
+        return;
+    }
+
+    panel->applyPatchesPrompt(patchFiles);
 }
 
 void QGitMasterMainWindow::readSettings()

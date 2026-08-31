@@ -20,7 +20,11 @@
 #include "qgitaddsubmoduledialog.h"
 #include "qgitsubmodulepointerdialog.h"
 #include "qgitremovesubmoduledialog.h"
+#include "qgitexportpatchdialog.h"
 #include <qgitbranch.h>
+#include <QDragEnterEvent>
+#include <QDropEvent>
+#include <QMimeData>
 
 #include <QDebug>
 #include <QCryptographicHash>
@@ -86,6 +90,7 @@ QGitRepository::QGitRepository(const QString &path, QWidget *parent)
     QString email;
 
     ui->setupUi(this);
+    setAcceptDrops(true);
 
     ui->treeWidget_staged->setHeaderHidden(true);
     ui->treeWidget_staged->setColumnCount(1);
@@ -240,6 +245,10 @@ QGitRepository::QGitRepository(const QString &path, QWidget *parent)
     connect(m_git, &QGit::cleanReply, this, &QGitRepository::repositoryCleanReply);
     connect(this, &QGitRepository::repositoryApplyPatch, m_git, &QGit::applyPatch);
     connect(m_git, &QGit::applyPatchReply, this, &QGitRepository::repositoryApplyPatchReply);
+    connect(this, &QGitRepository::repositoryApplyPatches, m_git, &QGit::applyPatches);
+    connect(m_git, &QGit::applyPatchesReply, this, &QGitRepository::repositoryApplyPatchesReply);
+    connect(this, &QGitRepository::repositoryExportPatches, m_git, &QGit::exportPatches);
+    connect(m_git, &QGit::exportPatchesReply, this, &QGitRepository::repositoryExportPatchesReply);
     connect(this, &QGitRepository::repositorySetNote, m_git, &QGit::setNote);
     connect(m_git, &QGit::setNoteReply, this, &QGitRepository::repositorySetNoteReply);
     connect(this, &QGitRepository::repositoryRemoveNote, m_git, &QGit::removeNote);
@@ -1677,6 +1686,7 @@ void QGitRepository::on_branchesTreeView_customContextMenuRequested(const QPoint
     if (type == "WorkingCopy")
     {
         QMenu menu(this);
+        QAction *exportPatchAction = menu.addAction(tr("Export Patch (format-patch)..."));
         QAction *applyPatchAction = menu.addAction(tr("Apply Patch..."));
         QAction *cleanAction = menu.addAction(tr("Clean Working Directory..."));
         menu.addSeparator();
@@ -1684,19 +1694,13 @@ void QGitRepository::on_branchesTreeView_customContextMenuRequested(const QPoint
         QAction *showBlameAction  = menu.addAction(tr("Browse File Blame..."));
 
         QAction *selectedAction = menu.exec(ui->branchesTreeView->viewport()->mapToGlobal(pos));
-        if (selectedAction == applyPatchAction)
+        if (selectedAction == exportPatchAction)
         {
-            QString patchPath = QFileDialog::getOpenFileName(
-                this,
-                tr("Select Patch File"),
-                QString(),
-                tr("Patch/Diff Files (*.patch *.diff);;All Files (*)")
-            );
-            if (!patchPath.isEmpty())
-            {
-                emit statusMessage(tr("Applying patch..."));
-                emit repositoryApplyPatch(patchPath);
-            }
+            exportPatchDialog(m_git ? m_git->headCommitId() : QString());
+        }
+        else if (selectedAction == applyPatchAction)
+        {
+            applyPatchDialog();
         }
         else if (selectedAction == cleanAction)
         {
@@ -1920,6 +1924,7 @@ void QGitRepository::on_branchesTreeView_customContextMenuRequested(const QPoint
     {
         QMenu menu(this);
         QAction *checkoutAction = menu.addAction(tr("Checkout Branch"));
+        QAction *exportPatchAction = menu.addAction(tr("Export Patches (format-patch)..."));
         QAction *renameAction = menu.addAction(tr("Rename Branch..."));
         QAction *setUpstreamAction = menu.addAction(tr("Set Upstream..."));
         menu.addSeparator();
@@ -1937,6 +1942,10 @@ void QGitRepository::on_branchesTreeView_customContextMenuRequested(const QPoint
         {
             emit statusMessage(tr("Checking out branch %1...").arg(fullName));
             emit repositoryCheckoutBranch(fullName);
+        }
+        else if (selectedAction == exportPatchAction)
+        {
+            exportPatchDialog(fullName);
         }
         else if (selectedAction == renameAction)
         {
@@ -2900,6 +2909,9 @@ void QGitRepository::on_logHistory_commits_customContextMenuRequested(const QPoi
     menu.addSeparator();
     QAction *createTagAction = menu.addAction(tr("Create Tag at '%1'...").arg(shortHash));
     menu.addSeparator();
+    QAction *exportPatchAction = menu.addAction(tr("Export Patch (format-patch)..."));
+    QAction *applyPatchAction = menu.addAction(tr("Apply Patch..."));
+    menu.addSeparator();
     QAction *editNoteAction = menu.addAction(tr("Edit Git Note..."));
     QAction *deleteNoteAction = menu.addAction(tr("Delete Git Note"));
 
@@ -3019,6 +3031,10 @@ void QGitRepository::on_logHistory_commits_customContextMenuRequested(const QPoi
                 emit statusMessage(tr("Deleting Git Note..."));
                 emit repositoryRemoveNote(selectedHash);
             }
+        } else if (res == exportPatchAction) {
+            exportPatchDialog(selectedHash);
+        } else if (res == applyPatchAction) {
+            applyPatchDialog();
         }
     }
 }
@@ -3063,6 +3079,165 @@ void QGitRepository::repositoryApplyPatchReply(const QGitError &error)
         QMessageBox::information(this, tr("Apply Patch Successful"), tr("Patch applied successfully."));
         refreshData();
     }
+}
+
+void QGitRepository::repositoryApplyPatchesReply(const QStringList &appliedFiles, const QGitError &error)
+{
+    emit statusMessage(tr("Ready"));
+    if (error.errorCode() != 0) {
+        if (!appliedFiles.isEmpty()) {
+            QMessageBox::critical(this, tr("Apply Patch Error"),
+                tr("Partially applied %1 patch file(s) before encountering an error:\n\n%2").arg(appliedFiles.size()).arg(error.errorString()));
+        } else {
+            QMessageBox::critical(this, tr("Apply Patch Error"), error.errorString());
+        }
+        refreshData();
+    } else {
+        QMessageBox::information(this, tr("Apply Patch Successful"),
+            tr("Successfully applied %n patch file(s) to working directory.", "", appliedFiles.size()));
+        refreshData();
+    }
+}
+
+void QGitRepository::repositoryExportPatchesReply(const QStringList &createdFiles, const QGitError &error)
+{
+    emit statusMessage(tr("Ready"));
+    if (error.errorCode() != 0) {
+        QMessageBox::critical(this, tr("Export Patch Error"), error.errorString());
+    } else {
+        if (createdFiles.size() == 1) {
+            QMessageBox::information(this, tr("Export Patch Successful"),
+                tr("Successfully exported 1 patch file:\n%1").arg(createdFiles.first()));
+        } else {
+            QString fileSummary = createdFiles.mid(0, 5).join("\n• ");
+            if (createdFiles.size() > 5) {
+                fileSummary += QString("\n... and %1 more").arg(createdFiles.size() - 5);
+            }
+            QMessageBox::information(this, tr("Export Patch Successful"),
+                tr("Successfully exported %1 patch files:\n\n• %2").arg(createdFiles.size()).arg(fileSummary));
+        }
+    }
+}
+
+void QGitRepository::exportPatchDialog(const QString &commitHash)
+{
+    QString targetHash = commitHash;
+    if (targetHash.isEmpty() && m_git) {
+        targetHash = m_git->headCommitId();
+    }
+    QGitExportPatchDialog dlg(m_git, targetHash, this);
+    if (dlg.exec() == QDialog::Accepted) {
+        QStringList commitIds = dlg.selectedCommitIds();
+        QString outputDir = dlg.outputDirectory();
+        QString subjectPrefix = dlg.subjectPrefix();
+        bool numbered = dlg.isNumbered();
+        bool detectRenames = dlg.detectRenames();
+
+        if (commitIds.isEmpty()) return;
+
+        emit statusMessage(tr("Exporting patches..."));
+        emit repositoryExportPatches(commitIds, outputDir, QString(), subjectPrefix, numbered, detectRenames);
+    }
+}
+
+void QGitRepository::applyPatchDialog()
+{
+    QStringList patchPaths = QFileDialog::getOpenFileNames(
+        this,
+        tr("Select Patch File(s) to Apply"),
+        QString(),
+        tr("Patch/Diff Files (*.patch *.diff);;All Files (*)")
+    );
+    if (!patchPaths.isEmpty())
+    {
+        patchPaths.sort(Qt::CaseInsensitive);
+        emit statusMessage(tr("Applying patch(es)..."));
+        emit repositoryApplyPatches(patchPaths);
+    }
+}
+
+void QGitRepository::applyPatchesPrompt(const QStringList &patchFiles)
+{
+    if (patchFiles.isEmpty()) return;
+
+    QStringList sortedFiles = patchFiles;
+    sortedFiles.sort(Qt::CaseInsensitive);
+
+    QString message;
+    if (sortedFiles.size() == 1) {
+        message = tr("Apply patch '%1' to repository '%2' (working directory)?")
+            .arg(QFileInfo(sortedFiles.first()).fileName())
+            .arg(m_git ? m_git->path().dirName() : QString());
+    } else {
+        QString fileList;
+        for (int i = 0; i < qMin(sortedFiles.size(), 10); ++i) {
+            fileList += QString("• %1\n").arg(QFileInfo(sortedFiles[i]).fileName());
+        }
+        if (sortedFiles.size() > 10) {
+            fileList += tr("... and %1 more files\n").arg(sortedFiles.size() - 10);
+        }
+        message = tr("Apply the following %1 patch files in sequence to repository '%2'?\n\n%3")
+            .arg(sortedFiles.size())
+            .arg(m_git ? m_git->path().dirName() : QString())
+            .arg(fileList);
+    }
+
+    auto reply = QMessageBox::question(this, tr("Apply Patches"), message, QMessageBox::Yes | QMessageBox::No);
+    if (reply == QMessageBox::Yes) {
+        emit statusMessage(tr("Applying patch(es)..."));
+        emit repositoryApplyPatches(sortedFiles);
+    }
+}
+
+void QGitRepository::dragEnterEvent(QDragEnterEvent *event)
+{
+    if (event->mimeData()->hasUrls()) {
+        const QList<QUrl> urls = event->mimeData()->urls();
+        for (const QUrl &url : urls) {
+            QString fn = url.toLocalFile();
+            if (fn.endsWith(".patch", Qt::CaseInsensitive) || fn.endsWith(".diff", Qt::CaseInsensitive)) {
+                event->acceptProposedAction();
+                return;
+            }
+        }
+    }
+    QWidget::dragEnterEvent(event);
+}
+
+void QGitRepository::dragMoveEvent(QDragMoveEvent *event)
+{
+    if (event->mimeData()->hasUrls()) {
+        const QList<QUrl> urls = event->mimeData()->urls();
+        for (const QUrl &url : urls) {
+            QString fn = url.toLocalFile();
+            if (fn.endsWith(".patch", Qt::CaseInsensitive) || fn.endsWith(".diff", Qt::CaseInsensitive)) {
+                event->acceptProposedAction();
+                return;
+            }
+        }
+    }
+    QWidget::dragMoveEvent(event);
+}
+
+void QGitRepository::dropEvent(QDropEvent *event)
+{
+    const QMimeData *mimeData = event->mimeData();
+    if (!mimeData->hasUrls()) return;
+
+    QStringList patchFiles;
+    for (const QUrl &url : mimeData->urls()) {
+        if (url.isLocalFile()) {
+            QString localPath = url.toLocalFile();
+            if (localPath.endsWith(".patch", Qt::CaseInsensitive) || localPath.endsWith(".diff", Qt::CaseInsensitive)) {
+                patchFiles.append(localPath);
+            }
+        }
+    }
+
+    if (patchFiles.isEmpty()) return;
+
+    event->acceptProposedAction();
+    applyPatchesPrompt(patchFiles);
 }
 
 void QGitRepository::repositorySetNoteReply(const QGitError &error)
