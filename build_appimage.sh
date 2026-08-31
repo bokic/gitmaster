@@ -76,8 +76,8 @@ cd "${APPIMAGE_DIR}"
 "${TOOLS_DIR}/linuxdeploy-x86_64.AppImage" \
     --appdir "${APPDIR}" \
     --executable "${APPDIR}/usr/bin/gitmaster" \
-    --desktop-file "${PROJECT_DIR}/gitmaster.desktop" \
-    --icon-file "${PROJECT_DIR}/gitmaster.svg" \
+    --desktop-file "${PROJECT_DIR}/org.gitmaster.GitMaster.desktop" \
+    --icon-file "${PROJECT_DIR}/org.gitmaster.GitMaster.svg" \
     --plugin qt \
     --output appimage
 

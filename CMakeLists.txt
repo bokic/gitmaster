@@ -295,11 +295,11 @@ install(
 )
 
 install(
-    FILES gitmaster.desktop
+    FILES org.gitmaster.GitMaster.desktop
     DESTINATION share/applications
 )
 
 install(
-    FILES gitmaster.svg
+    FILES org.gitmaster.GitMaster.svg
     DESTINATION share/icons/hicolor/scalable/apps
 )

@@ -34,8 +34,8 @@ built using C++ (C++20), Qt6, and libgit2.
 
 %files
 %{_bindir}/gitmaster
-%{_datadir}/applications/gitmaster.desktop
-%{_datadir}/icons/hicolor/scalable/apps/gitmaster.svg
+%{_datadir}/applications/org.gitmaster.GitMaster.desktop
+%{_datadir}/icons/hicolor/scalable/apps/org.gitmaster.GitMaster.svg
 
 %changelog
 * Mon Jul 13 2026 Developer - 0.8.0-1

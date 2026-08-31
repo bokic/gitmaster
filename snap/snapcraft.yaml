@@ -12,7 +12,7 @@ apps:
   gitmaster:
     extensions: [kde-neon-6]
     command: usr/bin/gitmaster
-    desktop: usr/share/applications/gitmaster.desktop
+    desktop: usr/share/applications/org.gitmaster.GitMaster.desktop
     plugs:
       - home
       - removable-media
