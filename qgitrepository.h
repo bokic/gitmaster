@@ -36,6 +36,7 @@ public:
     void merge();
     void rebase();
     void interactiveRebase(const QString &baseCommitId = QString());
+    void addSubmoduleDialog();
     void continueOperation();
     void abortOperation();
     void skipRebase();
@@ -76,6 +77,9 @@ signals:
     void repositoryRenameTag(const QString &oldName, const QString &newName);
     void repositoryCreateTag(const QString &name, const QString &targetObjectId, const QString &message, bool force);
     void repositoryUpdateSubmodule(const QString &name);
+    void repositoryInitSubmodule(const QString &name);
+    void repositorySyncSubmodule(const QString &name);
+    void repositoryAddSubmodule(const QString &url, const QString &path, const QString &branch, bool force);
     void repositoryClean(bool includeIgnored, bool removeDirectories);
     void repositoryApplyPatch(const QString &patchPath);
     void repositorySetNote(const QString &commitHash, const QString &note);
@@ -87,8 +91,6 @@ signals:
     void repositoryAddWorktree(const QString &name, const QString &path, const QString &branch, bool newBranch);
     void repositoryRemoveWorktree(const QString &name);
     void repositoryLockWorktree(const QString &name, bool lock);
-    void repositoryInitSubmodule(const QString &name);
-    void repositorySyncSubmodule(const QString &name);
     void repositoryCheckoutBranch(const QString &name);
     void repositorySetUpstream(const QString &branchName, const QString &upstreamBranchName);
     void repositoryDeleteTag(const QString &name);
@@ -122,6 +124,7 @@ private slots:
     void repositoryUpdateSubmoduleReply(const QGitError &error);
     void repositoryInitSubmoduleReply(const QGitError &error);
     void repositorySyncSubmoduleReply(const QGitError &error);
+    void repositoryAddSubmoduleReply(const QGitError &error);
     void repositoryCreateLocalBranchReply(const QGitError &error);
     void repositoryCherrypickReply(const QGitError &error);
     void repositoryRevertReply(const QGitError &error);

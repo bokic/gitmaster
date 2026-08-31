@@ -180,6 +180,7 @@ void QGitBranchTreeWidget::populateBranchesAndTags(
     }
 
     QTreeWidgetItem *itemSubmodules = new QTreeWidgetItem(QStringList() << tr("Submodules"));
+    itemSubmodules->setData(0, Qt::UserRole + 2, QStringLiteral("SubmodulesHeader"));
     for (const auto &sub : submodules) {
         QString label = sub.name;
         QString statusText;

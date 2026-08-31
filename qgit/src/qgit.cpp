@@ -1956,6 +1956,58 @@ void QGit::syncSubmodule(const QString &name)
     emit syncSubmoduleReply(error);
 }
 
+void QGit::addSubmodule(const QString &url, const QString &path, const QString &branch, bool force)
+{
+    Q_UNUSED(force)
+    QGitError error;
+    try {
+        GitRepository repo;
+        int res = git_repository_open(repo, m_path.absolutePath().toUtf8().constData());
+        if (res) throw QGitError("git_repository_open", res);
+
+        QString cleanPath = path.trimmed();
+        while (cleanPath.startsWith('/') || cleanPath.startsWith('\\')) {
+            cleanPath = cleanPath.mid(1);
+        }
+        cleanPath = QDir::cleanPath(cleanPath);
+
+        GitSubmodule sm;
+        res = git_submodule_add_setup(sm, repo, url.trimmed().toUtf8().constData(), cleanPath.toUtf8().constData(), 1);
+        if (res != 0) {
+            throw QGitError("git_submodule_add_setup", res);
+        }
+
+        if (!branch.trimmed().isEmpty()) {
+            git_submodule_set_branch(repo, git_submodule_name(sm), branch.trimmed().toUtf8().constData());
+        }
+
+        git_submodule_update_options opts = GIT_SUBMODULE_UPDATE_OPTIONS_INIT;
+        opts.checkout_opts.checkout_strategy = GIT_CHECKOUT_SAFE;
+        opts.fetch_opts.callbacks.credentials = gitCredentialCallback;
+        opts.fetch_opts.callbacks.payload = this;
+
+        git_repository *sub_repo = nullptr;
+        res = git_submodule_clone(&sub_repo, sm, &opts);
+        if (sub_repo) {
+            git_repository_free(sub_repo);
+        }
+        if (res != 0) {
+            throw QGitError("git_submodule_clone", res);
+        }
+
+        res = git_submodule_add_finalize(sm);
+        if (res != 0) {
+            throw QGitError("git_submodule_add_finalize", res);
+        }
+
+        git_submodule_init(sm, 1);
+        git_submodule_sync(sm);
+    } catch (const QGitError &ex) {
+        error = ex;
+    }
+    emit addSubmoduleReply(error);
+}
+
 void QGit::addRemote(const QString &name, const QString &url)
 {
     if (!isValidRemoteName(name))

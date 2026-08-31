@@ -92,6 +92,7 @@ set(PROJECT_HEADERS
     qgitworktreedialog.h
     qgitflowdialog.h
     qgitinteractiverebasedialog.h
+    qgitaddsubmoduledialog.h
 
     qgitrepotreeitemdelegate.h
     qgitrepotreewidget.h
@@ -149,6 +150,7 @@ set(PROJECT_SOURCES
     qgitworktreedialog.cpp         qgitworktreedialog.ui
     qgitflowdialog.cpp             qgitflowdialog.ui
     qgitinteractiverebasedialog.cpp qgitinteractiverebasedialog.ui
+    qgitaddsubmoduledialog.cpp     qgitaddsubmoduledialog.ui
 
     qgitrepotreeitemdelegate.cpp
     qgitrepotreewidget.cpp

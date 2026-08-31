@@ -17,6 +17,7 @@
 #include "qgitflowdialog.h"
 #include "qgitstashinspectdialog.h"
 #include "qgitinteractiverebasedialog.h"
+#include "qgitaddsubmoduledialog.h"
 #include <qgitbranch.h>
 
 #include <QDebug>
@@ -258,6 +259,8 @@ QGitRepository::QGitRepository(const QString &path, QWidget *parent)
     connect(m_git, &QGit::initSubmoduleReply, this, &QGitRepository::repositoryInitSubmoduleReply);
     connect(this, &QGitRepository::repositorySyncSubmodule, m_git, &QGit::syncSubmodule);
     connect(m_git, &QGit::syncSubmoduleReply, this, &QGitRepository::repositorySyncSubmoduleReply);
+    connect(this, &QGitRepository::repositoryAddSubmodule, m_git, &QGit::addSubmodule);
+    connect(m_git, &QGit::addSubmoduleReply, this, &QGitRepository::repositoryAddSubmoduleReply);
     connect(this, &QGitRepository::repositoryCheckoutBranch, m_git, &QGit::checkoutBranch);
     connect(this, &QGitRepository::repositorySetUpstream, m_git, &QGit::setUpstream);
     connect(this, &QGitRepository::repositoryDeleteTag, m_git, &QGit::deleteTag);
@@ -539,6 +542,27 @@ void QGitRepository::repositoryInteractiveRebaseReply(const QGitError &error)
     if (error.errorCode()) {
         QMessageBox::critical(this, tr("Interactive Rebase Error"), 
                               tr("Interactive rebase failed:\n\n%1").arg(error.errorString()));
+    } else {
+        refreshData();
+    }
+}
+
+void QGitRepository::addSubmoduleDialog()
+{
+    QGitAddSubmoduleDialog dlg(QDir(m_path), this);
+    if (dlg.exec() == QDialog::Accepted) {
+        emit statusMessage(tr("Adding submodule %1...").arg(dlg.path()));
+        emit repositoryAddSubmodule(dlg.url(), dlg.path(), dlg.branch(), dlg.force());
+    }
+}
+
+void QGitRepository::repositoryAddSubmoduleReply(const QGitError &error)
+{
+    emit clearStatusMessage();
+
+    if (error.errorCode()) {
+        QMessageBox::critical(this, tr("Add Submodule Error"), 
+                              tr("Failed to add submodule:\n\n%1").arg(error.errorString()));
     } else {
         refreshData();
     }
@@ -1638,6 +1662,18 @@ void QGitRepository::on_branchesTreeView_customContextMenuRequested(const QPoint
         return;
     }
 
+    if (type == "SubmodulesHeader")
+    {
+        QMenu menu(this);
+        QAction *addAction = menu.addAction(tr("Add Submodule..."));
+        QAction *selectedAction = menu.exec(ui->branchesTreeView->viewport()->mapToGlobal(pos));
+        if (selectedAction == addAction)
+        {
+            addSubmoduleDialog();
+        }
+        return;
+    }
+
     if (type == "Submodule")
     {
         QString subName = item->data(0, Qt::UserRole).toString();
@@ -1645,6 +1681,7 @@ void QGitRepository::on_branchesTreeView_customContextMenuRequested(const QPoint
 
         QMenu menu(this);
         QAction *openAction = menu.addAction(tr("Open Submodule Repository"));
+        QAction *addAction = menu.addAction(tr("Add Submodule..."));
         menu.addSeparator();
         QAction *updateAction = menu.addAction(tr("Update Submodule"));
         QAction *initAction = menu.addAction(tr("Initialize Submodule"));
@@ -1655,6 +1692,10 @@ void QGitRepository::on_branchesTreeView_customContextMenuRequested(const QPoint
         {
             QString fullSubPath = m_git->path().absoluteFilePath(subPath);
             emit openRepositoryRequested(fullSubPath);
+        }
+        else if (selectedAction == addAction)
+        {
+            addSubmoduleDialog();
         }
         else if (selectedAction == updateAction)
         {
