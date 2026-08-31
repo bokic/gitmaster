@@ -35,6 +35,7 @@ public:
     void push();
     void merge();
     void rebase();
+    void interactiveRebase(const QString &baseCommitId = QString());
     QGit *git() const;
     void navigateToCommit(const QString &hash);
     bool hasRemotes() const { return m_hasRemotes; }
@@ -64,6 +65,7 @@ signals:
     void deleteBranches(const QList<QGitBranch> &branches, bool force);
     void repositoryMerge(const QString &branchName);
     void repositoryRebase(const QString &upstream, const QString &branch = "", const QString &onto = "");
+    void repositoryInteractiveRebase(const QString &baseCommitId, const QList<QGitRebaseTodoItem> &todoList);
     void repositoryRenameBranch(const QString &oldName, const QString &newName);
     void repositoryRenameTag(const QString &oldName, const QString &newName);
     void repositoryCreateTag(const QString &name, const QString &targetObjectId, const QString &message, bool force);
@@ -107,6 +109,7 @@ private slots:
     void repositoryPushReply(const QGitError &error);
     void repositoryMergeReply(const QGitError &error);
     void repositoryRebaseReply(const QGitError &error);
+    void repositoryInteractiveRebaseReply(const QGitError &error);
     void repositoryUpdateSubmoduleReply(const QGitError &error);
     void repositoryInitSubmoduleReply(const QGitError &error);
     void repositorySyncSubmoduleReply(const QGitError &error);

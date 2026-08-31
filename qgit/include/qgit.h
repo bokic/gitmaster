@@ -6,6 +6,7 @@
 #include "qgiterror.h"
 #include "qgittag.h"
 #include "qgitworktree.h"
+#include "qgitrebasetodoitem.h"
 
 #include <QStringList>
 #include <QDateTime>
@@ -134,6 +135,9 @@ public:
     void renameRemote(const QString &oldName, const QString &newName);
     void setRemoteUrl(const QString &name, const QString &url, bool isPushUrl = false);
     QList<QGitWorktree> worktrees() const;
+    QString commitSummary(const QString &commitId) const;
+    QStringList getCommitParents(const QString &commitId) const;
+    QList<QGitCommit> getCommitsForRebase(const QString &baseCommitId, const QString &target = QString()) const;
 
     void setCredentialHandler(QObject *handler) { m_credentialHandler = handler; }
     QObject *credentialHandler() const { return m_credentialHandler; }
@@ -189,6 +193,7 @@ public slots:
     void setUpstream(const QString &branchName, const QString &upstreamBranchName);
     void merge(const QString &branchName);
     void rebase(const QString &upstream, const QString &branch = "", const QString &onto = "");
+    void interactiveRebase(const QString &baseCommitId, const QList<QGitRebaseTodoItem> &todoList);
     void createTag(const QString &name, const QString &targetObjectId, const QString &message, bool force);
     void clean(bool includeIgnored, bool removeDirectories);
     void applyPatch(const QString &patchPath);
@@ -239,6 +244,7 @@ signals:
     void deleteTagReply(const QGitError &error);
     void mergeReply(const QGitError &error);
     void rebaseReply(const QGitError &error);
+    void interactiveRebaseReply(const QGitError &error);
     void cleanReply(const QGitError &error);
     void applyPatchReply(const QGitError &error);
     void setNoteReply(const QGitError &error);

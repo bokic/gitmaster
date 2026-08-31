@@ -948,6 +948,129 @@ QString QGit::headCommitMessage() const
     return QString();
 }
 
+QString QGit::commitSummary(const QString &commitId) const
+{
+    if (commitId.isEmpty()) return QString();
+    try {
+        GitRepository repo = openRepo(m_path);
+        git_oid oid;
+        if (resolveToCommitOid(oid, repo, commitId) == 0) {
+            GitCommit commit;
+            if (git_commit_lookup(commit, repo, &oid) == 0) {
+                const char *summary = git_commit_summary(commit);
+                if (summary) return QString::fromUtf8(summary);
+            }
+        }
+    } catch (...) {}
+    return QString();
+}
+
+QStringList QGit::getCommitParents(const QString &commitId) const
+{
+    QStringList result;
+    if (commitId.isEmpty()) return result;
+    try {
+        GitRepository repo = openRepo(m_path);
+        git_oid oid;
+        if (resolveToCommitOid(oid, repo, commitId) == 0) {
+            GitCommit commit;
+            if (git_commit_lookup(commit, repo, &oid) == 0) {
+                unsigned int pcount = git_commit_parentcount(commit);
+                for (unsigned int i = 0; i < pcount; ++i) {
+                    const git_oid *pid = git_commit_parent_id(commit, i);
+                    if (pid) {
+                        result.append(QString::fromUtf8(git_oid_tostr_s(pid)));
+                    }
+                }
+            }
+        }
+    } catch (...) {}
+    return result;
+}
+
+QList<QGitCommit> QGit::getCommitsForRebase(const QString &baseCommitId, const QString &target) const
+{
+    QList<QGitCommit> commits;
+    try
+    {
+        GitRepository repo = openRepo(m_path);
+        GitRevWalk walker;
+        int res = git_revwalk_new(walker, repo);
+        if (res) throw QGitError("git_revwalk_new", res);
+
+        git_revwalk_sorting(walker, GIT_SORT_TOPOLOGICAL | GIT_SORT_REVERSE);
+
+        git_oid target_oid;
+        if (!target.isEmpty()) {
+            res = resolveToCommitOid(target_oid, repo, target);
+            if (res) throw QGitError("resolveToCommitOid (target)", res);
+        } else {
+            GitReference head_ref;
+            res = git_repository_head(head_ref, repo);
+            if (res) throw QGitError("git_repository_head", res);
+            const git_oid *h_oid = git_reference_target(head_ref);
+            if (!h_oid) throw QGitError("git_reference_target (head)", -1);
+            target_oid = *h_oid;
+        }
+
+        res = git_revwalk_push(walker, &target_oid);
+        if (res) throw QGitError("git_revwalk_push", res);
+
+        if (!baseCommitId.isEmpty()) {
+            git_oid base_oid;
+            if (resolveToCommitOid(base_oid, repo, baseCommitId) == 0) {
+                git_revwalk_hide(walker, &base_oid);
+            }
+        }
+
+        GitMailmap mailmap;
+        git_mailmap_from_repository(mailmap, repo);
+
+        git_oid oid;
+        while (git_revwalk_next(&oid, walker) == 0) {
+            GitCommit commit;
+            if (git_commit_lookup(commit, repo, &oid) == 0) {
+                QString commit_id = QByteArray(git_oid_tostr_s(&oid));
+                QList<QGitCommitDiffParent> commit_parents;
+                unsigned int pcount = git_commit_parentcount(commit);
+                for (unsigned int p = 0; p < pcount; ++p) {
+                    const git_oid *parent_oid = git_commit_parent_id(commit, p);
+                    if (parent_oid) {
+                        commit_parents.append(QGitCommitDiffParent(QByteArray(git_oid_tostr_s(parent_oid))));
+                    }
+                }
+
+                auto time = git_commit_time(commit);
+                auto timeOffset = git_commit_time_offset(commit);
+                QDateTime commit_time = QDateTime::fromMSecsSinceEpoch(time * 1000);
+                commit_time.setTimeZone(QTimeZone(timeOffset * 60));
+
+                QString author_name = QString::fromUtf8(git_commit_author(commit)->name);
+                QString author_email = QString::fromUtf8(git_commit_author(commit)->email);
+                resolveMailmap(mailmap, author_name, author_email);
+                QDateTime author_when = QDateTime::fromMSecsSinceEpoch(git_commit_author(commit)->when.time * 1000);
+                author_when.setTimeZone(QTimeZone(git_commit_author(commit)->when.offset * 60));
+                QGitSignature commit_author(author_name, author_email, author_when);
+
+                QString commiter_name = QString::fromUtf8(git_commit_committer(commit)->name);
+                QString commiter_email = QString::fromUtf8(git_commit_committer(commit)->email);
+                resolveMailmap(mailmap, commiter_name, commiter_email);
+                QDateTime commiter_when = QDateTime::fromMSecsSinceEpoch(git_commit_committer(commit)->when.time * 1000);
+                commiter_when.setTimeZone(QTimeZone(git_commit_committer(commit)->when.offset * 60));
+                QGitSignature commit_commiter(commiter_name, commiter_email, commiter_when);
+
+                QString commit_message = QString::fromUtf8(git_commit_message(commit));
+
+                commits.append(QGitCommit(commit_id, commit_parents, commit_time, commit_author, commit_commiter, commit_message));
+            }
+        }
+    }
+    catch (const QGitError &)
+    {
+    }
+    return commits;
+}
+
 bool QGit::isAncestor(const QString &ancestor, const QString &descendant) const
 {
     GitRepository repo;
@@ -4422,6 +4545,280 @@ void QGit::rebase(const QString &upstream, const QString &branch, const QString 
     }
 
     emit rebaseReply(error);
+}
+
+void QGit::interactiveRebase(const QString &baseCommitId, const QList<QGitRebaseTodoItem> &todoList)
+{
+    QGitError error;
+    try
+    {
+        GitRepository repo = openRepo(m_path);
+
+        git_repository_state_t state = (git_repository_state_t)git_repository_state(repo);
+        if (state != GIT_REPOSITORY_STATE_NONE)
+        {
+            throw QGitError(tr("Repository is not in a clean state. Please resolve or abort the active merge, rebase, or cherry-pick first."), -1);
+        }
+
+        // Check if there are unstaged/staged tracked modifications
+        git_status_options status_opts = GIT_STATUS_OPTIONS_INIT;
+        status_opts.show = GIT_STATUS_SHOW_INDEX_AND_WORKDIR;
+        git_status_list *status_list = nullptr;
+        int status_res = git_status_list_new(&status_list, repo, &status_opts);
+        if (status_res == 0) {
+            size_t count = git_status_list_entrycount(status_list);
+            bool hasDirtyTracked = false;
+            for (size_t i = 0; i < count; ++i) {
+                const git_status_entry *entry = git_status_byindex(status_list, i);
+                if (entry && (entry->status & (GIT_STATUS_INDEX_NEW | GIT_STATUS_INDEX_MODIFIED | GIT_STATUS_INDEX_DELETED | GIT_STATUS_INDEX_RENAMED | GIT_STATUS_INDEX_TYPECHANGE | GIT_STATUS_WT_MODIFIED | GIT_STATUS_WT_DELETED | GIT_STATUS_WT_RENAMED | GIT_STATUS_WT_TYPECHANGE))) {
+                    hasDirtyTracked = true;
+                    break;
+                }
+            }
+            git_status_list_free(status_list);
+            if (hasDirtyTracked) {
+                throw QGitError(tr("Working directory has unstaged or staged changes. Please commit or stash them before rebasing."), -1);
+            }
+        }
+
+        git_oid base_oid;
+        int res = resolveToCommitOid(base_oid, repo, baseCommitId);
+        if (res) {
+            throw QGitError("resolveToCommitOid (base)", res);
+        }
+
+        git_commit *currentHeadCommit = nullptr;
+        res = git_commit_lookup(&currentHeadCommit, repo, &base_oid);
+        if (res) {
+            throw QGitError("git_commit_lookup (base)", res);
+        }
+
+        GitSignature committer;
+        res = git_signature_default(committer, repo);
+        if (res) {
+            git_commit_free(currentHeadCommit);
+            throw QGitError("git_signature_default", res);
+        }
+
+        GitReference head_ref;
+        res = git_repository_head(head_ref, repo);
+        if (res) {
+            git_commit_free(currentHeadCommit);
+            throw QGitError("git_repository_head", res);
+        }
+
+        bool hasAppliedCommit = false;
+
+        for (const auto &item : todoList) {
+            if (item.action == QGitRebaseAction::Drop) {
+                continue;
+            }
+
+            git_oid orig_oid;
+            res = git_oid_fromstr(&orig_oid, item.commitId.toUtf8().constData());
+            if (res) {
+                git_commit_free(currentHeadCommit);
+                throw QGitError("git_oid_fromstr", res);
+            }
+
+            GitCommit origCommit;
+            res = git_commit_lookup(origCommit, repo, &orig_oid);
+            if (res) {
+                git_commit_free(currentHeadCommit);
+                throw QGitError("git_commit_lookup (orig)", res);
+            }
+
+            unsigned int mainline = (git_commit_parentcount(origCommit) > 1) ? 1 : 0;
+
+            if (item.action == QGitRebaseAction::Pick || item.action == QGitRebaseAction::Reword) {
+                git_index *cherry_index = nullptr;
+                res = git_cherrypick_commit(&cherry_index, repo, origCommit.value, currentHeadCommit, mainline, nullptr);
+                if (res != 0) {
+                    if (cherry_index) git_index_free(cherry_index);
+                    git_commit_free(currentHeadCommit);
+                    throw QGitError(QString("git_cherrypick_commit failed on %1: %2").arg(item.shortHash, item.summary), res);
+                }
+
+                if (git_index_has_conflicts(cherry_index)) {
+                    git_index_free(cherry_index);
+                    git_commit_free(currentHeadCommit);
+                    throw QGitError(tr("Conflict detected when applying commit %1 (%2). Interactive rebase aborted to keep repository safe.").arg(item.shortHash, item.summary), -1);
+                }
+
+                git_oid tree_oid;
+                res = git_index_write_tree_to(&tree_oid, cherry_index, repo);
+                git_index_free(cherry_index);
+                if (res) {
+                    git_commit_free(currentHeadCommit);
+                    throw QGitError("git_index_write_tree_to", res);
+                }
+
+                GitTree tree;
+                res = git_tree_lookup(tree, repo, &tree_oid);
+                if (res) {
+                    git_commit_free(currentHeadCommit);
+                    throw QGitError("git_tree_lookup", res);
+                }
+
+                const git_signature *author = git_commit_author(origCommit);
+                QByteArray commitMsgBytes;
+                if (item.action == QGitRebaseAction::Reword && !item.message.trimmed().isEmpty()) {
+                    commitMsgBytes = item.message.toUtf8();
+                } else {
+                    commitMsgBytes = git_commit_message(origCommit);
+                }
+
+                const git_commit *parents[] = { currentHeadCommit };
+                git_oid new_commit_oid;
+                res = git_commit_create(
+                    &new_commit_oid,
+                    repo,
+                    nullptr,
+                    author,
+                    committer,
+                    nullptr,
+                    commitMsgBytes.constData(),
+                    tree,
+                    1,
+                    parents
+                );
+                if (res) {
+                    git_commit_free(currentHeadCommit);
+                    throw QGitError("git_commit_create", res);
+                }
+
+                git_commit *nextCommit = nullptr;
+                res = git_commit_lookup(&nextCommit, repo, &new_commit_oid);
+                if (res) {
+                    git_commit_free(currentHeadCommit);
+                    throw QGitError("git_commit_lookup (new)", res);
+                }
+                git_commit_free(currentHeadCommit);
+                currentHeadCommit = nextCommit;
+                hasAppliedCommit = true;
+            }
+            else if (item.action == QGitRebaseAction::Squash || item.action == QGitRebaseAction::Fixup) {
+                if (!hasAppliedCommit) {
+                    git_commit_free(currentHeadCommit);
+                    throw QGitError(tr("Cannot squash or fixup the first commit in the rebase sequence."), -1);
+                }
+
+                git_index *cherry_index = nullptr;
+                res = git_cherrypick_commit(&cherry_index, repo, origCommit.value, currentHeadCommit, mainline, nullptr);
+                if (res != 0) {
+                    if (cherry_index) git_index_free(cherry_index);
+                    git_commit_free(currentHeadCommit);
+                    throw QGitError(QString("git_cherrypick_commit failed on %1: %2").arg(item.shortHash, item.summary), res);
+                }
+
+                if (git_index_has_conflicts(cherry_index)) {
+                    git_index_free(cherry_index);
+                    git_commit_free(currentHeadCommit);
+                    throw QGitError(tr("Conflict detected when squashing commit %1 (%2). Interactive rebase aborted.").arg(item.shortHash, item.summary), -1);
+                }
+
+                git_oid tree_oid;
+                res = git_index_write_tree_to(&tree_oid, cherry_index, repo);
+                git_index_free(cherry_index);
+                if (res) {
+                    git_commit_free(currentHeadCommit);
+                    throw QGitError("git_index_write_tree_to", res);
+                }
+
+                GitTree tree;
+                res = git_tree_lookup(tree, repo, &tree_oid);
+                if (res) {
+                    git_commit_free(currentHeadCommit);
+                    throw QGitError("git_tree_lookup", res);
+                }
+
+                unsigned int pcount = git_commit_parentcount(currentHeadCommit);
+                std::vector<git_commit*> parent_objs(pcount, nullptr);
+                std::vector<const git_commit*> parents(pcount, nullptr);
+                for (unsigned int p = 0; p < pcount; ++p) {
+                    git_commit_parent(&parent_objs[p], currentHeadCommit, p);
+                    parents[p] = parent_objs[p];
+                }
+
+                const git_signature *author = git_commit_author(currentHeadCommit);
+                QByteArray squashedMsgBytes;
+                if (item.action == QGitRebaseAction::Squash) {
+                    if (!item.message.trimmed().isEmpty()) {
+                        squashedMsgBytes = item.message.toUtf8();
+                    } else {
+                        QString prevMsg = QString::fromUtf8(git_commit_message(currentHeadCommit)).trimmed();
+                        QString nextMsg = QString::fromUtf8(git_commit_message(origCommit)).trimmed();
+                        squashedMsgBytes = (prevMsg + "\n\n" + nextMsg).toUtf8();
+                    }
+                } else { // Fixup
+                    squashedMsgBytes = git_commit_message(currentHeadCommit);
+                }
+
+                git_oid new_commit_oid;
+                res = git_commit_create(
+                    &new_commit_oid,
+                    repo,
+                    nullptr,
+                    author,
+                    committer,
+                    nullptr,
+                    squashedMsgBytes.constData(),
+                    tree,
+                    pcount,
+                    parents.empty() ? nullptr : parents.data()
+                );
+
+                for (auto *p : parent_objs) {
+                    if (p) git_commit_free(p);
+                }
+
+                if (res) {
+                    git_commit_free(currentHeadCommit);
+                    throw QGitError("git_commit_create (squash)", res);
+                }
+
+                git_commit *nextCommit = nullptr;
+                res = git_commit_lookup(&nextCommit, repo, &new_commit_oid);
+                if (res) {
+                    git_commit_free(currentHeadCommit);
+                    throw QGitError("git_commit_lookup (squashed)", res);
+                }
+                git_commit_free(currentHeadCommit);
+                currentHeadCommit = nextCommit;
+            }
+        }
+
+        const git_oid *final_oid = git_commit_id(currentHeadCommit);
+        if (git_reference_is_branch(head_ref)) {
+            GitReference new_ref;
+            res = git_reference_set_target(new_ref, head_ref, final_oid, "rebase interactive: finish");
+            if (res) {
+                git_commit_free(currentHeadCommit);
+                throw QGitError("git_reference_set_target", res);
+            }
+        } else {
+            res = git_repository_set_head_detached(repo, final_oid);
+            if (res) {
+                git_commit_free(currentHeadCommit);
+                throw QGitError("git_repository_set_head_detached", res);
+            }
+        }
+
+        git_commit_free(currentHeadCommit);
+
+        git_checkout_options checkout_opts = GIT_CHECKOUT_OPTIONS_INIT;
+        checkout_opts.checkout_strategy = GIT_CHECKOUT_FORCE;
+        res = git_checkout_head(repo, &checkout_opts);
+        if (res) {
+            throw QGitError("git_checkout_head", res);
+        }
+    }
+    catch (const QGitError &ex)
+    {
+        error = ex;
+    }
+
+    emit interactiveRebaseReply(error);
 }
 
 void QGit::merge(const QString &branchName)

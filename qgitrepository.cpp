@@ -16,6 +16,7 @@
 #include "qgitworktreedialog.h"
 #include "qgitflowdialog.h"
 #include "qgitstashinspectdialog.h"
+#include "qgitinteractiverebasedialog.h"
 #include <qgitbranch.h>
 
 #include <QDebug>
@@ -223,6 +224,8 @@ QGitRepository::QGitRepository(const QString &path, QWidget *parent)
     connect(m_git, &QGit::mergeReply, this, &QGitRepository::repositoryMergeReply);
     connect(this, &QGitRepository::repositoryRebase, m_git, &QGit::rebase);
     connect(m_git, &QGit::rebaseReply, this, &QGitRepository::repositoryRebaseReply);
+    connect(this, &QGitRepository::repositoryInteractiveRebase, m_git, &QGit::interactiveRebase);
+    connect(m_git, &QGit::interactiveRebaseReply, this, &QGitRepository::repositoryInteractiveRebaseReply);
     connect(this, &QGitRepository::repositoryRenameBranch, m_git, &QGit::renameBranch);
     connect(this, &QGitRepository::repositoryRenameTag, m_git, &QGit::renameTag);
     connect(m_git, &QGit::renameTagReply, this, &QGitRepository::renameTagReply);
@@ -476,6 +479,31 @@ void QGitRepository::repositoryMergeReply(const QGitError &error)
     }
 }
 
+void QGitRepository::interactiveRebase(const QString &baseCommitId)
+{
+    QString targetBase = baseCommitId;
+    if (targetBase.isEmpty()) {
+        auto commits = m_git->getCommitsForRebase(QString());
+        if (commits.size() > 10) {
+            auto parents = m_git->getCommitParents(commits.at(commits.size() - 10).id());
+            if (!parents.isEmpty()) {
+                targetBase = parents.first();
+            }
+        } else if (!commits.isEmpty()) {
+            auto parents = m_git->getCommitParents(commits.first().id());
+            if (!parents.isEmpty()) {
+                targetBase = parents.first();
+            }
+        }
+    }
+
+    QGitInteractiveRebaseDialog dlg(m_git, targetBase, this);
+    if (dlg.exec() == QDialog::Accepted) {
+        emit statusMessage(tr("Performing interactive rebase..."));
+        emit repositoryInteractiveRebase(dlg.baseCommitId(), dlg.todoItems());
+    }
+}
+
 void QGitRepository::repositoryRebaseReply(const QGitError &error)
 {
     emit clearStatusMessage();
@@ -483,6 +511,18 @@ void QGitRepository::repositoryRebaseReply(const QGitError &error)
     if (error.errorCode()) {
         QMessageBox::critical(this, tr("Rebase Error"), 
                               tr("Could not rebase onto the specified branch. Details: %1").arg(error.errorString()));
+    } else {
+        refreshData();
+    }
+}
+
+void QGitRepository::repositoryInteractiveRebaseReply(const QGitError &error)
+{
+    emit clearStatusMessage();
+
+    if (error.errorCode()) {
+        QMessageBox::critical(this, tr("Interactive Rebase Error"), 
+                              tr("Interactive rebase failed:\n\n%1").arg(error.errorString()));
     } else {
         refreshData();
     }
@@ -2412,19 +2452,28 @@ void QGitRepository::on_logHistory_commits_customContextMenuRequested(const QPoi
 
     QMenu menu(this);
     QAction *rewordAction = nullptr;
+    QAction *interactiveRebaseAction = nullptr;
+    QAction *interactiveRebaseOntoAction = nullptr;
     QAction *rebaseAction = nullptr;
     QAction *cherrypickAction = nullptr;
     QAction *revertAction = nullptr;
 
     // "Reword commit message…" is only offered for HEAD
     bool isHead = (selectedHash.compare(headHash, Qt::CaseInsensitive) == 0);
+    bool isAncestor = !headHash.isEmpty() && m_git->isAncestor(selectedHash, headHash);
+
     if (isHead) {
         rewordAction = menu.addAction(tr("Reword commit message..."));
         menu.addSeparator();
     }
 
+    if (isHead || isAncestor) {
+        interactiveRebaseAction = menu.addAction(tr("Interactive Rebase from here..."));
+    }
+
     if (canRebase) {
         rebaseAction = menu.addAction(tr("Rebase current branch onto '%1'").arg(targetName));
+        interactiveRebaseOntoAction = menu.addAction(tr("Interactive Rebase current branch onto '%1'...").arg(targetName));
     }
 
     bool canCherrypick = true;
@@ -2483,6 +2532,15 @@ void QGitRepository::on_logHistory_commits_customContextMenuRequested(const QPoi
                 emit statusMessage(tr("Rewording commit message..."));
                 emit repositoryCommit(newMessage, false, true);
             }
+        } else if (res == interactiveRebaseAction) {
+            QString baseHash;
+            auto parents = m_git->getCommitParents(selectedHash);
+            if (!parents.isEmpty()) {
+                baseHash = parents.first();
+            }
+            interactiveRebase(baseHash);
+        } else if (res == interactiveRebaseOntoAction) {
+            interactiveRebase(selectedHash);
         } else if (res == rebaseAction) {
             auto confirm = QMessageBox::question(this, tr("Rebase"),
                                                  tr("Are you sure you want to rebase the current branch onto '%1'?").arg(targetName),

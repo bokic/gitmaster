@@ -91,6 +91,7 @@ set(PROJECT_HEADERS
     qgitblamedialog.h
     qgitworktreedialog.h
     qgitflowdialog.h
+    qgitinteractiverebasedialog.h
 
     qgitrepotreeitemdelegate.h
     qgitrepotreewidget.h
@@ -121,6 +122,7 @@ set(PROJECT_HEADERS
     qgit/include/qgiterror.h
     qgit/include/qgitsignature.h
     qgit/include/qgitworktree.h
+    qgit/include/qgitrebasetodoitem.h
 )
 
 set(PROJECT_SOURCES
@@ -146,6 +148,7 @@ set(PROJECT_SOURCES
     qgitblamedialog.cpp            qgitblamedialog.ui
     qgitworktreedialog.cpp         qgitworktreedialog.ui
     qgitflowdialog.cpp             qgitflowdialog.ui
+    qgitinteractiverebasedialog.cpp qgitinteractiverebasedialog.ui
 
     qgitrepotreeitemdelegate.cpp
     qgitrepotreewidget.cpp
