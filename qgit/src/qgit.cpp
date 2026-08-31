@@ -1880,6 +1880,9 @@ static int submoduleForeachCallback(git_submodule *sm, const char *name, void *p
         const char *url = git_submodule_url(sm);
         if (url) sub.url = QString::fromUtf8(url);
 
+        const char *branch = git_submodule_branch(sm);
+        if (branch) sub.branch = QString::fromUtf8(branch);
+
         auto formatOid = [](const git_oid *oid) {
             if (!oid || git_oid_is_zero(oid)) return QString();
             char buf[GIT_OID_HEXSZ + 1];
@@ -2006,6 +2009,79 @@ void QGit::addSubmodule(const QString &url, const QString &path, const QString &
         error = ex;
     }
     emit addSubmoduleReply(error);
+}
+
+void QGit::setSubmodulePointer(const QString &name, const QString &targetRefOrCommit, const QString &branch)
+{
+    QGitError error;
+    try {
+        GitRepository repo;
+        int res = git_repository_open(repo, m_path.absolutePath().toUtf8().constData());
+        if (res) throw QGitError("git_repository_open", res);
+
+        GitSubmodule sm;
+        res = git_submodule_lookup(sm, repo, name.toUtf8().constData());
+        if (res) throw QGitError("git_submodule_lookup", res);
+
+        // Update tracked branch in .gitmodules / config if requested
+        if (!branch.isEmpty()) {
+            const char *branchName = branch.trimmed().isEmpty() ? nullptr : branch.trimmed().toUtf8().constData();
+            res = git_submodule_set_branch(repo, git_submodule_name(sm), branchName);
+            if (res) throw QGitError("git_submodule_set_branch", res);
+            git_submodule_sync(sm);
+        }
+
+        // If targetRefOrCommit is specified, checkout that ref/commit inside the submodule repository and stage in superproject index
+        if (!targetRefOrCommit.trimmed().isEmpty()) {
+            GitRepository sub_repo;
+            res = git_submodule_open(sub_repo, sm);
+            if (res) throw QGitError("git_submodule_open", res);
+
+            // Resolve targetRefOrCommit to an object/treeish in submodule repository
+            GitObject targetObj;
+            res = git_revparse_single(targetObj, sub_repo, targetRefOrCommit.trimmed().toUtf8().constData());
+            if (res) throw QGitError("git_revparse_single", res);
+
+            // Checkout tree in submodule
+            git_checkout_options opts = makeCheckoutOptions(GIT_CHECKOUT_SAFE);
+            res = git_checkout_tree(sub_repo, targetObj, &opts);
+            if (res) throw QGitError("git_checkout_tree", res);
+
+            // Update HEAD of submodule repo (either to branch ref or detached commit)
+            // Check if targetRefOrCommit corresponds to a local branch
+            QString candidateRef = targetRefOrCommit.trimmed();
+            if (!candidateRef.startsWith(QStringLiteral("refs/"))) {
+                // Check if refs/heads/<candidateRef> exists
+                GitReference directRef;
+                QString localBranchRef = QStringLiteral("refs/heads/") + candidateRef;
+                if (git_reference_lookup(directRef, sub_repo, localBranchRef.toUtf8().constData()) == 0) {
+                    candidateRef = localBranchRef;
+                }
+            }
+
+            if (candidateRef.startsWith(QStringLiteral("refs/heads/"))) {
+                res = git_repository_set_head(sub_repo, candidateRef.toUtf8().constData());
+            } else {
+                git_oid targetOid = *git_object_id(targetObj);
+                res = git_repository_set_head_detached(sub_repo, &targetOid);
+            }
+            if (res) throw QGitError("git_repository_set_head", res);
+
+            // Add the new submodule gitlink commit to the superproject index
+            res = git_submodule_add_to_index(sm, 1);
+            if (res) throw QGitError("git_submodule_add_to_index", res);
+
+            // Write the superproject index to disk
+            GitIndex superIndex;
+            res = git_repository_index(superIndex, repo);
+            if (res == 0) {
+                git_index_write(superIndex);
+            }
+        }
+    } catch (const QGitError &ex) {
+        error = ex;
+    }
+    emit setSubmodulePointerReply(error);
 }
 
 void QGit::addRemote(const QString &name, const QString &url)

@@ -18,6 +18,7 @@
 #include "qgitstashinspectdialog.h"
 #include "qgitinteractiverebasedialog.h"
 #include "qgitaddsubmoduledialog.h"
+#include "qgitsubmodulepointerdialog.h"
 #include <qgitbranch.h>
 
 #include <QDebug>
@@ -261,6 +262,8 @@ QGitRepository::QGitRepository(const QString &path, QWidget *parent)
     connect(m_git, &QGit::syncSubmoduleReply, this, &QGitRepository::repositorySyncSubmoduleReply);
     connect(this, &QGitRepository::repositoryAddSubmodule, m_git, &QGit::addSubmodule);
     connect(m_git, &QGit::addSubmoduleReply, this, &QGitRepository::repositoryAddSubmoduleReply);
+    connect(this, &QGitRepository::repositorySetSubmodulePointer, m_git, &QGit::setSubmodulePointer);
+    connect(m_git, &QGit::setSubmodulePointerReply, this, &QGitRepository::repositorySetSubmodulePointerReply);
     connect(this, &QGitRepository::repositoryCheckoutBranch, m_git, &QGit::checkoutBranch);
     connect(this, &QGitRepository::repositorySetUpstream, m_git, &QGit::setUpstream);
     connect(this, &QGitRepository::repositoryDeleteTag, m_git, &QGit::deleteTag);
@@ -553,6 +556,60 @@ void QGitRepository::addSubmoduleDialog()
     if (dlg.exec() == QDialog::Accepted) {
         emit statusMessage(tr("Adding submodule %1...").arg(dlg.path()));
         emit repositoryAddSubmodule(dlg.url(), dlg.path(), dlg.branch(), dlg.force());
+    }
+}
+
+void QGitRepository::submodulePointerDialog(const QString &subName)
+{
+    QGitSubmodule targetSub;
+    bool found = false;
+
+    if (!subName.isEmpty()) {
+        for (const auto &s : m_submodules) {
+            if (s.name == subName) {
+                targetSub = s;
+                found = true;
+                break;
+            }
+        }
+    }
+
+    if (!found) {
+        // Look up dynamically if not found in cache
+        QList<QGitSubmodule> subs = m_git->submodules();
+        for (const auto &s : subs) {
+            if (subName.isEmpty() || s.name == subName) {
+                targetSub = s;
+                found = true;
+                break;
+            }
+        }
+    }
+
+    if (!found) {
+        QMessageBox::warning(this, tr("Submodule Not Found"), tr("Could not find submodule '%1'.").arg(subName));
+        return;
+    }
+
+    QGitSubmodulePointerDialog dlg(QDir(m_path), targetSub, this);
+    if (dlg.exec() == QDialog::Accepted) {
+        QString targetRef = dlg.selectedTarget();
+        QString branch = dlg.shouldUpdateTrackedBranch() ? dlg.trackedBranch() : QString();
+
+        emit statusMessage(tr("Updating reference for submodule %1...").arg(targetSub.name));
+        emit repositorySetSubmodulePointer(targetSub.name, targetRef, branch);
+    }
+}
+
+void QGitRepository::repositorySetSubmodulePointerReply(const QGitError &error)
+{
+    emit clearStatusMessage();
+
+    if (error.errorCode()) {
+        QMessageBox::critical(this, tr("Update Submodule Reference Error"),
+                              tr("Failed to update submodule reference:\n\n%1").arg(error.errorString()));
+    } else {
+        refreshData();
     }
 }
 
@@ -998,6 +1055,7 @@ void QGitRepository::repositoryBranchesAndTagsReply(const QList<QGitBranch> &bra
 
     m_hasRemotes = hasRemotes;
     m_hasCommitsToPush = hasCommitsToPush;
+    m_submodules = submodules;
 
     emit updateRemoteActionsRequested();
 
@@ -1681,6 +1739,7 @@ void QGitRepository::on_branchesTreeView_customContextMenuRequested(const QPoint
 
         QMenu menu(this);
         QAction *openAction = menu.addAction(tr("Open Submodule Repository"));
+        QAction *changeRefAction = menu.addAction(tr("Change Reference / Pointer..."));
         QAction *addAction = menu.addAction(tr("Add Submodule..."));
         menu.addSeparator();
         QAction *updateAction = menu.addAction(tr("Update Submodule"));
@@ -1692,6 +1751,10 @@ void QGitRepository::on_branchesTreeView_customContextMenuRequested(const QPoint
         {
             QString fullSubPath = m_git->path().absoluteFilePath(subPath);
             emit openRepositoryRequested(fullSubPath);
+        }
+        else if (selectedAction == changeRefAction)
+        {
+            submodulePointerDialog(subName);
         }
         else if (selectedAction == addAction)
         {

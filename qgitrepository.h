@@ -37,6 +37,7 @@ public:
     void rebase();
     void interactiveRebase(const QString &baseCommitId = QString());
     void addSubmoduleDialog();
+    void submodulePointerDialog(const QString &subName = QString());
     void continueOperation();
     void abortOperation();
     void skipRebase();
@@ -80,6 +81,7 @@ signals:
     void repositoryInitSubmodule(const QString &name);
     void repositorySyncSubmodule(const QString &name);
     void repositoryAddSubmodule(const QString &url, const QString &path, const QString &branch, bool force);
+    void repositorySetSubmodulePointer(const QString &name, const QString &targetRefOrCommit, const QString &branch);
     void repositoryClean(bool includeIgnored, bool removeDirectories);
     void repositoryApplyPatch(const QString &patchPath);
     void repositorySetNote(const QString &commitHash, const QString &note);
@@ -125,6 +127,7 @@ private slots:
     void repositoryInitSubmoduleReply(const QGitError &error);
     void repositorySyncSubmoduleReply(const QGitError &error);
     void repositoryAddSubmoduleReply(const QGitError &error);
+    void repositorySetSubmodulePointerReply(const QGitError &error);
     void repositoryCreateLocalBranchReply(const QGitError &error);
     void repositoryCherrypickReply(const QGitError &error);
     void repositoryRevertReply(const QGitError &error);
@@ -243,6 +246,7 @@ private:
     bool m_hasCommitsToPush = false;
     bool m_hasStashableChanges = false;
     int m_layoutOption = 0;
+    QList<QGitSubmodule> m_submodules;
     QList<QPair<QString, git_status_t>> m_changedFiles;
     QString m_headCommitId;
     QString m_headCommitMessage;
