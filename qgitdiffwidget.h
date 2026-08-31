@@ -18,6 +18,12 @@ class QGitDiffWidget : public QWidget
     Q_OBJECT
     Q_PROPERTY( bool readonly READ readonly WRITE setReadonly DESIGNABLE true )
 public:
+    enum class InlineDiffMode {
+        Off,
+        CharacterLevel,
+        WordLevel
+    };
+
     explicit QGitDiffWidget(QWidget *parent = nullptr);
     ~QGitDiffWidget() = default;
 
@@ -25,6 +31,7 @@ public:
     void setReadonly(bool readonly = true);
     void setIgnoreWhitespace(bool ignore);
     void setLinesOfContent(int lines);
+    void setInlineDiffMode(InlineDiffMode mode);
     void refresh();
     bool readonly() const;
 
@@ -64,4 +71,6 @@ private:
     bool m_readonly = false;
     int m_linesOfContent = 3;
     bool m_ignoreWhitespace = false;
+    InlineDiffMode m_inlineDiffMode = InlineDiffMode::Off;
 };
+

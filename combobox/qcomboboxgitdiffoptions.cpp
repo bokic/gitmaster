@@ -14,6 +14,11 @@ enum {
     ITEM_IGNORE_WHITESPACE,
     ITEM_SHOW_WHITESPACE,
     ITEM_SEPARATOR2,
+    ITEM_INLINE_DIFF_HEADER,
+    ITEM_INLINE_DIFF_OFF,
+    ITEM_INLINE_DIFF_CHAR,
+    ITEM_INLINE_DIFF_WORD,
+    ITEM_SEPARATOR3,
     ITEM_SHOW_1_LINE,
     ITEM_SHOW_2_LINE,
     ITEM_SHOW_3_LINE,
@@ -41,6 +46,13 @@ QComboBoxGitDiffOptions::QComboBoxGitDiffOptions(QWidget *parent)
 
     insertSeparator(count());
 
+    addHeaderItem(tr("Inline diff"), m_iconUnchecked);
+    addOptionItem(tr("Off"), true, Qt::Checked, m_iconChecked);
+    addOptionItem(tr("Character-level"), true, Qt::Unchecked, m_iconUnchecked);
+    addOptionItem(tr("Word-level"), true, Qt::Unchecked, m_iconUnchecked);
+
+    insertSeparator(count());
+
     addHeaderItem(tr("Lines of context"), m_iconUnchecked);
     addOptionItem(tr("1"), true, Qt::Unchecked, m_iconUnchecked);
     addOptionItem(tr("3"), true, Qt::Checked, m_iconChecked);
@@ -63,6 +75,23 @@ void QComboBoxGitDiffOptions::activated(int index)
     if ((index >= ITEM_IGNORE_WHITESPACE)&&(index <= ITEM_SHOW_WHITESPACE))
     {
         for(int c = ITEM_IGNORE_WHITESPACE; c <= ITEM_SHOW_WHITESPACE; c++)
+        {
+            if (c == index)
+            {
+                items->setData(items->index(c, 0), Qt::Checked, Qt::CheckStateRole);
+                if (m_showIcons) items->item(c, 0)->setIcon(m_iconChecked);
+            }
+            else
+            {
+                items->setData(items->index(c, 0), Qt::Unchecked, Qt::CheckStateRole);
+                if (m_showIcons) items->item(c, 0)->setIcon(m_iconUnchecked);
+            }
+        }
+    }
+
+    if ((index >= ITEM_INLINE_DIFF_OFF)&&(index <= ITEM_INLINE_DIFF_WORD))
+    {
+        for(int c = ITEM_INLINE_DIFF_OFF; c <= ITEM_INLINE_DIFF_WORD; c++)
         {
             if (c == index)
             {
@@ -120,6 +149,19 @@ int QComboBoxGitDiffOptions::linesOfContent() const
 
     return 1;
 }
+
+QComboBoxGitDiffOptions::InlineDiffMode QComboBoxGitDiffOptions::inlineDiffMode() const
+{
+    QStandardItemModel *items = qobject_cast<QStandardItemModel *>(model());
+    if (!items) return InlineDiffMode::Off;
+
+    if (items->data(items->index(ITEM_INLINE_DIFF_CHAR, 0), Qt::CheckStateRole).toInt() == Qt::Checked)
+        return InlineDiffMode::CharacterLevel;
+    if (items->data(items->index(ITEM_INLINE_DIFF_WORD, 0), Qt::CheckStateRole).toInt() == Qt::Checked)
+        return InlineDiffMode::WordLevel;
+    return InlineDiffMode::Off;
+}
+
 
 void QComboBoxGitDiffOptions::updateIconColor()
 {

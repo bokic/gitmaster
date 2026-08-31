@@ -7,6 +7,13 @@
 #include <QObject>
 
 
+// A single highlighted segment within a diff line (character or word range)
+struct QGitDiffInlineRange
+{
+    int start = 0; // byte offset in the UTF-8 content
+    int length = 0;
+};
+
 class QGitDiffWidgetPrivateLine
 {
 public:
@@ -16,6 +23,8 @@ public:
     int old_lineno = 0;
     char origin = '\0';
     QRect rect;
+    // Inline diff highlight ranges (in the displayed text, character positions)
+    QVector<QGitDiffInlineRange> inlineRanges;
 };
 
 class QGitDiffWidgetPrivateHunk
@@ -113,6 +122,113 @@ void QGitDiffWidget::setIgnoreWhitespace(bool ignore)
 void QGitDiffWidget::setLinesOfContent(int lines)
 {
     m_linesOfContent = lines;
+}
+
+void QGitDiffWidget::setInlineDiffMode(InlineDiffMode mode)
+{
+    if (m_inlineDiffMode != mode)
+    {
+        m_inlineDiffMode = mode;
+        // Re-compute inline diff on existing data
+        if (!m_requestedFiles.isEmpty())
+            refresh();
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Inline diff helpers
+// ---------------------------------------------------------------------------
+
+// Split a UTF-8 byte array into tokens.
+// In CharacterLevel mode, each token is a single Unicode character (QChar).
+// In WordLevel mode, tokens are whitespace-separated words, with whitespace
+// runs kept as their own tokens so positions map back to source indices.
+static QVector<QByteArray> splitTokens(const QByteArray &text, bool wordLevel)
+{
+    QVector<QByteArray> tokens;
+    if (wordLevel)
+    {
+        int i = 0;
+        while (i < text.size())
+        {
+            bool ws = (text[i] == ' ' || text[i] == '\t');
+            int start = i;
+            while (i < text.size() && (text[i] == ' ' || text[i] == '\t') == ws)
+                ++i;
+            tokens.append(text.mid(start, i - start));
+        }
+    }
+    else
+    {
+        // Character level: split by Unicode code points
+        QString str = QString::fromUtf8(text);
+        for (const QChar &ch : str)
+        {
+            tokens.append(QString(ch).toUtf8());
+        }
+    }
+    return tokens;
+}
+
+// Compute LCS length table and back-trace the diff.
+// Returns ranges in `b` that are *changed* (not in common with `a`).
+static QVector<QGitDiffInlineRange> computeChangedRanges(const QByteArray &a, const QByteArray &b, bool wordLevel)
+{
+    QVector<QByteArray> ta = splitTokens(a, wordLevel);
+    QVector<QByteArray> tb = splitTokens(b, wordLevel);
+
+    int m = ta.size();
+    int n = tb.size();
+
+    // Limit to prevent O(m*n) blowup on huge lines
+    if (m > 200 || n > 200)
+    {
+        // Highlight entire line as changed
+        QGitDiffInlineRange r;
+        r.start = 0;
+        r.length = b.size();
+        return {r};
+    }
+
+    // Build LCS table
+    QVector<QVector<int>> dp(m + 1, QVector<int>(n + 1, 0));
+    for (int i = 1; i <= m; ++i)
+        for (int j = 1; j <= n; ++j)
+            dp[i][j] = (ta[i-1] == tb[j-1]) ? dp[i-1][j-1] + 1
+                                              : qMax(dp[i-1][j], dp[i][j-1]);
+
+    // Back-trace to find which tokens in b are changed (i.e., not matched)
+    QVector<bool> matched(n, false);
+    int i = m, j = n;
+    while (i > 0 && j > 0)
+    {
+        if (ta[i-1] == tb[j-1]) { matched[j-1] = true; --i; --j; }
+        else if (dp[i-1][j] >= dp[i][j-1]) --i;
+        else --j;
+    }
+
+    // Convert token indices to byte offsets in b
+    QVector<QGitDiffInlineRange> ranges;
+    int bytePos = 0;
+    for (int k = 0; k < n; ++k)
+    {
+        int tokenLen = tb[k].size();
+        if (!matched[k])
+        {
+            // Merge with previous range if adjacent
+            if (!ranges.isEmpty() && ranges.last().start + ranges.last().length == bytePos)
+                ranges.last().length += tokenLen;
+            else
+            {
+                QGitDiffInlineRange r;
+                r.start = bytePos;
+                r.length = tokenLen;
+                ranges.append(r);
+            }
+        }
+        bytePos += tokenLen;
+    }
+    return ranges;
 }
 
 void QGitDiffWidget::refresh()
@@ -342,6 +458,55 @@ void QGitDiffWidget::responseGitDiff(const QString &first, const QString &second
             hunk.rect.setHeight(hunk_h);
             file_h += hunk_h;
 
+            // ---------------------------------------------------------------
+            // Inline diff: pair adjacent deleted/added lines and compute
+            // character- or word-level diff ranges.
+            // ---------------------------------------------------------------
+            if (m_inlineDiffMode != InlineDiffMode::Off)
+            {
+                bool wordLevel = (m_inlineDiffMode == InlineDiffMode::WordLevel);
+                int nLines = hunk.lines.size();
+                int li = 0;
+                while (li < nLines)
+                {
+                    // Collect a run of '-' lines followed immediately by '+' lines
+                    int delStart = li;
+                    while (li < nLines && hunk.lines[li].origin == '-') ++li;
+                    int delEnd = li; // exclusive
+
+                    int addStart = li;
+                    while (li < nLines && hunk.lines[li].origin == '+') ++li;
+                    int addEnd = li; // exclusive
+
+                    int delCount = delEnd - delStart;
+                    int addCount = addEnd - addStart;
+
+                    if (delCount > 0 && addCount > 0)
+                    {
+                        // Pair them up 1-to-1; remaining unpaired lines get full-line highlight
+                        int pairs = qMin(delCount, addCount);
+                        for (int p = 0; p < pairs; ++p)
+                        {
+                            auto &delLine = hunk.lines[delStart + p];
+                            auto &addLine = hunk.lines[addStart + p];
+
+                            // Strip trailing newline for comparison
+                            QByteArray delContent = delLine.content;
+                            QByteArray addContent = addLine.content;
+                            while (!delContent.isEmpty() && (delContent.back() == '\n' || delContent.back() == '\r'))
+                                delContent.chop(1);
+                            while (!addContent.isEmpty() && (addContent.back() == '\n' || addContent.back() == '\r'))
+                                addContent.chop(1);
+
+                            delLine.inlineRanges = computeChangedRanges(addContent, delContent, wordLevel);
+                            addLine.inlineRanges = computeChangedRanges(delContent, addContent, wordLevel);
+                        }
+                    }
+
+                    if (delEnd == addEnd && delEnd == li) ++li; // context line, skip
+                }
+            }
+
             file.hunks.push_back(hunk);
         }
 
@@ -433,6 +598,44 @@ void QGitDiffWidget::paintEvent(QPaintEvent *event)
 
                             painter.drawText(oldColX, yFont, old_lineNo);
                             painter.drawText(newColX, yFont, new_lineNo);
+
+                            // -----------------------------------------------
+                            // Inline diff highlighting
+                            // -----------------------------------------------
+                            if (!line.inlineRanges.isEmpty())
+                            {
+                                QFontMetrics fm(m_font);
+                                QString fullText = QString::fromUtf8(line.content);
+
+                                // Choose highlight colour: deeper shade of line background
+                                QColor hlColor = (line.origin == '-')
+                                    ? QColor(200, 100, 100)   // deeper red for deleted parts
+                                    : QColor(100, 185, 80);   // deeper green for added parts
+
+                                for (const auto &range : line.inlineRanges)
+                                {
+                                    // Convert byte offsets to QString character positions
+                                    // because the content might be multi-byte UTF-8
+                                    QByteArray rawContent = line.content;
+                                    int charStart = QString::fromUtf8(rawContent.left(range.start)).length();
+                                    int charLength = QString::fromUtf8(rawContent.mid(range.start, range.length)).length();
+
+                                    if (charLength <= 0) continue;
+
+                                    // Pixel position of the range start/end inside the content area
+                                    int xRangeStart = contentX + fm.horizontalAdvance(fullText, charStart);
+                                    int xRangeEnd   = contentX + fm.horizontalAdvance(fullText, charStart + charLength);
+
+                                    painter.setPen(Qt::NoPen);
+                                    painter.setBrush(QBrush(hlColor));
+                                    painter.drawRect(QRect(xRangeStart, line.rect.top(),
+                                                           xRangeEnd - xRangeStart, line.rect.height()));
+                                }
+
+                                // Restore pen color for text
+                                painter.setPen((line.origin == '-') ? Qt::darkRed : Qt::darkGreen);
+                            }
+
                             painter.drawText(contentX, yFont, line.content);
 
                             if ((fileIndex == m_hoverFile)&&(hunkIndex == m_hoverHunk)&&(lineIndex == m_hoverLine))
@@ -445,6 +648,7 @@ void QGitDiffWidget::paintEvent(QPaintEvent *event)
                                 painter.drawRect(option.rect);
                                 //painter.drawPrimitive(QStyle::PE_FrameFocusRect, option);
                             }
+
                         }
 
                         lineIndex++;

@@ -6,11 +6,18 @@ class QComboBoxGitDiffOptions : public QComboBoxGitBase
 {
     Q_OBJECT
 public:
+    enum class InlineDiffMode {
+        Off,
+        CharacterLevel,
+        WordLevel
+    };
+
     explicit QComboBoxGitDiffOptions(QWidget *parent = nullptr);
     ~QComboBoxGitDiffOptions() override = default;
 
     bool ignoreWhitespace() const;
     int linesOfContent() const;
+    InlineDiffMode inlineDiffMode() const;
 
 signals:
     void optionsChanged();

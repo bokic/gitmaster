@@ -2013,17 +2013,26 @@ void QGitRepository::on_comboBox_gitDiffOptions_optionsChanged()
 {
     bool ignoreWhitespace = ui->comboBox_gitDiffOptions->ignoreWhitespace();
     int lines = ui->comboBox_gitDiffOptions->linesOfContent();
+    auto inlineMode = ui->comboBox_gitDiffOptions->inlineDiffMode();
 
     ui->logHistory_diff->setIgnoreWhitespace(ignoreWhitespace);
     ui->logHistory_diff->setLinesOfContent(lines);
+    ui->logHistory_diff->setInlineDiffMode(static_cast<QGitDiffWidget::InlineDiffMode>(static_cast<int>(inlineMode)));
 
     ui->commit_diff->setIgnoreWhitespace(ignoreWhitespace);
     ui->commit_diff->setLinesOfContent(lines);
+    ui->commit_diff->setInlineDiffMode(static_cast<QGitDiffWidget::InlineDiffMode>(static_cast<int>(inlineMode)));
+
+    ui->search_diff->setIgnoreWhitespace(ignoreWhitespace);
+    ui->search_diff->setLinesOfContent(lines);
+    ui->search_diff->setInlineDiffMode(static_cast<QGitDiffWidget::InlineDiffMode>(static_cast<int>(inlineMode)));
 
     if (ui->repositoryDetail->currentWidget() == ui->tabLogHistory) {
         ui->logHistory_diff->refresh();
     } else if (ui->repositoryDetail->currentWidget() == ui->tabFileStatus) {
         ui->commit_diff->refresh();
+    } else if (ui->repositoryDetail->currentWidget() == ui->tabSearch) {
+        ui->search_diff->refresh();
     }
 }
 
