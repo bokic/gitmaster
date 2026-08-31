@@ -13,7 +13,7 @@ Development plan and upcoming features for GitMaster.
 - [ ] **Side-by-Side Diff View**: Implement a two-panel split diff layout — old file on the left, new file on the right — with synchronized scrolling, matching hunk alignment, and per-line inline character highlighting on each side (similar to [kitty diff](https://sw.kovidgoyal.net/kitty/_images/diff.png)). Should be togglable alongside the existing unified diff view via the diff options combobox.
 
 ### Advanced Commit & Rebase Tools
-- [ ] **Commit Reword & Amend UI**: Enable instant commit message editing for HEAD and UI options for amending.
+- [x] **Commit Reword & Amend UI**: Enable instant commit message editing for HEAD and UI options for amending.
 - [ ] **Interactive Rebase Dialog**: Support squashing, rewording, dropping, and reordering commits from the commit log view.
 - [ ] **Cherry-Pick / Rebase Controls**: Add UI controls to continue or abort active merge/rebase/cherry-pick operations.
 

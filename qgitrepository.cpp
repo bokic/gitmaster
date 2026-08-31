@@ -210,6 +210,7 @@ QGitRepository::QGitRepository(const QString &path, QWidget *parent)
 
     connect(ui->logHistory_commits->verticalScrollBar(), &QScrollBar::valueChanged, this, &QGitRepository::historyTableSliderMoved);
     connect(ui->plainTextEdit_commitMessage, &QAdvPlainTextEdit::abort, ui->pushButton_commitCancel, &QPushButton::click);
+    connect(ui->plainTextEdit_commitMessage, &QPlainTextEdit::textChanged, this, &QGitRepository::updateCommitButtonState);
 
     connect(m_git, &QGit::stashApplyReply, this, &QGitRepository::stashApplyReply);
     connect(m_git, &QGit::stashPopReply, this, &QGitRepository::stashPopReply);
@@ -866,14 +867,40 @@ void QGitRepository::updateStatusViews()
     }
 
     ui->commit_diff->refresh();
+    updateCommitButtonState();
+}
 
-    if (stagedCnt > 0 || ui->checkBox_amendCommit->isChecked())
+void QGitRepository::updateCommitButtonState()
+{
+    int stagedCnt = 0;
+    for (const auto &filePair : m_changedFiles) {
+        if (filePair.second & (GIT_STATUS_INDEX_NEW | GIT_STATUS_INDEX_MODIFIED | GIT_STATUS_INDEX_DELETED | GIT_STATUS_INDEX_RENAMED | GIT_STATUS_INDEX_TYPECHANGE)) {
+            stagedCnt++;
+        }
+    }
+
+    bool amend = ui->checkBox_amendCommit->isChecked();
+    QString currentMsg = ui->plainTextEdit_commitMessage->toPlainText().trimmed();
+
+    if (currentMsg.isEmpty())
     {
+        ui->pushButton_commit->setEnabled(false);
+        return;
+    }
+
+    if (amend)
+    {
+        QString headMessage = m_git ? m_git->headCommitMessage().trimmed() : QString();
+        if (stagedCnt == 0 && currentMsg == headMessage)
+        {
+            ui->pushButton_commit->setEnabled(false);
+            return;
+        }
         ui->pushButton_commit->setEnabled(true);
     }
     else
     {
-        ui->pushButton_commit->setEnabled(false);
+        ui->pushButton_commit->setEnabled(stagedCnt > 0);
     }
 }
 
@@ -901,6 +928,9 @@ void QGitRepository::repositoryDiscardFilesReply(const QGitError &error)
 
 void QGitRepository::repositoryCommitReply(const QString &commit_id, const QGitError &error)
 {
+    bool wasRewording = m_rewordingCommit;
+    m_rewordingCommit = false;
+
     ui->plainTextEdit_commitMessage->setEnabled(true);
     ui->pushButton_commit->setEnabled(true);
 
@@ -908,17 +938,22 @@ void QGitRepository::repositoryCommitReply(const QString &commit_id, const QGitE
         if (!commit_id.isEmpty()) {
             QMessageBox::warning(this, tr("Commit Succeeded (Push Failed)"),
                                  tr("Commit succeeded (%1), but pushing changes failed:\n\n%2").arg(commit_id.left(7), error.errorString()));
-            ui->plainTextEdit_commitMessage->clear();
-            ui->checkBox_amendCommit->setChecked(false);
-            m_draftCommitMessage.clear();
+            if (!wasRewording) {
+                ui->plainTextEdit_commitMessage->clear();
+                ui->checkBox_amendCommit->setChecked(false);
+                m_draftCommitMessage.clear();
+            }
         } else {
             QMessageBox::critical(this, tr("Commit Error"), error.errorString());
         }
         refreshData();
     } else {
-        ui->plainTextEdit_commitMessage->clear();
-        ui->checkBox_amendCommit->setChecked(false);
-        m_draftCommitMessage.clear();
+        emit clearStatusMessage();
+        if (!wasRewording) {
+            ui->plainTextEdit_commitMessage->clear();
+            ui->checkBox_amendCommit->setChecked(false);
+            m_draftCommitMessage.clear();
+        }
         refreshData();
     }
 }
@@ -1838,21 +1873,13 @@ void QGitRepository::on_checkBox_amendCommit_clicked(bool checked)
         m_draftCommitMessage = ui->plainTextEdit_commitMessage->toPlainText();
         QString headMessage = m_git->headCommitMessage();
         ui->plainTextEdit_commitMessage->setPlainText(headMessage);
-        ui->pushButton_commit->setEnabled(true);
     }
     else
     {
         ui->plainTextEdit_commitMessage->setPlainText(m_draftCommitMessage);
         m_draftCommitMessage.clear();
-        if (ui->treeWidget_staged->topLevelItemCount() > 0)
-        {
-            ui->pushButton_commit->setEnabled(true);
-        }
-        else
-        {
-            ui->pushButton_commit->setEnabled(false);
-        }
     }
+    updateCommitButtonState();
 }
 
 void QGitRepository::historyTableSliderMoved(int pos)
@@ -2378,9 +2405,17 @@ void QGitRepository::on_logHistory_commits_customContextMenuRequested(const QPoi
     }
 
     QMenu menu(this);
+    QAction *rewordAction = nullptr;
     QAction *rebaseAction = nullptr;
     QAction *cherrypickAction = nullptr;
     QAction *revertAction = nullptr;
+
+    // "Reword commit message…" is only offered for HEAD
+    bool isHead = (selectedHash.compare(headHash, Qt::CaseInsensitive) == 0);
+    if (isHead) {
+        rewordAction = menu.addAction(tr("Reword commit message..."));
+        menu.addSeparator();
+    }
 
     if (canRebase) {
         rebaseAction = menu.addAction(tr("Rebase current branch onto '%1'").arg(targetName));
@@ -2413,7 +2448,36 @@ void QGitRepository::on_logHistory_commits_customContextMenuRequested(const QPoi
 
     QAction *res = menu.exec(ui->logHistory_commits->viewport()->mapToGlobal(pos));
     if (res) {
-        if (res == rebaseAction) {
+        if (res == rewordAction) {
+            QString currentMessage = m_git->headCommitMessage();
+            // Warn the user if the commit has already been pushed
+            if (!m_hasCommitsToPush) {
+                auto warn = QMessageBox::warning(
+                    this,
+                    tr("Reword Pushed Commit"),
+                    tr("This commit has already been pushed to a remote.\n\n"
+                       "Rewording it will rewrite history and require a force push,\n"
+                       "which can cause problems for others who have pulled this commit.\n\n"
+                       "Do you want to continue?"),
+                    QMessageBox::Yes | QMessageBox::No
+                );
+                if (warn != QMessageBox::Yes)
+                    return;
+            }
+            bool ok;
+            QString newMessage = QInputDialog::getMultiLineText(
+                this,
+                tr("Reword Commit Message"),
+                tr("Edit the commit message for HEAD (%1):").arg(shortHash),
+                currentMessage,
+                &ok
+            );
+            if (ok && !newMessage.trimmed().isEmpty()) {
+                m_rewordingCommit = true;
+                emit statusMessage(tr("Rewording commit message..."));
+                emit repositoryCommit(newMessage, false, true);
+            }
+        } else if (res == rebaseAction) {
             auto confirm = QMessageBox::question(this, tr("Rebase"),
                                                  tr("Are you sure you want to rebase the current branch onto '%1'?").arg(targetName),
                                                  QMessageBox::Yes | QMessageBox::No);

@@ -209,6 +209,7 @@ private:
     QString m_draftCommitMessage;
     bool m_stageingFiles = true;
     bool m_searchingCommits = false;
+    bool m_rewordingCommit = false;
     QString m_currentLogBranchFilter;
     int m_logCommitsOffset = 0;
     QString m_lastRemote;
@@ -224,5 +225,6 @@ private:
     QString m_headCommitId;
     QString m_headCommitMessage;
     void updateStatusViews();
+    void updateCommitButtonState();
     void collectFilePaths(QTreeWidgetItem *item, QStringList &paths);
 };
