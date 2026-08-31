@@ -20,6 +20,7 @@ public:
     bool fetchFromAllRemotes() const;
     bool purgeDeletedBranches() const;
     bool fetchAllTags() const;
+    bool recurseSubmodules() const;
 
 private slots:
     void on_checkBox_fetchFromAllRemotes_toggled(bool checked);

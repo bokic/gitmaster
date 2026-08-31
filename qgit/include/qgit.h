@@ -153,7 +153,8 @@ public:
 public slots:
     void init();
     void signature();
-    void updateSubmodule(const QString &name);
+    void updateSubmodule(const QString &name, bool recursive = false);
+    void updateAllSubmodules(bool recursive = true);
     void initSubmodule(const QString &name);
     void syncSubmodule(const QString &name);
     void addSubmodule(const QString &url, const QString &path, const QString &branch = QString(), bool force = false);
@@ -185,9 +186,9 @@ public slots:
     void discardFileLines(const QString &filename, const QVector<QGitDiffWidgetLine> &lines);
     void commit(const QString &message, bool withPush, bool amend = false);
     void clone(const QUrl &url);
-    void pull(const QString &remote, const QString &branch, bool rebase);
-    void fetch(bool fetchFromAllRemotes, bool purgeDeletedBranches, bool fetchAllTags);
-    void fetchRemote(const QString &remote, bool purgeDeletedBranches = false, bool fetchAllTags = false);
+    void pull(const QString &remote, const QString &branch, bool rebase, bool recurseSubmodules = false);
+    void fetch(bool fetchFromAllRemotes, bool purgeDeletedBranches, bool fetchAllTags, bool recurseSubmodules = false);
+    void fetchRemote(const QString &remote, bool purgeDeletedBranches = false, bool fetchAllTags = false, bool recurseSubmodules = false);
     void push(const QString &remote, const QStringList &branches, bool tags, bool force);
     void listCommits(const QString &branchRef, int offset, int length);
     void searchCommits(const QString &text, const QString &type);
@@ -218,6 +219,7 @@ signals:
     void initReply(const QGitError &error);
     void signatureReply(const QString &name, const QString &email, const QGitError &error);
     void updateSubmoduleReply(const QGitError &error);
+    void updateAllSubmodulesReply(const QGitError &error);
     void initSubmoduleReply(const QGitError &error);
     void syncSubmoduleReply(const QGitError &error);
     void addSubmoduleReply(const QGitError &error);

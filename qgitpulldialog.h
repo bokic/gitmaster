@@ -21,6 +21,7 @@ public:
     QGitRemote remote() const;
     QString branch() const;
     bool rebase() const;
+    bool recurseSubmodules() const;
 
 private slots:
     void on_remote_comboBox_currentIndexChanged(int index);

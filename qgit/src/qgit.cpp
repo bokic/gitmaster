@@ -2497,7 +2497,72 @@ void QGit::lockWorktree(const QString &name, bool lock)
     emit lockWorktreeReply(error);
 }
 
-void QGit::updateSubmodule(const QString &name)
+static void fetchRepoSubmodulesRecursive(git_repository *repo, bool purgeDeletedBranches, bool fetchAllTags, QGit *gitContext)
+{
+    struct SubmoduleFetchContext {
+        bool purge;
+        bool tags;
+        QGit *context;
+    } ctx = { purgeDeletedBranches, fetchAllTags, gitContext };
+
+    auto cb = [](git_submodule *sm, const char *name, void *payload) -> int {
+        Q_UNUSED(name);
+        SubmoduleFetchContext *c = static_cast<SubmoduleFetchContext*>(payload);
+        GitRepository subRepo;
+        if (git_submodule_open(subRepo, sm) == 0) {
+            GitStrArray remotes;
+            if (git_remote_list(remotes, subRepo) == 0) {
+                git_fetch_options fetch_opts = makeFetchOptions(c->context);
+                fetch_opts.prune = c->purge ? GIT_FETCH_PRUNE : GIT_FETCH_NO_PRUNE;
+                fetch_opts.download_tags = c->tags ? GIT_REMOTE_DOWNLOAD_TAGS_ALL : GIT_REMOTE_DOWNLOAD_TAGS_AUTO;
+                for (size_t i = 0; i < remotes.value.count; ++i) {
+                    GitRemote remote;
+                    if (git_remote_lookup(remote, subRepo, remotes.value.strings[i]) == 0) {
+                        git_remote_fetch(remote, nullptr, &fetch_opts, "fetch submodule");
+                    }
+                }
+            }
+            // Recurse into nested submodules
+            fetchRepoSubmodulesRecursive(subRepo, c->purge, c->tags, c->context);
+        }
+        return 0;
+    };
+
+    git_submodule_foreach(repo, cb, &ctx);
+}
+
+static void updateRepoSubmodulesRecursive(git_repository *repo, bool init, bool recursive, QGit *gitContext)
+{
+    struct SubmoduleUpdateContext {
+        bool init;
+        bool recursive;
+        QGit *context;
+    } ctx = { init, recursive, gitContext };
+
+    auto cb = [](git_submodule *sm, const char *name, void *payload) -> int {
+        Q_UNUSED(name);
+        SubmoduleUpdateContext *c = static_cast<SubmoduleUpdateContext*>(payload);
+
+        git_submodule_update_options opts = GIT_SUBMODULE_UPDATE_OPTIONS_INIT;
+        opts.checkout_opts.checkout_strategy = GIT_CHECKOUT_SAFE;
+        opts.fetch_opts.callbacks.credentials = gitCredentialCallback;
+        opts.fetch_opts.callbacks.payload = c->context;
+        opts.allow_fetch = 1;
+
+        int res = git_submodule_update(sm, c->init ? 1 : 0, &opts);
+        if (res == 0 && c->recursive) {
+            GitRepository subRepo;
+            if (git_submodule_open(subRepo, sm) == 0) {
+                updateRepoSubmodulesRecursive(subRepo, c->init, c->recursive, c->context);
+            }
+        }
+        return 0;
+    };
+
+    git_submodule_foreach(repo, cb, &ctx);
+}
+
+void QGit::updateSubmodule(const QString &name, bool recursive)
 {
     QGitError error;
     try {
@@ -2513,14 +2578,37 @@ void QGit::updateSubmodule(const QString &name)
         opts.checkout_opts.checkout_strategy = GIT_CHECKOUT_SAFE;
         opts.fetch_opts.callbacks.credentials = gitCredentialCallback;
         opts.fetch_opts.callbacks.payload = this;
+        opts.allow_fetch = 1;
 
         res = git_submodule_update(sm, 1, &opts);
         if (res) throw QGitError("git_submodule_update", res);
+
+        if (recursive) {
+            GitRepository subRepo;
+            if (git_submodule_open(subRepo, sm) == 0) {
+                updateRepoSubmodulesRecursive(subRepo, true, true, this);
+            }
+        }
 
     } catch (const QGitError &ex) {
         error = ex;
     }
     emit updateSubmoduleReply(error);
+}
+
+void QGit::updateAllSubmodules(bool recursive)
+{
+    QGitError error;
+    try {
+        GitRepository repo;
+        int res = git_repository_open(repo, m_path.absolutePath().toUtf8().constData());
+        if (res) throw QGitError("git_repository_open", res);
+
+        updateRepoSubmodulesRecursive(repo, true, recursive, this);
+    } catch (const QGitError &ex) {
+        error = ex;
+    }
+    emit updateAllSubmodulesReply(error);
 }
 
 void QGit::checkoutBranch(const QString &name)
@@ -4713,7 +4801,7 @@ void QGit::clone(const QUrl &url)
     emit cloneReply(error);
 }
 
-void QGit::pull(const QString &remote, const QString &branch, bool rebase)
+void QGit::pull(const QString &remote, const QString &branch, bool rebase, bool recurseSubmodules)
 {
     QGitError error;
 
@@ -4760,6 +4848,10 @@ void QGit::pull(const QString &remote, const QString &branch, bool rebase)
             this->rebase(targetRef);
         } else {
             merge(targetRef);
+        }
+
+        if (recurseSubmodules) {
+            updateRepoSubmodulesRecursive(repo, true, true, this);
         }
 
     } catch(const QGitError &ex) {
@@ -5544,7 +5636,7 @@ void QGit::merge(const QString &branchName)
     emit mergeReply(error);
 }
 
-void QGit::fetch(bool fetchFromAllRemotes, bool purgeDeletedBranches, bool fetchAllTags)
+void QGit::fetch(bool fetchFromAllRemotes, bool purgeDeletedBranches, bool fetchAllTags, bool recurseSubmodules)
 {
     QGitError error;
 
@@ -5623,6 +5715,11 @@ void QGit::fetch(bool fetchFromAllRemotes, bool purgeDeletedBranches, bool fetch
             }
         }
 
+        if (recurseSubmodules)
+        {
+            fetchRepoSubmodulesRecursive(repo, purgeDeletedBranches, fetchAllTags, this);
+        }
+
     } catch(const QGitError &ex) {
         error = ex;
     }
@@ -5630,7 +5727,7 @@ void QGit::fetch(bool fetchFromAllRemotes, bool purgeDeletedBranches, bool fetch
     emit fetchReply(error);
 }
 
-void QGit::fetchRemote(const QString &remoteName, bool purgeDeletedBranches, bool fetchAllTags)
+void QGit::fetchRemote(const QString &remoteName, bool purgeDeletedBranches, bool fetchAllTags, bool recurseSubmodules)
 {
     QGitError error;
 
@@ -5658,6 +5755,11 @@ void QGit::fetchRemote(const QString &remoteName, bool purgeDeletedBranches, boo
         if (res)
         {
             throw QGitError("git_remote_fetch", res);
+        }
+
+        if (recurseSubmodules)
+        {
+            fetchRepoSubmodulesRecursive(repo, purgeDeletedBranches, fetchAllTags, this);
         }
 
     } catch(const QGitError &ex) {

@@ -75,6 +75,13 @@
         </property>
        </widget>
       </item>
+      <item>
+       <widget class="QCheckBox" name="recurseSubmodules_checkBox">
+        <property name="text">
+         <string>Update submodules recursively after pull (--recurse-submodules)</string>
+        </property>
+       </widget>
+      </item>
      </layout>
     </widget>
    </item>

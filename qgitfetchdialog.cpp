@@ -50,6 +50,11 @@ bool QGitFetchDialog::fetchAllTags() const
     return ui->checkBox_fetchAllTags->isChecked();
 }
 
+bool QGitFetchDialog::recurseSubmodules() const
+{
+    return ui->checkBox_recurseSubmodules->isChecked();
+}
+
 void QGitFetchDialog::on_checkBox_fetchFromAllRemotes_toggled(bool checked)
 {
     ui->comboBox_remote->setEnabled(!checked);

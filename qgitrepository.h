@@ -54,9 +54,9 @@ public:
 signals:
     void localStash(const QString &name, bool keepIndex, bool includeUntracked, bool includeIgnored);
     void repositoryPush(const QString &remote, const QStringList &branches, bool tags, bool force);
-    void repositoryPull(const QString &remote, const QString &branch, bool rebase);
-    void repositoryFetch(bool fetchFromAllRemotes, bool purgeDeletedBranches, bool fetchAllTags);
-    void repositoryFetchRemote(const QString &remote, bool purgeDeletedBranches, bool fetchAllTags);
+    void repositoryPull(const QString &remote, const QString &branch, bool rebase, bool recurseSubmodules = false);
+    void repositoryFetch(bool fetchFromAllRemotes, bool purgeDeletedBranches, bool fetchAllTags, bool recurseSubmodules = false);
+    void repositoryFetchRemote(const QString &remote, bool purgeDeletedBranches, bool fetchAllTags, bool recurseSubmodules = false);
     void repositoryBranches();
     void repositoryStashes();
     void repositoryChangedFiles(int show, int sort, bool reversed);
@@ -78,7 +78,8 @@ signals:
     void repositoryRenameBranch(const QString &oldName, const QString &newName);
     void repositoryRenameTag(const QString &oldName, const QString &newName);
     void repositoryCreateTag(const QString &name, const QString &targetObjectId, const QString &message, bool force);
-    void repositoryUpdateSubmodule(const QString &name);
+    void repositoryUpdateSubmodule(const QString &name, bool recursive = false);
+    void repositoryUpdateAllSubmodules(bool recursive = true);
     void repositoryInitSubmodule(const QString &name);
     void repositorySyncSubmodule(const QString &name);
     void repositoryAddSubmodule(const QString &url, const QString &path, const QString &branch, bool force);
@@ -126,6 +127,7 @@ private slots:
     void repositoryRebaseReply(const QGitError &error);
     void repositoryInteractiveRebaseReply(const QGitError &error);
     void repositoryUpdateSubmoduleReply(const QGitError &error);
+    void repositoryUpdateAllSubmodulesReply(const QGitError &error);
     void repositoryInitSubmoduleReply(const QGitError &error);
     void repositorySyncSubmoduleReply(const QGitError &error);
     void repositoryAddSubmoduleReply(const QGitError &error);

@@ -142,6 +142,11 @@ bool QGitPullDialog::rebase() const
     return ui->rebase_checkBox->isChecked();
 }
 
+bool QGitPullDialog::recurseSubmodules() const
+{
+    return ui->recurseSubmodules_checkBox->isChecked();
+}
+
 void QGitPullDialog::on_remote_comboBox_currentIndexChanged(int index)
 {
     QString url;

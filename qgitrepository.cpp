@@ -163,6 +163,8 @@ QGitRepository::QGitRepository(const QString &path, QWidget *parent)
 
     connect(this, &QGitRepository::repositoryUpdateSubmodule, m_git, &QGit::updateSubmodule);
     connect(m_git, &QGit::updateSubmoduleReply, this, &QGitRepository::repositoryUpdateSubmoduleReply);
+    connect(this, &QGitRepository::repositoryUpdateAllSubmodules, m_git, &QGit::updateAllSubmodules);
+    connect(m_git, &QGit::updateAllSubmodulesReply, this, &QGitRepository::repositoryUpdateAllSubmodulesReply);
 
     connect(this, &QGitRepository::repositoryPush, m_git, &QGit::push);
     connect(m_git, &QGit::pushReply, this, &QGitRepository::repositoryPushReply);
@@ -404,17 +406,18 @@ void QGitRepository::fetch()
         bool fetchFromAllRemotes = dlg.fetchFromAllRemotes();
         bool purgeDeletedBranches = dlg.purgeDeletedBranches();
         bool fetchAllTags = dlg.fetchAllTags();
+        bool recurseSubmodules = dlg.recurseSubmodules();
         QString remote = dlg.remote();
 
         if (fetchFromAllRemotes || remote.isEmpty())
         {
             emit statusMessage(tr("Fetching all remotes..."));
-            emit repositoryFetch(true, purgeDeletedBranches, fetchAllTags);
+            emit repositoryFetch(true, purgeDeletedBranches, fetchAllTags, recurseSubmodules);
         }
         else
         {
             emit statusMessage(tr("Fetching from %1...").arg(remote));
-            emit repositoryFetchRemote(remote, purgeDeletedBranches, fetchAllTags);
+            emit repositoryFetchRemote(remote, purgeDeletedBranches, fetchAllTags, recurseSubmodules);
         }
     }
 }
@@ -432,9 +435,10 @@ void QGitRepository::pull()
         }
         QString branchName = dlg.branch();
         bool rebase = dlg.rebase();
+        bool recurseSubmodules = dlg.recurseSubmodules();
 
         emit statusMessage(tr("Pulling..."));
-        emit repositoryPull(remoteName, branchName, rebase);
+        emit repositoryPull(remoteName, branchName, rebase, recurseSubmodules);
     }
 }
 
@@ -1063,6 +1067,21 @@ void QGitRepository::repositoryUpdateSubmoduleReply(const QGitError &error)
         emit clearStatusMessage();
         refreshData();
         QMessageBox::information(this, tr("Submodule Updated"), tr("Submodule updated successfully."));
+    }
+}
+
+void QGitRepository::repositoryUpdateAllSubmodulesReply(const QGitError &error)
+{
+    if (error.errorCode())
+    {
+        emit statusMessage(error.errorString());
+        QMessageBox::critical(this, tr("Update Submodules Error"), error.errorString());
+    }
+    else
+    {
+        emit clearStatusMessage();
+        refreshData();
+        QMessageBox::information(this, tr("Submodules Updated"), tr("All submodules updated successfully."));
     }
 }
 
@@ -1777,11 +1796,24 @@ void QGitRepository::on_branchesTreeView_customContextMenuRequested(const QPoint
     if (type == "SubmodulesHeader")
     {
         QMenu menu(this);
+        QAction *updateAllAction = menu.addAction(tr("Update All Submodules"));
+        QAction *updateAllRecursiveAction = menu.addAction(tr("Update All Submodules (Recursive)"));
+        menu.addSeparator();
         QAction *addAction = menu.addAction(tr("Add Submodule..."));
         QAction *selectedAction = menu.exec(ui->branchesTreeView->viewport()->mapToGlobal(pos));
         if (selectedAction == addAction)
         {
             addSubmoduleDialog();
+        }
+        else if (selectedAction == updateAllAction)
+        {
+            emit statusMessage(tr("Updating all submodules..."));
+            emit repositoryUpdateAllSubmodules(false);
+        }
+        else if (selectedAction == updateAllRecursiveAction)
+        {
+            emit statusMessage(tr("Recursively updating all submodules..."));
+            emit repositoryUpdateAllSubmodules(true);
         }
         return;
     }
@@ -1797,6 +1829,7 @@ void QGitRepository::on_branchesTreeView_customContextMenuRequested(const QPoint
         QAction *addAction = menu.addAction(tr("Add Submodule..."));
         menu.addSeparator();
         QAction *updateAction = menu.addAction(tr("Update Submodule"));
+        QAction *updateRecursiveAction = menu.addAction(tr("Update Submodule (Recursive)"));
         QAction *initAction = menu.addAction(tr("Initialize Submodule"));
         QAction *syncAction = menu.addAction(tr("Sync URL"));
         menu.addSeparator();
@@ -1819,7 +1852,12 @@ void QGitRepository::on_branchesTreeView_customContextMenuRequested(const QPoint
         else if (selectedAction == updateAction)
         {
             emit statusMessage(tr("Updating submodule %1...").arg(subName));
-            emit repositoryUpdateSubmodule(subName);
+            emit repositoryUpdateSubmodule(subName, false);
+        }
+        else if (selectedAction == updateRecursiveAction)
+        {
+            emit statusMessage(tr("Recursively updating submodule %1...").arg(subName));
+            emit repositoryUpdateSubmodule(subName, true);
         }
         else if (selectedAction == initAction)
         {
