@@ -12,12 +12,18 @@ public:
         WordLevel
     };
 
+    enum class DiffViewMode {
+        Unified,
+        SideBySide
+    };
+
     explicit QComboBoxGitDiffOptions(QWidget *parent = nullptr);
     ~QComboBoxGitDiffOptions() override = default;
 
     bool ignoreWhitespace() const;
     int linesOfContent() const;
     InlineDiffMode inlineDiffMode() const;
+    DiffViewMode diffViewMode() const;
     bool showWhitespaceChars() const;
 
 signals:

@@ -27,6 +27,17 @@ public:
     QVector<QGitDiffInlineRange> inlineRanges;
 };
 
+// A single row in side-by-side diff view (pairing old/left and new/right)
+class QGitDiffWidgetPrivateSideRow
+{
+public:
+    int oldLineIdx = -1; // index into hunk.lines, or -1 if empty/inserted
+    int newLineIdx = -1; // index into hunk.lines, or -1 if empty/deleted
+    QRect rect;
+    QRect leftRect;
+    QRect rightRect;
+};
+
 class QGitDiffWidgetPrivateHunk
 {
 public:
@@ -37,6 +48,7 @@ public:
     int old_start = -1;
 
     QVector<QGitDiffWidgetPrivateLine> lines;
+    QVector<QGitDiffWidgetPrivateSideRow> sideRows;
     QRect rect;
 };
 
@@ -69,6 +81,7 @@ public:
         maxLineNum = 1;
         lineNumWidth = 0;
         contentOffset = 0;
+        sidePanelWidth = 0;
     }
 
     QVector<QGitDiffWidgetPrivateFile> files;
@@ -76,6 +89,7 @@ public:
     int maxLineNum = 1;
     int lineNumWidth = 0;
     int contentOffset = 0;
+    int sidePanelWidth = 0;
 };
 
 QGitDiffWidget::QGitDiffWidget(QWidget *parent)
@@ -130,6 +144,16 @@ void QGitDiffWidget::setInlineDiffMode(InlineDiffMode mode)
     {
         m_inlineDiffMode = mode;
         // Re-compute inline diff on existing data
+        if (!m_requestedFiles.isEmpty())
+            refresh();
+    }
+}
+
+void QGitDiffWidget::setDiffViewMode(DiffViewMode mode)
+{
+    if (m_diffViewMode != mode)
+    {
+        m_diffViewMode = mode;
         if (!m_requestedFiles.isEmpty())
             refresh();
     }
@@ -536,6 +560,16 @@ void QGitDiffWidget::responseGitDiff(const QString &first, const QString &second
 
     const int contentOffset = m_private->contentOffset;
 
+    // For side-by-side view: calculate panel width for each side
+    // Each side has: margin (10) + lineNumWidth + 5 + text (lineMax) + 10 padding
+    int sidePanelWidth = m_private->lineNumWidth + lineMax + 30;
+    // ensure a reasonable minimum width per panel
+    if (sidePanelWidth < 300) sidePanelWidth = 300;
+    m_private->sidePanelWidth = sidePanelWidth;
+
+    const bool isSideBySide = (m_diffViewMode == DiffViewMode::SideBySide);
+    const int totalDiffWidth = isSideBySide ? (sidePanelWidth * 2 + 10) : (contentOffset + lineMax);
+
     for(int c = 0; c < diff.count(); c++)
     {
         const auto &file_item = diff.at(c);
@@ -552,7 +586,7 @@ void QGitDiffWidget::responseGitDiff(const QString &first, const QString &second
 
         file.rect.setTop(y);
         file.rect.setLeft(contentsMargins().left());
-        file.rect.setWidth(contentOffset + lineMax);
+        file.rect.setWidth(totalDiffWidth);
 
         file_h = m_fontHeight * 2;
 
@@ -573,7 +607,7 @@ void QGitDiffWidget::responseGitDiff(const QString &first, const QString &second
 
             hunk.rect.setTop(y + file_h);
             hunk.rect.setLeft(contentsMargins().left());
-            hunk.rect.setWidth(contentOffset + lineMax);
+            hunk.rect.setWidth(totalDiffWidth);
 
             for(int pos_line = 0; pos_line < hunk_item.lines().count(); pos_line++)
             {
@@ -588,7 +622,7 @@ void QGitDiffWidget::responseGitDiff(const QString &first, const QString &second
 
                 line.rect.setTop(y + file_h + hunk_h);
                 line.rect.setLeft(contentsMargins().left());
-                line.rect.setWidth(contentOffset + lineMax);
+                line.rect.setWidth(totalDiffWidth);
 
                 hunk_h += m_fontHeight + 1;
 
@@ -596,9 +630,6 @@ void QGitDiffWidget::responseGitDiff(const QString &first, const QString &second
 
                 hunk.lines.push_back(line);
             }
-
-            hunk.rect.setHeight(hunk_h);
-            file_h += hunk_h;
 
             // ---------------------------------------------------------------
             // Inline diff: pair adjacent deleted/added lines and compute
@@ -649,6 +680,63 @@ void QGitDiffWidget::responseGitDiff(const QString &first, const QString &second
                 }
             }
 
+            // ---------------------------------------------------------------
+            // Side-by-side pairing: group deletion chunks and addition chunks
+            // ---------------------------------------------------------------
+            if (isSideBySide)
+            {
+                int nLines = hunk.lines.size();
+                int li = 0;
+                int sideRowY = y + file_h;
+
+                while (li < nLines)
+                {
+                    if (hunk.lines[li].origin == ' ')
+                    {
+                        QGitDiffWidgetPrivateSideRow sRow;
+                        sRow.oldLineIdx = li;
+                        sRow.newLineIdx = li;
+                        sRow.rect = QRect(contentsMargins().left(), sideRowY, totalDiffWidth, m_fontHeight + 1);
+                        sRow.leftRect = QRect(contentsMargins().left(), sideRowY, sidePanelWidth, m_fontHeight + 1);
+                        sRow.rightRect = QRect(contentsMargins().left() + sidePanelWidth + 10, sideRowY, sidePanelWidth, m_fontHeight + 1);
+                        hunk.sideRows.push_back(sRow);
+                        sideRowY += m_fontHeight + 1;
+                        ++li;
+                    }
+                    else
+                    {
+                        int delStart = li;
+                        while (li < nLines && hunk.lines[li].origin == '-') ++li;
+                        int delEnd = li;
+
+                        int addStart = li;
+                        while (li < nLines && hunk.lines[li].origin == '+') ++li;
+                        int addEnd = li;
+
+                        int delCount = delEnd - delStart;
+                        int addCount = addEnd - addStart;
+                        int maxCount = qMax(delCount, addCount);
+
+                        for (int k = 0; k < maxCount; ++k)
+                        {
+                            QGitDiffWidgetPrivateSideRow sRow;
+                            sRow.oldLineIdx = (k < delCount) ? (delStart + k) : -1;
+                            sRow.newLineIdx = (k < addCount) ? (addStart + k) : -1;
+                            sRow.rect = QRect(contentsMargins().left(), sideRowY, totalDiffWidth, m_fontHeight + 1);
+                            sRow.leftRect = QRect(contentsMargins().left(), sideRowY, sidePanelWidth, m_fontHeight + 1);
+                            sRow.rightRect = QRect(contentsMargins().left() + sidePanelWidth + 10, sideRowY, sidePanelWidth, m_fontHeight + 1);
+                            hunk.sideRows.push_back(sRow);
+                            sideRowY += m_fontHeight + 1;
+                        }
+                    }
+                }
+
+                hunk_h = sideRowY - (y + file_h);
+            }
+
+            hunk.rect.setHeight(hunk_h);
+            file_h += hunk_h;
+
             file.hunks.push_back(hunk);
         }
 
@@ -659,7 +747,7 @@ void QGitDiffWidget::responseGitDiff(const QString &first, const QString &second
         m_private->files.push_back(file);
     }
 
-    newSize = QSize(contentsMargins().left() + contentOffset + lineMax + contentsMargins().right(), contentsMargins().top() + y + contentsMargins().bottom());
+    newSize = QSize(contentsMargins().left() + totalDiffWidth + contentsMargins().right(), contentsMargins().top() + y + contentsMargins().bottom());
 
     setMinimumSize(newSize);
     setMaximumSize(newSize);
@@ -674,6 +762,8 @@ void QGitDiffWidget::paintEvent(QPaintEvent *event)
 
     const auto &files = m_private->files;
     const int lineNumWidth = m_private->lineNumWidth;
+    const bool isSideBySide = (m_diffViewMode == DiffViewMode::SideBySide);
+    const int sidePanelWidth = m_private->sidePanelWidth;
 
     for(const auto &file: files)
     {
@@ -707,102 +797,276 @@ void QGitDiffWidget::paintEvent(QPaintEvent *event)
             {
                 if (!event->region().intersected(hunk.rect).isEmpty())
                 {
-                    lineIndex = 0;
-                    for(const auto &line: hunk.lines)
+                    if (isSideBySide)
                     {
-                        if (!event->region().intersected(line.rect).isEmpty())
+                        // ---------------------------------------------------
+                        // Side-by-side rendering
+                        // ---------------------------------------------------
+                        int sRowIdx = 0;
+                        for(const auto &sRow : hunk.sideRows)
                         {
-                            QString old_lineNo, new_lineNo;
-                            if (line.old_lineno >= 0) old_lineNo = QString::number(line.old_lineno);
-                            if (line.new_lineno >= 0) new_lineNo = QString::number(line.new_lineno);
-
-                            int yFont = line.rect.top() + m_fontAscent;
-
-                            if (line.origin == '-')
+                            if (!event->region().intersected(sRow.rect).isEmpty())
                             {
-                                painter.setPen(Qt::NoPen);
-                                painter.setBrush(QBrush(QColor(235, 204, 204)));
-                                painter.drawRect(line.rect);
-                                painter.setPen(Qt::darkRed);
-                            } else if (line.origin == '+') {
-                                painter.setPen(Qt::NoPen);
-                                painter.setBrush(QBrush(QColor(204, 230, 194)));
-                                painter.drawRect(line.rect);
-                                painter.setPen(Qt::darkGreen);
-                            } else {
-                                painter.setPen(Qt::SolidLine);
-                                painter.setBrush(QBrush(QColor(Qt::black)));
-                            }
+                                int yFont = sRow.rect.top() + m_fontAscent;
 
-                            int oldColX = 10;
-                            int newColX = 10 + lineNumWidth + 5;
-                            int contentX = 10 + (lineNumWidth + 5) * 2;
-
-                            painter.drawText(oldColX, yFont, old_lineNo);
-                            painter.drawText(newColX, yFont, new_lineNo);
-
-                            // -----------------------------------------------
-                            // Inline diff highlighting
-                            // -----------------------------------------------
-                            if (!line.inlineRanges.isEmpty())
-                            {
-                                QFontMetrics fm(m_font);
-                                QString fullText = QString::fromUtf8(line.content);
-
-                                // Choose highlight colour: deeper shade of line background
-                                QColor hlColor = (line.origin == '-')
-                                    ? QColor(200, 100, 100)   // deeper red for deleted parts
-                                    : QColor(100, 185, 80);   // deeper green for added parts
-
-                                for (const auto &range : line.inlineRanges)
+                                // Left panel (Old / Base file)
+                                if (sRow.oldLineIdx >= 0)
                                 {
-                                    // Convert byte offsets to QString character positions
-                                    // because the content might be multi-byte UTF-8
-                                    QByteArray rawContent = line.content;
-                                    int charStart = QString::fromUtf8(rawContent.left(range.start)).length();
-                                    int charLength = QString::fromUtf8(rawContent.mid(range.start, range.length)).length();
+                                    const auto &oldLine = hunk.lines.at(sRow.oldLineIdx);
+                                    if (oldLine.origin == '-')
+                                    {
+                                        painter.setPen(Qt::NoPen);
+                                        painter.setBrush(QBrush(QColor(235, 204, 204)));
+                                        painter.drawRect(sRow.leftRect);
+                                    }
+                                    else
+                                    {
+                                        painter.setPen(Qt::NoPen);
+                                        painter.setBrush(QBrush(QColor(245, 245, 245)));
+                                        painter.drawRect(sRow.leftRect);
+                                    }
 
-                                    if (charLength <= 0) continue;
+                                    int leftLineNumX = sRow.leftRect.left() + 5;
+                                    int leftContentX = leftLineNumX + lineNumWidth + 10;
 
-                                    // Pixel position of the range start/end inside the content area
-                                    int xRangeStart = contentX + fm.horizontalAdvance(fullText, charStart);
-                                    int xRangeEnd   = contentX + fm.horizontalAdvance(fullText, charStart + charLength);
+                                    // Line number
+                                    painter.setPen(Qt::gray);
+                                    if (oldLine.old_lineno >= 0)
+                                        painter.drawText(leftLineNumX, yFont, QString::number(oldLine.old_lineno));
 
+                                    // Inline diff highlights on deleted line
+                                    if (!oldLine.inlineRanges.isEmpty())
+                                    {
+                                        QFontMetrics fm(m_font);
+                                        QString fullText = QString::fromUtf8(oldLine.content);
+                                        QColor hlColor = QColor(200, 100, 100);
+
+                                        for (const auto &range : oldLine.inlineRanges)
+                                        {
+                                            QByteArray rawContent = oldLine.content;
+                                            int charStart = QString::fromUtf8(rawContent.left(range.start)).length();
+                                            int charLength = QString::fromUtf8(rawContent.mid(range.start, range.length)).length();
+                                            if (charLength <= 0) continue;
+
+                                            int xRangeStart = leftContentX + fm.horizontalAdvance(fullText, charStart);
+                                            int xRangeEnd   = leftContentX + fm.horizontalAdvance(fullText, charStart + charLength);
+
+                                            painter.setPen(Qt::NoPen);
+                                            painter.setBrush(QBrush(hlColor));
+                                            painter.drawRect(QRect(xRangeStart, sRow.leftRect.top(),
+                                                                   xRangeEnd - xRangeStart, sRow.leftRect.height()));
+                                        }
+                                    }
+
+                                    QColor normalColor = (oldLine.origin == '-') ? Qt::darkRed : Qt::black;
+                                    drawLineContent(painter, m_font, oldLine.content,
+                                                    leftContentX, yFont,
+                                                    m_showWhitespaceChars, normalColor,
+                                                    oldLine.inlineRanges);
+                                }
+                                else
+                                {
+                                    // Empty slot on left (added line)
                                     painter.setPen(Qt::NoPen);
-                                    painter.setBrush(QBrush(hlColor));
-                                    painter.drawRect(QRect(xRangeStart, line.rect.top(),
-                                                           xRangeEnd - xRangeStart, line.rect.height()));
+                                    painter.setBrush(QBrush(QColor(230, 230, 230)));
+                                    painter.drawRect(sRow.leftRect);
                                 }
 
-                                // Restore pen color for text
-                                painter.setPen((line.origin == '-') ? Qt::darkRed : Qt::darkGreen);
+                                // Center separator divider
+                                int divX = sRow.leftRect.right();
+                                painter.setPen(QColor(180, 180, 180));
+                                painter.drawLine(divX + 5, sRow.rect.top(), divX + 5, sRow.rect.bottom());
+
+                                // Right panel (New / Modified file)
+                                if (sRow.newLineIdx >= 0)
+                                {
+                                    const auto &newLine = hunk.lines.at(sRow.newLineIdx);
+                                    if (newLine.origin == '+')
+                                    {
+                                        painter.setPen(Qt::NoPen);
+                                        painter.setBrush(QBrush(QColor(204, 230, 194)));
+                                        painter.drawRect(sRow.rightRect);
+                                    }
+                                    else
+                                    {
+                                        painter.setPen(Qt::NoPen);
+                                        painter.setBrush(QBrush(QColor(245, 245, 245)));
+                                        painter.drawRect(sRow.rightRect);
+                                    }
+
+                                    int rightLineNumX = sRow.rightRect.left() + 5;
+                                    int rightContentX = rightLineNumX + lineNumWidth + 10;
+
+                                    // Line number
+                                    painter.setPen(Qt::gray);
+                                    if (newLine.new_lineno >= 0)
+                                        painter.drawText(rightLineNumX, yFont, QString::number(newLine.new_lineno));
+
+                                    // Inline diff highlights on added line
+                                    if (!newLine.inlineRanges.isEmpty())
+                                    {
+                                        QFontMetrics fm(m_font);
+                                        QString fullText = QString::fromUtf8(newLine.content);
+                                        QColor hlColor = QColor(100, 185, 80);
+
+                                        for (const auto &range : newLine.inlineRanges)
+                                        {
+                                            QByteArray rawContent = newLine.content;
+                                            int charStart = QString::fromUtf8(rawContent.left(range.start)).length();
+                                            int charLength = QString::fromUtf8(rawContent.mid(range.start, range.length)).length();
+                                            if (charLength <= 0) continue;
+
+                                            int xRangeStart = rightContentX + fm.horizontalAdvance(fullText, charStart);
+                                            int xRangeEnd   = rightContentX + fm.horizontalAdvance(fullText, charStart + charLength);
+
+                                            painter.setPen(Qt::NoPen);
+                                            painter.setBrush(QBrush(hlColor));
+                                            painter.drawRect(QRect(xRangeStart, sRow.rightRect.top(),
+                                                                   xRangeEnd - xRangeStart, sRow.rightRect.height()));
+                                        }
+                                    }
+
+                                    QColor normalColor = (newLine.origin == '+') ? Qt::darkGreen : Qt::black;
+                                    drawLineContent(painter, m_font, newLine.content,
+                                                    rightContentX, yFont,
+                                                    m_showWhitespaceChars, normalColor,
+                                                    newLine.inlineRanges);
+                                }
+                                else
+                                {
+                                    // Empty slot on right (deleted line)
+                                    painter.setPen(Qt::NoPen);
+                                    painter.setBrush(QBrush(QColor(230, 230, 230)));
+                                    painter.drawRect(sRow.rightRect);
+                                }
+
+                                // Hover focus rectangle on side row or line
+                                if ((fileIndex == m_hoverFile) && (hunkIndex == m_hoverHunk))
+                                {
+                                    if (m_hoverLine == sRow.oldLineIdx && sRow.oldLineIdx >= 0 && m_hoverSide == 0)
+                                    {
+                                        QStyleOptionFocusRect option;
+                                        option.initFrom(this);
+                                        option.rect = sRow.leftRect.adjusted(0, 0, -1, -1);
+                                        painter.setPen(Qt::SolidLine);
+                                        painter.setBrush(Qt::NoBrush);
+                                        painter.drawRect(option.rect);
+                                    }
+                                    else if (m_hoverLine == sRow.newLineIdx && sRow.newLineIdx >= 0 && m_hoverSide == 1)
+                                    {
+                                        QStyleOptionFocusRect option;
+                                        option.initFrom(this);
+                                        option.rect = sRow.rightRect.adjusted(0, 0, -1, -1);
+                                        painter.setPen(Qt::SolidLine);
+                                        painter.setBrush(Qt::NoBrush);
+                                        painter.drawRect(option.rect);
+                                    }
+                                }
                             }
-
-                            // Determine normal text colour for this line type
-                            QColor normalColor;
-                            if (line.origin == '-')      normalColor = Qt::darkRed;
-                            else if (line.origin == '+') normalColor = Qt::darkGreen;
-                            else                         normalColor = Qt::black;
-
-                            drawLineContent(painter, m_font, line.content,
-                                            contentX, yFont,
-                                            m_showWhitespaceChars, normalColor,
-                                            line.inlineRanges);
-
-                            if ((fileIndex == m_hoverFile)&&(hunkIndex == m_hoverHunk)&&(lineIndex == m_hoverLine))
-                            {
-                                QStyleOptionFocusRect option;
-                                option.initFrom(this);
-                                option.rect = line.rect.adjusted(contentX - contentsMargins().left(), 0, -1, -1);
-                                painter.setPen(Qt::SolidLine);
-                                painter.setBrush(Qt::NoBrush);
-                                painter.drawRect(option.rect);
-                                //painter.drawPrimitive(QStyle::PE_FrameFocusRect, option);
-                            }
-
+                            sRowIdx++;
                         }
+                    }
+                    else
+                    {
+                        // ---------------------------------------------------
+                        // Unified rendering
+                        // ---------------------------------------------------
+                        lineIndex = 0;
+                        for(const auto &line: hunk.lines)
+                        {
+                            if (!event->region().intersected(line.rect).isEmpty())
+                            {
+                                QString old_lineNo, new_lineNo;
+                                if (line.old_lineno >= 0) old_lineNo = QString::number(line.old_lineno);
+                                if (line.new_lineno >= 0) new_lineNo = QString::number(line.new_lineno);
 
-                        lineIndex++;
+                                int yFont = line.rect.top() + m_fontAscent;
+
+                                if (line.origin == '-')
+                                {
+                                    painter.setPen(Qt::NoPen);
+                                    painter.setBrush(QBrush(QColor(235, 204, 204)));
+                                    painter.drawRect(line.rect);
+                                    painter.setPen(Qt::darkRed);
+                                } else if (line.origin == '+') {
+                                    painter.setPen(Qt::NoPen);
+                                    painter.setBrush(QBrush(QColor(204, 230, 194)));
+                                    painter.drawRect(line.rect);
+                                    painter.setPen(Qt::darkGreen);
+                                } else {
+                                    painter.setPen(Qt::SolidLine);
+                                    painter.setBrush(QBrush(QColor(Qt::black)));
+                                }
+
+                                int oldColX = 10;
+                                int newColX = 10 + lineNumWidth + 5;
+                                int contentX = 10 + (lineNumWidth + 5) * 2;
+
+                                painter.drawText(oldColX, yFont, old_lineNo);
+                                painter.drawText(newColX, yFont, new_lineNo);
+
+                                // -----------------------------------------------
+                                // Inline diff highlighting
+                                // -----------------------------------------------
+                                if (!line.inlineRanges.isEmpty())
+                                {
+                                    QFontMetrics fm(m_font);
+                                    QString fullText = QString::fromUtf8(line.content);
+
+                                    // Choose highlight colour: deeper shade of line background
+                                    QColor hlColor = (line.origin == '-')
+                                        ? QColor(200, 100, 100)   // deeper red for deleted parts
+                                        : QColor(100, 185, 80);   // deeper green for added parts
+
+                                    for (const auto &range : line.inlineRanges)
+                                    {
+                                        // Convert byte offsets to QString character positions
+                                        // because the content might be multi-byte UTF-8
+                                        QByteArray rawContent = line.content;
+                                        int charStart = QString::fromUtf8(rawContent.left(range.start)).length();
+                                        int charLength = QString::fromUtf8(rawContent.mid(range.start, range.length)).length();
+
+                                        if (charLength <= 0) continue;
+
+                                        // Pixel position of the range start/end inside the content area
+                                        int xRangeStart = contentX + fm.horizontalAdvance(fullText, charStart);
+                                        int xRangeEnd   = contentX + fm.horizontalAdvance(fullText, charStart + charLength);
+
+                                        painter.setPen(Qt::NoPen);
+                                        painter.setBrush(QBrush(hlColor));
+                                        painter.drawRect(QRect(xRangeStart, line.rect.top(),
+                                                               xRangeEnd - xRangeStart, line.rect.height()));
+                                    }
+
+                                    // Restore pen color for text
+                                    painter.setPen((line.origin == '-') ? Qt::darkRed : Qt::darkGreen);
+                                }
+
+                                // Determine normal text colour for this line type
+                                QColor normalColor;
+                                if (line.origin == '-')      normalColor = Qt::darkRed;
+                                else if (line.origin == '+') normalColor = Qt::darkGreen;
+                                else                         normalColor = Qt::black;
+
+                                drawLineContent(painter, m_font, line.content,
+                                                contentX, yFont,
+                                                m_showWhitespaceChars, normalColor,
+                                                line.inlineRanges);
+
+                                if ((fileIndex == m_hoverFile)&&(hunkIndex == m_hoverHunk)&&(lineIndex == m_hoverLine))
+                                {
+                                    QStyleOptionFocusRect option;
+                                    option.initFrom(this);
+                                    option.rect = line.rect.adjusted(contentX - contentsMargins().left(), 0, -1, -1);
+                                    painter.setPen(Qt::SolidLine);
+                                    painter.setBrush(Qt::NoBrush);
+                                    painter.drawRect(option.rect);
+                                }
+
+                            }
+
+                            lineIndex++;
+                        }
                     }
 
                     if ((fileIndex == m_hoverFile)&&(hunkIndex == m_hoverHunk)&&(m_hoverLine == -1))
@@ -813,7 +1077,6 @@ void QGitDiffWidget::paintEvent(QPaintEvent *event)
                         painter.setPen(Qt::SolidLine);
                         painter.setBrush(Qt::NoBrush);
                         painter.drawRect(option.rect);
-                        //painter.drawPrimitive(QStyle::PE_FrameFocusRect, option);
                     }
                 }
 
@@ -859,6 +1122,7 @@ void QGitDiffWidget::updatePosition()
     int l_hoverFile = -1;
     int l_hoverHunk = -1;
     int l_hoverLine = -1;
+    int l_hoverSide = 0;
 
     if (m_readonly)
         return;
@@ -868,6 +1132,7 @@ void QGitDiffWidget::updatePosition()
     int file_index = 0;
     const auto &files = m_private->files;
     const int contentX = 10 + (m_private->lineNumWidth + 5) * 2;
+    const bool isSideBySide = (m_diffViewMode == DiffViewMode::SideBySide);
 
     for(const auto &file : files)
     {
@@ -896,28 +1161,60 @@ void QGitDiffWidget::updatePosition()
                 {
                     l_hoverHunk = hunk_index;
 
-                    if (point.x() >= contentX)
+                    if (isSideBySide)
                     {
-                        int line_index = 0;
-                        for(const auto &line : hunk.lines)
+                        for(const auto &sRow : hunk.sideRows)
                         {
-                            if (line.rect.contains(point))
+                            if (sRow.rect.contains(point))
                             {
-                                if ((line.origin == '-')||(line.origin == '+'))
+                                if (sRow.leftRect.contains(point) && sRow.oldLineIdx >= 0)
                                 {
-                                    l_hoverLine = line_index;
+                                    const auto &oldLine = hunk.lines.at(sRow.oldLineIdx);
+                                    if (oldLine.origin == '-')
+                                    {
+                                        l_hoverLine = sRow.oldLineIdx;
+                                        l_hoverSide = 0;
+                                    }
                                 }
-                                else
+                                else if (sRow.rightRect.contains(point) && sRow.newLineIdx >= 0)
                                 {
-                                    l_hoverFile = -1;
-                                    l_hoverHunk = -1;
-                                    l_hoverLine = -1;
+                                    const auto &newLine = hunk.lines.at(sRow.newLineIdx);
+                                    if (newLine.origin == '+')
+                                    {
+                                        l_hoverLine = sRow.newLineIdx;
+                                        l_hoverSide = 1;
+                                    }
                                 }
 
                                 break;
                             }
+                        }
+                    }
+                    else
+                    {
+                        if (point.x() >= contentX)
+                        {
+                            int line_index = 0;
+                            for(const auto &line : hunk.lines)
+                            {
+                                if (line.rect.contains(point))
+                                {
+                                    if ((line.origin == '-')||(line.origin == '+'))
+                                    {
+                                        l_hoverLine = line_index;
+                                    }
+                                    else
+                                    {
+                                        l_hoverFile = -1;
+                                        l_hoverHunk = -1;
+                                        l_hoverLine = -1;
+                                    }
 
-                            line_index++;
+                                    break;
+                                }
+
+                                line_index++;
+                            }
                         }
                     }
 
@@ -933,11 +1230,12 @@ void QGitDiffWidget::updatePosition()
         file_index++;
     }
 
-    if ((m_hoverFile != l_hoverFile)||(m_hoverHunk != l_hoverHunk)||(m_hoverLine != l_hoverLine))
+    if ((m_hoverFile != l_hoverFile)||(m_hoverHunk != l_hoverHunk)||(m_hoverLine != l_hoverLine)||(m_hoverSide != l_hoverSide))
     {
         m_hoverFile = l_hoverFile;
         m_hoverHunk = l_hoverHunk;
         m_hoverLine = l_hoverLine;
+        m_hoverSide = l_hoverSide;
 
         if (m_hoverHunk >= 0) {
             setCursor(Qt::PointingHandCursor);

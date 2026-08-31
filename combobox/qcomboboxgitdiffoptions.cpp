@@ -11,16 +11,20 @@
 enum {
     ITEM_EXTERNAL_DIFF,
     ITEM_SEPARATOR1,
+    ITEM_DIFF_VIEW_HEADER,
+    ITEM_DIFF_VIEW_UNIFIED,
+    ITEM_DIFF_VIEW_SIDE_BY_SIDE,
+    ITEM_SEPARATOR2,
     ITEM_IGNORE_WHITESPACE,
     ITEM_SHOW_WHITESPACE,
-    ITEM_SEPARATOR2,
+    ITEM_SEPARATOR3,
     ITEM_INLINE_DIFF_HEADER,
     ITEM_INLINE_DIFF_OFF,
     ITEM_INLINE_DIFF_CHAR,
     ITEM_INLINE_DIFF_WORD,
-    ITEM_SEPARATOR3,
-    ITEM_VISUALIZE_WHITESPACE,
     ITEM_SEPARATOR4,
+    ITEM_VISUALIZE_WHITESPACE,
+    ITEM_SEPARATOR5,
     ITEM_SHOW_1_LINE,
     ITEM_SHOW_2_LINE,
     ITEM_SHOW_3_LINE,
@@ -40,6 +44,12 @@ QComboBoxGitDiffOptions::QComboBoxGitDiffOptions(QWidget *parent)
     updateIconColor();
 
     addOptionItem(tr("External Diff"), true, Qt::Unchecked, m_iconUnchecked);
+
+    insertSeparator(count());
+
+    addHeaderItem(tr("Diff layout"), m_iconUnchecked);
+    addOptionItem(tr("Unified"), true, Qt::Checked, m_iconChecked);
+    addOptionItem(tr("Side-by-side"), true, Qt::Unchecked, m_iconUnchecked);
 
     insertSeparator(count());
 
@@ -77,6 +87,23 @@ void QComboBoxGitDiffOptions::activated(int index)
 {
     QStandardItemModel *items = qobject_cast<QStandardItemModel *>(model());
     if (!items) return;
+
+    if ((index >= ITEM_DIFF_VIEW_UNIFIED)&&(index <= ITEM_DIFF_VIEW_SIDE_BY_SIDE))
+    {
+        for(int c = ITEM_DIFF_VIEW_UNIFIED; c <= ITEM_DIFF_VIEW_SIDE_BY_SIDE; c++)
+        {
+            if (c == index)
+            {
+                items->setData(items->index(c, 0), Qt::Checked, Qt::CheckStateRole);
+                if (m_showIcons) items->item(c, 0)->setIcon(m_iconChecked);
+            }
+            else
+            {
+                items->setData(items->index(c, 0), Qt::Unchecked, Qt::CheckStateRole);
+                if (m_showIcons) items->item(c, 0)->setIcon(m_iconUnchecked);
+            }
+        }
+    }
 
     if ((index >= ITEM_IGNORE_WHITESPACE)&&(index <= ITEM_SHOW_WHITESPACE))
     {
@@ -138,6 +165,16 @@ void QComboBoxGitDiffOptions::activated(int index)
     }
 
     emit optionsChanged();
+}
+
+QComboBoxGitDiffOptions::DiffViewMode QComboBoxGitDiffOptions::diffViewMode() const
+{
+    QStandardItemModel *items = qobject_cast<QStandardItemModel *>(model());
+    if (!items) return DiffViewMode::Unified;
+
+    if (items->data(items->index(ITEM_DIFF_VIEW_SIDE_BY_SIDE, 0), Qt::CheckStateRole).toInt() == Qt::Checked)
+        return DiffViewMode::SideBySide;
+    return DiffViewMode::Unified;
 }
 
 bool QComboBoxGitDiffOptions::ignoreWhitespace() const

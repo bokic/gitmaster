@@ -24,6 +24,11 @@ public:
         WordLevel
     };
 
+    enum class DiffViewMode {
+        Unified,
+        SideBySide
+    };
+
     explicit QGitDiffWidget(QWidget *parent = nullptr);
     ~QGitDiffWidget() = default;
 
@@ -32,6 +37,7 @@ public:
     void setIgnoreWhitespace(bool ignore);
     void setLinesOfContent(int lines);
     void setInlineDiffMode(InlineDiffMode mode);
+    void setDiffViewMode(DiffViewMode mode);
     void setShowWhitespaceChars(bool show);
     void refresh();
     bool readonly() const;
@@ -69,10 +75,12 @@ private:
     int m_hoverFile = -1;
     int m_hoverHunk = -1;
     int m_hoverLine = -1;
+    int m_hoverSide = 0; // 0 = old (left), 1 = new (right), -1 = none
     bool m_readonly = false;
     int m_linesOfContent = 3;
     bool m_ignoreWhitespace = false;
     InlineDiffMode m_inlineDiffMode = InlineDiffMode::Off;
+    DiffViewMode m_diffViewMode = DiffViewMode::Unified;
     bool m_showWhitespaceChars = false;
 };
 

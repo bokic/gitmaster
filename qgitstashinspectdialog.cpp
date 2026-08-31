@@ -239,7 +239,17 @@ void QGitStashInspectDialog::on_tableWidget_files_itemSelectionChanged()
 void QGitStashInspectDialog::on_comboBox_gitDiffOptions_optionsChanged()
 {
     bool ignoreWhitespace = ui->comboBox_gitDiffOptions->ignoreWhitespace();
+    int lines = ui->comboBox_gitDiffOptions->linesOfContent();
+    auto inlineMode = ui->comboBox_gitDiffOptions->inlineDiffMode();
+    auto viewMode = ui->comboBox_gitDiffOptions->diffViewMode();
+    bool showWsChars = ui->comboBox_gitDiffOptions->showWhitespaceChars();
+
     ui->diffWidget->setIgnoreWhitespace(ignoreWhitespace);
+    ui->diffWidget->setLinesOfContent(lines);
+    ui->diffWidget->setInlineDiffMode(static_cast<QGitDiffWidget::InlineDiffMode>(static_cast<int>(inlineMode)));
+    ui->diffWidget->setDiffViewMode(static_cast<QGitDiffWidget::DiffViewMode>(static_cast<int>(viewMode)));
+    ui->diffWidget->setShowWhitespaceChars(showWsChars);
+
     updateDiffForCurrentFile();
 }
 
