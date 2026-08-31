@@ -36,6 +36,12 @@ public:
     void merge();
     void rebase();
     void interactiveRebase(const QString &baseCommitId = QString());
+    void continueOperation();
+    void abortOperation();
+    void skipRebase();
+    void resolveActiveConflicts();
+    void updateOperationBanner();
+    git_repository_state_t repositoryState() const;
     QGit *git() const;
     void navigateToCommit(const QString &hash);
     bool hasRemotes() const { return m_hasRemotes; }
@@ -86,6 +92,9 @@ signals:
     void repositoryCheckoutBranch(const QString &name);
     void repositorySetUpstream(const QString &branchName, const QString &upstreamBranchName);
     void repositoryDeleteTag(const QString &name);
+    void repositoryContinueOperation();
+    void repositoryAbortOperation();
+    void repositorySkipRebase();
     void repositoryStashApply(const QString &name);
     void repositoryStashPop(const QString &name);
     void repositoryStashRemove(const QString &name);
@@ -117,6 +126,9 @@ private slots:
     void repositoryCherrypickReply(const QGitError &error);
     void repositoryRevertReply(const QGitError &error);
     void repositoryResetReply(const QGitError &error);
+    void repositoryContinueOperationReply(const QGitError &error);
+    void repositoryAbortOperationReply(const QGitError &error);
+    void repositorySkipRebaseReply(const QGitError &error);
     void repositoryAddWorktreeReply(const QGitError &error);
     void repositoryRemoveWorktreeReply(const QGitError &error);
     void repositoryLockWorktreeReply(const QGitError &error);
@@ -178,6 +190,10 @@ private slots:
     void on_search_files_itemSelectionChanged();
     void onCommitFound(const QGitCommit &commit);
     void onSearchFinished();
+    void on_pushButton_resolveConflicts_clicked();
+    void on_pushButton_continueOperation_clicked();
+    void on_pushButton_skipOperation_clicked();
+    void on_pushButton_abortOperation_clicked();
 
 private:
     void fetchCommits();

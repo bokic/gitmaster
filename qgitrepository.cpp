@@ -265,6 +265,20 @@ QGitRepository::QGitRepository(const QString &path, QWidget *parent)
     connect(this, &QGitRepository::repositoryStashPop, m_git, &QGit::stashPop);
     connect(this, &QGitRepository::repositoryStashRemove, m_git, &QGit::stashRemove);
 
+    connect(this, &QGitRepository::repositoryContinueOperation, m_git, &QGit::continueOperation);
+    connect(m_git, &QGit::continueOperationReply, this, &QGitRepository::repositoryContinueOperationReply);
+    connect(this, &QGitRepository::repositoryAbortOperation, m_git, &QGit::abortOperation);
+    connect(m_git, &QGit::abortOperationReply, this, &QGitRepository::repositoryAbortOperationReply);
+    connect(this, &QGitRepository::repositorySkipRebase, m_git, &QGit::skipRebase);
+    connect(m_git, &QGit::skipRebaseReply, this, &QGitRepository::repositorySkipRebaseReply);
+
+    connect(ui->pushButton_resolveConflicts, &QPushButton::clicked, this, &QGitRepository::on_pushButton_resolveConflicts_clicked);
+    connect(ui->pushButton_continueOperation, &QPushButton::clicked, this, &QGitRepository::on_pushButton_continueOperation_clicked);
+    connect(ui->pushButton_skipOperation, &QPushButton::clicked, this, &QGitRepository::on_pushButton_skipOperation_clicked);
+    connect(ui->pushButton_abortOperation, &QPushButton::clicked, this, &QGitRepository::on_pushButton_abortOperation_clicked);
+
+    ui->frame_operationBanner->setVisible(false);
+
     ui->branchesTreeView->setContextMenuPolicy(Qt::CustomContextMenu);
     ui->branchesTreeView->setEditTriggers(QAbstractItemView::NoEditTriggers);
 
@@ -314,6 +328,8 @@ void QGitRepository::refreshData()
 
     emit repositoryBranches();
     emit repositoryStashes();
+
+    updateOperationBanner();
 
     emit updateRemoteActionsRequested();
 }
@@ -526,6 +542,190 @@ void QGitRepository::repositoryInteractiveRebaseReply(const QGitError &error)
     } else {
         refreshData();
     }
+}
+
+void QGitRepository::updateOperationBanner()
+{
+    git_repository_state_t state = repositoryState();
+    if (state == GIT_REPOSITORY_STATE_NONE) {
+        ui->frame_operationBanner->setVisible(false);
+        return;
+    }
+
+    ui->frame_operationBanner->setVisible(true);
+
+    bool hasConflicts = m_git->hasConflicts();
+    ui->pushButton_resolveConflicts->setVisible(hasConflicts);
+
+    if (state == GIT_REPOSITORY_STATE_MERGE) {
+        ui->label_operationIcon->setText(QStringLiteral("🔀"));
+        if (hasConflicts) {
+            ui->label_operationText->setText(tr("<b>Merge in progress:</b> Conflicts detected. Please resolve conflicts and click <i>Continue</i>."));
+        } else {
+            ui->label_operationText->setText(tr("<b>Merge in progress:</b> All conflicts resolved. Click <i>Continue</i> to finalize the merge."));
+        }
+        ui->pushButton_continueOperation->setText(tr("Continue Merge"));
+        ui->pushButton_continueOperation->setVisible(true);
+        ui->pushButton_skipOperation->setVisible(false);
+        ui->pushButton_abortOperation->setText(tr("Abort Merge"));
+        ui->pushButton_abortOperation->setVisible(true);
+    } else if (state == GIT_REPOSITORY_STATE_REBASE ||
+               state == GIT_REPOSITORY_STATE_REBASE_INTERACTIVE ||
+               state == GIT_REPOSITORY_STATE_REBASE_MERGE) {
+        ui->label_operationIcon->setText(QStringLiteral("🔄"));
+        if (hasConflicts) {
+            ui->label_operationText->setText(tr("<b>Rebase in progress:</b> Conflicts detected. Resolve conflicts, then click <i>Continue</i>, or <i>Skip</i>."));
+        } else {
+            ui->label_operationText->setText(tr("<b>Rebase in progress:</b> Changes staged. Click <i>Continue</i> to apply commit, or <i>Skip</i>."));
+        }
+        ui->pushButton_continueOperation->setText(tr("Continue Rebase"));
+        ui->pushButton_continueOperation->setVisible(true);
+        ui->pushButton_skipOperation->setText(tr("Skip Commit"));
+        ui->pushButton_skipOperation->setVisible(true);
+        ui->pushButton_abortOperation->setText(tr("Abort Rebase"));
+        ui->pushButton_abortOperation->setVisible(true);
+    } else if (state == GIT_REPOSITORY_STATE_CHERRYPICK ||
+               state == GIT_REPOSITORY_STATE_CHERRYPICK_SEQUENCE) {
+        ui->label_operationIcon->setText(QStringLiteral("🍒"));
+        if (hasConflicts) {
+            ui->label_operationText->setText(tr("<b>Cherry-pick in progress:</b> Conflicts detected. Resolve conflicts and click <i>Continue</i>."));
+        } else {
+            ui->label_operationText->setText(tr("<b>Cherry-pick in progress:</b> Conflicts resolved. Click <i>Continue</i> to complete cherry-pick."));
+        }
+        ui->pushButton_continueOperation->setText(tr("Continue Cherry-Pick"));
+        ui->pushButton_continueOperation->setVisible(true);
+        ui->pushButton_skipOperation->setVisible(false);
+        ui->pushButton_abortOperation->setText(tr("Abort Cherry-Pick"));
+        ui->pushButton_abortOperation->setVisible(true);
+    } else if (state == GIT_REPOSITORY_STATE_REVERT ||
+               state == GIT_REPOSITORY_STATE_REVERT_SEQUENCE) {
+        ui->label_operationIcon->setText(QStringLiteral("↩️"));
+        if (hasConflicts) {
+            ui->label_operationText->setText(tr("<b>Revert in progress:</b> Conflicts detected. Resolve conflicts and click <i>Continue</i>."));
+        } else {
+            ui->label_operationText->setText(tr("<b>Revert in progress:</b> Conflicts resolved. Click <i>Continue</i> to complete revert."));
+        }
+        ui->pushButton_continueOperation->setText(tr("Continue Revert"));
+        ui->pushButton_continueOperation->setVisible(true);
+        ui->pushButton_skipOperation->setVisible(false);
+        ui->pushButton_abortOperation->setText(tr("Abort Revert"));
+        ui->pushButton_abortOperation->setVisible(true);
+    } else {
+        ui->label_operationIcon->setText(QStringLiteral("⚠️"));
+        ui->label_operationText->setText(tr("<b>%1:</b> Active operation in progress.").arg(m_git->repositoryStateDescription()));
+        ui->pushButton_continueOperation->setText(tr("Continue"));
+        ui->pushButton_continueOperation->setVisible(true);
+        ui->pushButton_skipOperation->setVisible(false);
+        ui->pushButton_abortOperation->setText(tr("Abort"));
+        ui->pushButton_abortOperation->setVisible(true);
+    }
+}
+
+void QGitRepository::continueOperation()
+{
+    if (m_git->hasConflicts()) {
+        QMessageBox::warning(this, tr("Unresolved Conflicts"),
+                             tr("There are still unresolved conflicts in the repository.\n\nPlease resolve and stage all conflicting files before continuing."));
+        return;
+    }
+    emit statusMessage(tr("Continuing operation..."));
+    emit repositoryContinueOperation();
+}
+
+void QGitRepository::abortOperation()
+{
+    QString opName = m_git->repositoryStateDescription();
+    if (opName.isEmpty()) opName = tr("active operation");
+
+    auto confirm = QMessageBox::question(
+        this,
+        tr("Abort Operation"),
+        tr("Are you sure you want to abort the %1?\n\nAll uncommitted changes from this operation will be discarded.").arg(opName),
+        QMessageBox::Yes | QMessageBox::No
+    );
+    if (confirm == QMessageBox::Yes) {
+        emit statusMessage(tr("Aborting operation..."));
+        emit repositoryAbortOperation();
+    }
+}
+
+void QGitRepository::skipRebase()
+{
+    auto confirm = QMessageBox::question(
+        this,
+        tr("Skip Commit"),
+        tr("Are you sure you want to skip the current commit in the rebase?"),
+        QMessageBox::Yes | QMessageBox::No
+    );
+    if (confirm == QMessageBox::Yes) {
+        emit statusMessage(tr("Skipping commit..."));
+        emit repositorySkipRebase();
+    }
+}
+
+void QGitRepository::resolveActiveConflicts()
+{
+    auto conflicted = m_git->conflictedFiles();
+    if (!conflicted.isEmpty()) {
+        QGitConflictResolverDialog dlg(m_git, conflicted.first(), this);
+        if (dlg.exec() == QDialog::Accepted) {
+            refreshData();
+        }
+    } else {
+        QMessageBox::information(this, tr("No Conflicts"), tr("No conflicting files detected."));
+    }
+}
+
+void QGitRepository::on_pushButton_resolveConflicts_clicked()
+{
+    resolveActiveConflicts();
+}
+
+void QGitRepository::on_pushButton_continueOperation_clicked()
+{
+    continueOperation();
+}
+
+void QGitRepository::on_pushButton_skipOperation_clicked()
+{
+    skipRebase();
+}
+
+void QGitRepository::on_pushButton_abortOperation_clicked()
+{
+    abortOperation();
+}
+
+void QGitRepository::repositoryContinueOperationReply(const QGitError &error)
+{
+    emit clearStatusMessage();
+    if (error.errorCode() != 0) {
+        QMessageBox::warning(this, tr("Continue Operation Error"), error.errorString());
+    }
+    refreshData();
+}
+
+void QGitRepository::repositoryAbortOperationReply(const QGitError &error)
+{
+    emit clearStatusMessage();
+    if (error.errorCode() != 0) {
+        QMessageBox::warning(this, tr("Abort Operation Error"), error.errorString());
+    }
+    refreshData();
+}
+
+void QGitRepository::repositorySkipRebaseReply(const QGitError &error)
+{
+    emit clearStatusMessage();
+    if (error.errorCode() != 0) {
+        QMessageBox::warning(this, tr("Skip Commit Error"), error.errorString());
+    }
+    refreshData();
+}
+
+git_repository_state_t QGitRepository::repositoryState() const
+{
+    return m_git ? m_git->repositoryState() : GIT_REPOSITORY_STATE_NONE;
 }
 
 void QGitRepository::repositoryCreateLocalBranchReply(const QGitError &error)

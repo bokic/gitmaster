@@ -1071,6 +1071,43 @@ QList<QGitCommit> QGit::getCommitsForRebase(const QString &baseCommitId, const Q
     return commits;
 }
 
+git_repository_state_t QGit::repositoryState() const
+{
+    try {
+        GitRepository repo = openRepo(m_path);
+        return (git_repository_state_t)git_repository_state(repo);
+    } catch (...) {
+        return GIT_REPOSITORY_STATE_NONE;
+    }
+}
+
+QString QGit::repositoryStateDescription() const
+{
+    git_repository_state_t state = repositoryState();
+    switch (state) {
+    case GIT_REPOSITORY_STATE_MERGE:
+        return tr("Merge in progress");
+    case GIT_REPOSITORY_STATE_REVERT:
+    case GIT_REPOSITORY_STATE_REVERT_SEQUENCE:
+        return tr("Revert in progress");
+    case GIT_REPOSITORY_STATE_CHERRYPICK:
+    case GIT_REPOSITORY_STATE_CHERRYPICK_SEQUENCE:
+        return tr("Cherry-pick in progress");
+    case GIT_REPOSITORY_STATE_REBASE:
+    case GIT_REPOSITORY_STATE_REBASE_INTERACTIVE:
+    case GIT_REPOSITORY_STATE_REBASE_MERGE:
+        return tr("Rebase in progress");
+    case GIT_REPOSITORY_STATE_BISECT:
+        return tr("Bisect in progress");
+    case GIT_REPOSITORY_STATE_APPLY_MAILBOX:
+    case GIT_REPOSITORY_STATE_APPLY_MAILBOX_OR_REBASE:
+        return tr("Apply mailbox in progress");
+    case GIT_REPOSITORY_STATE_NONE:
+    default:
+        return QString();
+    }
+}
+
 bool QGit::isAncestor(const QString &ancestor, const QString &descendant) const
 {
     GitRepository repo;
@@ -4819,6 +4856,294 @@ void QGit::interactiveRebase(const QString &baseCommitId, const QList<QGitRebase
     }
 
     emit interactiveRebaseReply(error);
+}
+
+void QGit::continueOperation()
+{
+    QGitError error;
+    try
+    {
+        GitRepository repo = openRepo(m_path);
+        git_repository_state_t state = (git_repository_state_t)git_repository_state(repo);
+
+        if (state == GIT_REPOSITORY_STATE_NONE)
+        {
+            throw QGitError(tr("No active operation to continue."), -1);
+        }
+
+        if (state == GIT_REPOSITORY_STATE_REBASE ||
+            state == GIT_REPOSITORY_STATE_REBASE_INTERACTIVE ||
+            state == GIT_REPOSITORY_STATE_REBASE_MERGE)
+        {
+            GitRebase rebase;
+            git_rebase_options opts = GIT_REBASE_OPTIONS_INIT;
+            int res = git_rebase_open(rebase, repo, &opts);
+            if (res)
+            {
+                throw QGitError("git_rebase_open", res);
+            }
+
+            GitSignature committer;
+            res = git_signature_default(committer, repo);
+            if (res)
+            {
+                throw QGitError("git_signature_default", res);
+            }
+
+            git_oid commit_id;
+            res = git_rebase_commit(&commit_id, rebase, nullptr, committer, nullptr, nullptr);
+            if (res == GIT_EUNMERGED)
+            {
+                throw QGitError(tr("Conflicts still exist in the index. Please resolve and stage all conflicts before continuing."), -1);
+            }
+            else if (res < 0 && res != GIT_EAPPLIED)
+            {
+                throw QGitError("git_rebase_commit", res);
+            }
+
+            git_rebase_operation *op = nullptr;
+            bool has_conflict = false;
+
+            while ((res = git_rebase_next(&op, rebase)) == 0)
+            {
+                res = git_rebase_commit(&commit_id, rebase, nullptr, committer, nullptr, nullptr);
+                if (res == GIT_EUNMERGED)
+                {
+                    has_conflict = true;
+                    break;
+                }
+                else if (res < 0 && res != GIT_EAPPLIED)
+                {
+                    throw QGitError("git_rebase_commit", res);
+                }
+            }
+
+            if (has_conflict)
+            {
+                throw QGitError(tr("Rebase paused due to conflicts on the next commit. Please resolve conflicts and continue."), -1);
+            }
+
+            if (res != GIT_ITEROVER && res != 0)
+            {
+                throw QGitError("git_rebase_next", res);
+            }
+
+            res = git_rebase_finish(rebase, committer);
+            if (res)
+            {
+                throw QGitError("git_rebase_finish", res);
+            }
+        }
+        else if (state == GIT_REPOSITORY_STATE_MERGE)
+        {
+            GitIndex index;
+            int res = git_repository_index(index, repo);
+            if (res) throw QGitError("git_repository_index", res);
+            if (git_index_has_conflicts(index))
+            {
+                throw QGitError(tr("Conflicts still exist in the index. Please resolve and stage all conflicts before continuing merge."), -1);
+            }
+
+            QString mergeMsg = tr("Merge branch");
+            QFile mergeMsgFile(m_path.filePath(QStringLiteral(".git/MERGE_MSG")));
+            if (mergeMsgFile.open(QIODevice::ReadOnly))
+            {
+                mergeMsg = QString::fromUtf8(mergeMsgFile.readAll()).trimmed();
+                mergeMsgFile.close();
+            }
+
+            this->commit(mergeMsg, false, false);
+        }
+        else if (state == GIT_REPOSITORY_STATE_CHERRYPICK ||
+                 state == GIT_REPOSITORY_STATE_CHERRYPICK_SEQUENCE)
+        {
+            GitIndex index;
+            int res = git_repository_index(index, repo);
+            if (res) throw QGitError("git_repository_index", res);
+            if (git_index_has_conflicts(index))
+            {
+                throw QGitError(tr("Conflicts still exist in the index. Please resolve and stage all conflicts before continuing cherry-pick."), -1);
+            }
+
+            QString cherryMsg = tr("Cherry-pick commit");
+            QFile mergeMsgFile(m_path.filePath(QStringLiteral(".git/MERGE_MSG")));
+            if (!mergeMsgFile.exists()) {
+                mergeMsgFile.setFileName(m_path.filePath(QStringLiteral(".git/CHERRY_PICK_HEAD")));
+            }
+            if (mergeMsgFile.open(QIODevice::ReadOnly))
+            {
+                cherryMsg = QString::fromUtf8(mergeMsgFile.readAll()).trimmed();
+                mergeMsgFile.close();
+            }
+
+            this->commit(cherryMsg, false, false);
+            git_repository_state_cleanup(repo);
+        }
+        else if (state == GIT_REPOSITORY_STATE_REVERT ||
+                 state == GIT_REPOSITORY_STATE_REVERT_SEQUENCE)
+        {
+            GitIndex index;
+            int res = git_repository_index(index, repo);
+            if (res) throw QGitError("git_repository_index", res);
+            if (git_index_has_conflicts(index))
+            {
+                throw QGitError(tr("Conflicts still exist in the index. Please resolve and stage all conflicts before continuing revert."), -1);
+            }
+
+            QString revertMsg = tr("Revert commit");
+            QFile mergeMsgFile(m_path.filePath(QStringLiteral(".git/MERGE_MSG")));
+            if (mergeMsgFile.open(QIODevice::ReadOnly))
+            {
+                revertMsg = QString::fromUtf8(mergeMsgFile.readAll()).trimmed();
+                mergeMsgFile.close();
+            }
+
+            this->commit(revertMsg, false, false);
+            git_repository_state_cleanup(repo);
+        }
+        else
+        {
+            git_repository_state_cleanup(repo);
+        }
+    }
+    catch (const QGitError &ex)
+    {
+        error = ex;
+    }
+
+    emit continueOperationReply(error);
+}
+
+void QGit::abortOperation()
+{
+    QGitError error;
+    try
+    {
+        GitRepository repo = openRepo(m_path);
+        git_repository_state_t state = (git_repository_state_t)git_repository_state(repo);
+
+        if (state == GIT_REPOSITORY_STATE_NONE)
+        {
+            throw QGitError(tr("No active operation to abort."), -1);
+        }
+
+        if (state == GIT_REPOSITORY_STATE_REBASE ||
+            state == GIT_REPOSITORY_STATE_REBASE_INTERACTIVE ||
+            state == GIT_REPOSITORY_STATE_REBASE_MERGE)
+        {
+            GitRebase rebase;
+            git_rebase_options opts = GIT_REBASE_OPTIONS_INIT;
+            int res = git_rebase_open(rebase, repo, &opts);
+            if (res == 0)
+            {
+                git_rebase_abort(rebase);
+            }
+        }
+
+        git_repository_state_cleanup(repo);
+
+        git_checkout_options checkout_opts = GIT_CHECKOUT_OPTIONS_INIT;
+        checkout_opts.checkout_strategy = GIT_CHECKOUT_FORCE;
+        int res = git_checkout_head(repo, &checkout_opts);
+        if (res)
+        {
+            throw QGitError("git_checkout_head", res);
+        }
+    }
+    catch (const QGitError &ex)
+    {
+        error = ex;
+    }
+
+    emit abortOperationReply(error);
+}
+
+void QGit::skipRebase()
+{
+    QGitError error;
+    try
+    {
+        GitRepository repo = openRepo(m_path);
+        git_repository_state_t state = (git_repository_state_t)git_repository_state(repo);
+
+        if (state != GIT_REPOSITORY_STATE_REBASE &&
+            state != GIT_REPOSITORY_STATE_REBASE_INTERACTIVE &&
+            state != GIT_REPOSITORY_STATE_REBASE_MERGE)
+        {
+            throw QGitError(tr("No active rebase operation to skip."), -1);
+        }
+
+        GitRebase rebase;
+        git_rebase_options opts = GIT_REBASE_OPTIONS_INIT;
+        int res = git_rebase_open(rebase, repo, &opts);
+        if (res)
+        {
+            throw QGitError("git_rebase_open", res);
+        }
+
+        GitSignature committer;
+        res = git_signature_default(committer, repo);
+        if (res)
+        {
+            throw QGitError("git_signature_default", res);
+        }
+
+        git_rebase_operation *op = nullptr;
+        res = git_rebase_next(&op, rebase);
+        if (res == 0)
+        {
+            git_oid commit_id;
+            bool has_conflict = false;
+            while (res == 0)
+            {
+                res = git_rebase_commit(&commit_id, rebase, nullptr, committer, nullptr, nullptr);
+                if (res == GIT_EUNMERGED)
+                {
+                    has_conflict = true;
+                    break;
+                }
+                else if (res < 0 && res != GIT_EAPPLIED)
+                {
+                    throw QGitError("git_rebase_commit", res);
+                }
+                res = git_rebase_next(&op, rebase);
+            }
+
+            if (has_conflict)
+            {
+                throw QGitError(tr("Rebase paused due to conflicts on the next commit. Please resolve conflicts and continue."), -1);
+            }
+
+            if (res != GIT_ITEROVER && res != 0)
+            {
+                throw QGitError("git_rebase_next", res);
+            }
+
+            res = git_rebase_finish(rebase, committer);
+            if (res)
+            {
+                throw QGitError("git_rebase_finish", res);
+            }
+        }
+        else if (res == GIT_ITEROVER)
+        {
+            res = git_rebase_finish(rebase, committer);
+            if (res)
+            {
+                throw QGitError("git_rebase_finish", res);
+            }
+        }
+        else
+        {
+            throw QGitError("git_rebase_next", res);
+        }
+    }
+    catch (const QGitError &ex)
+    {
+        error = ex;
+    }
+
+    emit skipRebaseReply(error);
 }
 
 void QGit::merge(const QString &branchName)

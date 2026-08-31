@@ -9,7 +9,7 @@ Development plan and upcoming features for GitMaster.
 ### Advanced Commit & Rebase Tools
 - [x] **Commit Reword & Amend UI**: Enable instant commit message editing for HEAD and UI options for amending.
 - [x] **Interactive Rebase Dialog**: Support squashing, rewording, dropping, and reordering commits from the commit log view.
-- [ ] **Cherry-Pick / Rebase Controls**: Add UI controls to continue or abort active merge/rebase/cherry-pick operations.
+- [x] **Cherry-Pick / Rebase Controls**: Add UI controls to continue or abort active merge/rebase/cherry-pick operations.
 
 ### Submodules & Repository Management
 - [ ] **Add Submodule Dialog**: Implement dialog for cloning and adding new submodules (`git submodule add`).

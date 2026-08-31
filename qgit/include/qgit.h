@@ -138,6 +138,8 @@ public:
     QString commitSummary(const QString &commitId) const;
     QStringList getCommitParents(const QString &commitId) const;
     QList<QGitCommit> getCommitsForRebase(const QString &baseCommitId, const QString &target = QString()) const;
+    git_repository_state_t repositoryState() const;
+    QString repositoryStateDescription() const;
 
     void setCredentialHandler(QObject *handler) { m_credentialHandler = handler; }
     QObject *credentialHandler() const { return m_credentialHandler; }
@@ -197,6 +199,9 @@ public slots:
     void createTag(const QString &name, const QString &targetObjectId, const QString &message, bool force);
     void clean(bool includeIgnored, bool removeDirectories);
     void applyPatch(const QString &patchPath);
+    void continueOperation();
+    void abortOperation();
+    void skipRebase();
     void setNote(const QString &commitHash, const QString &note);
     void removeNote(const QString &commitHash);
     void setLastPushError(const QString &err);
@@ -252,6 +257,9 @@ signals:
     void cherrypickReply(const QGitError &error);
     void revertReply(const QGitError &error);
     void resetReply(const QGitError &error);
+    void continueOperationReply(const QGitError &error);
+    void abortOperationReply(const QGitError &error);
+    void skipRebaseReply(const QGitError &error);
     void createLocalBranchReply(const QGitError &error);
     void addWorktreeReply(const QGitError &error);
     void removeWorktreeReply(const QGitError &error);
