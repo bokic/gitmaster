@@ -8,6 +8,8 @@ Development plan and upcoming features for GitMaster.
 
 ### Interactive Staging & Diffing
 - [x] **Stash Inspection**: Allow double-clicking stashes in the stash dialog to view file diffs directly in the main diff widget.
+- [ ] **Inline Diff Option**: Show character-level / word-level diffs inline within a single line (e.g. if one character is deleted from a line, display the diff on one line with deleted characters highlighted in a red background and additions in green).
+- [ ] **Whitespace & Non-Visual Characters Diff Visualization**: Render whitespace and non-visual characters in diff views (e.g. `.` for spaces, `→` / `->` for tabs, and down/corner arrows `↵` / `↓` for newlines/end-of-line) rendered per character or via custom `QPainter` draw operations.
 
 ### Advanced Commit & Rebase Tools
 - [ ] **Commit Reword & Amend UI**: Enable instant commit message editing for HEAD and UI options for amending.
