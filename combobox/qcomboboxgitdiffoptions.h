@@ -18,6 +18,7 @@ public:
     bool ignoreWhitespace() const;
     int linesOfContent() const;
     InlineDiffMode inlineDiffMode() const;
+    bool showWhitespaceChars() const;
 
 signals:
     void optionsChanged();

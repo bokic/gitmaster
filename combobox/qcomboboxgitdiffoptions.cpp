@@ -19,6 +19,8 @@ enum {
     ITEM_INLINE_DIFF_CHAR,
     ITEM_INLINE_DIFF_WORD,
     ITEM_SEPARATOR3,
+    ITEM_VISUALIZE_WHITESPACE,
+    ITEM_SEPARATOR4,
     ITEM_SHOW_1_LINE,
     ITEM_SHOW_2_LINE,
     ITEM_SHOW_3_LINE,
@@ -50,6 +52,10 @@ QComboBoxGitDiffOptions::QComboBoxGitDiffOptions(QWidget *parent)
     addOptionItem(tr("Off"), true, Qt::Checked, m_iconChecked);
     addOptionItem(tr("Character-level"), true, Qt::Unchecked, m_iconUnchecked);
     addOptionItem(tr("Word-level"), true, Qt::Unchecked, m_iconUnchecked);
+
+    insertSeparator(count());
+
+    addOptionItem(tr("Visualize Whitespace"), true, Qt::Unchecked, m_iconUnchecked);
 
     insertSeparator(count());
 
@@ -106,6 +112,14 @@ void QComboBoxGitDiffOptions::activated(int index)
         }
     }
 
+    if (index == ITEM_VISUALIZE_WHITESPACE)
+    {
+        // Independent checkbox: toggle on/off
+        bool current = items->data(items->index(ITEM_VISUALIZE_WHITESPACE, 0), Qt::CheckStateRole).toInt() == Qt::Checked;
+        items->setData(items->index(ITEM_VISUALIZE_WHITESPACE, 0), current ? Qt::Unchecked : Qt::Checked, Qt::CheckStateRole);
+        if (m_showIcons) items->item(ITEM_VISUALIZE_WHITESPACE, 0)->setIcon(current ? m_iconUnchecked : m_iconChecked);
+    }
+
     if ((index >= ITEM_SHOW_1_LINE)&&(index <= ITEM_SHOW_100_LINE))
     {
         for(int c = ITEM_SHOW_1_LINE; c <= ITEM_SHOW_100_LINE; c++)
@@ -160,6 +174,14 @@ QComboBoxGitDiffOptions::InlineDiffMode QComboBoxGitDiffOptions::inlineDiffMode(
     if (items->data(items->index(ITEM_INLINE_DIFF_WORD, 0), Qt::CheckStateRole).toInt() == Qt::Checked)
         return InlineDiffMode::WordLevel;
     return InlineDiffMode::Off;
+}
+
+bool QComboBoxGitDiffOptions::showWhitespaceChars() const
+{
+    QStandardItemModel *items = qobject_cast<QStandardItemModel *>(model());
+    if (!items) return false;
+
+    return items->data(items->index(ITEM_VISUALIZE_WHITESPACE, 0), Qt::CheckStateRole).toInt() == Qt::Checked;
 }
 
 

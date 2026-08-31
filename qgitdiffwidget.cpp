@@ -135,6 +135,148 @@ void QGitDiffWidget::setInlineDiffMode(InlineDiffMode mode)
     }
 }
 
+void QGitDiffWidget::setShowWhitespaceChars(bool show)
+{
+    if (m_showWhitespaceChars != show)
+    {
+        m_showWhitespaceChars = show;
+        update();
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Whitespace visualisation helper
+// ---------------------------------------------------------------------------
+
+// Returns true if byteOffset falls inside any of the inline diff ranges.
+static bool byteIsInInlineRange(int byteOffset, const QVector<QGitDiffInlineRange> &ranges)
+{
+    for (const auto &r : ranges)
+        if (byteOffset >= r.start && byteOffset < r.start + r.length)
+            return true;
+    return false;
+}
+
+// Renders a line's text content to the painter at (x, yBaseline).
+//
+// Whitespace substitution rules:
+//   - spaces  → '·'  (middle dot)
+//   - tabs    → '→'  (rightward arrow)
+//   - newline → '↵'  (return symbol, shown at end)
+//
+// A whitespace character is ALWAYS substituted when it falls inside an inline
+// diff range (so empty-box artifacts on space↔tab changes are impossible),
+// even when showWhitespaceChars is false.  When it falls outside any range,
+// substitution only happens when showWhitespaceChars is true.
+//
+// Substitutes inside inline ranges use the full normalColor (clearly visible);
+// substitutes outside ranges use a muted 45%-opacity colour.
+static void drawLineContent(
+    QPainter &painter,
+    const QFont &font,
+    const QByteArray &rawContent,
+    int x,
+    int yBaseline,
+    bool showWhitespaceChars,
+    const QColor &normalColor,
+    const QVector<QGitDiffInlineRange> &inlineRanges)
+{
+    QFontMetrics fm(font);
+
+    // Decode UTF-8, recording the byte offset of every character so we can
+    // check it against the inline ranges (which are in byte coordinates).
+    struct CharEntry {
+        QChar ch;
+        int   byteOffset;
+    };
+
+    QVector<CharEntry> chars;
+    {
+        const QByteArray &raw = rawContent;
+        QString decoded = QString::fromUtf8(raw);
+        int bOff = 0;
+        for (const QChar &qch : decoded)
+        {
+            chars.append({qch, bOff});
+            bOff += QString(qch).toUtf8().size();
+        }
+    }
+
+    // Strip trailing CR/LF, recording the byte offset of the first stripped
+    // byte so we can check whether the newline itself is in an inline range.
+    bool hasTrailingNewline = false;
+    int  newlineByteOffset  = rawContent.size(); // safe default: past the end
+    while (!chars.isEmpty()
+           && (chars.back().ch == u'\n' || chars.back().ch == u'\r'))
+    {
+        hasTrailingNewline  = true;
+        newlineByteOffset   = chars.back().byteOffset;
+        chars.pop_back();
+    }
+
+    QColor wsColor = normalColor;
+    wsColor.setAlphaF(0.45f);   // muted — visible but clearly secondary
+
+    int cx = x;
+    int n  = chars.size();
+    int i  = 0;
+
+    while (i < n)
+    {
+        bool isWs   = (chars[i].ch == u' ' || chars[i].ch == u'\t');
+        bool inRange = byteIsInInlineRange(chars[i].byteOffset, inlineRanges);
+
+        // Collect a run of characters sharing the same (isWs, inRange) pair
+        int start = i;
+        while (i < n
+               && (chars[i].ch == u' ' || chars[i].ch == u'\t') == isWs
+               && byteIsInInlineRange(chars[i].byteOffset, inlineRanges) == inRange)
+        {
+            ++i;
+        }
+
+        // Build the original string (for width measurement) and the display
+        // string (potentially with whitespace substitutes).
+        bool substitute = isWs && (showWhitespaceChars || inRange);
+        QString orig, display;
+        for (int k = start; k < i; ++k)
+        {
+            orig += chars[k].ch;
+            if (substitute)
+                display += (chars[k].ch == u'\t') ? QChar(u'→') : QChar(u'·');
+            else
+                display += chars[k].ch;
+        }
+
+        int segWidth = fm.horizontalAdvance(orig);
+
+        if (substitute)
+        {
+            // Substitutes inside an inline range: full colour (it's a real change).
+            // Substitutes outside (global whitespace mode): muted colour.
+            painter.setPen(inRange ? normalColor : wsColor);
+            painter.drawText(cx, yBaseline, display);
+        }
+        else
+        {
+            painter.setPen(normalColor);
+            painter.drawText(cx, yBaseline, display);
+        }
+
+        cx += segWidth;
+    }
+
+    // Trailing newline symbol — only shown when showWhitespaceChars is on or
+    // the newline itself is inside an inline range.
+    bool newlineInRange = byteIsInInlineRange(newlineByteOffset, inlineRanges);
+    if (hasTrailingNewline && (showWhitespaceChars || newlineInRange))
+    {
+        painter.setPen(newlineInRange ? normalColor : wsColor);
+        painter.drawText(cx, yBaseline, QStringLiteral("↵"));
+    }
+}
+
+
 // ---------------------------------------------------------------------------
 // Inline diff helpers
 // ---------------------------------------------------------------------------
@@ -636,7 +778,16 @@ void QGitDiffWidget::paintEvent(QPaintEvent *event)
                                 painter.setPen((line.origin == '-') ? Qt::darkRed : Qt::darkGreen);
                             }
 
-                            painter.drawText(contentX, yFont, line.content);
+                            // Determine normal text colour for this line type
+                            QColor normalColor;
+                            if (line.origin == '-')      normalColor = Qt::darkRed;
+                            else if (line.origin == '+') normalColor = Qt::darkGreen;
+                            else                         normalColor = Qt::black;
+
+                            drawLineContent(painter, m_font, line.content,
+                                            contentX, yFont,
+                                            m_showWhitespaceChars, normalColor,
+                                            line.inlineRanges);
 
                             if ((fileIndex == m_hoverFile)&&(hunkIndex == m_hoverHunk)&&(lineIndex == m_hoverLine))
                             {

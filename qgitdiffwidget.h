@@ -32,6 +32,7 @@ public:
     void setIgnoreWhitespace(bool ignore);
     void setLinesOfContent(int lines);
     void setInlineDiffMode(InlineDiffMode mode);
+    void setShowWhitespaceChars(bool show);
     void refresh();
     bool readonly() const;
 
@@ -72,5 +73,6 @@ private:
     int m_linesOfContent = 3;
     bool m_ignoreWhitespace = false;
     InlineDiffMode m_inlineDiffMode = InlineDiffMode::Off;
+    bool m_showWhitespaceChars = false;
 };
 
