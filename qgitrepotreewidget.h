@@ -30,6 +30,9 @@ private:
     QThread m_thread;
     QGit *m_git = nullptr;
     int m_refreshIndex = 0;
+    bool m_isRefreshing = false;
+    bool m_refreshPending = false;
+    QString m_currentRefreshingPath;
 
 private slots:
     void repositoryStatusReply(QMap<git_status_t, int> items, QGitError error);
