@@ -70,6 +70,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/bin)
 
 find_package(Qt6 COMPONENTS Gui Widgets Network Svg REQUIRED)
+find_package(ZLIB REQUIRED)
 
 set(PROJECT_HEADERS
     qgitmastermainwindow.h
@@ -96,6 +97,7 @@ set(PROJECT_HEADERS
     qgitsubmodulepointerdialog.h
     qgitremovesubmoduledialog.h
     qgitexportpatchdialog.h
+    qgitexportarchivedialog.h
 
     qgitrepotreeitemdelegate.h
     qgitrepotreewidget.h
@@ -157,6 +159,7 @@ set(PROJECT_SOURCES
     qgitsubmodulepointerdialog.cpp qgitsubmodulepointerdialog.ui
     qgitremovesubmoduledialog.cpp  qgitremovesubmoduledialog.ui
     qgitexportpatchdialog.cpp      qgitexportpatchdialog.ui
+    qgitexportarchivedialog.cpp    qgitexportarchivedialog.ui
 
     qgitrepotreeitemdelegate.cpp
     qgitrepotreewidget.cpp
@@ -256,6 +259,7 @@ target_link_libraries(gitmaster PRIVATE
     Qt6::Gui
     Qt6::Network
     Qt6::Svg
+    ZLIB::ZLIB
 )
 
 if (WIN32)

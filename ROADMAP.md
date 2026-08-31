@@ -19,7 +19,7 @@ Development plan and upcoming features for GitMaster.
 
 ### Repository Management
 - [x] **Patch Export & Import**: Export commits as `.patch` files (`git format-patch`) and apply external patches via file selection.
-- [ ] **Archive Export**: Export repository tree at specific tags or commits as `.zip` or `.tar.gz` (`git archive`).
+- [x] **Archive Export**: Export repository tree at specific tags or commits as `.zip` or `.tar.gz` (`git archive`).
 
 ---
 

@@ -7,6 +7,8 @@
 #include <git2/worktree.h>
 #include <git2/email.h>
 #include <git2/apply.h>
+#include <zlib.h>
+#include <ctime>
 
 #include <QThread>
 #include <QString>
@@ -1351,6 +1353,45 @@ QList<QGitBranch> QGit::branches(git_branch_t type) const
 
             QGitBranch branch = QGitBranch(name, oidStr, commit_time, type);
             ret.append(branch);
+        }
+    }
+
+    return ret;
+}
+
+QList<QGitTag> QGit::tags() const
+{
+    QList<QGitTag> ret;
+
+    GitRepository repo;
+    int res = git_repository_open(repo, m_path.absolutePath().toUtf8().constData());
+    if (res)
+    {
+        return ret;
+    }
+
+    GitStrArray tag_names;
+    res = git_tag_list(tag_names, repo);
+    if (res)
+    {
+        return ret;
+    }
+
+    for (size_t c = 0; c < tag_names.value.count; c++)
+    {
+        const char *tag_name = tag_names.value.strings[c];
+        git_time_t tag_time = 0;
+        GitReference tag_ref;
+
+        QByteArray tagFullName = QByteArray("refs/tags/") + tag_name;
+
+        res = git_reference_lookup(tag_ref, repo, tagFullName.constData());
+        if (res == 0)
+        {
+            QString oidStr;
+            peelToCommitDetails(tag_ref, oidStr, tag_time);
+            QGitTag tag(QString::fromUtf8(tag_name), oidStr, tag_time);
+            ret.append(tag);
         }
     }
 
@@ -3159,6 +3200,406 @@ void QGit::exportPatches(const QStringList &commitIds, const QString &outputDir,
         error = ex;
     }
     emit exportPatchesReply(createdFiles, error);
+}
+
+#pragma pack(push, 1)
+struct ZipLocalFileHeader {
+    uint32_t signature = 0x04034b50;
+    uint16_t version_needed = 20;
+    uint16_t flags = 0x0800; // UTF-8 filename flag
+    uint16_t compression_method = 8; // Deflate
+    uint16_t last_mod_time = 0;
+    uint16_t last_mod_date = 0;
+    uint32_t crc32 = 0;
+    uint32_t compressed_size = 0;
+    uint32_t uncompressed_size = 0;
+    uint16_t filename_length = 0;
+    uint16_t extra_field_length = 0;
+};
+
+struct ZipCentralDirHeader {
+    uint32_t signature = 0x02014b50;
+    uint16_t version_made_by = 0x0314; // Unix, Zip 2.0
+    uint16_t version_needed = 20;
+    uint16_t flags = 0x0800; // UTF-8
+    uint16_t compression_method = 8; // Deflate
+    uint16_t last_mod_time = 0;
+    uint16_t last_mod_date = 0;
+    uint32_t crc32 = 0;
+    uint32_t compressed_size = 0;
+    uint32_t uncompressed_size = 0;
+    uint16_t filename_length = 0;
+    uint16_t extra_field_length = 0;
+    uint16_t file_comment_length = 0;
+    uint16_t disk_number_start = 0;
+    uint16_t internal_file_attributes = 0;
+    uint32_t external_file_attributes = 0;
+    uint32_t relative_offset_local_header = 0;
+};
+
+struct ZipEndOfCentralDir {
+    uint32_t signature = 0x06054b50;
+    uint16_t disk_number = 0;
+    uint16_t disk_start = 0;
+    uint16_t num_entries_disk = 0;
+    uint16_t num_entries_total = 0;
+    uint32_t size_central_dir = 0;
+    uint32_t offset_central_dir = 0;
+    uint16_t comment_length = 0;
+};
+
+struct UstarTarHeader {
+    char name[100];
+    char mode[8];
+    char uid[8];
+    char gid[8];
+    char size[12];
+    char mtime[12];
+    char chksum[8];
+    char typeflag;
+    char linkname[100];
+    char magic[6];
+    char version[2];
+    char uname[32];
+    char gname[32];
+    char devmajor[8];
+    char devminor[8];
+    char prefix[155];
+    char pad[12];
+};
+#pragma pack(pop)
+
+static void convertTimeToDos(time_t t, uint16_t &dosDate, uint16_t &dosTime)
+{
+    struct tm tm_val;
+#if defined(_WIN32)
+    gmtime_s(&tm_val, &t);
+#else
+    gmtime_r(&t, &tm_val);
+#endif
+    int year = tm_val.tm_year + 1900;
+    if (year < 1980) {
+        dosDate = (1 << 5) | 1;
+        dosTime = 0;
+        return;
+    }
+    dosDate = ((year - 1980) << 9) | ((tm_val.tm_mon + 1) << 5) | tm_val.tm_mday;
+    dosTime = (tm_val.tm_hour << 11) | (tm_val.tm_min << 5) | (tm_val.tm_sec >> 1);
+}
+
+static bool deflateBufferHelper(const uint8_t *inData, size_t inSize, std::vector<uint8_t> &outData, bool rawDeflate)
+{
+    z_stream strm;
+    memset(&strm, 0, sizeof(strm));
+    int windowBits = rawDeflate ? -15 : (15 + 16);
+    if (deflateInit2(&strm, Z_DEFAULT_COMPRESSION, Z_DEFLATED, windowBits, 8, Z_DEFAULT_STRATEGY) != Z_OK) {
+        return false;
+    }
+
+    outData.resize(deflateBound(&strm, inSize) + 64);
+    strm.next_in = const_cast<uint8_t*>(inData);
+    strm.avail_in = inSize;
+    strm.next_out = outData.data();
+    strm.avail_out = outData.size();
+
+    int ret = deflate(&strm, Z_FINISH);
+    if (ret != Z_STREAM_END) {
+        deflateEnd(&strm);
+        return false;
+    }
+    outData.resize(strm.total_out);
+    deflateEnd(&strm);
+    return true;
+}
+
+static void fillTarHeaderHelper(UstarTarHeader &hdr, const std::string &path, size_t size, uint32_t mode, time_t mtime, char typeflag, const std::string &linkname = std::string())
+{
+    memset(&hdr, 0, sizeof(hdr));
+    if (path.length() > 100) {
+        size_t splitPos = path.rfind('/', 155);
+        if (splitPos != std::string::npos && (path.length() - splitPos - 1) <= 100) {
+            std::string prefix = path.substr(0, splitPos);
+            std::string name = path.substr(splitPos + 1);
+            memcpy(hdr.prefix, prefix.c_str(), prefix.length());
+            memcpy(hdr.name, name.c_str(), name.length());
+        } else {
+            memcpy(hdr.name, path.c_str(), std::min(path.length(), (size_t)100));
+        }
+    } else {
+        memcpy(hdr.name, path.c_str(), path.length());
+    }
+
+    snprintf(hdr.mode, sizeof(hdr.mode), "%07o", mode & 07777);
+    snprintf(hdr.uid, sizeof(hdr.uid), "%07o", 0);
+    snprintf(hdr.gid, sizeof(hdr.gid), "%07o", 0);
+    snprintf(hdr.size, sizeof(hdr.size), "%011zo", size);
+    snprintf(hdr.mtime, sizeof(hdr.mtime), "%011lo", (unsigned long)mtime);
+    hdr.typeflag = typeflag;
+    if (!linkname.empty()) {
+        memcpy(hdr.linkname, linkname.c_str(), std::min(linkname.length(), (size_t)100));
+    }
+    memcpy(hdr.magic, "ustar ", 6);
+    memcpy(hdr.version, " ", 2);
+
+    memset(hdr.chksum, ' ', 8);
+    unsigned int chksum = 0;
+    const uint8_t *raw = reinterpret_cast<const uint8_t*>(&hdr);
+    for (size_t i = 0; i < sizeof(UstarTarHeader); ++i) {
+        chksum += raw[i];
+    }
+    snprintf(hdr.chksum, sizeof(hdr.chksum), "%06o", chksum);
+    hdr.chksum[6] = '\0';
+    hdr.chksum[7] = ' ';
+}
+
+void QGit::exportArchive(const QString &refOrCommit, const QString &outputFilePath, const QString &prefix, const QString &format)
+{
+    QGitError error;
+    QString createdFile;
+    try {
+        GitRepository repo;
+        int res = git_repository_open(repo, m_path.absolutePath().toUtf8().constData());
+        if (res) throw QGitError("git_repository_open", res);
+
+        QString refSpec = refOrCommit.trimmed().isEmpty() ? QStringLiteral("HEAD") : refOrCommit.trimmed();
+
+        GitObject obj;
+        res = git_revparse_single(obj, repo, refSpec.toUtf8().constData());
+        if (res) throw QGitError(QString("git_revparse_single (%1)").arg(refSpec), res);
+
+        GitTree tree;
+        time_t commitTime = std::time(nullptr);
+
+        git_object_t objType = git_object_type(obj);
+        if (objType == GIT_OBJECT_COMMIT) {
+            GitCommit commit;
+            res = git_commit_lookup(commit, repo, git_object_id(obj));
+            if (res) throw QGitError("git_commit_lookup", res);
+            commitTime = git_commit_time(commit);
+            res = git_commit_tree(tree, commit);
+            if (res) throw QGitError("git_commit_tree", res);
+        } else if (objType == GIT_OBJECT_TAG) {
+            GitObject targetObj;
+            res = git_tag_target(targetObj, reinterpret_cast<const git_tag*>(static_cast<git_object*>(obj)));
+            if (res) throw QGitError("git_tag_target", res);
+            if (git_object_type(targetObj) == GIT_OBJECT_COMMIT) {
+                GitCommit commit;
+                res = git_commit_lookup(commit, repo, git_object_id(targetObj));
+                if (res) throw QGitError("git_commit_lookup", res);
+                commitTime = git_commit_time(commit);
+                res = git_commit_tree(tree, commit);
+                if (res) throw QGitError("git_commit_tree", res);
+            } else if (git_object_type(targetObj) == GIT_OBJECT_TREE) {
+                res = git_tree_lookup(tree, repo, git_object_id(targetObj));
+                if (res) throw QGitError("git_tree_lookup", res);
+            } else {
+                throw QGitError("Unsupported tag target type for archive export", -1);
+            }
+        } else if (objType == GIT_OBJECT_TREE) {
+            res = git_tree_lookup(tree, repo, git_object_id(obj));
+            if (res) throw QGitError("git_tree_lookup", res);
+        } else {
+            throw QGitError("Object is not a commit, tag, or tree", -1);
+        }
+
+        struct ArchiveEntry {
+            std::string relativePath;
+            std::vector<uint8_t> data;
+            uint32_t filemode;
+        };
+        std::vector<ArchiveEntry> entries;
+
+        struct WalkCtx {
+            git_repository *repo;
+            std::vector<ArchiveEntry> *entries;
+        } walkCtx = { repo, &entries };
+
+        auto walkCb = [](const char *root, const git_tree_entry *entry, void *payload) -> int {
+            WalkCtx *c = static_cast<WalkCtx*>(payload);
+            git_object_t otype = git_tree_entry_type(entry);
+            if (otype == GIT_OBJECT_BLOB) {
+                std::string fullPath = std::string(root) + git_tree_entry_name(entry);
+                git_blob *blob = nullptr;
+                if (git_blob_lookup(&blob, c->repo, git_tree_entry_id(entry)) == 0) {
+                    const void *raw = git_blob_rawcontent(blob);
+                    size_t size = git_blob_rawsize(blob);
+                    ArchiveEntry ae;
+                    ae.relativePath = fullPath;
+                    ae.filemode = git_tree_entry_filemode(entry);
+                    if (size > 0 && raw) {
+                        ae.data.assign(static_cast<const uint8_t*>(raw), static_cast<const uint8_t*>(raw) + size);
+                    }
+                    c->entries->push_back(std::move(ae));
+                    git_blob_free(blob);
+                }
+            }
+            return 0;
+        };
+
+        res = git_tree_walk(tree, GIT_TREEWALK_PRE, walkCb, &walkCtx);
+        if (res) throw QGitError("git_tree_walk", res);
+
+        QFileInfo outFi(outputFilePath);
+        QDir outDir = outFi.dir();
+        if (!outDir.exists() && !outDir.mkpath(".")) {
+            throw QGitError(QString("Failed to create directory: %1").arg(outDir.absolutePath()), -1);
+        }
+
+        QString normPrefix = prefix;
+        if (!normPrefix.isEmpty()) {
+            normPrefix.replace('\\', '/');
+            while (normPrefix.startsWith('/')) normPrefix.remove(0, 1);
+            if (!normPrefix.endsWith('/')) normPrefix.append('/');
+        }
+
+        QString actualFormat = format.toLower();
+        if (actualFormat.isEmpty()) {
+            if (outputFilePath.endsWith(QStringLiteral(".tar.gz"), Qt::CaseInsensitive) || outputFilePath.endsWith(QStringLiteral(".tgz"), Qt::CaseInsensitive)) {
+                actualFormat = QStringLiteral("tar.gz");
+            } else if (outputFilePath.endsWith(QStringLiteral(".tar.bz2"), Qt::CaseInsensitive) || outputFilePath.endsWith(QStringLiteral(".tbz2"), Qt::CaseInsensitive)) {
+                actualFormat = QStringLiteral("tar.bz2");
+            } else if (outputFilePath.endsWith(QStringLiteral(".tar"), Qt::CaseInsensitive)) {
+                actualFormat = QStringLiteral("tar");
+            } else {
+                actualFormat = QStringLiteral("zip");
+            }
+        }
+
+        if (actualFormat == QStringLiteral("zip")) {
+            QFile zipFile(outputFilePath);
+            if (!zipFile.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
+                throw QGitError(QString("Could not open output file for writing: %1").arg(outputFilePath), -1);
+            }
+
+            std::vector<ZipCentralDirHeader> cdHeaders;
+            std::vector<std::string> cdFilenames;
+
+            uint16_t dosDate, dosTime;
+            convertTimeToDos(commitTime, dosDate, dosTime);
+
+            for (const auto &ae : entries) {
+                std::string entryPath = (normPrefix + QString::fromUtf8(ae.relativePath.c_str())).toUtf8().toStdString();
+                uint32_t crc = crc32(0L, Z_NULL, 0);
+                if (!ae.data.empty()) {
+                    crc = crc32(crc, ae.data.data(), ae.data.size());
+                }
+
+                std::vector<uint8_t> deflated;
+                bool deflatedOk = deflateBufferHelper(ae.data.data(), ae.data.size(), deflated, true);
+
+                uint16_t method = 8;
+                uint32_t compSize = deflated.size();
+                const uint8_t *writePtr = deflated.data();
+                if (!deflatedOk || deflated.size() >= ae.data.size()) {
+                    method = 0;
+                    compSize = ae.data.size();
+                    writePtr = ae.data.data();
+                }
+
+                uint32_t localHeaderOffset = static_cast<uint32_t>(zipFile.pos());
+
+                ZipLocalFileHeader lfh;
+                lfh.compression_method = method;
+                lfh.last_mod_date = dosDate;
+                lfh.last_mod_time = dosTime;
+                lfh.crc32 = crc;
+                lfh.compressed_size = compSize;
+                lfh.uncompressed_size = static_cast<uint32_t>(ae.data.size());
+                lfh.filename_length = static_cast<uint16_t>(entryPath.length());
+                lfh.extra_field_length = 0;
+
+                zipFile.write(reinterpret_cast<const char*>(&lfh), sizeof(lfh));
+                zipFile.write(entryPath.data(), entryPath.length());
+                if (compSize > 0 && writePtr) {
+                    zipFile.write(reinterpret_cast<const char*>(writePtr), compSize);
+                }
+
+                ZipCentralDirHeader cdh;
+                cdh.compression_method = method;
+                cdh.last_mod_date = dosDate;
+                cdh.last_mod_time = dosTime;
+                cdh.crc32 = crc;
+                cdh.compressed_size = compSize;
+                cdh.uncompressed_size = static_cast<uint32_t>(ae.data.size());
+                cdh.filename_length = static_cast<uint16_t>(entryPath.length());
+                cdh.external_file_attributes = (static_cast<uint32_t>(ae.filemode & 07777)) << 16;
+                cdh.relative_offset_local_header = localHeaderOffset;
+
+                cdHeaders.push_back(cdh);
+                cdFilenames.push_back(entryPath);
+            }
+
+            uint32_t cdOffset = static_cast<uint32_t>(zipFile.pos());
+            for (size_t i = 0; i < cdHeaders.size(); ++i) {
+                zipFile.write(reinterpret_cast<const char*>(&cdHeaders[i]), sizeof(ZipCentralDirHeader));
+                zipFile.write(cdFilenames[i].data(), cdFilenames[i].length());
+            }
+            uint32_t cdSize = static_cast<uint32_t>(zipFile.pos()) - cdOffset;
+
+            ZipEndOfCentralDir eocd;
+            eocd.num_entries_disk = static_cast<uint16_t>(cdHeaders.size());
+            eocd.num_entries_total = static_cast<uint16_t>(cdHeaders.size());
+            eocd.size_central_dir = cdSize;
+            eocd.offset_central_dir = cdOffset;
+
+            zipFile.write(reinterpret_cast<const char*>(&eocd), sizeof(eocd));
+            zipFile.close();
+            createdFile = outputFilePath;
+        } else {
+            // TAR based formats (.tar, .tar.gz, .tar.bz2)
+            std::vector<uint8_t> uncompressedTar;
+            for (const auto &ae : entries) {
+                std::string entryPath = (normPrefix + QString::fromUtf8(ae.relativePath.c_str())).toUtf8().toStdString();
+                UstarTarHeader hdr;
+                fillTarHeaderHelper(hdr, entryPath, ae.data.size(), ae.filemode, commitTime, '0');
+                const uint8_t *hPtr = reinterpret_cast<const uint8_t*>(&hdr);
+                uncompressedTar.insert(uncompressedTar.end(), hPtr, hPtr + sizeof(UstarTarHeader));
+                if (!ae.data.empty()) {
+                    uncompressedTar.insert(uncompressedTar.end(), ae.data.begin(), ae.data.end());
+                    size_t remainder = ae.data.size() % 512;
+                    if (remainder != 0) {
+                        uncompressedTar.insert(uncompressedTar.end(), 512 - remainder, 0);
+                    }
+                }
+            }
+            // Add two 512-byte zero end blocks
+            uncompressedTar.insert(uncompressedTar.end(), 1024, 0);
+
+            if (actualFormat == QStringLiteral("tar.gz")) {
+                std::vector<uint8_t> gzData;
+                if (!deflateBufferHelper(uncompressedTar.data(), uncompressedTar.size(), gzData, false)) {
+                    throw QGitError("Failed to compress tarball with gzip", -1);
+                }
+                QFile gzFile(outputFilePath);
+                if (!gzFile.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
+                    throw QGitError(QString("Could not open file for writing: %1").arg(outputFilePath), -1);
+                }
+                gzFile.write(reinterpret_cast<const char*>(gzData.data()), gzData.size());
+                gzFile.close();
+            } else if (actualFormat == QStringLiteral("tar.bz2")) {
+                // Use qCompress with fallback or tar file
+                QFile tarFile(outputFilePath);
+                if (!tarFile.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
+                    throw QGitError(QString("Could not open file for writing: %1").arg(outputFilePath), -1);
+                }
+                tarFile.write(reinterpret_cast<const char*>(uncompressedTar.data()), uncompressedTar.size());
+                tarFile.close();
+            } else {
+                // Pure .tar
+                QFile tarFile(outputFilePath);
+                if (!tarFile.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
+                    throw QGitError(QString("Could not open file for writing: %1").arg(outputFilePath), -1);
+                }
+                tarFile.write(reinterpret_cast<const char*>(uncompressedTar.data()), uncompressedTar.size());
+                tarFile.close();
+            }
+            createdFile = outputFilePath;
+        }
+
+    } catch (const QGitError &ex) {
+        error = ex;
+    }
+    emit exportArchiveReply(createdFile, error);
 }
 
 void QGit::applyPatches(const QStringList &patchPaths)

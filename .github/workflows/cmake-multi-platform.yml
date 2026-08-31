@@ -47,7 +47,7 @@ jobs:
       if: runner.os == 'Linux'
       run: |
         sudo apt-get update
-        sudo apt-get install -y qt6-base-dev qt6-svg-dev libgit2-dev ninja-build
+        sudo apt-get install -y qt6-base-dev qt6-svg-dev libgit2-dev zlib1g-dev ninja-build
 
     - name: Install dependencies on macOS
       if: runner.os == 'macOS'

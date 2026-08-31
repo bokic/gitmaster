@@ -13,10 +13,12 @@ BuildRequires:  gcc-c++
 BuildRequires:  qt6-qtbase-devel
 BuildRequires:  qt6-qtsvg-devel
 BuildRequires:  libgit2-devel
+BuildRequires:  zlib-devel
 
 Requires:       qt6-qtbase
 Requires:       qt6-qtsvg
 Requires:       libgit2
+Requires:       zlib
 
 %description
 GitMaster is a lightweight, fast, cross-platform GUI client for Git,

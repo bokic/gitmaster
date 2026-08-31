@@ -21,6 +21,7 @@
 #include "qgitsubmodulepointerdialog.h"
 #include "qgitremovesubmoduledialog.h"
 #include "qgitexportpatchdialog.h"
+#include "qgitexportarchivedialog.h"
 #include <qgitbranch.h>
 #include <QDragEnterEvent>
 #include <QDropEvent>
@@ -249,6 +250,8 @@ QGitRepository::QGitRepository(const QString &path, QWidget *parent)
     connect(m_git, &QGit::applyPatchesReply, this, &QGitRepository::repositoryApplyPatchesReply);
     connect(this, &QGitRepository::repositoryExportPatches, m_git, &QGit::exportPatches);
     connect(m_git, &QGit::exportPatchesReply, this, &QGitRepository::repositoryExportPatchesReply);
+    connect(this, &QGitRepository::repositoryExportArchive, m_git, &QGit::exportArchive);
+    connect(m_git, &QGit::exportArchiveReply, this, &QGitRepository::repositoryExportArchiveReply);
     connect(this, &QGitRepository::repositorySetNote, m_git, &QGit::setNote);
     connect(m_git, &QGit::setNoteReply, this, &QGitRepository::repositorySetNoteReply);
     connect(this, &QGitRepository::repositoryRemoveNote, m_git, &QGit::removeNote);
@@ -1687,6 +1690,7 @@ void QGitRepository::on_branchesTreeView_customContextMenuRequested(const QPoint
     {
         QMenu menu(this);
         QAction *exportPatchAction = menu.addAction(tr("Export Patch (format-patch)..."));
+        QAction *exportArchiveAction = menu.addAction(tr("Export Archive (zip/tar.gz)..."));
         QAction *applyPatchAction = menu.addAction(tr("Apply Patch..."));
         QAction *cleanAction = menu.addAction(tr("Clean Working Directory..."));
         menu.addSeparator();
@@ -1697,6 +1701,10 @@ void QGitRepository::on_branchesTreeView_customContextMenuRequested(const QPoint
         if (selectedAction == exportPatchAction)
         {
             exportPatchDialog(m_git ? m_git->headCommitId() : QString());
+        }
+        else if (selectedAction == exportArchiveAction)
+        {
+            exportArchiveDialog(m_git ? m_git->headCommitId() : QString());
         }
         else if (selectedAction == applyPatchAction)
         {
@@ -1925,6 +1933,7 @@ void QGitRepository::on_branchesTreeView_customContextMenuRequested(const QPoint
         QMenu menu(this);
         QAction *checkoutAction = menu.addAction(tr("Checkout Branch"));
         QAction *exportPatchAction = menu.addAction(tr("Export Patches (format-patch)..."));
+        QAction *exportArchiveAction = menu.addAction(tr("Export Archive (zip/tar.gz)..."));
         QAction *renameAction = menu.addAction(tr("Rename Branch..."));
         QAction *setUpstreamAction = menu.addAction(tr("Set Upstream..."));
         menu.addSeparator();
@@ -1946,6 +1955,10 @@ void QGitRepository::on_branchesTreeView_customContextMenuRequested(const QPoint
         else if (selectedAction == exportPatchAction)
         {
             exportPatchDialog(fullName);
+        }
+        else if (selectedAction == exportArchiveAction)
+        {
+            exportArchiveDialog(fullName);
         }
         else if (selectedAction == renameAction)
         {
@@ -2000,23 +2013,24 @@ void QGitRepository::on_branchesTreeView_customContextMenuRequested(const QPoint
         QString branchName = fullName.section('/', 1);
 
         QMenu menu(this);
-        QAction *pullAction = menu.addAction(tr("Pull into Current Branch (Merge)"));
-        QAction *pullRebaseAction = menu.addAction(tr("Pull into Current Branch (Rebase)"));
-        QAction *fetchAction = menu.addAction(tr("Fetch from '%1'").arg(remoteName));
+        QAction *pullMergeAction = menu.addAction(tr("Pull (Merge into current branch)"));
+        QAction *pullRebaseAction = menu.addAction(tr("Pull (Rebase onto current branch)"));
         menu.addSeparator();
+        QAction *fetchAction = menu.addAction(tr("Fetch from '%1'").arg(remoteName));
         QAction *checkoutAction = menu.addAction(tr("Checkout as Local Branch..."));
+        QAction *exportArchiveAction = menu.addAction(tr("Export Archive (zip/tar.gz)..."));
         menu.addSeparator();
         QAction *showReflogAction = menu.addAction(tr("Show Reference Log (Reflog)..."));
         
         QAction *selectedAction = menu.exec(ui->branchesTreeView->viewport()->mapToGlobal(pos));
-        if (selectedAction == pullAction)
+        if (selectedAction == pullMergeAction)
         {
-            emit statusMessage(tr("Pulling %1...").arg(fullName));
+            emit statusMessage(tr("Pulling (merge) from %1/%2...").arg(remoteName, branchName));
             emit repositoryPull(remoteName, branchName, false);
         }
         else if (selectedAction == pullRebaseAction)
         {
-            emit statusMessage(tr("Pulling (Rebase) %1...").arg(fullName));
+            emit statusMessage(tr("Pulling (rebase) from %1/%2...").arg(remoteName, branchName));
             emit repositoryPull(remoteName, branchName, true);
         }
         else if (selectedAction == fetchAction)
@@ -2039,6 +2053,10 @@ void QGitRepository::on_branchesTreeView_customContextMenuRequested(const QPoint
                 emit repositoryCheckoutBranch(fullName);
             }
         }
+        else if (selectedAction == exportArchiveAction)
+        {
+            exportArchiveDialog(fullName);
+        }
         else if (selectedAction == showReflogAction)
         {
             QGitReflogDialog dlg(fullName, this, this);
@@ -2048,11 +2066,17 @@ void QGitRepository::on_branchesTreeView_customContextMenuRequested(const QPoint
     else if (type == "Tag")
     {
         QMenu menu(this);
+        QAction *exportArchiveAction = menu.addAction(tr("Export Archive (zip/tar.gz)..."));
+        menu.addSeparator();
         QAction *renameAction = menu.addAction(tr("Rename Tag"));
         QAction *deleteAction = menu.addAction(tr("Delete Tag"));
         
         QAction *selectedAction = menu.exec(ui->branchesTreeView->viewport()->mapToGlobal(pos));
-        if (selectedAction == renameAction)
+        if (selectedAction == exportArchiveAction)
+        {
+            exportArchiveDialog(QString("refs/tags/") + fullName);
+        }
+        else if (selectedAction == renameAction)
         {
             ui->branchesTreeView->editItem(item, 0);
         }
@@ -2910,6 +2934,7 @@ void QGitRepository::on_logHistory_commits_customContextMenuRequested(const QPoi
     QAction *createTagAction = menu.addAction(tr("Create Tag at '%1'...").arg(shortHash));
     menu.addSeparator();
     QAction *exportPatchAction = menu.addAction(tr("Export Patch (format-patch)..."));
+    QAction *exportArchiveAction = menu.addAction(tr("Export Archive (zip/tar.gz)..."));
     QAction *applyPatchAction = menu.addAction(tr("Apply Patch..."));
     menu.addSeparator();
     QAction *editNoteAction = menu.addAction(tr("Edit Git Note..."));
@@ -3033,6 +3058,8 @@ void QGitRepository::on_logHistory_commits_customContextMenuRequested(const QPoi
             }
         } else if (res == exportPatchAction) {
             exportPatchDialog(selectedHash);
+        } else if (res == exportArchiveAction) {
+            exportArchiveDialog(selectedHash);
         } else if (res == applyPatchAction) {
             applyPatchDialog();
         }
@@ -3137,6 +3164,37 @@ void QGitRepository::exportPatchDialog(const QString &commitHash)
 
         emit statusMessage(tr("Exporting patches..."));
         emit repositoryExportPatches(commitIds, outputDir, QString(), subjectPrefix, numbered, detectRenames);
+    }
+}
+
+void QGitRepository::repositoryExportArchiveReply(const QString &createdFile, const QGitError &error)
+{
+    emit statusMessage(tr("Ready"));
+    if (error.errorCode() != 0) {
+        QMessageBox::critical(this, tr("Export Archive Error"), error.errorString());
+    } else {
+        QMessageBox::information(this, tr("Export Archive Successful"),
+            tr("Successfully exported archive:\n%1").arg(createdFile));
+    }
+}
+
+void QGitRepository::exportArchiveDialog(const QString &refOrCommit)
+{
+    QString target = refOrCommit;
+    if (target.isEmpty() && m_git) {
+        target = m_git->headCommitId();
+    }
+    QGitExportArchiveDialog dlg(m_git, target, this);
+    if (dlg.exec() == QDialog::Accepted) {
+        QString outputFile = dlg.outputFilePath();
+        QString targetRef = dlg.targetRefOrCommit();
+        QString prefix = dlg.prefix();
+        QString format = dlg.format();
+
+        if (outputFile.isEmpty()) return;
+
+        emit statusMessage(tr("Exporting archive..."));
+        emit repositoryExportArchive(targetRef, outputFile, prefix, format);
     }
 }
 

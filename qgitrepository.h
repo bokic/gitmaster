@@ -40,6 +40,7 @@ public:
     void removeSubmoduleDialog(const QString &subName = QString());
     void submodulePointerDialog(const QString &subName = QString());
     void exportPatchDialog(const QString &commitHash = QString());
+    void exportArchiveDialog(const QString &refOrCommit = QString());
     void applyPatchDialog();
     void applyPatchesPrompt(const QStringList &patchFiles);
     void continueOperation();
@@ -92,6 +93,7 @@ signals:
     void repositoryApplyPatch(const QString &patchPath);
     void repositoryApplyPatches(const QStringList &patchPaths);
     void repositoryExportPatches(const QStringList &commitIds, const QString &outputDir, const QString &customFilePath, const QString &subjectPrefix, bool numbered, bool detectRenames);
+    void repositoryExportArchive(const QString &refOrCommit, const QString &outputFilePath, const QString &prefix, const QString &format);
     void repositorySetNote(const QString &commitHash, const QString &note);
     void repositoryRemoveNote(const QString &commitHash);
     void repositoryCreateLocalBranch(const QString &name, const QString &commit_id, bool checkout, bool force);
@@ -158,6 +160,7 @@ private slots:
     void repositoryApplyPatchReply(const QGitError &error);
     void repositoryApplyPatchesReply(const QStringList &appliedFiles, const QGitError &error);
     void repositoryExportPatchesReply(const QStringList &createdFiles, const QGitError &error);
+    void repositoryExportArchiveReply(const QString &createdFile, const QGitError &error);
     void repositorySetNoteReply(const QGitError &error);
     void repositoryRemoveNoteReply(const QGitError &error);
     void repositoryCommitReply(const QString &commit_id, const QGitError &error);

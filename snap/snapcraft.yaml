@@ -28,8 +28,10 @@ parts:
       - git
       - libgit2-dev
       - build-essential
+      - zlib1g-dev
     stage-packages:
       - libgit2-1.7
+      - zlib1g
     cmake-parameters:
       - -DCMAKE_BUILD_TYPE=Release
     override-build: |

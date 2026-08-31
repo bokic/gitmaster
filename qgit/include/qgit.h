@@ -121,6 +121,7 @@ public:
     QList<QGitReflogEntry> getReflog(const QString &refName = QStringLiteral("HEAD")) const;
     QList<QGitBlameHunk> blameFile(const QString &filePath, const QString &commitId = QString()) const;
     QList<QGitBranch> branches(git_branch_t type) const;
+    QList<QGitTag> tags() const;
     bool hasCommitId(const QString &commitId) const;
     QString configString(const QString &key) const;
     void setConfigString(const QString &key, const QString &value, bool global = false);
@@ -210,6 +211,7 @@ public slots:
     void applyPatch(const QString &patchPath);
     void applyPatches(const QStringList &patchPaths);
     void exportPatches(const QStringList &commitIds, const QString &outputDir, const QString &customFilePath = QString(), const QString &subjectPrefix = QString("PATCH"), bool numbered = true, bool detectRenames = true);
+    void exportArchive(const QString &refOrCommit, const QString &outputFilePath, const QString &prefix = QString(), const QString &format = QStringLiteral("zip"));
     void continueOperation();
     void abortOperation();
     void skipRebase();
@@ -269,6 +271,7 @@ signals:
     void applyPatchReply(const QGitError &error);
     void applyPatchesReply(const QStringList &appliedFiles, const QGitError &error);
     void exportPatchesReply(const QStringList &createdFiles, const QGitError &error);
+    void exportArchiveReply(const QString &createdFile, const QGitError &error);
     void setNoteReply(const QGitError &error);
     void removeNoteReply(const QGitError &error);
     void cherrypickReply(const QGitError &error);
