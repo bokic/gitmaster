@@ -9,7 +9,7 @@ Overview of packaging pipelines, formats, and distribution targets for GitMaster
 | Packaging Target | Distribution / Platform | Status | Pipeline / Script Location | Details |
 |---|---|---|---|---|
 | **Arch Linux AUR** | Arch Linux / Manjaro | ✅ **Live** | [AUR `gitmaster`](https://aur.archlinux.org/packages/gitmaster) *(Separate git repo)* | `PKGBUILD` packaging for Arch users via `yay -S gitmaster` |
-| **Flatpak** | Flathub / All Linux | ✅ **Ready** | [`org.gitmaster.GitMaster.yaml`](org.gitmaster.GitMaster.yaml), [`org.gitmaster.GitMaster.metainfo.xml`](org.gitmaster.GitMaster.metainfo.xml) | KDE/Qt6 6.8 SDK runtime, builds `libgit2`, AppStream validated |
+| **Flatpak** | Flathub / All Linux | ✅ **Ready** | [`io.github.bokic.gitmaster.yaml`](io.github.bokic.gitmaster.yaml), [`io.github.bokic.gitmaster.metainfo.xml`](io.github.bokic.gitmaster.metainfo.xml) | KDE/Qt6 6.8 SDK runtime, builds `libgit2`, AppStream validated |
 | **AppImage** | Universal Linux | ✅ **Ready** | [`build_appimage.sh`](build_appimage.sh) | Bundles Qt6 & dependencies via `linuxdeploy` and `linuxdeploy-plugin-qt` |
 | **Snap** | Canonical Snap Store | ✅ **Ready** | [`snap/snapcraft.yaml`](snap/snapcraft.yaml) | Uses `kde-neon-6` extension on Ubuntu `core24` |
 | **RPM** | Fedora / RHEL / openSUSE | ✅ **Ready** | [`gitmaster.spec`](gitmaster.spec) | Standard RPM spec with AppStream metainfo & desktop integration |
@@ -30,8 +30,8 @@ yay -S gitmaster
 To build and install locally:
 ```bash
 flatpak install -y flathub org.kde.Platform//6.8 org.kde.Sdk//6.8
-flatpak-builder --user --install --force-clean build-flatpak org.gitmaster.GitMaster.yaml
-flatpak run org.gitmaster.GitMaster
+flatpak-builder --user --install --force-clean build-flatpak io.github.bokic.gitmaster.yaml
+flatpak run io.github.bokic.gitmaster
 ```
 
 ### 3. AppImage

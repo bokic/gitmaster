@@ -7,14 +7,14 @@ set -e
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 
-SVG_ICON="$PROJECT_ROOT/org.gitmaster.GitMaster.svg"
+SVG_ICON="$PROJECT_ROOT/io.github.bokic.gitmaster.svg"
 ICONSET_DIR="$SCRIPT_DIR/gitmaster.iconset"
 ICNS_FILE="$SCRIPT_DIR/gitmaster.icns"
 
 echo "Generating macOS application icon..."
 
 if [ ! -f "$SVG_ICON" ]; then
-    echo "Error: org.gitmaster.GitMaster.svg not found at $SVG_ICON"
+    echo "Error: io.github.bokic.gitmaster.svg not found at $SVG_ICON"
     exit 1
 fi
 
