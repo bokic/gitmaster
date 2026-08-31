@@ -33,4 +33,4 @@ Development plan and upcoming features for GitMaster.
 
 ### Visual Identity & Distribution
 - [ ] **Iconography Overhaul**: Redesign and polish all system icons and brand assets for a premium feel.
-- [ ] **Cross-Platform Packaging**: AppImage, Flatpak, and macOS bundle distribution pipelines.
+- [x] **Cross-Platform Packaging**: AppImage, Flatpak, and macOS bundle distribution pipelines.
