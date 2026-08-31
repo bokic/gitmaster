@@ -36,6 +36,7 @@ built using C++ (C++20), Qt6, and libgit2.
 %{_bindir}/gitmaster
 %{_datadir}/applications/org.gitmaster.GitMaster.desktop
 %{_datadir}/icons/hicolor/scalable/apps/org.gitmaster.GitMaster.svg
+%{_datadir}/metainfo/org.gitmaster.GitMaster.metainfo.xml
 
 %changelog
 * Mon Jul 13 2026 Developer - 0.8.0-1

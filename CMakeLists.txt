@@ -303,3 +303,8 @@ install(
     FILES org.gitmaster.GitMaster.svg
     DESTINATION share/icons/hicolor/scalable/apps
 )
+
+install(
+    FILES org.gitmaster.GitMaster.metainfo.xml
+    DESTINATION share/metainfo
+)
