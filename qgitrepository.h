@@ -37,6 +37,7 @@ public:
     void rebase();
     void interactiveRebase(const QString &baseCommitId = QString());
     void addSubmoduleDialog();
+    void removeSubmoduleDialog(const QString &subName = QString());
     void submodulePointerDialog(const QString &subName = QString());
     void continueOperation();
     void abortOperation();
@@ -81,6 +82,7 @@ signals:
     void repositoryInitSubmodule(const QString &name);
     void repositorySyncSubmodule(const QString &name);
     void repositoryAddSubmodule(const QString &url, const QString &path, const QString &branch, bool force);
+    void repositoryRemoveSubmodule(const QString &name, bool removeWorkingDirectory, bool removeGitDir, bool force);
     void repositorySetSubmodulePointer(const QString &name, const QString &targetRefOrCommit, const QString &branch);
     void repositoryClean(bool includeIgnored, bool removeDirectories);
     void repositoryApplyPatch(const QString &patchPath);
@@ -127,6 +129,7 @@ private slots:
     void repositoryInitSubmoduleReply(const QGitError &error);
     void repositorySyncSubmoduleReply(const QGitError &error);
     void repositoryAddSubmoduleReply(const QGitError &error);
+    void repositoryRemoveSubmoduleReply(const QGitError &error);
     void repositorySetSubmodulePointerReply(const QGitError &error);
     void repositoryCreateLocalBranchReply(const QGitError &error);
     void repositoryCherrypickReply(const QGitError &error);

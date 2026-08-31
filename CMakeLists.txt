@@ -94,6 +94,7 @@ set(PROJECT_HEADERS
     qgitinteractiverebasedialog.h
     qgitaddsubmoduledialog.h
     qgitsubmodulepointerdialog.h
+    qgitremovesubmoduledialog.h
 
     qgitrepotreeitemdelegate.h
     qgitrepotreewidget.h
@@ -153,6 +154,7 @@ set(PROJECT_SOURCES
     qgitinteractiverebasedialog.cpp qgitinteractiverebasedialog.ui
     qgitaddsubmoduledialog.cpp     qgitaddsubmoduledialog.ui
     qgitsubmodulepointerdialog.cpp qgitsubmodulepointerdialog.ui
+    qgitremovesubmoduledialog.cpp  qgitremovesubmoduledialog.ui
 
     qgitrepotreeitemdelegate.cpp
     qgitrepotreewidget.cpp

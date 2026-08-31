@@ -19,6 +19,7 @@
 #include "qgitinteractiverebasedialog.h"
 #include "qgitaddsubmoduledialog.h"
 #include "qgitsubmodulepointerdialog.h"
+#include "qgitremovesubmoduledialog.h"
 #include <qgitbranch.h>
 
 #include <QDebug>
@@ -262,6 +263,8 @@ QGitRepository::QGitRepository(const QString &path, QWidget *parent)
     connect(m_git, &QGit::syncSubmoduleReply, this, &QGitRepository::repositorySyncSubmoduleReply);
     connect(this, &QGitRepository::repositoryAddSubmodule, m_git, &QGit::addSubmodule);
     connect(m_git, &QGit::addSubmoduleReply, this, &QGitRepository::repositoryAddSubmoduleReply);
+    connect(this, &QGitRepository::repositoryRemoveSubmodule, m_git, &QGit::removeSubmodule);
+    connect(m_git, &QGit::removeSubmoduleReply, this, &QGitRepository::repositoryRemoveSubmoduleReply);
     connect(this, &QGitRepository::repositorySetSubmodulePointer, m_git, &QGit::setSubmodulePointer);
     connect(m_git, &QGit::setSubmodulePointerReply, this, &QGitRepository::repositorySetSubmodulePointerReply);
     connect(this, &QGitRepository::repositoryCheckoutBranch, m_git, &QGit::checkoutBranch);
@@ -620,6 +623,57 @@ void QGitRepository::repositoryAddSubmoduleReply(const QGitError &error)
     if (error.errorCode()) {
         QMessageBox::critical(this, tr("Add Submodule Error"), 
                               tr("Failed to add submodule:\n\n%1").arg(error.errorString()));
+    } else {
+        refreshData();
+    }
+}
+
+void QGitRepository::removeSubmoduleDialog(const QString &subName)
+{
+    QGitSubmodule targetSub;
+    bool found = false;
+
+    if (!subName.isEmpty()) {
+        for (const auto &s : m_submodules) {
+            if (s.name == subName || s.path == subName) {
+                targetSub = s;
+                found = true;
+                break;
+            }
+        }
+    }
+
+    if (!found) {
+        // Look up dynamically if not found in cache
+        QList<QGitSubmodule> subs = m_git->submodules();
+        for (const auto &s : subs) {
+            if (subName.isEmpty() || s.name == subName || s.path == subName) {
+                targetSub = s;
+                found = true;
+                break;
+            }
+        }
+    }
+
+    if (!found) {
+        QMessageBox::warning(this, tr("Submodule Not Found"), tr("Could not find submodule '%1'.").arg(subName));
+        return;
+    }
+
+    QGitRemoveSubmoduleDialog dlg(QDir(m_path), targetSub, this);
+    if (dlg.exec() == QDialog::Accepted) {
+        emit statusMessage(tr("Removing submodule %1...").arg(targetSub.name));
+        emit repositoryRemoveSubmodule(targetSub.name, dlg.removeWorkingDirectory(), dlg.removeGitDir(), dlg.force());
+    }
+}
+
+void QGitRepository::repositoryRemoveSubmoduleReply(const QGitError &error)
+{
+    emit clearStatusMessage();
+
+    if (error.errorCode()) {
+        QMessageBox::critical(this, tr("Remove Submodule Error"),
+                              tr("Failed to remove submodule:\n\n%1").arg(error.errorString()));
     } else {
         refreshData();
     }
@@ -1745,6 +1799,8 @@ void QGitRepository::on_branchesTreeView_customContextMenuRequested(const QPoint
         QAction *updateAction = menu.addAction(tr("Update Submodule"));
         QAction *initAction = menu.addAction(tr("Initialize Submodule"));
         QAction *syncAction = menu.addAction(tr("Sync URL"));
+        menu.addSeparator();
+        QAction *removeAction = menu.addAction(tr("Remove Submodule..."));
 
         QAction *selectedAction = menu.exec(ui->branchesTreeView->viewport()->mapToGlobal(pos));
         if (selectedAction == openAction)
@@ -1774,6 +1830,10 @@ void QGitRepository::on_branchesTreeView_customContextMenuRequested(const QPoint
         {
             emit statusMessage(tr("Synchronizing submodule %1...").arg(subName));
             emit repositorySyncSubmodule(subName);
+        }
+        else if (selectedAction == removeAction)
+        {
+            removeSubmoduleDialog(subName);
         }
         return;
     }
@@ -3048,6 +3108,9 @@ void QGitRepository::keyPressEvent(QKeyEvent *event)
             if (res == QMessageBox::Yes) {
                 emit repositoryDeleteTag(fullName);
             }
+        } else if (type == "Submodule") {
+            QString subName = item->data(0, Qt::UserRole).toString();
+            removeSubmoduleDialog(subName);
         }
     }
     QWidget::keyPressEvent(event);

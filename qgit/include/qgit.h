@@ -157,6 +157,7 @@ public slots:
     void initSubmodule(const QString &name);
     void syncSubmodule(const QString &name);
     void addSubmodule(const QString &url, const QString &path, const QString &branch = QString(), bool force = false);
+    void removeSubmodule(const QString &name, bool removeWorkingDirectory = true, bool removeGitDir = false, bool force = false);
     void setSubmodulePointer(const QString &name, const QString &targetRefOrCommit, const QString &branch = QString());
     void createLocalBranch(const QString &name, const QString &commit_id = "", bool checkout = false, bool force = false);
     void cherrypick(const QString &commitId);
@@ -220,6 +221,7 @@ signals:
     void initSubmoduleReply(const QGitError &error);
     void syncSubmoduleReply(const QGitError &error);
     void addSubmoduleReply(const QGitError &error);
+    void removeSubmoduleReply(const QGitError &error);
     void setSubmodulePointerReply(const QGitError &error);
     void statusReply(const QMap<git_status_t, int> &items, const QGitError &error);
     void listBranchesAndTagsReply(const QList<QGitBranch> &branches, const QList<QGitTag> &tags, const QList<QGitSubmodule> &submodules, const QList<QGitWorktree> &worktrees, bool hasRemotes, bool hasCommitsToPush, const QGitError &error);

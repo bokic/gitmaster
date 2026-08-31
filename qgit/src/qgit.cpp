@@ -2011,6 +2011,167 @@ void QGit::addSubmodule(const QString &url, const QString &path, const QString &
     emit addSubmoduleReply(error);
 }
 
+void QGit::removeSubmodule(const QString &name, bool removeWorkingDirectory, bool removeGitDir, bool force)
+{
+    QGitError error;
+    try {
+        GitRepository repo;
+        int res = git_repository_open(repo, m_path.absolutePath().toUtf8().constData());
+        if (res) throw QGitError("git_repository_open", res);
+
+        QString subName = name;
+        QString subPath;
+
+        GitSubmodule sm;
+        res = git_submodule_lookup(sm, repo, name.toUtf8().constData());
+        if (res == 0) {
+            const char *p = git_submodule_path(sm);
+            if (p) subPath = QString::fromUtf8(p);
+            const char *n = git_submodule_name(sm);
+            if (n) subName = QString::fromUtf8(n);
+        } else {
+            // If not found by direct lookup, find in submodules list
+            auto allSubs = submodules();
+            for (const auto &s : allSubs) {
+                if (s.name == name || s.path == name) {
+                    subName = s.name;
+                    subPath = s.path;
+                    break;
+                }
+            }
+        }
+
+        if (subPath.isEmpty()) {
+            subPath = subName;
+        }
+
+        // Check for uncommitted changes in submodule working copy if not force
+        if (!force) {
+            GitRepository sub_repo;
+            if (sm.value && git_submodule_open(sub_repo, sm) == 0) {
+                git_status_options opt = GIT_STATUS_OPTIONS_INIT;
+                opt.show = GIT_STATUS_SHOW_INDEX_AND_WORKDIR;
+                opt.flags = GIT_STATUS_OPT_INCLUDE_UNTRACKED | GIT_STATUS_OPT_RECURSE_UNTRACKED_DIRS;
+                git_status_list *statusList = nullptr;
+                if (git_status_list_new(&statusList, sub_repo, &opt) == 0) {
+                    size_t count = git_status_list_entrycount(statusList);
+                    git_status_list_free(statusList);
+                    if (count > 0) {
+                        throw QGitError("removeSubmodule", -1, QStringLiteral("Submodule '%1' contains uncommitted changes. Use force removal to proceed.").arg(subName));
+                    }
+                }
+            }
+        }
+
+        // 1. De-initialize in .git/config (remove submodule.<name>.*)
+        GitConfig repo_cfg;
+        if (git_repository_config(repo_cfg, repo) == 0) {
+            git_config_iterator *iter = nullptr;
+            if (git_config_iterator_new(&iter, repo_cfg) == 0) {
+                git_config_entry *entry = nullptr;
+                QStringList keysToDelete;
+                QString prefix1 = QStringLiteral("submodule.%1.").arg(subName).toLower();
+                QString prefix2 = QStringLiteral("submodule.%1.").arg(subPath).toLower();
+                while (git_config_next(&entry, iter) == 0) {
+                    QString keyName = QString::fromUtf8(entry->name).toLower();
+                    if (keyName.startsWith(prefix1) || keyName.startsWith(prefix2)) {
+                        keysToDelete.append(QString::fromUtf8(entry->name));
+                    }
+                }
+                git_config_iterator_free(iter);
+                for (const QString &k : keysToDelete) {
+                    git_config_delete_entry(repo_cfg, k.toUtf8().constData());
+                }
+            }
+        }
+
+        // 2. Remove from .gitmodules
+        QString gitmodulesPath = m_path.filePath(QStringLiteral(".gitmodules"));
+        if (QFile::exists(gitmodulesPath)) {
+            GitConfig submodules_cfg;
+            if (git_config_open_ondisk(submodules_cfg, gitmodulesPath.toUtf8().constData()) == 0) {
+                git_config_iterator *iter = nullptr;
+                if (git_config_iterator_new(&iter, submodules_cfg) == 0) {
+                    git_config_entry *entry = nullptr;
+                    QStringList keysToDelete;
+                    QString prefix1 = QStringLiteral("submodule.%1.").arg(subName).toLower();
+                    QString prefix2 = QStringLiteral("submodule.%1.").arg(subPath).toLower();
+                    while (git_config_next(&entry, iter) == 0) {
+                        QString keyName = QString::fromUtf8(entry->name).toLower();
+                        if (keyName.startsWith(prefix1) || keyName.startsWith(prefix2)) {
+                            keysToDelete.append(QString::fromUtf8(entry->name));
+                        }
+                    }
+                    git_config_iterator_free(iter);
+                    for (const QString &k : keysToDelete) {
+                        git_config_delete_entry(submodules_cfg, k.toUtf8().constData());
+                    }
+                }
+            }
+
+            // Check if .gitmodules is now empty
+            bool hasRemainingEntries = false;
+            GitConfig check_cfg;
+            if (git_config_open_ondisk(check_cfg, gitmodulesPath.toUtf8().constData()) == 0) {
+                git_config_iterator *iter = nullptr;
+                if (git_config_iterator_new(&iter, check_cfg) == 0) {
+                    git_config_entry *entry = nullptr;
+                    if (git_config_next(&entry, iter) == 0) {
+                        hasRemainingEntries = true;
+                    }
+                    git_config_iterator_free(iter);
+                }
+            }
+            if (!hasRemainingEntries) {
+                QFile::remove(gitmodulesPath);
+            }
+        }
+
+        // 3. Remove submodule from superproject index (git rm)
+        GitIndex index;
+        res = git_repository_index(index, repo);
+        if (res == 0) {
+            git_index_remove_bypath(index, subPath.toUtf8().constData());
+            if (QFile::exists(gitmodulesPath)) {
+                git_index_add_bypath(index, ".gitmodules");
+            } else {
+                git_index_remove_bypath(index, ".gitmodules");
+            }
+            git_index_write(index);
+        }
+
+        // 4. Remove working directory files
+        if (removeWorkingDirectory && !subPath.isEmpty()) {
+            QString workingDirPath = m_path.filePath(subPath);
+            QDir workingDir(workingDirPath);
+            if (workingDir.exists()) {
+                workingDir.removeRecursively();
+            }
+        }
+
+        // 5. Remove cached git directory in .git/modules if requested
+        if (removeGitDir) {
+            const char *gitDirPathRaw = git_repository_path(repo);
+            if (gitDirPathRaw) {
+                QDir gitDir(QString::fromUtf8(gitDirPathRaw));
+                QString modulePath = gitDir.filePath(QStringLiteral("modules/%1").arg(subName));
+                if (QDir(modulePath).exists()) {
+                    QDir(modulePath).removeRecursively();
+                }
+                if (subName != subPath) {
+                    QString modulePath2 = gitDir.filePath(QStringLiteral("modules/%1").arg(subPath));
+                    if (QDir(modulePath2).exists()) {
+                        QDir(modulePath2).removeRecursively();
+                    }
+                }
+            }
+        }
+    } catch (const QGitError &ex) {
+        error = ex;
+    }
+    emit removeSubmoduleReply(error);
+}
+
 void QGit::setSubmodulePointer(const QString &name, const QString &targetRefOrCommit, const QString &branch)
 {
     QGitError error;

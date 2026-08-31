@@ -14,7 +14,7 @@ Development plan and upcoming features for GitMaster.
 ### Submodules Management
 - [x] **Add Submodule Dialog**: Implement dialog for cloning and adding new submodules (`git submodule add`).
 - [x] **Submodule Reference & Pointer Picker**: Dialog to select specific branches, tags, or commits to update tracked submodule references.
-- [ ] **Remove Submodule Support**: Safely de-initialize and unregister submodules (`git submodule deinit` & `git rm`).
+- [x] **Remove Submodule Support**: Safely de-initialize and unregister submodules (`git submodule deinit` & `git rm`).
 - [ ] **Recursive Submodule Fetch/Pull**: Option to automatically fetch and update submodules recursively.
 
 ### Repository Management
