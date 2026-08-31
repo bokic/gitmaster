@@ -69,6 +69,10 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/bin)
 
+if (WIN32 AND NOT DEFINED ZLIB_ROOT)
+    set(ZLIB_ROOT "${CMAKE_SOURCE_DIR}")
+endif()
+
 find_package(Qt6 COMPONENTS Gui Widgets Network Svg REQUIRED)
 find_package(ZLIB REQUIRED)
 
@@ -265,6 +269,7 @@ target_link_libraries(gitmaster PRIVATE
 if (WIN32)
     target_link_directories(gitmaster PRIVATE
         bin
+        lib
     )
 endif()
 

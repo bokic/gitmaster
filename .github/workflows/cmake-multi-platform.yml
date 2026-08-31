@@ -68,20 +68,7 @@ jobs:
       shell: cmd
       working-directory: windows
       run: |
-        call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" x64 || call "C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Auxiliary\Build\vcvarsall.bat" x64
-        set LIBGIT2_VERSION=1.9.0
-        curl -L --output libgit2.zip https://github.com/libgit2/libgit2/archive/refs/tags/v%LIBGIT2_VERSION%.zip
-        tar -xf libgit2.zip
-        del libgit2.zip
-        ren libgit2-%LIBGIT2_VERSION% libgit2
-        cmake -S libgit2 -B build-libgit2 -DBUILD_TESTS=OFF -DBUILD_CLI=OFF -DLIBGIT2_FILENAME=git2 -DCMAKE_INSTALL_PREFIX=install -A x64
-        cmake --build build-libgit2 --config Release
-        cmake --install build-libgit2 --config Release
-        if not exist "..\bin" mkdir ..\bin
-        if not exist "..\include" mkdir ..\include
-        xcopy /y /e install\include ..\include
-        copy /y install\bin\git2.dll ..\bin\
-        copy /y install\lib\git2.lib ..\bin\
+        call build_deps.bat
 
     - name: Configure CMake (Linux)
       if: runner.os == 'Linux'
@@ -109,7 +96,7 @@ jobs:
       shell: cmd
       run: |
         call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" x64 || call "C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Auxiliary\Build\vcvarsall.bat" x64
-        cmake -B ${{ steps.strings.outputs.build-output-dir }} -S ${{ github.workspace }} -A x64
+        cmake -B ${{ steps.strings.outputs.build-output-dir }} -S ${{ github.workspace }} -A x64 -DZLIB_ROOT="${{ github.workspace }}"
 
     - name: Build
       if: runner.os != 'Windows'

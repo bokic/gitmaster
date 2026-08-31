@@ -55,3 +55,6 @@ Source: "..\bin\gitmaster.exe"; DestDir: "{app}";
 
 ; libgit2 library
 Source: "..\bin\git2.dll"; DestDir: "{app}";
+
+; zlib library
+Source: "..\bin\zlib.dll"; DestDir: "{app}";
