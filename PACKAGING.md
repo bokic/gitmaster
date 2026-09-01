@@ -11,7 +11,7 @@ Overview of packaging pipelines, formats, and distribution targets for GitMaster
 | **Arch Linux AUR** | Arch Linux / Manjaro | ✅ **Live** | [AUR `gitmaster`](https://aur.archlinux.org/packages/gitmaster) *(Separate git repo)* | `PKGBUILD` packaging for Arch users via `yay -S gitmaster` |
 | **Flatpak** | Flathub / All Linux | ✅ **Ready** | [`io.github.bokic.gitmaster.yaml`](io.github.bokic.gitmaster.yaml), [`io.github.bokic.gitmaster.metainfo.xml`](io.github.bokic.gitmaster.metainfo.xml) | KDE/Qt6 6.8 SDK runtime, builds `libgit2`, AppStream validated |
 | **AppImage** | Universal Linux | ✅ **Ready** | [`build_appimage.sh`](build_appimage.sh) | Bundles Qt6 & dependencies via `linuxdeploy` and `linuxdeploy-plugin-qt` |
-| **Snap** | Canonical Snap Store | ✅ **Ready** | [`snap/snapcraft.yaml`](snap/snapcraft.yaml) | Uses `kde-neon-6` extension on Ubuntu `core24` |
+| **Snap** | Local / Self-hosted | ✅ **Ready** | [`build_snap.sh`](build_snap.sh), [`snap/snapcraft.yaml`](snap/snapcraft.yaml) | Not on the Snap Store — users can build and install locally using Snapcraft |
 | **RPM** | Fedora / RHEL / openSUSE | ✅ **Ready** | [`gitmaster.spec`](gitmaster.spec) | Standard RPM spec with AppStream metainfo & desktop integration |
 | **macOS Bundle & DMG** | macOS (Apple Silicon & Intel) | ✅ **Ready** | [`macos/build.sh`](macos/build.sh), [`macos/build_icon.sh`](macos/build_icon.sh) | Creates `gitmaster.app`, bundles with `macdeployqt`, ad-hoc codesigns, outputs `.dmg` |
 | **Windows Installer** | Windows 10 / 11 (x64) | ✅ **Ready** | [`windows/build_installer.bat`](windows/build_installer.bat), [`windows/gitmaster.iss`](windows/gitmaster.iss) | Inno Setup 6 installer packaging executable and Qt/OpenSSL DLLs |
@@ -40,10 +40,22 @@ Generates a standalone portable `.AppImage` in the `AppImage/` directory:
 ./build_appimage.sh
 ```
 
-### 4. Snap
-Builds a `.snap` package using Snapcraft:
+### 4. Snap (Local Build)
+GitMaster is not published on the Snap Store. However, you can build and install a `.snap` package locally using [Snapcraft](https://snapcraft.io/docs/installing-snapcraft).
+
+**Prerequisites:**
 ```bash
-snapcraft
+sudo snap install snapcraft --classic
+```
+
+**Build using the helper script:**
+```bash
+./build_snap.sh
+```
+
+**Install the generated `.snap` locally:**
+```bash
+sudo snap install --dangerous gitmaster_*.snap
 ```
 
 ### 5. Fedora / RPM
