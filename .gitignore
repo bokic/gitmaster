@@ -2,7 +2,6 @@
 /windows/libgit2
 /windows/build
 /windows/*.exe
-/include
 /build
 /.qtcreator
 /.vscode

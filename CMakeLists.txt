@@ -77,123 +77,124 @@ find_package(Qt6 COMPONENTS Gui Widgets Network Svg REQUIRED)
 find_package(ZLIB REQUIRED)
 
 set(PROJECT_HEADERS
-    qgitmastermainwindow.h
-    qgitrepository.h
-    qnewrepositorydialog.h
-    qgitclonerepositorydialog.h
-    qgitpushdialog.h
-    qgitpulldialog.h
-    qgitfetchdialog.h
-    qgitbranchdialog.h
-    qgitsettingsdialog.h
-    qgitconflictresolverdialog.h
-    qgitcreatetagdialog.h
-    qgitcleandialog.h
-    qgitstashdialog.h
-    qgitstashinspectdialog.h
-    qgitreflogdialog.h
-    qgitremotesdialog.h
-    qgitblamedialog.h
-    qgitworktreedialog.h
-    qgitflowdialog.h
-    qgitinteractiverebasedialog.h
-    qgitaddsubmoduledialog.h
-    qgitsubmodulepointerdialog.h
-    qgitremovesubmoduledialog.h
-    qgitexportpatchdialog.h
-    qgitexportarchivedialog.h
+    include/qgitmastermainwindow.h
+    include/qgitrepository.h
+    include/qnewrepositorydialog.h
+    include/qgitclonerepositorydialog.h
+    include/qgitpushdialog.h
+    include/qgitpulldialog.h
+    include/qgitfetchdialog.h
+    include/qgitbranchdialog.h
+    include/qgitsettingsdialog.h
+    include/qgitconflictresolverdialog.h
+    include/qgitcreatetagdialog.h
+    include/qgitcleandialog.h
+    include/qgitstashdialog.h
+    include/qgitstashinspectdialog.h
+    include/qgitreflogdialog.h
+    include/qgitremotesdialog.h
+    include/qgitblamedialog.h
+    include/qgitworktreedialog.h
+    include/qgitflowdialog.h
+    include/qgitinteractiverebasedialog.h
+    include/qgitaddsubmoduledialog.h
+    include/qgitsubmodulepointerdialog.h
+    include/qgitremovesubmoduledialog.h
+    include/qgitexportpatchdialog.h
+    include/qgitexportarchivedialog.h
+    include/qgitmergedialog.h
 
-    qgitrepotreeitemdelegate.h
-    qgitrepotreewidget.h
-    qgitbranchtreewidget.h
-    qgitfilestatustreewidget.h
-    qgitdiffwidget.h
-    qadvplaintextedit.h
-    qloghistoryitemdelegate.h
-    qloghistorytablewidget.h
-    qexttextbrowser.h
+    include/qgitrepotreeitemdelegate.h
+    include/qgitrepotreewidget.h
+    include/qgitbranchtreewidget.h
+    include/qgitfilestatustreewidget.h
+    include/qgitdiffwidget.h
+    include/qadvplaintextedit.h
+    include/qloghistoryitemdelegate.h
+    include/qloghistorytablewidget.h
+    include/qexttextbrowser.h
 
-    combobox/qcomboboxgitdiffoptions.h
-    combobox/qcomboboxgitstatusfiles.h
-    combobox/qcomboboxgitviewoptions.h
+    include/combobox/qcomboboxgitbase.h
+    include/combobox/qcomboboxgitdiffoptions.h
+    include/combobox/qcomboboxgitstatusfiles.h
+    include/combobox/qcomboboxgitviewoptions.h
 
-    qgit/include/qgit.h
-    qgit/include/qgitbranch.h
-    qgit/include/qgittag.h
-    qgit/include/qgitcommit.h
-    qgit/include/qgitcommitdiffparent.h
-    qgitmergedialog.h
-    qgit/include/qgitdiffbinary.h
-    qgit/include/qgitdiffbinaryfile.h
-    qgit/include/qgitdifffile.h
-    qgit/include/qgitdifffileitem.h
-    qgit/include/qgitdiffhunk.h
-    qgit/include/qgitdiffline.h
-    qgit/include/qgiterror.h
-    qgit/include/qgitsignature.h
-    qgit/include/qgitworktree.h
-    qgit/include/qgitrebasetodoitem.h
+    include/qgit/qgit.h
+    include/qgit/qgitbranch.h
+    include/qgit/qgittag.h
+    include/qgit/qgitcommit.h
+    include/qgit/qgitcommitdiffparent.h
+    include/qgit/qgitdiffbinary.h
+    include/qgit/qgitdiffbinaryfile.h
+    include/qgit/qgitdifffile.h
+    include/qgit/qgitdifffileitem.h
+    include/qgit/qgitdiffhunk.h
+    include/qgit/qgitdiffline.h
+    include/qgit/qgiterror.h
+    include/qgit/qgitsignature.h
+    include/qgit/qgitworktree.h
+    include/qgit/qgitrebasetodoitem.h
 )
 
 set(PROJECT_SOURCES
-    main.cpp
+    src/main.cpp
 
-    qgitmastermainwindow.cpp       qgitmastermainwindow.ui
-    qgitrepository.cpp             qgitrepository.ui
-    qnewrepositorydialog.cpp       qnewrepositorydialog.ui
-    qgitclonerepositorydialog.cpp  qgitclonerepositorydialog.ui
-    qgitpushdialog.cpp             qgitpushdialog.ui
-    qgitpulldialog.cpp             qgitpulldialog.ui
-    qgitfetchdialog.cpp            qgitfetchdialog.ui
-    qgitbranchdialog.cpp           qgitbranchdialog.ui
-    qgitmergedialog.cpp            qgitmergedialog.ui
-    qgitsettingsdialog.cpp         qgitsettingsdialog.ui
-    qgitconflictresolverdialog.cpp qgitconflictresolverdialog.ui
-    qgitcreatetagdialog.cpp        qgitcreatetagdialog.ui
-    qgitcleandialog.cpp            qgitcleandialog.ui
-    qgitstashdialog.cpp            qgitstashdialog.ui
-    qgitstashinspectdialog.cpp     qgitstashinspectdialog.ui
-    qgitreflogdialog.cpp           qgitreflogdialog.ui
-    qgitremotesdialog.cpp          qgitremotesdialog.ui
-    qgitblamedialog.cpp            qgitblamedialog.ui
-    qgitworktreedialog.cpp         qgitworktreedialog.ui
-    qgitflowdialog.cpp             qgitflowdialog.ui
-    qgitinteractiverebasedialog.cpp qgitinteractiverebasedialog.ui
-    qgitaddsubmoduledialog.cpp     qgitaddsubmoduledialog.ui
-    qgitsubmodulepointerdialog.cpp qgitsubmodulepointerdialog.ui
-    qgitremovesubmoduledialog.cpp  qgitremovesubmoduledialog.ui
-    qgitexportpatchdialog.cpp      qgitexportpatchdialog.ui
-    qgitexportarchivedialog.cpp    qgitexportarchivedialog.ui
+    src/qgitmastermainwindow.cpp       src/qgitmastermainwindow.ui
+    src/qgitrepository.cpp             src/qgitrepository.ui
+    src/qnewrepositorydialog.cpp       src/qnewrepositorydialog.ui
+    src/qgitclonerepositorydialog.cpp  src/qgitclonerepositorydialog.ui
+    src/qgitpushdialog.cpp             src/qgitpushdialog.ui
+    src/qgitpulldialog.cpp             src/qgitpulldialog.ui
+    src/qgitfetchdialog.cpp            src/qgitfetchdialog.ui
+    src/qgitbranchdialog.cpp           src/qgitbranchdialog.ui
+    src/qgitmergedialog.cpp            src/qgitmergedialog.ui
+    src/qgitsettingsdialog.cpp         src/qgitsettingsdialog.ui
+    src/qgitconflictresolverdialog.cpp src/qgitconflictresolverdialog.ui
+    src/qgitcreatetagdialog.cpp        src/qgitcreatetagdialog.ui
+    src/qgitcleandialog.cpp            src/qgitcleandialog.ui
+    src/qgitstashdialog.cpp            src/qgitstashdialog.ui
+    src/qgitstashinspectdialog.cpp     src/qgitstashinspectdialog.ui
+    src/qgitreflogdialog.cpp           src/qgitreflogdialog.ui
+    src/qgitremotesdialog.cpp          src/qgitremotesdialog.ui
+    src/qgitblamedialog.cpp            src/qgitblamedialog.ui
+    src/qgitworktreedialog.cpp         src/qgitworktreedialog.ui
+    src/qgitflowdialog.cpp             src/qgitflowdialog.ui
+    src/qgitinteractiverebasedialog.cpp src/qgitinteractiverebasedialog.ui
+    src/qgitaddsubmoduledialog.cpp     src/qgitaddsubmoduledialog.ui
+    src/qgitsubmodulepointerdialog.cpp src/qgitsubmodulepointerdialog.ui
+    src/qgitremovesubmoduledialog.cpp  src/qgitremovesubmoduledialog.ui
+    src/qgitexportpatchdialog.cpp      src/qgitexportpatchdialog.ui
+    src/qgitexportarchivedialog.cpp    src/qgitexportarchivedialog.ui
 
-    qgitrepotreeitemdelegate.cpp
-    qgitrepotreewidget.cpp
-    qgitbranchtreewidget.cpp
-    qgitfilestatustreewidget.cpp
-    qgitdiffwidget.cpp
-    qadvplaintextedit.cpp
-    qloghistoryitemdelegate.cpp
-    qloghistorytablewidget.cpp
-    qexttextbrowser.cpp
+    src/qgitrepotreeitemdelegate.cpp
+    src/qgitrepotreewidget.cpp
+    src/qgitbranchtreewidget.cpp
+    src/qgitfilestatustreewidget.cpp
+    src/qgitdiffwidget.cpp
+    src/qadvplaintextedit.cpp
+    src/qloghistoryitemdelegate.cpp
+    src/qloghistorytablewidget.cpp
+    src/qexttextbrowser.cpp
 
-    combobox/qcomboboxgitbase.cpp
-    combobox/qcomboboxgitdiffoptions.cpp
-    combobox/qcomboboxgitstatusfiles.cpp
-    combobox/qcomboboxgitviewoptions.cpp
+    src/combobox/qcomboboxgitbase.cpp
+    src/combobox/qcomboboxgitdiffoptions.cpp
+    src/combobox/qcomboboxgitstatusfiles.cpp
+    src/combobox/qcomboboxgitviewoptions.cpp
 
-    qgit/src/qgit.cpp
-    qgit/src/qgitbranch.cpp
-    qgit/src/qgittag.cpp
-    qgit/src/qgitcommit.cpp
-    qgit/src/qgitcommitdiffparent.cpp
-    qgit/src/qgitdiffbinary.cpp
-    qgit/src/qgitdiffbinaryfile.cpp
-    qgit/src/qgitdifffile.cpp
-    qgit/src/qgitdifffileitem.cpp
-    qgit/src/qgitdiffhunk.cpp
-    qgit/src/qgitdiffline.cpp
-    qgit/src/qgiterror.cpp
-    qgit/src/qgitsignature.cpp
-    qgit/src/qgitworktree.cpp
+    src/qgit/qgit.cpp
+    src/qgit/qgitbranch.cpp
+    src/qgit/qgittag.cpp
+    src/qgit/qgitcommit.cpp
+    src/qgit/qgitcommitdiffparent.cpp
+    src/qgit/qgitdiffbinary.cpp
+    src/qgit/qgitdiffbinaryfile.cpp
+    src/qgit/qgitdifffile.cpp
+    src/qgit/qgitdifffileitem.cpp
+    src/qgit/qgitdiffhunk.cpp
+    src/qgit/qgitdiffline.cpp
+    src/qgit/qgiterror.cpp
+    src/qgit/qgitsignature.cpp
+    src/qgit/qgitworktree.cpp
 
     resource.qrc
 
@@ -222,16 +223,19 @@ if (CMAKE_BUILD_TYPE STREQUAL "Release")
     )
 endif()
 
-target_include_directories(gitmaster PRIVATE combobox qgit/include)
+
+target_include_directories(gitmaster PRIVATE include include/combobox include/qgit)
 target_compile_definitions(gitmaster PRIVATE GITMASTER_VERSION="${PROJECT_VERSION}")
 
 if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
     target_compile_options(gitmaster PRIVATE -Wno-documentation-deprecated-sync)
 endif()
 
+
 if (WIN32)
     target_include_directories(gitmaster PRIVATE include)
 endif()
+
 
 if (CMAKE_BUILD_TYPE STREQUAL "Debug")
     set_target_properties(gitmaster PROPERTIES OUTPUT_NAME "gitmaster_d")

@@ -231,7 +231,7 @@
   <customwidget>
    <class>QComboBoxGitDiffOptions</class>
    <extends>QComboBox</extends>
-   <header>combobox/qcomboboxgitdiffoptions.h</header>
+   <header>qcomboboxgitdiffoptions.h</header>
   </customwidget>
  </customwidgets>
  <resources/>

@@ -10,8 +10,13 @@ GitMaster is a lightweight, fast, cross-platform GUI client for Git, built using
 - **Build System**: CMake (via `CMakeLists.txt` / Makefile or Ninja generator)
 
 ## Architecture Overview
-- **`qgit/` (`qgit.h` / `qgit.cpp`)**: Contains the core encapsulation for `libgit2` commands, operating as a backend wrapper.
-- **`QGitMasterMainWindow`**: The main entry point for the window logic (`qgitmastermainwindow.cpp`, `.h`, `.ui`), containing toolbars and tabs.
+- **`src/`**: All top-level `.cpp` and `.ui` source files.
+- **`src/combobox/`**: Custom QComboBox widget source files.
+- **`src/qgit/`**: Core `libgit2` encapsulation source files.
+- **`include/`**: All top-level `.h` header files.
+- **`include/combobox/`**: Custom QComboBox widget headers.
+- **`include/qgit/`**: Core `libgit2` encapsulation headers.
+- **`QGitMasterMainWindow`**: The main entry point for the window logic (`src/qgitmastermainwindow.cpp`, `include/qgitmastermainwindow.h`, `src/qgitmastermainwindow.ui`), containing toolbars and tabs.
 - **`QGitRepository`**: Maps to an active repository widget tab, holding the state of file indices, branches, staged/unstaged changes, and orchestrating backend `libgit2` calls.
 - **Dialogs**: Features are broken down into descriptive UI files and controllers, e.g., `QGitPushDialog`, `QGitBranchDialog`, `QGitMergeDialog`, `QGitCloneRepositoryDialog`, etc.
 
