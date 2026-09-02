@@ -1,94 +1,83 @@
-# GitMaster [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/bokic/gitmaster)
+# GitMaster 🖥️
 
-[![License: LGPL v3](https://img.shields.io/badge/License-LGPL%20v3-blue.svg)](https://www.gnu.org/licenses/lgpl-3.0)
+[![Language: C++](https://shields.io)](https://wikipedia.org)
+[![Framework: Qt6](https://shields.io)](https://qt.io)
+[![Engine: libgit2](https://shields.io)](https://libgit2.org)
+[![License: LGPL v3](https://shields.io)](https://gnu.org)
 
-GitMaster is a powerful, lightweight Git GUI client built with C++, **Qt6**, and **libgit2**. It provides an intuitive interface for managing your Git repositories, aimed at developers who want a fast and responsive tool for their daily workflow.
+A lightning-fast, native **Desktop Git GUI client** designed for developers who value performance and minimalism. 
+
+Unlike heavy, memory-hungry Electron-based Git clients, `GitMaster` is built from the ground up using **C++20**, **Qt6** for a fluid native user interface, and **libgit2** for raw, asynchronous Git operations. It offers a lightweight footprint with zero compromise on power.
+
+---
+
+## ✨ Features
+
+- **⚡ Blazing Fast Performance:** Native C++ core delivers instant repository loading and smooth history scrolling.
+- **🌳 Visual Git Graph:** Interactive, beautifully rendered branch topologies to track commits, merges, and tags.
+- **📁 Multi-Repository Management:** Easily switch, track, and manage multiple local projects from a single workspace.
+- **🔄 Seamless Remote Sync:** Effortless `Fetch`, `Pull`, and `Push` operations with GitHub, GitLab, Gitee, and custom remotes.
+- **🌿 Advanced Branching:** Visual shortcuts to checkout, create, rename, delete, and merge branches or manage stashes/shelves.
+
+---
+
+## 🛠️ Building from Source
+
+### Prerequisites
+
+To build GitMaster, ensure you have a modern C++ compiler (supporting C++20), **CMake**, and the required libraries installed:
+
+*   **Linux (Ubuntu/Debian):**
+    ```bash
+    sudo apt-get install build-essential cmake qt6-base-dev libgit2-dev
+    ```
+*   **macOS (Homebrew):**
+    ```bash
+    brew install cmake qt6 libgit2
+    ```
+
+### Build Steps
+
+1. **Clone the repository:**
+   ```bash
+   git clone https://github.com
+   cd gitmaster
+   ```
+
+2. **Configure and build using CMake:**
+   ```bash
+   mkdir build && cd build
+   cmake -DCMAKE_BUILD_TYPE=Release ..
+   make -j\$(nproc)
+   ```
+
+3. **Install onto your system:**
+   ```bash
+   sudo make install
+   ```
+
+---
+
+## 📸 Screenshots
+
+*(Tip: Add your application screenshots inside a `screenshots/` directory in your repo and link them here to give users a visual preview!)*
 
 ![screenshot](https://raw.githubusercontent.com/bokic/gitmaster/master/docs/gitmaster-screenshot.png)
 
-## Features
+## 🤝 Contributing
 
-- **Repository Management**: Initialize new repositories, clone existing ones, and manage your local projects.
-- **Branching & Tagging**: Create, switch, rename, and delete branches and tags. Create lightweight and annotated tags directly from any commit in the history log.
-- **Remote Operations**: Seamlessly Fetch, Pull, and Push to remote servers.
-- **History Visualization**: Browse commit history with a clear and detailed log table.
-- **Integrated Diff Viewer**: View line-by-line changes with integrated diff highlighting.
-- **Staging Area**: Easily stage and unstage files for your next commit.
-- **Cross-Platform**: Designed for Linux, with support for Windows and macOS.
+Contributions make the open-source community an amazing place to learn, inspire, and create. Any contributions you make are **greatly appreciated**.
 
-## Prerequisites
+1. **Fork** the Project.
+2. **Create** your Feature Branch (`git checkout -b feature/AmazingFeature`).
+3. **Commit** your Changes (`git commit -m 'Add some AmazingFeature'`).
+4. **Push** to the Branch (`git push origin feature/AmazingFeature`).
+5. **Open a Pull Request**.
 
-To build GitMaster from source, you will need:
+---
 
-- **C++ Compiler**: Supporting C++20 (e.g., GCC 10+, Clang 10+, or MSVC 2019+).
-- **CMake**: Version 3.12 or higher.
-- **Qt6**: Following modules are required:
-  - Gui
-  - Widgets
-  - Network
-  - Svg
-- **libgit2**: Development files for the libgit2 library.
+## 📄 License
 
-## Build Instructions
+This project is licensed under the **GNU Lesser General Public License v3.0 (LGPL-3.0)** - see the [LICENSE](LICENSE) file for details.
 
-### Linux / macOS
-
-1.  **Clone the repository**:
-    ```bash
-    git clone https://github.com/bokic/gitmaster.git
-    cd gitmaster
-    ```
-
-2.  **Create a build directory**:
-    ```bash
-    mkdir build && cd build
-    ```
-
-3.  **Run CMake**:
-    ```bash
-    cmake ..
-    ```
-
-4.  **Compile**:
-    ```bash
-    make -j$(nproc)
-    ```
-
-### Arch Linux (AUR)
-
-GitMaster is available in the **Arch User Repository (AUR)**. Arch users can install it using an AUR helper like `yay`:
-
-```bash
-yay -S gitmaster
-```
-
-### Windows
-
-You can use the provided batch scripts in the `windows` directory:
-- `windows/build_deps.bat`: Builds dependencies.
-- `windows/build.bat`: Builds the application.
-- `windows/build_installer.bat`: Generates an installer using Inno Setup.
-
-Alternatively, you can use CMake directly with a generator like Visual Studio or MinGW.
-
-## Installation
-
-On Linux, you can install GitMaster to your system using:
-
-```bash
-sudo make install
-```
-
-This will install the binary and the `.desktop` file for system integration.
-
-## Roadmap
-
-Check out our [ROADMAP.md](ROADMAP.md) for upcoming features, development plans, and release milestones.
-
-## License
-
-This project is licensed under the **GNU Lesser General Public License v3.0** - see the [LICENSE](LICENSE) file for details.
-
-## Contributing
-
-Contributions are welcome! Please feel free to submit a Pull Request or open an Issue for any bugs or feature requests.
+Developed with ❤️ by [Boris Barbulovski (bokic)](https://github.com).
