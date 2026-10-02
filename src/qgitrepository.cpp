@@ -1157,7 +1157,7 @@ void QGitRepository::repositoryBranchesAndTagsReply(const QList<QGitBranch> &bra
     ui->comboBox_logBranchFilter->addItem(tr("Current Branch (HEAD)"), QStringLiteral(""));
 
     // Add local branches
-    ui->comboBox_logBranchFilter->addItem(QStringLiteral("--- Local Branches ---"), QVariant());
+    ui->comboBox_logBranchFilter->addItem(tr("--- Local Branches ---"), QVariant());
     for (const auto &branch : branches) {
         if (branch.type() & GIT_BRANCH_LOCAL) {
             QString name = branch.name();
@@ -1168,7 +1168,7 @@ void QGitRepository::repositoryBranchesAndTagsReply(const QList<QGitBranch> &bra
     }
 
     // Add remote branches
-    ui->comboBox_logBranchFilter->addItem(QStringLiteral("--- Remote Branches ---"), QVariant());
+    ui->comboBox_logBranchFilter->addItem(tr("--- Remote Branches ---"), QVariant());
     for (const auto &branch : branches) {
         if (branch.type() & GIT_BRANCH_REMOTE) {
             QString name = branch.name();
@@ -1453,17 +1453,17 @@ void QGitRepository::repositoryGetCommitDiffReply(const QString &commitId, const
             html += QStringLiteral("<div>");
             html += QStringLiteral("<img src=\"https://www.gravatar.com/avatar/") + QCryptographicHash::hash(email.trimmed().toUtf8(), QCryptographicHash::Md5).toHex() + QStringLiteral("?s=32\" width=\"32\" height=\"32\" style=\"float: right\" />");
             html += QStringLiteral("</div>");
-            html += QStringLiteral("<b>Commit:</b> ") + commit_id + QStringLiteral("<br />");
-            html += (parentsHtml.count() > 1? QStringLiteral("<b>Parents:</b>"): QStringLiteral("<b>Parent:</b>")) + parentsHtml.join(", ") + QStringLiteral("<br />");
-            html += QStringLiteral("<b>Date:</b> ") + m_commitDiff.time().toString() + QStringLiteral("<br />");
+            html += tr("<b>Commit:</b> ") + commit_id + QStringLiteral("<br />");
+            html += (parentsHtml.count() > 1 ? tr("<b>Parents:</b> ") : tr("<b>Parent:</b> ")) + parentsHtml.join(", ") + QStringLiteral("<br />");
+            html += tr("<b>Date:</b> ") + m_commitDiff.time().toString() + QStringLiteral("<br />");
             if (!m_commitDiff.description().isEmpty()) {
-                html += QStringLiteral("<b>Describe:</b> ") + m_commitDiff.description() + QStringLiteral("<br />");
+                html += tr("<b>Describe:</b> ") + m_commitDiff.description() + QStringLiteral("<br />");
             }
-            html += QStringLiteral("<b>Labels:</b> ") + labelsHtml.join(", ") + QStringLiteral("<br />");
+            html += tr("<b>Labels:</b> ") + labelsHtml.join(", ") + QStringLiteral("<br />");
             html += QStringLiteral("<br />");
             html += m_commitDiff.message().toHtmlEscaped().replace(QLatin1Char('\n'), QStringLiteral("<br />"));
             if (!m_commitDiff.note().isEmpty()) {
-                html += QStringLiteral("<br /><br /><b>Notes:</b><br />") + m_commitDiff.note().toHtmlEscaped().replace(QLatin1Char('\n'), QStringLiteral("<br />"));
+                html += tr("<br /><br /><b>Notes:</b><br />") + m_commitDiff.note().toHtmlEscaped().replace(QLatin1Char('\n'), QStringLiteral("<br />"));
             }
 
             ui->search_info->setHtml(html);
@@ -1549,17 +1549,17 @@ void QGitRepository::repositoryGetCommitDiffReply(const QString &commitId, const
             html += QStringLiteral("<div>");
             html += QStringLiteral("<img src=\"https://www.gravatar.com/avatar/") + QCryptographicHash::hash(email.trimmed().toUtf8(), QCryptographicHash::Md5).toHex() + QStringLiteral("?s=32\" width=\"32\" height=\"32\" style=\"float: right\" />");
             html += QStringLiteral("</div>");
-            html += QStringLiteral("<b>Commit:</b> ") + commit_id + QStringLiteral("<br />");
-            html += (parentsHtml.count() > 1? QStringLiteral("<b>Parents:</b>"): QStringLiteral("<b>Parent:</b>")) + parentsHtml.join(", ") + QStringLiteral("<br />");
-            html += QStringLiteral("<b>Date:</b> ") + m_commitDiff.time().toString() + QStringLiteral("<br />");
+            html += tr("<b>Commit:</b> ") + commit_id + QStringLiteral("<br />");
+            html += (parentsHtml.count() > 1 ? tr("<b>Parents:</b> ") : tr("<b>Parent:</b> ")) + parentsHtml.join(", ") + QStringLiteral("<br />");
+            html += tr("<b>Date:</b> ") + m_commitDiff.time().toString() + QStringLiteral("<br />");
             if (!m_commitDiff.description().isEmpty()) {
-                html += QStringLiteral("<b>Describe:</b> ") + m_commitDiff.description() + QStringLiteral("<br />");
+                html += tr("<b>Describe:</b> ") + m_commitDiff.description() + QStringLiteral("<br />");
             }
-            html += QStringLiteral("<b>Labels:</b> ") + labelsHtml.join(", ") + QStringLiteral("<br />");
+            html += tr("<b>Labels:</b> ") + labelsHtml.join(", ") + QStringLiteral("<br />");
             html += QStringLiteral("<br />");
             html += m_commitDiff.message().toHtmlEscaped().replace(QLatin1Char('\n'), QStringLiteral("<br />"));
             if (!m_commitDiff.note().isEmpty()) {
-                html += QStringLiteral("<br /><br /><b>Notes:</b><br />") + m_commitDiff.note().toHtmlEscaped().replace(QLatin1Char('\n'), QStringLiteral("<br />"));
+                html += tr("<br /><br /><b>Notes:</b><br />") + m_commitDiff.note().toHtmlEscaped().replace(QLatin1Char('\n'), QStringLiteral("<br />"));
             }
 
             ui->logHistory_info->setHtml(html);
@@ -3138,7 +3138,7 @@ void QGitRepository::repositoryExportPatchesReply(const QStringList &createdFile
         } else {
             QString fileSummary = createdFiles.mid(0, 5).join("\n• ");
             if (createdFiles.size() > 5) {
-                fileSummary += QString("\n... and %1 more").arg(createdFiles.size() - 5);
+                fileSummary += tr("\n... and %1 more").arg(createdFiles.size() - 5);
             }
             QMessageBox::information(this, tr("Export Patch Successful"),
                 tr("Successfully exported %1 patch files:\n\n• %2").arg(createdFiles.size()).arg(fileSummary));

@@ -302,7 +302,7 @@ void QGitMasterMainWindow::addRepositories(const QStringList &paths)
 
         QString baseName = dir.dirName();
         if (baseName.isEmpty()) {
-            baseName = "repository";
+            baseName = tr("repository");
         }
 
         QString repoName = baseName;

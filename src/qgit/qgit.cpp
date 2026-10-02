@@ -404,13 +404,13 @@ struct SafeGitStrArray {
         arr.value.count = static_cast<size_t>(list.count());
         arr.value.strings = static_cast<char **>(calloc(arr.value.count, sizeof(char *)));
         if (!arr.value.strings) {
-            throw QGitError("malloc", -1, "Memory allocation failed");
+            throw QGitError("malloc", -1, QObject::tr("Memory allocation failed"));
         }
 
         for (int i = 0; i < list.count(); ++i) {
             arr.value.strings[i] = strdup(list.at(i).toUtf8().constData());
             if (!arr.value.strings[i]) {
-                throw QGitError("strdup", -1, "Memory allocation failed");
+                throw QGitError("strdup", -1, QObject::tr("Memory allocation failed"));
             }
         }
         return arr;
@@ -425,11 +425,11 @@ struct SafeGitStrArray {
         arr.value.count = 1;
         arr.value.strings = static_cast<char **>(calloc(1, sizeof(char *)));
         if (!arr.value.strings) {
-            throw QGitError("malloc", -1, "Memory allocation failed");
+            throw QGitError("malloc", -1, QObject::tr("Memory allocation failed"));
         }
         arr.value.strings[0] = strdup(bytes.constData());
         if (!arr.value.strings[0]) {
-            throw QGitError("strdup", -1, "Memory allocation failed");
+            throw QGitError("strdup", -1, QObject::tr("Memory allocation failed"));
         }
         return arr;
     }
@@ -656,7 +656,7 @@ static git_push_options makePushOptions(QGit *payload = nullptr)
             if (status) {
                 if (payload) {
                     QGit *_this = static_cast<QGit *>(payload);
-                    _this->setLastPushError(QString("Push rejected for %1: %2").arg(refname ? refname : "ref", status));
+                    _this->setLastPushError(QObject::tr("Push rejected for %1: %2").arg(refname ? QString::fromUtf8(refname) : QObject::tr("ref"), QString::fromUtf8(status)));
                 }
                 git_error_set_str(GIT_ERROR_NET, status);
                 return -1;
@@ -2066,7 +2066,7 @@ void QGit::resolveConflict(const QString &path, const QString &resolvedContent)
     QFile file(fullPath);
     if (!file.open(QIODevice::WriteOnly | QIODevice::Text))
     {
-        throw QGitError("Could not open file to write resolved content: " + fullPath, -1);
+        throw QGitError(tr("Could not open file to write resolved content: %1").arg(fullPath), -1);
     }
     QTextStream out(&file);
     out << resolvedContent;
@@ -2279,7 +2279,7 @@ void QGit::removeSubmodule(const QString &name, bool removeWorkingDirectory, boo
                     size_t count = git_status_list_entrycount(statusList);
                     git_status_list_free(statusList);
                     if (count > 0) {
-                        throw QGitError("removeSubmodule", -1, QStringLiteral("Submodule '%1' contains uncommitted changes. Use force removal to proceed.").arg(subName));
+                        throw QGitError("removeSubmodule", -1, tr("Submodule '%1' contains uncommitted changes. Use force removal to proceed.").arg(subName));
                     }
                 }
             }
@@ -3129,7 +3129,7 @@ void QGit::exportPatches(const QStringList &commitIds, const QString &outputDir,
         }
         if (!dir.exists()) {
             if (!dir.mkpath(".")) {
-                throw QGitError(QString("Failed to create destination directory: %1").arg(dir.absolutePath()), -1);
+                throw QGitError(tr("Failed to create destination directory: %1").arg(dir.absolutePath()), -1);
             }
         }
 
@@ -3146,7 +3146,7 @@ void QGit::exportPatches(const QStringList &commitIds, const QString &outputDir,
 
             unsigned int parentCount = git_commit_parentcount(commit);
             if (parentCount > 1) {
-                throw QGitError(QString("Commit %1 is a merge commit. Git format-patch cannot generate patches for merge commits.").arg(commitId.left(7)), -1);
+                throw QGitError(tr("Commit %1 is a merge commit. Git format-patch cannot generate patches for merge commits.").arg(commitId.left(7)), -1);
             }
 
             git_email_create_options opts = GIT_EMAIL_CREATE_OPTIONS_INIT;
@@ -3186,7 +3186,7 @@ void QGit::exportPatches(const QStringList &commitIds, const QString &outputDir,
 
             QFile outFile(filePath);
             if (!outFile.open(QIODevice::WriteOnly | QIODevice::Text | QIODevice::Truncate)) {
-                throw QGitError(QString("Could not open file for writing: %1").arg(filePath), -1);
+                throw QGitError(tr("Could not open file for writing: %1").arg(filePath), -1);
             }
 
             if (buf.value.ptr && buf.value.size > 0) {
@@ -3393,13 +3393,13 @@ void QGit::exportArchive(const QString &refOrCommit, const QString &outputFilePa
                 res = git_tree_lookup(tree, repo, git_object_id(targetObj));
                 if (res) throw QGitError("git_tree_lookup", res);
             } else {
-                throw QGitError("Unsupported tag target type for archive export", -1);
+                throw QGitError(tr("Unsupported tag target type for archive export"), -1);
             }
         } else if (objType == GIT_OBJECT_TREE) {
             res = git_tree_lookup(tree, repo, git_object_id(obj));
             if (res) throw QGitError("git_tree_lookup", res);
         } else {
-            throw QGitError("Object is not a commit, tag, or tree", -1);
+            throw QGitError(tr("Object is not a commit, tag, or tree"), -1);
         }
 
         struct ArchiveEntry {
@@ -3442,7 +3442,7 @@ void QGit::exportArchive(const QString &refOrCommit, const QString &outputFilePa
         QFileInfo outFi(outputFilePath);
         QDir outDir = outFi.dir();
         if (!outDir.exists() && !outDir.mkpath(".")) {
-            throw QGitError(QString("Failed to create directory: %1").arg(outDir.absolutePath()), -1);
+            throw QGitError(tr("Failed to create directory: %1").arg(outDir.absolutePath()), -1);
         }
 
         QString normPrefix = prefix;
@@ -3468,7 +3468,7 @@ void QGit::exportArchive(const QString &refOrCommit, const QString &outputFilePa
         if (actualFormat == QStringLiteral("zip")) {
             QFile zipFile(outputFilePath);
             if (!zipFile.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
-                throw QGitError(QString("Could not open output file for writing: %1").arg(outputFilePath), -1);
+                throw QGitError(tr("Could not open output file for writing: %1").arg(outputFilePath), -1);
             }
 
             std::vector<ZipCentralDirHeader> cdHeaders;
@@ -3568,11 +3568,11 @@ void QGit::exportArchive(const QString &refOrCommit, const QString &outputFilePa
             if (actualFormat == QStringLiteral("tar.gz")) {
                 std::vector<uint8_t> gzData;
                 if (!deflateBufferHelper(uncompressedTar.data(), uncompressedTar.size(), gzData, false)) {
-                    throw QGitError("Failed to compress tarball with gzip", -1);
+                    throw QGitError(tr("Failed to compress tarball with gzip"), -1);
                 }
                 QFile gzFile(outputFilePath);
                 if (!gzFile.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
-                    throw QGitError(QString("Could not open file for writing: %1").arg(outputFilePath), -1);
+                    throw QGitError(tr("Could not open file for writing: %1").arg(outputFilePath), -1);
                 }
                 gzFile.write(reinterpret_cast<const char*>(gzData.data()), gzData.size());
                 gzFile.close();
@@ -3580,7 +3580,7 @@ void QGit::exportArchive(const QString &refOrCommit, const QString &outputFilePa
                 // Use qCompress with fallback or tar file
                 QFile tarFile(outputFilePath);
                 if (!tarFile.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
-                    throw QGitError(QString("Could not open file for writing: %1").arg(outputFilePath), -1);
+                    throw QGitError(tr("Could not open file for writing: %1").arg(outputFilePath), -1);
                 }
                 tarFile.write(reinterpret_cast<const char*>(uncompressedTar.data()), uncompressedTar.size());
                 tarFile.close();
@@ -3588,7 +3588,7 @@ void QGit::exportArchive(const QString &refOrCommit, const QString &outputFilePa
                 // Pure .tar
                 QFile tarFile(outputFilePath);
                 if (!tarFile.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
-                    throw QGitError(QString("Could not open file for writing: %1").arg(outputFilePath), -1);
+                    throw QGitError(tr("Could not open file for writing: %1").arg(outputFilePath), -1);
                 }
                 tarFile.write(reinterpret_cast<const char*>(uncompressedTar.data()), uncompressedTar.size());
                 tarFile.close();
@@ -3616,7 +3616,7 @@ void QGit::applyPatches(const QStringList &patchPaths)
             QFile file(patchPath);
             if (!file.open(QIODevice::ReadOnly | QIODevice::Text))
             {
-                throw QGitError(QString("Could not open patch file: %1").arg(patchPath), -1);
+                throw QGitError(tr("Could not open patch file: %1").arg(patchPath), -1);
             }
 
             QByteArray content = file.readAll();
@@ -3626,14 +3626,14 @@ void QGit::applyPatches(const QStringList &patchPaths)
             res = git_diff_from_buffer(diff, content.constData(), content.length());
             if (res) {
                 QFileInfo fi(patchPath);
-                throw QGitError(QString("Failed to parse patch '%1': %2").arg(fi.fileName(), git_error_last() ? QString::fromUtf8(git_error_last()->message) : tr("Invalid patch format")), res);
+                throw QGitError(tr("Failed to parse patch '%1': %2").arg(fi.fileName(), git_error_last() ? QString::fromUtf8(git_error_last()->message) : tr("Invalid patch format")), res);
             }
 
             git_apply_options opts = GIT_APPLY_OPTIONS_INIT;
             res = git_apply(repo, diff, GIT_APPLY_LOCATION_WORKDIR, &opts);
             if (res) {
                 QFileInfo fi(patchPath);
-                throw QGitError(QString("Failed to apply patch '%1': %2").arg(fi.fileName(), git_error_last() ? QString::fromUtf8(git_error_last()->message) : tr("Application error / conflict")), res);
+                throw QGitError(tr("Failed to apply patch '%1': %2").arg(fi.fileName(), git_error_last() ? QString::fromUtf8(git_error_last()->message) : tr("Application error / conflict")), res);
             }
             successfullyApplied.append(patchPath);
         }
@@ -4047,7 +4047,7 @@ void QGit::stashRemove(const QString &name)
 
         if (!ctx.found)
         {
-            throw QGitError("stash not found", -1);
+            throw QGitError(tr("Stash not found"), -1);
         }
 
         res = git_stash_drop(repo, ctx.foundIndex);
@@ -4134,7 +4134,7 @@ void QGit::stashApply(const QString &name)
 
         if (!ctx.found)
         {
-            throw QGitError("Stash not found", -1);
+            throw QGitError(tr("Stash not found"), -1);
         }
 
         git_stash_apply_options opts = GIT_STASH_APPLY_OPTIONS_INIT;
@@ -4185,7 +4185,7 @@ void QGit::stashPop(const QString &name)
 
         if (!ctx.found)
         {
-            throw QGitError("Stash not found", -1);
+            throw QGitError(tr("Stash not found"), -1);
         }
 
         git_stash_apply_options opts = GIT_STASH_APPLY_OPTIONS_INIT;
@@ -4838,7 +4838,7 @@ void QGit::stageFileLines(const QString &filename, const QVector<QGitDiffWidgetL
         git_off_t blob_size = git_blob_rawsize(blob);
         if (blob_size > std::numeric_limits<int>::max())
         {
-            throw QGitError("File size exceeds 2GB limit for QByteArray", -1);
+            throw QGitError(tr("File size exceeds 2GB limit for QByteArray"), -1);
         }
         QByteArray buffer = QByteArray(blob_content, static_cast<int>(blob_size));
         auto bufferLines = buffer.split(LINE_END);
@@ -4898,7 +4898,7 @@ void QGit::stageFileLines(const QString &filename, const QVector<QGitDiffWidgetL
                 }
                 break;
             default:
-                throw QGitError("Unknown operation", -1);
+                throw QGitError(tr("Unknown operation"), -1);
             }
         }
 
@@ -4964,7 +4964,7 @@ void QGit::unstageFileLines(const QString &filename, const QVector<QGitDiffWidge
         git_off_t blob_size = git_blob_rawsize(blob);
         if (blob_size > std::numeric_limits<int>::max())
         {
-            throw QGitError("File size exceeds 2GB limit for QByteArray", -1);
+            throw QGitError(tr("File size exceeds 2GB limit for QByteArray"), -1);
         }
         QByteArray buffer = QByteArray(blob_content, static_cast<int>(blob_size));
         auto bufferLines = buffer.split(LINE_END);
@@ -5024,7 +5024,7 @@ void QGit::unstageFileLines(const QString &filename, const QVector<QGitDiffWidge
                 }
                 break;
             default:
-                throw QGitError("Unknown operation", -1);
+                throw QGitError(tr("Unknown operation"), -1);
             }
         }
         buffer = bufferLines.join(LINE_END);
@@ -5208,7 +5208,7 @@ void QGit::discardFileLines(const QString &filename, const QVector<QGitDiffWidge
                 }
                 break;
             default:
-                throw QGitError("Unknown operation", -1);
+                throw QGitError(tr("Unknown operation"), -1);
             }
         }
 
@@ -5266,7 +5266,7 @@ void QGit::commit(const QString &message, bool withPush, bool amend)
         int _count = git_diff_num_deltas(diff);
         if (_count == 0 && !amend)
         {
-            throw QGitError("Nothing staged.", res);
+            throw QGitError(tr("Nothing staged."), res);
         }
 
         GitSignature me;
@@ -5459,7 +5459,7 @@ void QGit::commit(const QString &message, bool withPush, bool amend)
                 else
                 {
                     git_error_set_str(GIT_ERROR_INVALID, "No remote repository configured to push to");
-                    throw QGitError("git_remote_push", GIT_ERROR_INVALID, "No remote repository configured to push to");
+                    throw QGitError("git_remote_push", GIT_ERROR_INVALID, tr("No remote repository configured to push to"));
                 }
             }
 
@@ -5499,11 +5499,11 @@ void QGit::clone(const QUrl &url)
     {
         if (url.isEmpty() || !url.isValid())
         {
-            throw QGitError("Invalid clone URL", -1);
+            throw QGitError(tr("Invalid clone URL"), -1);
         }
         if (m_path.absolutePath().isEmpty())
         {
-            throw QGitError("Invalid clone destination path", -1);
+            throw QGitError(tr("Invalid clone destination path"), -1);
         }
 
         git_clone_options opts;
@@ -5695,7 +5695,7 @@ void QGit::rebase(const QString &upstream, const QString &branch, const QString 
 
         if (has_conflict)
         {
-            throw QGitError("Rebase conflicts detected. Please resolve conflicts or abort rebase.", -1);
+            throw QGitError(tr("Rebase conflicts detected. Please resolve conflicts or abort rebase."), -1);
         }
 
         if (res != GIT_ITEROVER && res != 0)
@@ -6334,7 +6334,7 @@ void QGit::merge(const QString &branchName)
             if(res) throw QGitError("git_repository_index", res);
 
             if (git_index_has_conflicts(index)) {
-                throw QGitError("Merge conflicts detected. Please resolve them manually.", -1);
+                throw QGitError(tr("Merge conflicts detected. Please resolve them manually."), -1);
             }
 
             // Create merge commit
@@ -6566,7 +6566,7 @@ void QGit::push(const QString &remote, const QStringList &branches, bool tags, b
             res = git_branch_lookup(ref, repo, branch.toUtf8().constData(), GIT_BRANCH_LOCAL);
             if (res)
             {
-                throw QGitError("Local branch not found!", res);
+                throw QGitError(tr("Local branch not found!"), res);
             }
 
         }

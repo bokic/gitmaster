@@ -108,15 +108,15 @@ void QGitStashInspectDialog::onCommitDiffReply(const QString &commit_id, const Q
     html += QStringLiteral("</div>");
     if (m_activeCommitDiff.id() == m_stashCommit.id())
     {
-        html += QStringLiteral("<b>Stash:</b> ") + (m_stashName.isEmpty() ? m_stashRef : m_stashName.toHtmlEscaped()) + QStringLiteral("<br />");
+        html += tr("<b>Stash:</b> ") + (m_stashName.isEmpty() ? m_stashRef : m_stashName.toHtmlEscaped()) + QStringLiteral("<br />");
     }
-    html += QStringLiteral("<b>Commit:</b> ") + m_activeCommitDiff.id() + QStringLiteral("<br />");
+    html += tr("<b>Commit:</b> ") + m_activeCommitDiff.id() + QStringLiteral("<br />");
     if (!parentsHtml.isEmpty())
     {
-        html += (parentsHtml.count() > 1 ? QStringLiteral("<b>Parents:</b> ") : QStringLiteral("<b>Parent:</b> ")) + parentsHtml.join(", ") + QStringLiteral("<br />");
+        html += (parentsHtml.count() > 1 ? tr("<b>Parents:</b> ") : tr("<b>Parent:</b> ")) + parentsHtml.join(", ") + QStringLiteral("<br />");
     }
-    html += QStringLiteral("<b>Date:</b> ") + m_activeCommitDiff.time().toString() + QStringLiteral("<br />");
-    html += QStringLiteral("<b>Author:</b> ") + m_activeCommitDiff.author().name().toHtmlEscaped() + QStringLiteral(" &lt;") + email.toHtmlEscaped() + QStringLiteral("&gt;<br />");
+    html += tr("<b>Date:</b> ") + m_activeCommitDiff.time().toString() + QStringLiteral("<br />");
+    html += tr("<b>Author:</b> ") + m_activeCommitDiff.author().name().toHtmlEscaped() + QStringLiteral(" &lt;") + email.toHtmlEscaped() + QStringLiteral("&gt;<br />");
     html += QStringLiteral("<br />");
     html += m_activeCommitDiff.message().toHtmlEscaped().replace(QLatin1Char('\n'), QStringLiteral("<br />"));
 
