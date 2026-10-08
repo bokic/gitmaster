@@ -18,7 +18,6 @@ private Q_SLOTS:
 private:
     void setIcon(int index);
 
-    QIcon m_icon;
     QIcon m_iconFlatListSingleColumn;
     QIcon m_iconFlatListMultipleColumn;
     QIcon m_iconTreeView;

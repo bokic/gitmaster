@@ -6,6 +6,7 @@
 #include <QApplication>
 #include <QSvgRenderer>
 #include <QFile>
+#include <QSize>
 
 
 enum {
@@ -25,6 +26,7 @@ QComboBoxGitViewOptions::QComboBoxGitViewOptions(QWidget *parent)
     , m_iconNoStaging(":/QComboBoxGitViewOptions/no_staging")
     , m_iconSplitViewStaging(":/QComboBoxGitViewOptions/split_view_staging")
 {
+    setIconSize(QSize(16, 16));
     initStandardModel();
     updateIconColor();
 
