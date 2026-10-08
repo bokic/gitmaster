@@ -1337,6 +1337,15 @@ void QGitRepository::repositoryCommitReply(const QString &commit_id, const QGitE
     bool wasRewording = m_rewordingCommit;
     m_rewordingCommit = false;
 
+    // The history list is paged and cached in the table. Invalidate that cache
+    // whenever a commit was created so the next visit to Log / History starts
+    // from HEAD and includes the new commit.
+    if (!commit_id.isEmpty()) {
+        m_logCommitsOffset = 0;
+        m_allCommitsLoaded = false;
+        ui->logHistory_commits->clearCommits();
+    }
+
     ui->plainTextEdit_commitMessage->setEnabled(true);
     ui->pushButton_commit->setEnabled(true);
 
