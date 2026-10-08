@@ -891,6 +891,76 @@ QString QGit::currentBranch() const
     return branch;
 }
 
+QString QGit::currentBranchPushTarget() const
+{
+    GitRepository repo;
+    int res = git_repository_open(repo, m_path.absolutePath().toUtf8().constData());
+    if (res)
+    {
+        return QString();
+    }
+
+    GitReference head;
+    res = git_repository_head(head, repo);
+    if (res)
+    {
+        return QString();
+    }
+
+    const char *branchName = nullptr;
+    if (git_branch_name(&branchName, head) != 0 || !branchName)
+    {
+        return QString();
+    }
+
+    QString remoteName;
+    QString remoteBranch;
+    GitBuf upstreamRemote;
+    const char *localRefName = git_reference_name(head);
+    if (localRefName && git_branch_upstream_remote(upstreamRemote, repo, localRefName) == 0)
+    {
+        remoteName = QString::fromUtf8(upstreamRemote.value.ptr);
+
+        GitBuf upstreamRef;
+        if (git_branch_upstream_merge(upstreamRef, repo, localRefName) == 0 && upstreamRef.value.ptr)
+        {
+            remoteBranch = QString::fromUtf8(upstreamRef.value.ptr);
+            const QString headsPrefix = QStringLiteral("refs/heads/");
+            if (remoteBranch.startsWith(headsPrefix))
+            {
+                remoteBranch.remove(0, headsPrefix.size());
+            }
+        }
+    }
+
+    if (remoteName.isEmpty())
+    {
+        GitStrArray remotes;
+        if (git_remote_list(remotes, repo) != 0 || remotes.value.count == 0)
+        {
+            return QString();
+        }
+
+        const char *selectedRemote = remotes.value.strings[0];
+        for (size_t i = 0; i < remotes.value.count; ++i)
+        {
+            if (strcmp(remotes.value.strings[i], "origin") == 0)
+            {
+                selectedRemote = remotes.value.strings[i];
+                break;
+            }
+        }
+        remoteName = QString::fromUtf8(selectedRemote);
+    }
+
+    if (remoteBranch.isEmpty())
+    {
+        remoteBranch = QString::fromUtf8(branchName);
+    }
+
+    return remoteName + QLatin1Char('/') + remoteBranch;
+}
+
 QString QGit::headCommitId() const
 {
     GitRepository repo;

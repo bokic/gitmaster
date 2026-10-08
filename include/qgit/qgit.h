@@ -114,6 +114,7 @@ public:
     QList<QGitRemote> remotes() const;
     bool hasCommitsToPush() const;
     QString currentBranch() const;
+    QString currentBranchPushTarget() const;
     QString headCommitId() const;
     QString headCommitMessage() const;
     bool isAncestor(const QString &ancestor, const QString &descendant) const;

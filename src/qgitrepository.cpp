@@ -2179,6 +2179,13 @@ void QGitRepository::on_repositoryDetail_currentChanged(int index)
 
     switch(index) {
     case 0:
+        {
+            const QString pushTarget = m_git->currentBranchPushTarget();
+            ui->checkBox_pushChangesImmidietely->setText(
+                pushTarget.isEmpty()
+                    ? tr("Push changes immediately")
+                    : tr("Push changes immediately to %1").arg(pushTarget));
+        }
         connect(ui->commit_diff, &QGitDiffWidget::requestGitDiff, m_git, &QGit::commitDiffContent);
         connect(m_git, &QGit::commitDiffContentReply, ui->commit_diff, &QGitDiffWidget::responseGitDiff);
 
