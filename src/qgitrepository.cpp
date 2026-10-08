@@ -49,8 +49,6 @@
 
 
 #include <QLineEdit>
-#include <QStyledItemDelegate>
-
 #include <QHBoxLayout>
 #include <QCheckBox>
 #include <QLabel>
@@ -142,6 +140,7 @@ QGitRepository::QGitRepository(const QString &path, QWidget *parent)
 
 
     ui->logHistory_files->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
+    ui->logHistory_files->setStyleSheet(QStringLiteral("QTableWidget { outline: 0; }"));
     ui->search_files->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
     ui->logHistory_commits->horizontalHeader()->setSectionResizeMode(1, QHeaderView::Stretch);
     ui->search_commits->horizontalHeader()->setSectionResizeMode(0, QHeaderView::Stretch);
