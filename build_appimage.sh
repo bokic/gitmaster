@@ -55,15 +55,18 @@ cmake --install "${BUILD_DIR}" --prefix "${APPDIR}/usr"
 # 4. Packaging the AppImage
 echo "=> Executing linuxdeploy..."
 
-# Set version
-if [ -z "${VERSION:-}" ]; then
-    # Get version from git tags
-    VERSION=$(git describe --tags --always || echo "1.0.0")
-    # Clean version string (remove 'v' prefix if present)
-    VERSION="${VERSION#v}"
-    export VERSION
+# Set the output version. Keep VERSION as a supported input for callers, but
+# pass it to linuxdeploy using its current variable name.
+if [ -z "${LINUXDEPLOY_OUTPUT_VERSION:-}" ]; then
+    if [ -n "${VERSION:-}" ]; then
+        LINUXDEPLOY_OUTPUT_VERSION="${VERSION}"
+    else
+        LINUXDEPLOY_OUTPUT_VERSION=$(git describe --tags --always || echo "1.0.0")
+    fi
+    LINUXDEPLOY_OUTPUT_VERSION="${LINUXDEPLOY_OUTPUT_VERSION#v}"
+    export LINUXDEPLOY_OUTPUT_VERSION
 fi
-echo "AppImage Version: ${VERSION}"
+echo "AppImage Version: ${LINUXDEPLOY_OUTPUT_VERSION}"
 
 # Environment configuration for Qt6 plugin detection
 export QMAKE="/usr/lib/qt6/bin/qmake"

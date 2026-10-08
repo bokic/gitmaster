@@ -332,3 +332,11 @@ install(
     FILES io.github.bokic.gitmaster.metainfo.xml
     DESTINATION share/metainfo
 )
+
+# appimagetool currently looks for AppStream metadata with the legacy
+# .appdata.xml suffix. Keep the standard .metainfo.xml install above as well.
+install(
+    FILES io.github.bokic.gitmaster.metainfo.xml
+    DESTINATION share/metainfo
+    RENAME io.github.bokic.gitmaster.appdata.xml
+)
