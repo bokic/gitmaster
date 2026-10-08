@@ -2454,12 +2454,13 @@ void QGitRepository::activateCommitOperation(bool activate)
 void QGitRepository::on_logHistory_files_itemSelectionChanged()
 {
     bool ignoreWhitespace = ui->comboBox_gitDiffOptions->ignoreWhitespace();
-    QTableWidgetItem *item = ui->logHistory_files->currentItem();
+    int currentRow = ui->logHistory_files->currentRow();
+    QTableWidgetItem *col0 = currentRow >= 0 ? ui->logHistory_files->item(currentRow, 0) : nullptr;
 
-    if (item && item->column() == 0)
+    if (col0)
     {
         ui->logHistory_diff->setIgnoreWhitespace(ignoreWhitespace);
-        ui->logHistory_diff->setGitDiff(m_commitDiff.parents().at(0).commitHash(), m_commitDiff.id(), {item->data(Qt::UserRole).toString()});
+        ui->logHistory_diff->setGitDiff(m_commitDiff.parents().at(0).commitHash(), m_commitDiff.id(), {col0->data(Qt::UserRole).toString()});
     }
 }
 
