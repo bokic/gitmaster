@@ -6535,8 +6535,7 @@ void QGit::push(const QString &remote, const QStringList &branches, bool tags, b
             throw QGitError("git_repository_open", res);
         }
 
-        const int refspecCount = branches.size() + (tags ? 1 : 0);
-        if (refspecCount == 0)
+        if (branches.isEmpty() && !tags)
         {
             git_error_set_str(GIT_ERROR_INVALID, "No branches or tags selected to push");
             throw QGitError("git_remote_push", GIT_ERROR_INVALID);
@@ -6580,9 +6579,26 @@ void QGit::push(const QString &remote, const QStringList &branches, bool tags, b
         }
         if (tags)
         {
-            QString tagRefspec = "refs/tags/*:refs/tags/*";
-            if (force) tagRefspec.prepend("+");
-            refspecList.append(tagRefspec);
+            GitStrArray tagNames;
+            res = git_tag_list(tagNames, repo);
+            if (res)
+            {
+                throw QGitError("git_tag_list", res);
+            }
+
+            for (size_t i = 0; i < tagNames.value.count; ++i)
+            {
+                const QString tagName = QString::fromUtf8(tagNames.value.strings[i]);
+                QString tagRefspec = "refs/tags/" + tagName + ":refs/tags/" + tagName;
+                if (force) tagRefspec.prepend("+");
+                refspecList.append(tagRefspec);
+            }
+        }
+
+        if (refspecList.isEmpty())
+        {
+            git_error_set_str(GIT_ERROR_INVALID, "No branches or tags selected to push");
+            throw QGitError("git_remote_push", GIT_ERROR_INVALID);
         }
         SafeGitStrArray refspecs = SafeGitStrArray::fromQStringList(refspecList);
 
