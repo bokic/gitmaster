@@ -36,7 +36,6 @@ private Q_SLOTS:
     void activated(int index);
 
 private:
-    QIcon m_icon;
     QIcon m_iconChecked;
     QIcon m_iconUnchecked;
     bool m_showIcons = false;

@@ -6,6 +6,7 @@
 #include <QApplication>
 #include <QSvgRenderer>
 #include <QFile>
+#include <QSize>
 
 
 enum {
@@ -40,6 +41,8 @@ QComboBoxGitDiffOptions::QComboBoxGitDiffOptions(QWidget *parent)
     , m_iconChecked(":/QCustomComboBox/check")
     , m_iconUnchecked(":/QCustomComboBox/uncheck")
 {
+    setIconSize(QSize(16, 16));
+    m_icon = QIcon(QStringLiteral(":/QComboBoxGitDiffOptions/gear"));
     initStandardModel();
     updateIconColor();
 
