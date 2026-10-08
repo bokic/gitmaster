@@ -41,7 +41,7 @@
         <string>Merge From Log</string>
        </property>
        <property name="icon">
-        <iconset resource="resource.qrc">
+        <iconset resource="../resource.qrc">
          <normaloff>:/toolbar/merge</normaloff>:/toolbar/merge</iconset>
        </property>
        <property name="iconSize">
@@ -61,7 +61,7 @@
         <string>Merge Fetched</string>
        </property>
        <property name="icon">
-        <iconset resource="resource.qrc">
+        <iconset resource="../resource.qrc">
          <normaloff>:/toolbar/merge</normaloff>:/toolbar/merge</iconset>
        </property>
        <property name="iconSize">
@@ -292,7 +292,7 @@
   </layout>
  </widget>
  <resources>
-  <include location="resource.qrc"/>
+  <include location="../resource.qrc"/>
  </resources>
  <connections/>
 </ui>

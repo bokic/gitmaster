@@ -14,7 +14,7 @@
    <string>Git Master</string>
   </property>
   <property name="windowIcon">
-   <iconset resource="resource.qrc">
+   <iconset resource="../resource.qrc">
     <normaloff>:/images/window_icon.svg</normaloff>:/images/window_icon.svg</iconset>
   </property>
   <widget class="QWidget" name="centralWidget">
@@ -60,7 +60,7 @@
            <string>Repository Settings</string>
           </property>
           <property name="icon">
-           <iconset resource="resource.qrc">
+           <iconset resource="../resource.qrc">
             <normaloff>:/images/database_settings.svg</normaloff>:/images/database_settings.svg</iconset>
           </property>
           <property name="iconSize">
@@ -77,7 +77,7 @@
            <string>Clone / New</string>
           </property>
           <property name="icon">
-           <iconset resource="resource.qrc">
+           <iconset resource="../resource.qrc">
             <normaloff>:/images/database_add.svg</normaloff>:/images/database_add.svg</iconset>
           </property>
           <property name="iconSize">
@@ -110,7 +110,7 @@
            <string>Delete Item</string>
           </property>
           <property name="icon">
-           <iconset resource="resource.qrc">
+           <iconset resource="../resource.qrc">
             <normaloff>:/images/remove.svg</normaloff>:/images/remove.svg</iconset>
           </property>
           <property name="iconSize">
@@ -190,7 +190,7 @@
   <widget class="QStatusBar" name="statusBar"/>
   <action name="actionCommit">
    <property name="icon">
-    <iconset resource="resource.qrc">
+    <iconset resource="../resource.qrc">
      <normaloff>:/toolbar/commit</normaloff>:/toolbar/commit</iconset>
    </property>
    <property name="text">
@@ -199,7 +199,7 @@
   </action>
   <action name="actionStash">
    <property name="icon">
-    <iconset resource="resource.qrc">
+    <iconset resource="../resource.qrc">
      <normaloff>:/toolbar/stash</normaloff>:/toolbar/stash</iconset>
    </property>
    <property name="text">
@@ -208,7 +208,7 @@
   </action>
   <action name="actionFetch">
    <property name="icon">
-    <iconset resource="resource.qrc">
+    <iconset resource="../resource.qrc">
      <normaloff>:/toolbar/fetch</normaloff>:/toolbar/fetch</iconset>
    </property>
    <property name="text">
@@ -217,7 +217,7 @@
   </action>
   <action name="actionPull">
    <property name="icon">
-    <iconset resource="resource.qrc">
+    <iconset resource="../resource.qrc">
      <normaloff>:/toolbar/pull</normaloff>:/toolbar/pull</iconset>
    </property>
    <property name="text">
@@ -226,7 +226,7 @@
   </action>
   <action name="actionPush">
    <property name="icon">
-    <iconset resource="resource.qrc">
+    <iconset resource="../resource.qrc">
      <normaloff>:/toolbar/push</normaloff>:/toolbar/push</iconset>
    </property>
    <property name="text">
@@ -235,7 +235,7 @@
   </action>
   <action name="actionBranch">
    <property name="icon">
-    <iconset resource="resource.qrc">
+    <iconset resource="../resource.qrc">
      <normaloff>:/toolbar/branch</normaloff>:/toolbar/branch</iconset>
    </property>
    <property name="text">
@@ -244,7 +244,7 @@
   </action>
   <action name="actionMerge">
    <property name="icon">
-    <iconset resource="resource.qrc">
+    <iconset resource="../resource.qrc">
      <normaloff>:/toolbar/merge</normaloff>:/toolbar/merge</iconset>
    </property>
    <property name="text">
@@ -256,7 +256,7 @@
     <bool>false</bool>
    </property>
    <property name="icon">
-    <iconset resource="resource.qrc">
+    <iconset resource="../resource.qrc">
      <normaloff>:/toolbar/rebase</normaloff>:/toolbar/rebase</iconset>
    </property>
    <property name="text">
@@ -268,7 +268,7 @@
     <bool>false</bool>
    </property>
    <property name="icon">
-    <iconset resource="resource.qrc">
+    <iconset resource="../resource.qrc">
      <normaloff>:/toolbar/worktrees</normaloff>:/toolbar/worktrees</iconset>
    </property>
    <property name="text">
@@ -277,7 +277,7 @@
   </action>
   <action name="actionGit_Flow">
    <property name="icon">
-    <iconset resource="resource.qrc">
+    <iconset resource="../resource.qrc">
      <normaloff>:/toolbar/git_flow</normaloff>:/toolbar/git_flow</iconset>
    </property>
    <property name="text">
@@ -286,7 +286,7 @@
   </action>
   <action name="actionTerminal">
    <property name="icon">
-    <iconset resource="resource.qrc">
+    <iconset resource="../resource.qrc">
      <normaloff>:/toolbar/terminal</normaloff>:/toolbar/terminal</iconset>
    </property>
    <property name="text">
@@ -295,7 +295,7 @@
   </action>
   <action name="actionSettings">
    <property name="icon">
-    <iconset resource="resource.qrc">
+    <iconset resource="../resource.qrc">
      <normaloff>:/toolbar/settings</normaloff>:/toolbar/settings</iconset>
    </property>
    <property name="text">
@@ -312,7 +312,7 @@
   </customwidget>
  </customwidgets>
  <resources>
-  <include location="resource.qrc"/>
+  <include location="../resource.qrc"/>
  </resources>
  <connections/>
 </ui>
