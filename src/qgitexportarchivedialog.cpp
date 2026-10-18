@@ -18,7 +18,6 @@ QGitExportArchiveDialog::QGitExportArchiveDialog(QGit *git, const QString &selec
     // Format choices
     ui->comboBox_format->addItem(tr("ZIP Archive (.zip)"), QStringLiteral("zip"));
     ui->comboBox_format->addItem(tr("Gzip Tarball (.tar.gz)"), QStringLiteral("tar.gz"));
-    ui->comboBox_format->addItem(tr("Bzip2 Tarball (.tar.bz2)"), QStringLiteral("tar.bz2"));
     ui->comboBox_format->addItem(tr("Uncompressed Tarball (.tar)"), QStringLiteral("tar"));
 
     populateRefs();
@@ -140,8 +139,6 @@ void QGitExportArchiveDialog::updateDefaultFileName()
     QString fmt = format();
     if (fmt == QStringLiteral("tar.gz")) {
         ext = QStringLiteral(".tar.gz");
-    } else if (fmt == QStringLiteral("tar.bz2")) {
-        ext = QStringLiteral(".tar.bz2");
     } else if (fmt == QStringLiteral("tar")) {
         ext = QStringLiteral(".tar");
     }
@@ -219,15 +216,10 @@ void QGitExportArchiveDialog::on_comboBox_format_currentIndexChanged(int)
         QString fmt = format();
         QString newExt = QStringLiteral(".zip");
         if (fmt == QStringLiteral("tar.gz")) newExt = QStringLiteral(".tar.gz");
-        else if (fmt == QStringLiteral("tar.bz2")) newExt = QStringLiteral(".tar.bz2");
         else if (fmt == QStringLiteral("tar")) newExt = QStringLiteral(".tar");
 
         if (currentPath.endsWith(QStringLiteral(".tar.gz"), Qt::CaseInsensitive)) {
             currentPath.chop(7);
-            currentPath += newExt;
-            ui->lineEdit_outputFile->setText(currentPath);
-        } else if (currentPath.endsWith(QStringLiteral(".tar.bz2"), Qt::CaseInsensitive)) {
-            currentPath.chop(8);
             currentPath += newExt;
             ui->lineEdit_outputFile->setText(currentPath);
         } else if (currentPath.endsWith(QStringLiteral(".zip"), Qt::CaseInsensitive)) {
@@ -250,8 +242,6 @@ void QGitExportArchiveDialog::on_pushButton_browse_clicked()
         filter = tr("ZIP Archives (*.zip);;All Files (*)");
     } else if (fmt == QStringLiteral("tar.gz")) {
         filter = tr("Gzip Tarballs (*.tar.gz *.tgz);;All Files (*)");
-    } else if (fmt == QStringLiteral("tar.bz2")) {
-        filter = tr("Bzip2 Tarballs (*.tar.bz2 *.tbz2);;All Files (*)");
     } else {
         filter = tr("Tarballs (*.tar);;All Files (*)");
     }

@@ -3432,15 +3432,25 @@ static bool deflateBufferHelper(const uint8_t *inData, size_t inSize, std::vecto
 static void fillTarHeaderHelper(UstarTarHeader &hdr, const std::string &path, size_t size, uint32_t mode, time_t mtime, char typeflag, const std::string &linkname = std::string())
 {
     memset(&hdr, 0, sizeof(hdr));
-    if (path.length() > 100) {
-        size_t splitPos = path.rfind('/', 155);
-        if (splitPos != std::string::npos && (path.length() - splitPos - 1) <= 100) {
-            std::string prefix = path.substr(0, splitPos);
-            std::string name = path.substr(splitPos + 1);
-            memcpy(hdr.prefix, prefix.c_str(), prefix.length());
-            memcpy(hdr.name, name.c_str(), name.length());
-        } else {
-            memcpy(hdr.name, path.c_str(), std::min(path.length(), (size_t)100));
+    if (path.length() > sizeof(hdr.name)) {
+        bool splitFound = false;
+        size_t minSplit = (path.length() > sizeof(hdr.name)) ? (path.length() - sizeof(hdr.name)) : 0;
+        size_t maxSplit = std::min(sizeof(hdr.prefix), path.length() - 1);
+        for (size_t pos = maxSplit; pos >= minSplit; --pos) {
+            if (path[pos] == '/') {
+                std::string prefix = path.substr(0, pos);
+                std::string name = path.substr(pos + 1);
+                if (prefix.length() <= sizeof(hdr.prefix) && name.length() <= sizeof(hdr.name)) {
+                    memcpy(hdr.prefix, prefix.c_str(), prefix.length());
+                    memcpy(hdr.name, name.c_str(), name.length());
+                    splitFound = true;
+                    break;
+                }
+            }
+            if (pos == 0) break;
+        }
+        if (!splitFound) {
+            memcpy(hdr.name, path.c_str(), std::min(path.length(), sizeof(hdr.name)));
         }
     } else {
         memcpy(hdr.name, path.c_str(), path.length());
@@ -3573,8 +3583,6 @@ void QGit::exportArchive(const QString &refOrCommit, const QString &outputFilePa
         if (actualFormat.isEmpty()) {
             if (outputFilePath.endsWith(QStringLiteral(".tar.gz"), Qt::CaseInsensitive) || outputFilePath.endsWith(QStringLiteral(".tgz"), Qt::CaseInsensitive)) {
                 actualFormat = QStringLiteral("tar.gz");
-            } else if (outputFilePath.endsWith(QStringLiteral(".tar.bz2"), Qt::CaseInsensitive) || outputFilePath.endsWith(QStringLiteral(".tbz2"), Qt::CaseInsensitive)) {
-                actualFormat = QStringLiteral("tar.bz2");
             } else if (outputFilePath.endsWith(QStringLiteral(".tar"), Qt::CaseInsensitive)) {
                 actualFormat = QStringLiteral("tar");
             } else {
@@ -3663,19 +3671,27 @@ void QGit::exportArchive(const QString &refOrCommit, const QString &outputFilePa
             zipFile.close();
             createdFile = outputFilePath;
         } else {
-            // TAR based formats (.tar, .tar.gz, .tar.bz2)
+            // TAR based formats (.tar, .tar.gz)
             std::vector<uint8_t> uncompressedTar;
             for (const auto &ae : entries) {
                 std::string entryPath = (normPrefix + QString::fromUtf8(ae.relativePath.c_str())).toUtf8().toStdString();
                 UstarTarHeader hdr;
-                fillTarHeaderHelper(hdr, entryPath, ae.data.size(), ae.filemode, commitTime, '0');
-                const uint8_t *hPtr = reinterpret_cast<const uint8_t*>(&hdr);
-                uncompressedTar.insert(uncompressedTar.end(), hPtr, hPtr + sizeof(UstarTarHeader));
-                if (!ae.data.empty()) {
-                    uncompressedTar.insert(uncompressedTar.end(), ae.data.begin(), ae.data.end());
-                    size_t remainder = ae.data.size() % 512;
-                    if (remainder != 0) {
-                        uncompressedTar.insert(uncompressedTar.end(), 512 - remainder, 0);
+                bool isSymlink = (ae.filemode == GIT_FILEMODE_LINK);
+                if (isSymlink) {
+                    std::string target(reinterpret_cast<const char*>(ae.data.data()), ae.data.size());
+                    fillTarHeaderHelper(hdr, entryPath, 0, ae.filemode, commitTime, '2', target);
+                    const uint8_t *hPtr = reinterpret_cast<const uint8_t*>(&hdr);
+                    uncompressedTar.insert(uncompressedTar.end(), hPtr, hPtr + sizeof(UstarTarHeader));
+                } else {
+                    fillTarHeaderHelper(hdr, entryPath, ae.data.size(), ae.filemode, commitTime, '0');
+                    const uint8_t *hPtr = reinterpret_cast<const uint8_t*>(&hdr);
+                    uncompressedTar.insert(uncompressedTar.end(), hPtr, hPtr + sizeof(UstarTarHeader));
+                    if (!ae.data.empty()) {
+                        uncompressedTar.insert(uncompressedTar.end(), ae.data.begin(), ae.data.end());
+                        size_t remainder = ae.data.size() % 512;
+                        if (remainder != 0) {
+                            uncompressedTar.insert(uncompressedTar.end(), 512 - remainder, 0);
+                        }
                     }
                 }
             }
@@ -3693,14 +3709,6 @@ void QGit::exportArchive(const QString &refOrCommit, const QString &outputFilePa
                 }
                 gzFile.write(reinterpret_cast<const char*>(gzData.data()), gzData.size());
                 gzFile.close();
-            } else if (actualFormat == QStringLiteral("tar.bz2")) {
-                // Use qCompress with fallback or tar file
-                QFile tarFile(outputFilePath);
-                if (!tarFile.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
-                    throw QGitError(tr("Could not open file for writing: %1").arg(outputFilePath));
-                }
-                tarFile.write(reinterpret_cast<const char*>(uncompressedTar.data()), uncompressedTar.size());
-                tarFile.close();
             } else {
                 // Pure .tar
                 QFile tarFile(outputFilePath);
