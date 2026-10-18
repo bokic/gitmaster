@@ -840,14 +840,8 @@ static bool hasCommitsToPushHelper(git_repository *repo)
 
         GitReference upstream;
         res = git_branch_upstream(upstream, ref);
-        if (res == GIT_ENOTFOUND || res < 0)
+        if (res != 0)
         {
-            int unborn = git_repository_head_unborn(repo);
-            if (unborn == 0)
-            {
-                hasCommits = true;
-                break;
-            }
             continue;
         }
 
