@@ -2977,6 +2977,10 @@ void QGit::renameBranch(const QString &oldName, const QString &newName)
 {
     QGitError error;
     try {
+        if (oldName == newName) {
+            return;
+        }
+
         if (!isValidRefName(QStringLiteral("refs/heads/"), newName))
         {
             git_error_set_str(GIT_ERROR_INVALID, "Invalid branch name");
@@ -2999,28 +3003,10 @@ void QGit::renameBranch(const QString &oldName, const QString &newName)
         res = git_branch_lookup(branch, repo, oldName.toUtf8().constData(), GIT_BRANCH_LOCAL);
         if(res) throw QGitError("git_branch_lookup", res);
 
-        int is_head = git_branch_is_head(branch);
-
-        // 3. Create new branch on same commit
-        GitObject target_obj;
-        res = git_reference_peel(target_obj, branch, GIT_OBJ_COMMIT);
-        if (res) throw QGitError("git_reference_peel", res);
-
-        git_commit *commit = reinterpret_cast<git_commit *>(target_obj.value);
-
+        // 3. Move/rename branch (preserves upstream tracking config and reflog)
         GitReference new_branch;
-        res = git_branch_create(new_branch, repo, newName.toUtf8().constData(), commit, 0);
-        if (res) throw QGitError("git_branch_create", res);
-
-        // 4. Update HEAD if we renamed current branch
-        if (is_head == 1) {
-            res = git_repository_set_head(repo, git_reference_name(new_branch));
-            if (res) throw QGitError("git_repository_set_head", res);
-        }
-
-        // 5. Delete old branch
-        res = git_branch_delete(branch);
-        if (res) throw QGitError("git_branch_delete", res);
+        res = git_branch_move(new_branch, branch, newName.toUtf8().constData(), 0);
+        if (res) throw QGitError("git_branch_move", res);
 
     } catch(const QGitError &ex) {
         error = ex;
@@ -3032,6 +3018,10 @@ void QGit::renameTag(const QString &oldName, const QString &newName)
 {
     QGitError error;
     try {
+        if (oldName == newName) {
+            return;
+        }
+
         if (!isValidRefName(QStringLiteral("refs/tags/"), newName))
         {
             git_error_set_str(GIT_ERROR_INVALID, "Invalid tag name");
@@ -3056,17 +3046,46 @@ void QGit::renameTag(const QString &oldName, const QString &newName)
         res = git_reference_lookup(tag_ref, repo, oldTagFullName.toUtf8().constData());
         if (res) throw QGitError("git_reference_lookup", res);
 
-        // 3. Get target object of old tag
-        GitObject target_obj;
-        res = git_reference_peel(target_obj, tag_ref, GIT_OBJ_ANY);
-        if (res) throw QGitError("git_reference_peel", res);
+        GitReference resolved_ref;
+        res = git_reference_resolve(resolved_ref, tag_ref);
+        git_reference *effective_ref = (res == 0) ? resolved_ref.value : tag_ref.value;
 
-        // 4. Create new tag pointing to same target object
-        git_oid new_tag_oid;
-        res = git_tag_create_lightweight(&new_tag_oid, repo, newName.toUtf8().constData(), target_obj, 0);
-        if (res) throw QGitError("git_tag_create_lightweight", res);
+        const git_oid *tag_oid = git_reference_target(effective_ref);
+        GitTag tag;
+        int tag_lookup_res = tag_oid ? git_tag_lookup(tag, repo, tag_oid) : GIT_ENOTFOUND;
 
-        // 5. Delete old tag
+        if (tag_lookup_res == 0 && tag.value) {
+            // Annotated tag: preserve target object, tagger signature, and message
+            GitObject target;
+            res = git_tag_target(target, tag);
+            if (res) throw QGitError("git_tag_target", res);
+
+            const git_signature *tagger = git_tag_tagger(tag);
+            const char *message = git_tag_message(tag);
+            const char *msg = message ? message : "";
+
+            GitSignature default_sig;
+            if (!tagger) {
+                if (git_signature_default(default_sig, repo) == 0) {
+                    tagger = default_sig;
+                }
+            }
+
+            git_oid new_tag_oid;
+            res = git_tag_create(&new_tag_oid, repo, newName.toUtf8().constData(), target, tagger, msg, 0);
+            if (res) throw QGitError("git_tag_create", res);
+        } else {
+            // Lightweight tag
+            GitObject target_obj;
+            res = git_reference_peel(target_obj, tag_ref, GIT_OBJ_ANY);
+            if (res) throw QGitError("git_reference_peel", res);
+
+            git_oid new_tag_oid;
+            res = git_tag_create_lightweight(&new_tag_oid, repo, newName.toUtf8().constData(), target_obj, 0);
+            if (res) throw QGitError("git_tag_create_lightweight", res);
+        }
+
+        // 3. Delete old tag
         res = git_tag_delete(repo, oldName.toUtf8().constData());
         if (res) throw QGitError("git_tag_delete", res);
 
