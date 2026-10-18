@@ -156,6 +156,13 @@ public:
     static bool isGitRepository(const QDir &path);
     static bool gitRepositoryDefaultSignature(const QDir &path, QString &name, QString &email);
 
+    void createLocalBranchInternal(const QString &name, const QString &commit_id = "", bool checkout = false, bool force = false);
+    void checkoutBranchInternal(const QString &name);
+    void mergeInternal(const QString &branchName);
+    void createTagInternal(const QString &name, const QString &targetObjectId, const QString &message, bool force);
+    void deleteBranchesInternal(const QList<QGitBranch> &branches, bool force);
+    void resetInternal(const QString &commitId, git_reset_t type);
+
 public slots:
     void init();
     void signature();
@@ -288,7 +295,6 @@ signals:
 
 private:
     QString commitInternal(const QString &message, bool withPush, bool amend);
-    void mergeInternal(const QString &branchName);
     void rebaseInternal(const QString &upstream, const QString &branch = "", const QString &onto = "");
 
     mutable QMutex m_mutex;

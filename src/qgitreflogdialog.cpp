@@ -95,7 +95,7 @@ void QGitReflogDialog::on_checkoutButton_clicked()
                                                  &ok);
     if (ok && !branchName.isEmpty()) {
         try {
-            m_repository->git()->createLocalBranch(branchName, hash, true);
+            m_repository->git()->createLocalBranchInternal(branchName, hash, true);
             m_repository->refreshData();
             accept();
         } catch (const QGitError &error) {
@@ -117,7 +117,7 @@ void QGitReflogDialog::on_createBranchButton_clicked()
                                                  &ok);
     if (ok && !branchName.isEmpty()) {
         try {
-            m_repository->git()->createLocalBranch(branchName, hash, false);
+            m_repository->git()->createLocalBranchInternal(branchName, hash, false);
             m_repository->refreshData();
             loadReflog();
             QMessageBox::information(this, tr("Branch Created"), tr("Branch '%1' successfully created.").arg(branchName));
@@ -149,7 +149,7 @@ void QGitReflogDialog::on_resetButton_clicked()
                                          QMessageBox::Yes | QMessageBox::No);
     if (confirm == QMessageBox::Yes) {
         try {
-            m_repository->git()->reset(hash, resetType);
+            m_repository->git()->resetInternal(hash, resetType);
             m_repository->refreshData();
             QMessageBox::information(this, tr("Reset Successful"), tr("Branch successfully reset to commit %1.").arg(hash.left(7)));
             accept();

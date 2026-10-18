@@ -84,7 +84,7 @@ bool QGitFlowDialog::ensureDevelopBranch()
             return false;
         }
         try {
-            m_git.createLocalBranch(QStringLiteral("develop"), mainBranch, false);
+            m_git.createLocalBranchInternal(QStringLiteral("develop"), mainBranch, false);
             QMessageBox::information(this, tr("Git Flow Initialization"),
                                      tr("Branch 'develop' was automatically created from '%1'.").arg(mainBranch));
         } catch (const QGitError &err) {
@@ -109,7 +109,7 @@ void QGitFlowDialog::on_pushButton_startFeature_clicked()
 
     try {
         if (!ensureDevelopBranch()) return;
-        m_git.createLocalBranch(branchName, QStringLiteral("develop"), true);
+        m_git.createLocalBranchInternal(branchName, QStringLiteral("develop"), true);
         ui->lineEdit_featureName->clear();
         refreshBranches();
         m_repo->refreshData();
@@ -126,13 +126,13 @@ void QGitFlowDialog::on_pushButton_finishFeature_clicked()
 
     try {
         if (!ensureDevelopBranch()) return;
-        m_git.checkoutBranch(QStringLiteral("develop"));
-        m_git.merge(branchName);
+        m_git.checkoutBranchInternal(QStringLiteral("develop"));
+        m_git.mergeInternal(branchName);
 
         // Delete feature branch
         QList<QGitBranch> toDelete;
         toDelete.append(QGitBranch(branchName, "", 0, GIT_BRANCH_LOCAL));
-        m_git.deleteBranches(toDelete, true);
+        m_git.deleteBranchesInternal(toDelete, true);
 
         refreshBranches();
         m_repo->refreshData();
@@ -155,7 +155,7 @@ void QGitFlowDialog::on_pushButton_startRelease_clicked()
 
     try {
         if (!ensureDevelopBranch()) return;
-        m_git.createLocalBranch(branchName, QStringLiteral("develop"), true);
+        m_git.createLocalBranchInternal(branchName, QStringLiteral("develop"), true);
         ui->lineEdit_releaseName->clear();
         refreshBranches();
         m_repo->refreshData();
@@ -175,21 +175,21 @@ void QGitFlowDialog::on_pushButton_finishRelease_clicked()
 
     try {
         // Merge into main
-        m_git.checkoutBranch(mainBranch);
-        m_git.merge(branchName);
+        m_git.checkoutBranchInternal(mainBranch);
+        m_git.mergeInternal(branchName);
 
         // Tag the release
-        m_git.createTag(releaseName, mainBranch, QString("Release %1").arg(releaseName), true);
+        m_git.createTagInternal(releaseName, mainBranch, QString("Release %1").arg(releaseName), true);
 
         // Merge into develop
         if (!ensureDevelopBranch()) return;
-        m_git.checkoutBranch(QStringLiteral("develop"));
-        m_git.merge(branchName);
+        m_git.checkoutBranchInternal(QStringLiteral("develop"));
+        m_git.mergeInternal(branchName);
 
         // Delete release branch
         QList<QGitBranch> toDelete;
         toDelete.append(QGitBranch(branchName, "", 0, GIT_BRANCH_LOCAL));
-        m_git.deleteBranches(toDelete, true);
+        m_git.deleteBranchesInternal(toDelete, true);
 
         refreshBranches();
         m_repo->refreshData();
@@ -212,7 +212,7 @@ void QGitFlowDialog::on_pushButton_startHotfix_clicked()
 
     try {
         QString mainBranch = detectMainBranch();
-        m_git.createLocalBranch(branchName, mainBranch, true);
+        m_git.createLocalBranchInternal(branchName, mainBranch, true);
         ui->lineEdit_hotfixName->clear();
         refreshBranches();
         m_repo->refreshData();
@@ -232,21 +232,21 @@ void QGitFlowDialog::on_pushButton_finishHotfix_clicked()
 
     try {
         // Merge into main
-        m_git.checkoutBranch(mainBranch);
-        m_git.merge(branchName);
+        m_git.checkoutBranchInternal(mainBranch);
+        m_git.mergeInternal(branchName);
 
         // Tag the hotfix
-        m_git.createTag(hotfixName, mainBranch, QString("Hotfix %1").arg(hotfixName), true);
+        m_git.createTagInternal(hotfixName, mainBranch, QString("Hotfix %1").arg(hotfixName), true);
 
         // Merge into develop
         if (!ensureDevelopBranch()) return;
-        m_git.checkoutBranch(QStringLiteral("develop"));
-        m_git.merge(branchName);
+        m_git.checkoutBranchInternal(QStringLiteral("develop"));
+        m_git.mergeInternal(branchName);
 
         // Delete hotfix branch
         QList<QGitBranch> toDelete;
         toDelete.append(QGitBranch(branchName, "", 0, GIT_BRANCH_LOCAL));
-        m_git.deleteBranches(toDelete, true);
+        m_git.deleteBranchesInternal(toDelete, true);
 
         refreshBranches();
         m_repo->refreshData();

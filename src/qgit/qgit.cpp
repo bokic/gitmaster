@@ -1559,68 +1559,72 @@ bool QGit::gitRepositoryDefaultSignature(const QDir &path, QString &name, QStrin
     return true;
 }
 
+void QGit::createLocalBranchInternal(const QString &name, const QString &commit_id, bool checkout, bool force)
+{
+    if (!isValidRefName(QStringLiteral("refs/heads/"), name))
+    {
+        git_error_set_str(GIT_ERROR_INVALID, "Invalid branch name");
+        throw QGitError("createLocalBranch", -1);
+    }
+
+    GitRepository repo = openRepo(m_path);
+    GitReference branch;
+    GitCommit commit_obj;
+    git_oid oid;
+    int res = 0;
+
+    QString effectiveCommitId = commit_id.isEmpty() ? QStringLiteral("HEAD") : commit_id;
+    res = resolveToCommitOid(oid, repo, effectiveCommitId);
+    if(res)
+    {
+        throw QGitError("resolveToCommitOid", res);
+    }
+
+    res = git_commit_lookup(commit_obj, repo, &oid);
+    if(res)
+    {
+        throw QGitError("git_commit_lookup", res);
+    }
+
+    res = git_branch_create(branch, repo, name.toUtf8().constData(), commit_obj, force);
+    if(res)
+    {
+        throw QGitError("git_branch_create", res);
+    }
+
+    if (checkout)
+    {
+        GitObject treeish;
+        git_checkout_options opts = makeCheckoutOptions(GIT_CHECKOUT_SAFE);
+
+        QString refName = "refs/heads/" + name;
+
+        res = git_revparse_single(treeish, repo, refName.toUtf8().constData());
+        if(res)
+        {
+            throw QGitError("git_revparse_single", res);
+        }
+
+        res = git_checkout_tree(repo, treeish, &opts);
+        if(res)
+        {
+            throw QGitError("git_checkout_tree", res);
+        }
+
+        res = git_repository_set_head(repo, refName.toUtf8().constData());
+        if(res)
+        {
+            throw QGitError("git_repository_set_head", res);
+        }
+    }
+}
+
 void QGit::createLocalBranch(const QString &name, const QString &commit_id, bool checkout, bool force)
 {
     QGitError error;
     try
     {
-        if (!isValidRefName(QStringLiteral("refs/heads/"), name))
-        {
-            git_error_set_str(GIT_ERROR_INVALID, "Invalid branch name");
-            throw QGitError("createLocalBranch", -1);
-        }
-
-        GitRepository repo = openRepo(m_path);
-        GitReference branch;
-        GitObject target_obj;
-        GitCommit commit_obj;
-        git_oid oid;
-        int res = 0;
-
-        QString effectiveCommitId = commit_id.isEmpty() ? QStringLiteral("HEAD") : commit_id;
-        res = resolveToCommitOid(oid, repo, effectiveCommitId);
-        if(res)
-        {
-            throw QGitError("resolveToCommitOid", res);
-        }
-
-        res = git_commit_lookup(commit_obj, repo, &oid);
-        if(res)
-        {
-            throw QGitError("git_commit_lookup", res);
-        }
-
-        res = git_branch_create(branch, repo, name.toUtf8().constData(), commit_obj, force);
-        if(res)
-        {
-            throw QGitError("git_branch_create", res);
-        }
-
-        if (checkout)
-        {
-            GitObject treeish;
-            git_checkout_options opts = makeCheckoutOptions(GIT_CHECKOUT_SAFE);
-
-            QString refName = "refs/heads/" + name;
-
-            res = git_revparse_single(treeish, repo, refName.toUtf8().constData());
-            if(res)
-            {
-                throw QGitError("git_revparse_single", res);
-            }
-
-            res = git_checkout_tree(repo, treeish, &opts);
-            if(res)
-            {
-                throw QGitError("git_checkout_tree", res);
-            }
-
-            res = git_repository_set_head(repo, refName.toUtf8().constData());
-            if(res)
-            {
-                throw QGitError("git_repository_set_head", res);
-            }
-        }
+        createLocalBranchInternal(name, commit_id, checkout, force);
     } catch (const QGitError &ex) {
         error = ex;
     }
@@ -1865,39 +1869,44 @@ void QGit::revert(const QString &commitId)
     emit revertReply(error);
 }
 
+void QGit::resetInternal(const QString &commitId, git_reset_t type)
+{
+    GitRepository repo = openRepo(m_path);
+
+    git_oid oid;
+    int res = resolveToCommitOid(oid, repo, commitId);
+    if (res)
+    {
+        throw QGitError("resolveToCommitOid", res);
+    }
+
+    GitObject obj;
+    res = git_object_lookup(obj, repo, &oid, GIT_OBJECT_COMMIT);
+    if (res)
+    {
+        throw QGitError("git_object_lookup", res);
+    }
+
+    git_checkout_options opts = makeCheckoutOptions(GIT_CHECKOUT_SAFE);
+
+    res = git_reset(repo, obj, type, &opts);
+    if (res)
+    {
+        throw QGitError("git_reset", res);
+    }
+
+    if (type == GIT_RESET_HARD || type == GIT_RESET_MIXED)
+    {
+        git_repository_state_cleanup(repo);
+    }
+}
+
 void QGit::reset(const QString &commitId, git_reset_t type)
 {
     QGitError error;
     try
     {
-        GitRepository repo = openRepo(m_path);
-
-        git_oid oid;
-        int res = resolveToCommitOid(oid, repo, commitId);
-        if (res)
-        {
-            throw QGitError("resolveToCommitOid", res);
-        }
-
-        GitObject obj;
-        res = git_object_lookup(obj, repo, &oid, GIT_OBJECT_COMMIT);
-        if (res)
-        {
-            throw QGitError("git_object_lookup", res);
-        }
-
-        git_checkout_options opts = makeCheckoutOptions(GIT_CHECKOUT_SAFE);
-
-        res = git_reset(repo, obj, type, &opts);
-        if (res)
-        {
-            throw QGitError("git_reset", res);
-        }
-
-        if (type == GIT_RESET_HARD || type == GIT_RESET_MIXED)
-        {
-            git_repository_state_cleanup(repo);
-        }
+        resetInternal(commitId, type);
     } catch (const QGitError &ex) {
         error = ex;
     }
@@ -2905,27 +2914,31 @@ void QGit::updateAllSubmodules(bool recursive)
     emit updateAllSubmodulesReply(error);
 }
 
+void QGit::checkoutBranchInternal(const QString &name)
+{
+    GitRepository repo;
+    int res = git_repository_open(repo, m_path.absolutePath().toUtf8().constData());
+    if(res) throw QGitError("git_repository_open", res);
+
+    GitObject treeish;
+    git_checkout_options opts = makeCheckoutOptions(GIT_CHECKOUT_SAFE);
+
+    QString refName = "refs/heads/" + name;
+    res = git_revparse_single(treeish, repo, refName.toUtf8().constData());
+    if(res) throw QGitError("git_revparse_single", res);
+
+    res = git_checkout_tree(repo, treeish, &opts);
+    if(res) throw QGitError("git_checkout_tree", res);
+
+    res = git_repository_set_head(repo, refName.toUtf8().constData());
+    if(res) throw QGitError("git_repository_set_head", res);
+}
+
 void QGit::checkoutBranch(const QString &name)
 {
     QGitError error;
     try {
-        GitRepository repo;
-        int res = git_repository_open(repo, m_path.absolutePath().toUtf8().constData());
-        if(res) throw QGitError("git_repository_open", res);
-
-        GitObject treeish;
-        git_checkout_options opts = makeCheckoutOptions(GIT_CHECKOUT_SAFE);
-
-        QString refName = "refs/heads/" + name;
-        res = git_revparse_single(treeish, repo, refName.toUtf8().constData());
-        if(res) throw QGitError("git_revparse_single", res);
-
-        res = git_checkout_tree(repo, treeish, &opts);
-        if(res) throw QGitError("git_checkout_tree", res);
-
-        res = git_repository_set_head(repo, refName.toUtf8().constData());
-        if(res) throw QGitError("git_repository_set_head", res);
-
+        checkoutBranchInternal(name);
     } catch(const QGitError &ex) {
         error = ex;
     }
@@ -3052,45 +3065,49 @@ void QGit::deleteTag(const QString &name)
     emit deleteTagReply(error);
 }
 
+void QGit::createTagInternal(const QString &name, const QString &targetObjectId, const QString &message, bool force)
+{
+    if (!isValidRefName(QStringLiteral("refs/tags/"), name))
+    {
+        git_error_set_str(GIT_ERROR_INVALID, "Invalid tag name");
+        throw QGitError("createTag", -1);
+    }
+
+    GitRepository repo;
+    int res = git_repository_open(repo, m_path.absolutePath().toUtf8().constData());
+    if (res) throw QGitError("git_repository_open", res);
+
+    // Resolve the target OID from the commit hash string
+    git_oid target_oid;
+    res = resolveToCommitOid(target_oid, repo, targetObjectId);
+    if (res) throw QGitError("resolveToCommitOid", res);
+
+    // Look up the target git object (commit)
+    GitObject target_obj;
+    res = git_object_lookup(target_obj, repo, &target_oid, GIT_OBJECT_ANY);
+    if (res) throw QGitError("git_object_lookup", res);
+
+    git_oid tag_oid;
+    if (message.isEmpty()) {
+        // Create a lightweight tag
+        res = git_tag_create_lightweight(&tag_oid, repo, name.toUtf8().constData(), target_obj, force ? 1 : 0);
+        if (res) throw QGitError("git_tag_create_lightweight", res);
+    } else {
+        // Create an annotated tag (requires a tagger signature)
+        GitSignature tagger;
+        res = git_signature_default(tagger, repo);
+        if (res) throw QGitError("git_signature_default", res);
+
+        res = git_tag_create(&tag_oid, repo, name.toUtf8().constData(), target_obj, tagger, message.toUtf8().constData(), force ? 1 : 0);
+        if (res) throw QGitError("git_tag_create", res);
+    }
+}
+
 void QGit::createTag(const QString &name, const QString &targetObjectId, const QString &message, bool force)
 {
     QGitError error;
     try {
-        if (!isValidRefName(QStringLiteral("refs/tags/"), name))
-        {
-            git_error_set_str(GIT_ERROR_INVALID, "Invalid tag name");
-            throw QGitError("createTag", -1);
-        }
-
-        GitRepository repo;
-        int res = git_repository_open(repo, m_path.absolutePath().toUtf8().constData());
-        if (res) throw QGitError("git_repository_open", res);
-
-        // Resolve the target OID from the commit hash string
-        git_oid target_oid;
-        res = resolveToCommitOid(target_oid, repo, targetObjectId);
-        if (res) throw QGitError("resolveToCommitOid", res);
-
-        // Look up the target git object (commit)
-        GitObject target_obj;
-        res = git_object_lookup(target_obj, repo, &target_oid, GIT_OBJECT_ANY);
-        if (res) throw QGitError("git_object_lookup", res);
-
-        git_oid tag_oid;
-        if (message.isEmpty()) {
-            // Create a lightweight tag
-            res = git_tag_create_lightweight(&tag_oid, repo, name.toUtf8().constData(), target_obj, force ? 1 : 0);
-            if (res) throw QGitError("git_tag_create_lightweight", res);
-        } else {
-            // Create an annotated tag (requires a tagger signature)
-            GitSignature tagger;
-            res = git_signature_default(tagger, repo);
-            if (res) throw QGitError("git_signature_default", res);
-
-            res = git_tag_create(&tag_oid, repo, name.toUtf8().constData(), target_obj, tagger, message.toUtf8().constData(), force ? 1 : 0);
-            if (res) throw QGitError("git_tag_create", res);
-        }
-
+        createTagInternal(name, targetObjectId, message, force);
     } catch (const QGitError &ex) {
         error = ex;
     }
@@ -3743,78 +3760,83 @@ void QGit::setUpstream(const QString &branchName, const QString &upstreamBranchN
     emit setUpstreamReply(error);
 }
 
-void QGit::deleteBranches(const QList<QGitBranch> &branches, bool force)
+void QGit::deleteBranchesInternal(const QList<QGitBranch> &branches, bool force)
 {
     Q_UNUSED(force);
+
+    GitRepository repo;
+    int res = git_repository_open(repo, m_path.absolutePath().toUtf8().constData());
+    if(res)
+    {
+        throw QGitError("git_repository_open", res);
+    }
+
+    for(const auto &branch: branches)
+    {
+        if (branch.type() == GIT_BRANCH_LOCAL)
+        {
+            GitReference branch_ref;
+            res = git_branch_lookup(branch_ref, repo, branch.name().toUtf8().constData(), GIT_BRANCH_LOCAL);
+            if (res)
+            {
+                throw QGitError("git_branch_lookup", res);
+            }
+
+            res = git_branch_delete(branch_ref);
+            if (res)
+            {
+                throw QGitError("git_branch_delete", res);
+            }
+        }
+        else
+        {
+            QString name = branch.name();
+            if (name.startsWith(QStringLiteral("refs/remotes/")))
+            {
+                name = name.mid(13);
+            }
+            else if (name.startsWith(QStringLiteral("refs/heads/")))
+            {
+                name = name.mid(11);
+            }
+
+            QStringList parts = name.split('/');
+            if (parts.size() >= 2)
+            {
+                QString remoteName = parts[0];
+                QString branchName = parts.mid(1).join('/');
+                
+                GitRemote remote;
+                res = git_remote_lookup(remote, repo, remoteName.toUtf8().constData());
+                if (res)
+                {
+                    throw QGitError("git_remote_lookup", res);
+                }
+                
+                QByteArray refspec = ":refs/heads/" + branchName.toUtf8();
+                SafeGitStrArray refspecs = SafeGitStrArray::fromSingle(refspec);
+                
+                git_push_options push_opts = makePushOptions(this);
+                clearLastPushError();
+                
+                res = git_remote_push(remote, &refspecs.value, &push_opts);
+                if (res)
+                {
+                    if (!m_lastPushError.isEmpty()) {
+                        throw QGitError("git_remote_push", res, m_lastPushError);
+                    }
+                    throw QGitError("git_remote_push", res);
+                }
+            }
+        }
+    }
+}
+
+void QGit::deleteBranches(const QList<QGitBranch> &branches, bool force)
+{
     QGitError error;
-
     try {
-        GitRepository repo;
-        int res = git_repository_open(repo, m_path.absolutePath().toUtf8().constData());
-        if(res)
-        {
-            throw QGitError("git_repository_open", res);
-        }
-
-        for(const auto &branch: branches)
-        {
-            if (branch.type() == GIT_BRANCH_LOCAL)
-            {
-                GitReference branch_ref;
-                res = git_branch_lookup(branch_ref, repo, branch.name().toUtf8().constData(), GIT_BRANCH_LOCAL);
-                if (res)
-                {
-                    throw QGitError("git_branch_lookup", res);
-                }
-
-                res = git_branch_delete(branch_ref);
-                if (res)
-                {
-                    throw QGitError("git_branch_delete", res);
-                }
-            }
-            else
-            {
-                QString name = branch.name();
-                if (name.startsWith(QStringLiteral("refs/remotes/")))
-                {
-                    name = name.mid(13);
-                }
-                else if (name.startsWith(QStringLiteral("refs/heads/")))
-                {
-                    name = name.mid(11);
-                }
-
-                QStringList parts = name.split('/');
-                if (parts.size() >= 2)
-                {
-                    QString remoteName = parts[0];
-                    QString branchName = parts.mid(1).join('/');
-                    
-                    GitRemote remote;
-                    res = git_remote_lookup(remote, repo, remoteName.toUtf8().constData());
-                    if (res)
-                    {
-                        throw QGitError("git_remote_lookup", res);
-                    }
-                    
-                    QByteArray refspec = ":refs/heads/" + branchName.toUtf8();
-                    SafeGitStrArray refspecs = SafeGitStrArray::fromSingle(refspec);
-                    
-                    git_push_options push_opts = makePushOptions(this);
-                    clearLastPushError();
-                    
-                    res = git_remote_push(remote, &refspecs.value, &push_opts);
-                    if (res)
-                    {
-                        if (!m_lastPushError.isEmpty()) {
-                            throw QGitError("git_remote_push", res, m_lastPushError);
-                        }
-                        throw QGitError("git_remote_push", res);
-                    }
-                }
-            }
-        }
+        deleteBranchesInternal(branches, force);
     } catch(const QGitError & ex) {
         error = ex;
     }
