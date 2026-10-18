@@ -35,7 +35,7 @@ QGitDiffFileItem &QGitDiffFileItem::operator=(QGitDiffFileItem &&other) noexcept
     return *this;
 }
 
-bool QGitDiffFileItem::operator==(const QGitDiffFileItem &other)
+bool QGitDiffFileItem::operator==(const QGitDiffFileItem &other) const
 {
     if (
             (m_path == other.m_path)&&
@@ -51,11 +51,12 @@ bool QGitDiffFileItem::operator==(const QGitDiffFileItem &other)
     return false;
 }
 
-bool QGitDiffFileItem::operator==(const git_diff_file &other)
+bool QGitDiffFileItem::operator==(const git_diff_file &other) const
 {
     if (
             (m_path == other.path)&&
-            (memcmp(m_id.constData(), &other.id, sizeof(other.id)) == 0)&&
+            (m_id.size() == static_cast<int>(sizeof(other.id.id)))&&
+            (memcmp(m_id.constData(), other.id.id, sizeof(other.id.id)) == 0)&&
             (m_mode == other.mode)&&
             (m_flags == other.flags)&&
             (m_size == other.size)
@@ -90,20 +91,4 @@ quint32 QGitDiffFileItem::flags() const
 quint64 QGitDiffFileItem::size() const
 {
     return m_size;
-}
-
-bool operator==(const QGitDiffFileItem &l, const git_diff_file &r)
-{
-    if (
-            (l.path() == QString::fromUtf8(r.path))&&
-            (l.id() == QByteArray(reinterpret_cast<const char *>(r.id.id), sizeof(r.id)))&&
-            (l.mode() == r.mode)&&
-            (l.flags() == r.flags)&&
-            (l.size() == r.size)
-       )
-    {
-        return true;
-    }
-
-    return false;
 }

@@ -9,7 +9,7 @@ class QGitDiffFileItem
 {
 public:
     QGitDiffFileItem() = default;
-    QGitDiffFileItem(const git_diff_file &file);
+    explicit QGitDiffFileItem(const git_diff_file &file);
     QGitDiffFileItem(const QGitDiffFileItem &other) = default;
     QGitDiffFileItem(QGitDiffFileItem &&other) noexcept;
     virtual ~QGitDiffFileItem() = default;
@@ -17,8 +17,8 @@ public:
     QGitDiffFileItem &operator=(QGitDiffFileItem &&other) noexcept;
     QGitDiffFileItem &operator=(const QGitDiffFileItem &other) = default;
 
-    bool operator==(const QGitDiffFileItem &other);
-    bool operator==(const git_diff_file &other);
+    bool operator==(const QGitDiffFileItem &other) const;
+    bool operator==(const git_diff_file &other) const;
 
     const QString &path() const;
     const QByteArray &id() const;
@@ -33,5 +33,3 @@ private:
     quint32 m_flags = 0;
     quint64 m_size = 0;
 };
-
-bool operator==(const QGitDiffFileItem &l, const git_diff_file &r);

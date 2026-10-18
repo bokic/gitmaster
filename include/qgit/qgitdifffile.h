@@ -15,14 +15,14 @@ class QGitDiffFile
 public:
     QGitDiffFile() = default;
     QGitDiffFile(const git_diff_delta *file);
-    QGitDiffFile(const QGitDiffFile &other);
-    QGitDiffFile(QGitDiffFile &&other) noexcept;
+    QGitDiffFile(const QGitDiffFile &other) = default;
+    QGitDiffFile(QGitDiffFile &&other) noexcept = default;
     virtual ~QGitDiffFile() = default;
 
-    QGitDiffFile &operator=(QGitDiffFile &&other) noexcept;
-    QGitDiffFile &operator=(const QGitDiffFile &other);
-    bool operator==(const git_diff_delta *other);
-    bool operator==(const QGitDiffFile &other);
+    QGitDiffFile &operator=(QGitDiffFile &&other) noexcept = default;
+    QGitDiffFile &operator=(const QGitDiffFile &other) = default;
+    bool operator==(const git_diff_delta *other) const;
+    bool operator==(const QGitDiffFile &other) const;
 
     const QGitDiffFileItem &new_file() const;
     const QGitDiffFileItem &old_file() const;

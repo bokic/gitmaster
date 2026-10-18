@@ -14,56 +14,7 @@ QGitDiffFile::QGitDiffFile(const git_diff_delta *file)
     , m_status(file ? file->status : GIT_DELTA_UNMODIFIED)
 {
 }
-
-QGitDiffFile::QGitDiffFile(const QGitDiffFile &other)
-    : m_new_file(other.m_new_file)
-    , m_old_file(other.m_old_file)
-    , m_flags(other.m_flags)
-    , m_nfiles(other.m_nfiles)
-    , m_simularity(other.m_simularity)
-    , m_status(other.m_status)
-    , m_hunks(other.m_hunks)
-{
-}
-
-QGitDiffFile::QGitDiffFile(QGitDiffFile &&other) noexcept
-{
-    std::swap(m_new_file, other.m_new_file);
-    std::swap(m_old_file, other.m_old_file);
-    std::swap(m_flags, other.m_flags);
-    std::swap(m_nfiles, other.m_nfiles);
-    std::swap(m_simularity, other.m_simularity);
-    std::swap(m_status, other.m_status);
-    std::swap(m_hunks, other.m_hunks);
-}
-
-QGitDiffFile &QGitDiffFile::operator=(QGitDiffFile &&other) noexcept
-{
-    std::swap(m_new_file, other.m_new_file);
-    std::swap(m_old_file, other.m_old_file);
-    std::swap(m_flags, other.m_flags);
-    std::swap(m_nfiles, other.m_nfiles);
-    std::swap(m_simularity, other.m_simularity);
-    std::swap(m_status, other.m_status);
-    std::swap(m_hunks, other.m_hunks);
-
-    return *this;
-}
-
-QGitDiffFile &QGitDiffFile::operator=(const QGitDiffFile &other)
-{
-    m_new_file = other.m_new_file;
-    m_old_file = other.m_old_file;
-    m_flags = other.m_flags;
-    m_nfiles = other.m_nfiles;
-    m_simularity = other.m_simularity;
-    m_status = other.m_status;
-    m_hunks = other.m_hunks;
-
-    return *this;
-}
-
-bool QGitDiffFile::operator==(const git_diff_delta *other)
+bool QGitDiffFile::operator==(const git_diff_delta *other) const
 {
     if (
             (other)&&
@@ -81,7 +32,7 @@ bool QGitDiffFile::operator==(const git_diff_delta *other)
     return false;
 }
 
-bool QGitDiffFile::operator==(const QGitDiffFile &other)
+bool QGitDiffFile::operator==(const QGitDiffFile &other) const
 {
     if (
             (m_flags == other.m_flags)&&
