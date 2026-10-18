@@ -7,15 +7,19 @@
 #include <QIcon>
 #include <QMessageBox>
 
-QGitStashInspectDialog::QGitStashInspectDialog(QGit *git, const QString &stashRef, const QString &stashName, QWidget *parent)
+QGitStashInspectDialog::QGitStashInspectDialog(const QDir &repoPath, const QString &stashRef, const QString &stashName, QWidget *parent)
     : QDialog(parent)
     , ui(new Ui::QGitStashInspectDialog)
-    , m_git(git)
+    , m_git(new QGit(repoPath))
     , m_stashRef(stashRef)
     , m_stashName(stashName)
 {
     ui->setupUi(this);
     setWindowTitle(tr("Inspect Stash - %1").arg(stashName.isEmpty() ? stashRef : stashName));
+
+    m_git->moveToThread(&m_thread);
+    m_thread.setObjectName("QGit(stash)");
+    m_thread.start();
 
     ui->logHistory_commits->setItemDelegate(new QLogHistoryItemDelegate(ui->logHistory_commits));
     ui->logHistory_commits->horizontalHeader()->setSectionResizeMode(0, QHeaderView::ResizeToContents);
@@ -34,6 +38,8 @@ QGitStashInspectDialog::QGitStashInspectDialog(QGit *git, const QString &stashRe
     ui->splitter_left->setStretchFactor(0, 1);
     ui->splitter_left->setStretchFactor(1, 2);
 
+    connect(this, &QGitStashInspectDialog::requestCommitDiff, m_git, &QGit::commitDiff);
+    connect(this, &QGitStashInspectDialog::requestListCommits, m_git, &QGit::listCommits);
     connect(ui->diffWidget, &QGitDiffWidget::requestGitDiff, m_git, &QGit::commitDiffContent);
     connect(m_git, &QGit::commitDiffContentReply, this, &QGitStashInspectDialog::onCommitDiffContentReply);
     connect(m_git, &QGit::commitDiffReply, this, &QGitStashInspectDialog::onCommitDiffReply);
@@ -42,8 +48,26 @@ QGitStashInspectDialog::QGitStashInspectDialog(QGit *git, const QString &stashRe
     loadStashDetails();
 }
 
+QGitStashInspectDialog::QGitStashInspectDialog(QGit *git, const QString &stashRef, const QString &stashName, QWidget *parent)
+    : QGitStashInspectDialog(git ? git->path() : QDir(), stashRef, stashName, parent)
+{
+}
+
 QGitStashInspectDialog::~QGitStashInspectDialog()
 {
+    if (m_git) {
+        m_git->setCredentialHandler(nullptr);
+        m_git->disconnect();
+        this->disconnect(m_git);
+    }
+
+    m_thread.requestInterruption();
+    m_thread.quit();
+    m_thread.wait();
+
+    delete m_git;
+    m_git = nullptr;
+
     delete ui;
 }
 
@@ -53,7 +77,7 @@ void QGitStashInspectDialog::loadStashDetails()
         return;
 
     bool ignoreWhitespace = ui->comboBox_gitDiffOptions->ignoreWhitespace();
-    m_git->commitDiff(m_stashRef, ignoreWhitespace);
+    emit requestCommitDiff(m_stashRef, ignoreWhitespace);
 }
 
 void QGitStashInspectDialog::onCommitDiffReply(const QString &commit_id, const QGitCommit &diff, const QGitError &error)
@@ -83,7 +107,7 @@ void QGitStashInspectDialog::onCommitDiffReply(const QString &commit_id, const Q
         m_commitMap.insert(m_stashCommit.id().toLower(), m_stashCommit);
 
         // Fetch commit history leading from the stash commit so parents and context appear in table
-        m_git->listCommits(m_stashCommit.id(), 0, 100);
+        emit requestListCommits(m_stashCommit.id(), 0, 100);
     }
     else
     {
@@ -228,7 +252,7 @@ void QGitStashInspectDialog::on_logHistory_commits_itemSelectionChanged()
         return;
 
     bool ignoreWhitespace = ui->comboBox_gitDiffOptions->ignoreWhitespace();
-    m_git->commitDiff(commitHash, ignoreWhitespace);
+    emit requestCommitDiff(commitHash, ignoreWhitespace);
 }
 
 void QGitStashInspectDialog::on_tableWidget_files_itemSelectionChanged()

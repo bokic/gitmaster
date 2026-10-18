@@ -1,8 +1,10 @@
 #pragma once
 
 #include <QDialog>
+#include <QDir>
 #include <QList>
 #include <QSet>
+#include <QThread>
 #include "qgit.h"
 
 namespace Ui {
@@ -14,8 +16,13 @@ class QGitStashInspectDialog : public QDialog
     Q_OBJECT
 
 public:
+    explicit QGitStashInspectDialog(const QDir &repoPath, const QString &stashRef, const QString &stashName, QWidget *parent = nullptr);
     explicit QGitStashInspectDialog(QGit *git, const QString &stashRef, const QString &stashName, QWidget *parent = nullptr);
     ~QGitStashInspectDialog() override;
+
+signals:
+    void requestCommitDiff(const QString &commitId, bool ignoreWhitespace);
+    void requestListCommits(const QString &branchRef, int offset, int length);
 
 private slots:
     void on_tableWidget_files_itemSelectionChanged();
@@ -30,6 +37,7 @@ private:
     void updateDiffForCurrentFile();
 
     Ui::QGitStashInspectDialog *ui = nullptr;
+    QThread m_thread;
     QGit *m_git = nullptr;
     QString m_stashRef;
     QString m_stashName;
