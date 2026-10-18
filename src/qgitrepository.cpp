@@ -101,9 +101,6 @@ QGitRepository::QGitRepository(const QString &path, QWidget *parent)
     ui->treeWidget_pending->setColumnCount(1);
     ui->treeWidget_pending->setContextMenuPolicy(Qt::CustomContextMenu);
 
-    connect(ui->comboBox_logBranchFilter, &QComboBox::currentTextChanged,
-            this, &QGitRepository::on_comboBox_logBranchFilter_currentTextChanged);
-
     ui->commit_diff->setContentsMargins(10, 10, 10, 10);
 
     ui->logHistory_commits->setItemDelegate(new QLogHistoryItemDelegate(ui->logHistory_commits));
@@ -146,12 +143,7 @@ QGitRepository::QGitRepository(const QString &path, QWidget *parent)
     ui->search_commits->horizontalHeader()->setSectionResizeMode(0, QHeaderView::Stretch);
 
     ui->logHistory_files->setContextMenuPolicy(Qt::CustomContextMenu);
-    connect(ui->logHistory_files, &QTableWidget::customContextMenuRequested,
-            this, &QGitRepository::on_logHistory_files_customContextMenuRequested);
-
     ui->search_files->setContextMenuPolicy(Qt::CustomContextMenu);
-    connect(ui->search_files, &QTableWidget::customContextMenuRequested,
-            this, &QGitRepository::on_search_files_customContextMenuRequested);
 
     activateCommitOperation(false);
 
@@ -295,25 +287,17 @@ QGitRepository::QGitRepository(const QString &path, QWidget *parent)
     connect(this, &QGitRepository::repositorySkipRebase, m_git, &QGit::skipRebase);
     connect(m_git, &QGit::skipRebaseReply, this, &QGitRepository::repositorySkipRebaseReply);
 
-    connect(ui->pushButton_resolveConflicts, &QPushButton::clicked, this, &QGitRepository::on_pushButton_resolveConflicts_clicked);
-    connect(ui->pushButton_continueOperation, &QPushButton::clicked, this, &QGitRepository::on_pushButton_continueOperation_clicked);
-    connect(ui->pushButton_skipOperation, &QPushButton::clicked, this, &QGitRepository::on_pushButton_skipOperation_clicked);
-    connect(ui->pushButton_abortOperation, &QPushButton::clicked, this, &QGitRepository::on_pushButton_abortOperation_clicked);
-
     ui->frame_operationBanner->setVisible(false);
 
     ui->branchesTreeView->setContextMenuPolicy(Qt::CustomContextMenu);
     ui->branchesTreeView->setEditTriggers(QAbstractItemView::NoEditTriggers);
 
     ui->logHistory_commits->setContextMenuPolicy(Qt::CustomContextMenu);
-    connect(ui->logHistory_commits, &QLogHistoryTableWidget::customContextMenuRequested, this, &QGitRepository::on_logHistory_commits_customContextMenuRequested);
 
     m_git->setPath(QDir(m_path));
 
     m_thread.setObjectName("QGit(repo)");
     m_thread.start();
-
-    connect(ui->comboBox_gitDiffOptions, &QComboBoxGitDiffOptions::optionsChanged, this, &QGitRepository::on_comboBox_gitDiffOptions_optionsChanged);
 }
 
 QGitRepository::~QGitRepository()

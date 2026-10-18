@@ -11,10 +11,6 @@ QGitAddSubmoduleDialog::QGitAddSubmoduleDialog(const QDir &repoPath, QWidget *pa
 {
     ui->setupUi(this);
 
-    connect(ui->lineEdit_url, &QLineEdit::textChanged, this, &QGitAddSubmoduleDialog::on_lineEdit_url_textChanged);
-    connect(ui->lineEdit_path, &QLineEdit::textChanged, this, &QGitAddSubmoduleDialog::on_lineEdit_path_textChanged);
-    connect(ui->pushButton_browse, &QPushButton::clicked, this, &QGitAddSubmoduleDialog::on_pushButton_browse_clicked);
-
     updateButtons();
 }
 

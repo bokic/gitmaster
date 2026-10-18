@@ -46,21 +46,6 @@ void QGitInteractiveRebaseDialog::setupUiCustomizations()
 
     ui->splitter->setStretchFactor(0, 3);
     ui->splitter->setStretchFactor(1, 2);
-
-    connect(ui->toolButton_pick, &QToolButton::clicked, this, &QGitInteractiveRebaseDialog::on_toolButton_pick_clicked);
-    connect(ui->toolButton_reword, &QToolButton::clicked, this, &QGitInteractiveRebaseDialog::on_toolButton_reword_clicked);
-    connect(ui->toolButton_squash, &QToolButton::clicked, this, &QGitInteractiveRebaseDialog::on_toolButton_squash_clicked);
-    connect(ui->toolButton_fixup, &QToolButton::clicked, this, &QGitInteractiveRebaseDialog::on_toolButton_fixup_clicked);
-    connect(ui->toolButton_drop, &QToolButton::clicked, this, &QGitInteractiveRebaseDialog::on_toolButton_drop_clicked);
-    connect(ui->toolButton_moveUp, &QToolButton::clicked, this, &QGitInteractiveRebaseDialog::on_toolButton_moveUp_clicked);
-    connect(ui->toolButton_moveDown, &QToolButton::clicked, this, &QGitInteractiveRebaseDialog::on_toolButton_moveDown_clicked);
-    connect(ui->toolButton_reset, &QToolButton::clicked, this, &QGitInteractiveRebaseDialog::on_toolButton_reset_clicked);
-
-    connect(ui->tableWidget, &QTableWidget::customContextMenuRequested, this, &QGitInteractiveRebaseDialog::on_tableWidget_customContextMenuRequested);
-    connect(ui->tableWidget, &QTableWidget::itemSelectionChanged, this, &QGitInteractiveRebaseDialog::on_tableWidget_itemSelectionChanged);
-    connect(ui->plainTextEdit_message, &QPlainTextEdit::textChanged, this, &QGitInteractiveRebaseDialog::on_plainTextEdit_message_textChanged);
-    connect(ui->pushButton_rebase, &QPushButton::clicked, this, &QGitInteractiveRebaseDialog::on_pushButton_rebase_clicked);
-    connect(ui->pushButton_cancel, &QPushButton::clicked, this, &QGitInteractiveRebaseDialog::on_pushButton_cancel_clicked);
 }
 
 void QGitInteractiveRebaseDialog::loadCommits()
