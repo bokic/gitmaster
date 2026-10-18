@@ -582,7 +582,8 @@ static int gitCredentialCallback(
                     pubkeyPtr = pubkeyPathname.constData();
                 }
 
-                const char *passphrase = pass.isEmpty() ? nullptr : pass.toUtf8().constData();
+                const QByteArray passUtf8 = pass.toUtf8();
+                const char *passphrase = passUtf8.isEmpty() ? nullptr : passUtf8.constData();
                 int res = git_credential_ssh_key_new(out, username, pubkeyPtr, privkeyPathname.constData(), passphrase);
                 if (res == 0) {
                     return 0;
@@ -2478,7 +2479,8 @@ void QGit::setSubmodulePointer(const QString &name, const QString &targetRefOrCo
 
         // Update tracked branch in .gitmodules / config if requested
         if (!branch.isEmpty()) {
-            const char *branchName = branch.trimmed().isEmpty() ? nullptr : branch.trimmed().toUtf8().constData();
+            const QByteArray branchUtf8 = branch.trimmed().toUtf8();
+            const char *branchName = branchUtf8.isEmpty() ? nullptr : branchUtf8.constData();
             res = git_submodule_set_branch(repo, git_submodule_name(sm), branchName);
             if (res) throw QGitError("git_submodule_set_branch", res);
             git_submodule_sync(sm);
