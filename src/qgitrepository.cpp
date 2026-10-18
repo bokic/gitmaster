@@ -1533,7 +1533,12 @@ void QGitRepository::repositoryGetCommitDiffReply(const QString &commitId, const
                 ui->search_files->setCurrentCell(0, 0);
 
                 ui->search_diff->setIgnoreWhitespace(ignoreWhitespace);
-                ui->search_diff->setGitDiff(m_commitDiff.parents().at(0).commitHash(), m_commitDiff.id(), {ui->search_files->item(0, 0)->data(Qt::UserRole).toString()});
+                QTableWidgetItem *item = ui->search_files->item(0, 0);
+                if (item)
+                {
+                    const QString parentHash = m_commitDiff.parents().isEmpty() ? QString() : m_commitDiff.parents().at(0).commitHash();
+                    ui->search_diff->setGitDiff(parentHash, m_commitDiff.id(), {item->data(Qt::UserRole).toString()});
+                }
             }
         }
         else
@@ -1629,7 +1634,12 @@ void QGitRepository::repositoryGetCommitDiffReply(const QString &commitId, const
                 ui->logHistory_files->setCurrentCell(0, 0);
 
                 ui->logHistory_diff->setIgnoreWhitespace(ignoreWhitespace);
-                ui->logHistory_diff->setGitDiff(m_commitDiff.parents().at(0).commitHash(), m_commitDiff.id(), {ui->logHistory_files->item(0, 0)->data(Qt::UserRole).toString()});
+                QTableWidgetItem *item = ui->logHistory_files->item(0, 0);
+                if (item)
+                {
+                    const QString parentHash = m_commitDiff.parents().isEmpty() ? QString() : m_commitDiff.parents().at(0).commitHash();
+                    ui->logHistory_diff->setGitDiff(parentHash, m_commitDiff.id(), {item->data(Qt::UserRole).toString()});
+                }
             }
         }
     }
@@ -2475,7 +2485,8 @@ void QGitRepository::on_logHistory_files_itemSelectionChanged()
     if (col0)
     {
         ui->logHistory_diff->setIgnoreWhitespace(ignoreWhitespace);
-        ui->logHistory_diff->setGitDiff(m_commitDiff.parents().at(0).commitHash(), m_commitDiff.id(), {col0->data(Qt::UserRole).toString()});
+        const QString parentHash = m_commitDiff.parents().isEmpty() ? QString() : m_commitDiff.parents().at(0).commitHash();
+        ui->logHistory_diff->setGitDiff(parentHash, m_commitDiff.id(), {col0->data(Qt::UserRole).toString()});
     }
 }
 
@@ -3598,10 +3609,14 @@ void QGitRepository::on_search_files_itemSelectionChanged()
     int row = ui->search_files->currentRow();
     if (row < 0) return;
 
+    QTableWidgetItem *item = ui->search_files->item(row, 0);
+    if (!item) return;
+
     bool ignoreWhitespace = ui->comboBox_gitDiffOptions->ignoreWhitespace();
 
     ui->search_diff->setIgnoreWhitespace(ignoreWhitespace);
-    ui->search_diff->setGitDiff(m_commitDiff.parents().at(0).commitHash(), m_commitDiff.id(), {ui->search_files->item(row, 0)->data(Qt::UserRole).toString()});
+    const QString parentHash = m_commitDiff.parents().isEmpty() ? QString() : m_commitDiff.parents().at(0).commitHash();
+    ui->search_diff->setGitDiff(parentHash, m_commitDiff.id(), {item->data(Qt::UserRole).toString()});
 }
 
 void QGitRepository::on_branchesTreeView_itemChanged(QTreeWidgetItem *item, int column)
