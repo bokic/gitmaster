@@ -176,6 +176,7 @@ QGitRepository::QGitRepository(const QString &path, QWidget *parent)
 
     connect(this, &QGitRepository::repositoryBranches, m_git, &QGit::listBranchesAndTags);
     connect(m_git, &QGit::listBranchesAndTagsReply, this, &QGitRepository::repositoryBranchesAndTagsReply);
+    connect(m_git, &QGit::repositoryStateReply, this, &QGitRepository::repositoryStateReply);
 
     connect(this, &QGitRepository::repositoryStashes, m_git, &QGit::listStashes);
     connect(m_git, &QGit::listStashesReply, this, &QGitRepository::repositoryStashesReply);
@@ -475,7 +476,7 @@ void QGitRepository::push()
 
 void QGitRepository::merge()
 {
-    QGitMergeDialog dlg(m_git->path(), this);
+    QGitMergeDialog dlg(QDir(m_path), this);
 
     if (dlg.exec() == QDialog::Accepted)
     {
@@ -494,7 +495,7 @@ void QGitRepository::merge()
 
 void QGitRepository::rebase()
 {
-    QGitMergeDialog dlg(m_git->path(), this);
+    QGitMergeDialog dlg(QDir(m_path), this);
     dlg.setRebaseMode(true);
 
     if (dlg.exec() == QDialog::Accepted)
@@ -696,7 +697,7 @@ void QGitRepository::repositoryRemoveSubmoduleReply(const QGitError &error)
 
 void QGitRepository::updateOperationBanner()
 {
-    git_repository_state_t state = repositoryState();
+    git_repository_state_t state = m_repositoryState;
     if (state == GIT_REPOSITORY_STATE_NONE) {
         ui->frame_operationBanner->setVisible(false);
         return;
@@ -704,7 +705,7 @@ void QGitRepository::updateOperationBanner()
 
     ui->frame_operationBanner->setVisible(true);
 
-    bool hasConflicts = m_git->hasConflicts();
+    bool hasConflicts = m_hasConflicts;
     ui->pushButton_resolveConflicts->setVisible(hasConflicts);
 
     if (state == GIT_REPOSITORY_STATE_MERGE) {
@@ -762,7 +763,7 @@ void QGitRepository::updateOperationBanner()
         ui->pushButton_abortOperation->setVisible(true);
     } else {
         ui->label_operationIcon->setText(QStringLiteral("⚠️"));
-        ui->label_operationText->setText(tr("<b>%1:</b> Active operation in progress.").arg(m_git->repositoryStateDescription()));
+        ui->label_operationText->setText(tr("<b>%1:</b> Active operation in progress.").arg(QGit::repositoryStateDescription(m_repositoryState)));
         ui->pushButton_continueOperation->setText(tr("Continue"));
         ui->pushButton_continueOperation->setVisible(true);
         ui->pushButton_skipOperation->setVisible(false);
@@ -773,7 +774,7 @@ void QGitRepository::updateOperationBanner()
 
 void QGitRepository::continueOperation()
 {
-    if (m_git->hasConflicts()) {
+    if (m_hasConflicts) {
         QMessageBox::warning(this, tr("Unresolved Conflicts"),
                              tr("There are still unresolved conflicts in the repository.\n\nPlease resolve and stage all conflicting files before continuing."));
         return;
@@ -784,7 +785,7 @@ void QGitRepository::continueOperation()
 
 void QGitRepository::abortOperation()
 {
-    QString opName = m_git->repositoryStateDescription();
+    QString opName = QGit::repositoryStateDescription(m_repositoryState);
     if (opName.isEmpty()) opName = tr("active operation");
 
     auto confirm = QMessageBox::question(
@@ -873,9 +874,17 @@ void QGitRepository::repositorySkipRebaseReply(const QGitError &error)
     refreshData();
 }
 
+void QGitRepository::repositoryStateReply(int state, const QString &headCommitId, const QString &headCommitMessage)
+{
+    m_repositoryState = static_cast<git_repository_state_t>(state);
+    m_headCommitId = headCommitId;
+    m_headCommitMessage = headCommitMessage;
+    updateOperationBanner();
+}
+
 git_repository_state_t QGitRepository::repositoryState() const
 {
-    return m_git ? m_git->repositoryState() : GIT_REPOSITORY_STATE_NONE;
+    return m_repositoryState;
 }
 
 void QGitRepository::repositoryCreateLocalBranchReply(const QGitError &error)
@@ -1143,7 +1152,7 @@ void QGitRepository::repositoryBranchesAndTagsReply(const QList<QGitBranch> &bra
 
     emit updateRemoteActionsRequested();
 
-    auto current_branch = QGit::getBranchNameFromPath(m_git->path().path());
+    auto current_branch = QGit::getBranchNameFromPath(m_path);
 
     ui->branchesTreeView->populateBranchesAndTags(branches, tags, submodules, worktrees, current_branch);
 
@@ -1203,9 +1212,14 @@ void QGitRepository::repositoryChangedFilesReply(const QList<QPair<QString, git_
 
     // Update stash button state: check if there are any staged or unstaged changes
     bool hasStashableChanges = false;
+    bool hasConflicts = false;
     for (const auto &filePair : files)
     {
         git_status_t status = filePair.second;
+        if (status & GIT_STATUS_CONFLICTED)
+        {
+            hasConflicts = true;
+        }
         if (status & (GIT_STATUS_INDEX_NEW | GIT_STATUS_INDEX_MODIFIED | GIT_STATUS_INDEX_DELETED | 
                       GIT_STATUS_INDEX_RENAMED | GIT_STATUS_INDEX_TYPECHANGE | 
                       GIT_STATUS_WT_NEW | GIT_STATUS_WT_MODIFIED | GIT_STATUS_WT_DELETED | 
@@ -1213,9 +1227,11 @@ void QGitRepository::repositoryChangedFilesReply(const QList<QPair<QString, git_
                       GIT_STATUS_CONFLICTED))
         {
             hasStashableChanges = true;
-            break;
         }
     }
+
+    m_hasConflicts = hasConflicts;
+    updateOperationBanner();
 
     m_hasStashableChanges = hasStashableChanges;
     emit setStashEnabledRequested(hasStashableChanges);
@@ -1296,7 +1312,7 @@ void QGitRepository::updateCommitButtonState()
 
     if (amend)
     {
-        QString headMessage = m_git ? m_git->headCommitMessage().trimmed() : QString();
+        QString headMessage = m_headCommitMessage.trimmed();
         if (stagedCnt == 0 && currentMsg == headMessage)
         {
             ui->pushButton_commit->setEnabled(false);
@@ -1663,7 +1679,7 @@ void QGitRepository::on_branchesTreeView_itemDoubleClicked(QTreeWidgetItem *item
     if (type == "Submodule")
     {
         QString subPath = item->data(0, Qt::UserRole + 1).toString();
-        QString fullSubPath = m_git->path().absoluteFilePath(subPath);
+        QString fullSubPath = QDir(m_path).absoluteFilePath(subPath);
         emit openRepositoryRequested(fullSubPath);
         return;
     }
@@ -1718,11 +1734,11 @@ void QGitRepository::on_branchesTreeView_customContextMenuRequested(const QPoint
         QAction *selectedAction = menu.exec(ui->branchesTreeView->viewport()->mapToGlobal(pos));
         if (selectedAction == exportPatchAction)
         {
-            exportPatchDialog(m_git ? m_git->headCommitId() : QString());
+            exportPatchDialog(m_headCommitId);
         }
         else if (selectedAction == exportArchiveAction)
         {
-            exportArchiveDialog(m_git ? m_git->headCommitId() : QString());
+            exportArchiveDialog(m_headCommitId);
         }
         else if (selectedAction == applyPatchAction)
         {
@@ -1743,7 +1759,7 @@ void QGitRepository::on_branchesTreeView_customContextMenuRequested(const QPoint
         }
         else if (selectedAction == showBlameAction)
         {
-            QGitBlameDialog dlg(m_git, this);
+            QGitBlameDialog dlg(QDir(m_path), this);
             connect(&dlg, &QGitBlameDialog::commitNavigationRequested,
                     this, &QGitRepository::navigateToCommit);
             dlg.exec();
@@ -2190,7 +2206,7 @@ void QGitRepository::on_repositoryDetail_currentChanged(int index)
     switch(index) {
     case 0:
         {
-            const QString pushTarget = m_git->currentBranchPushTarget();
+            const QString pushTarget = QGit::currentBranchPushTarget(QDir(m_path));
             ui->checkBox_pushChangesImmidietely->setText(
                 pushTarget.isEmpty()
                     ? tr("Push changes immediately")
@@ -2371,7 +2387,7 @@ void QGitRepository::on_checkBox_amendCommit_clicked(bool checked)
     if (checked)
     {
         m_draftCommitMessage = ui->plainTextEdit_commitMessage->toPlainText();
-        QString headMessage = m_git->headCommitMessage();
+        QString headMessage = m_headCommitMessage;
         ui->plainTextEdit_commitMessage->setPlainText(headMessage);
     }
     else
@@ -2490,7 +2506,7 @@ void QGitRepository::on_logHistory_files_itemSelectionChanged()
     }
 }
 
-static void openBlameForFileItem(QTableWidgetItem *item, QGit *git,
+static void openBlameForFileItem(QTableWidgetItem *item, const QDir &repoPath,
                                   QGitRepository *repo, const QString &commitId,
                                   QWidget *parent)
 {
@@ -2501,7 +2517,7 @@ static void openBlameForFileItem(QTableWidgetItem *item, QGit *git,
     QString relPath = col0->data(Qt::UserRole).toString();
     if (relPath.isEmpty()) return;
 
-    QGitBlameDialog *dlg = new QGitBlameDialog(git, parent);
+    QGitBlameDialog *dlg = new QGitBlameDialog(repoPath, parent);
     dlg->setAttribute(Qt::WA_DeleteOnClose);
 
     // Pre-select the file automatically
@@ -2521,7 +2537,7 @@ void QGitRepository::on_logHistory_files_customContextMenuRequested(const QPoint
     QAction *blameAction = menu.addAction(tr("Show Blame at this Commit..."));
     QAction *selected = menu.exec(ui->logHistory_files->viewport()->mapToGlobal(pos));
     if (selected == blameAction) {
-        openBlameForFileItem(item, m_git, this, m_commitDiff.id(), this);
+        openBlameForFileItem(item, QDir(m_path), this, m_commitDiff.id(), this);
     }
 }
 
@@ -2534,7 +2550,7 @@ void QGitRepository::on_search_files_customContextMenuRequested(const QPoint &po
     QAction *blameAction = menu.addAction(tr("Show Blame at this Commit..."));
     QAction *selected = menu.exec(ui->search_files->viewport()->mapToGlobal(pos));
     if (selected == blameAction) {
-        openBlameForFileItem(item, m_git, this, m_commitDiff.id(), this);
+        openBlameForFileItem(item, QDir(m_path), this, m_commitDiff.id(), this);
     }
 }
 
@@ -2890,7 +2906,7 @@ void QGitRepository::on_logHistory_commits_customContextMenuRequested(const QPoi
     QString selectedHash = item->data(Qt::UserRole).toString();
     if (selectedHash.isEmpty()) return;
 
-    QString headHash = m_git->headCommitId();
+    QString headHash = m_headCommitId;
 
     bool canRebase = true;
     if (selectedHash.compare(headHash, Qt::CaseInsensitive) == 0) {
@@ -3176,8 +3192,8 @@ void QGitRepository::repositoryExportPatchesReply(const QStringList &createdFile
 void QGitRepository::exportPatchDialog(const QString &commitHash)
 {
     QString targetHash = commitHash;
-    if (targetHash.isEmpty() && m_git) {
-        targetHash = m_git->headCommitId();
+    if (targetHash.isEmpty()) {
+        targetHash = m_headCommitId;
     }
     QGitExportPatchDialog dlg(m_git, targetHash, this);
     if (dlg.exec() == QDialog::Accepted) {
@@ -3208,8 +3224,8 @@ void QGitRepository::repositoryExportArchiveReply(const QString &createdFile, co
 void QGitRepository::exportArchiveDialog(const QString &refOrCommit)
 {
     QString target = refOrCommit;
-    if (target.isEmpty() && m_git) {
-        target = m_git->headCommitId();
+    if (target.isEmpty()) {
+        target = m_headCommitId;
     }
     QGitExportArchiveDialog dlg(m_git, target, this);
     if (dlg.exec() == QDialog::Accepted) {

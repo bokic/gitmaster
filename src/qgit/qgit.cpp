@@ -756,7 +756,7 @@ QList<QGitRemote> QGit::remotes() const
     QList<QGitRemote> ret;
 
     GitRepository repo;
-    int res = git_repository_open(repo, m_path.absolutePath().toUtf8().constData());
+    int res = git_repository_open(repo, path().absolutePath().toUtf8().constData());
     if (res)
     {
         return ret;
@@ -853,11 +853,11 @@ static bool hasCommitsToPushHelper(git_repository *repo)
 
 bool QGit::hasCommitsToPush() const
 {
-    if (m_path.absolutePath().isEmpty())
+    if (path().absolutePath().isEmpty())
         return false;
 
     GitRepository repo;
-    int res = git_repository_open(repo, m_path.absolutePath().toUtf8().constData());
+    int res = git_repository_open(repo, path().absolutePath().toUtf8().constData());
     if (res)
     {
         return false;
@@ -869,7 +869,7 @@ bool QGit::hasCommitsToPush() const
 QString QGit::currentBranch() const
 {
     GitRepository repo;
-    int res = git_repository_open(repo, m_path.absolutePath().toUtf8().constData());
+    int res = git_repository_open(repo, path().absolutePath().toUtf8().constData());
     if (res)
     {
         return QString();
@@ -892,10 +892,10 @@ QString QGit::currentBranch() const
     return branch;
 }
 
-QString QGit::currentBranchPushTarget() const
+QString QGit::currentBranchPushTarget(const QDir &path)
 {
     GitRepository repo;
-    int res = git_repository_open(repo, m_path.absolutePath().toUtf8().constData());
+    int res = git_repository_open(repo, path.absolutePath().toUtf8().constData());
     if (res)
     {
         return QString();
@@ -962,10 +962,15 @@ QString QGit::currentBranchPushTarget() const
     return remoteName + QLatin1Char('/') + remoteBranch;
 }
 
+QString QGit::currentBranchPushTarget() const
+{
+    return currentBranchPushTarget(path());
+}
+
 QString QGit::headCommitId() const
 {
     GitRepository repo;
-    int res = git_repository_open(repo, m_path.absolutePath().toUtf8().constData());
+    int res = git_repository_open(repo, path().absolutePath().toUtf8().constData());
     if (res)
     {
         return QString();
@@ -989,7 +994,7 @@ QString QGit::headCommitId() const
 QString QGit::headCommitMessage() const
 {
     GitRepository repo;
-    int res = git_repository_open(repo, m_path.absolutePath().toUtf8().constData());
+    int res = git_repository_open(repo, path().absolutePath().toUtf8().constData());
     if (res)
     {
         return QString();
@@ -1027,7 +1032,7 @@ QString QGit::commitSummary(const QString &commitId) const
 {
     if (commitId.isEmpty()) return QString();
     try {
-        GitRepository repo = openRepo(m_path);
+        GitRepository repo = openRepo(path());
         git_oid oid;
         if (resolveToCommitOid(oid, repo, commitId) == 0) {
             GitCommit commit;
@@ -1045,7 +1050,7 @@ QStringList QGit::getCommitParents(const QString &commitId) const
     QStringList result;
     if (commitId.isEmpty()) return result;
     try {
-        GitRepository repo = openRepo(m_path);
+        GitRepository repo = openRepo(path());
         git_oid oid;
         if (resolveToCommitOid(oid, repo, commitId) == 0) {
             GitCommit commit;
@@ -1068,7 +1073,7 @@ QList<QGitCommit> QGit::getCommitsForRebase(const QString &baseCommitId, const Q
     QList<QGitCommit> commits;
     try
     {
-        GitRepository repo = openRepo(m_path);
+        GitRepository repo = openRepo(path());
         GitRevWalk walker;
         int res = git_revwalk_new(walker, repo);
         if (res) throw QGitError("git_revwalk_new", res);
@@ -1186,7 +1191,7 @@ QList<QGitCommit> QGit::getCommitList(const QStringList &commitIds) const
 {
     QList<QGitCommit> commits;
     try {
-        GitRepository repo = openRepo(m_path);
+        GitRepository repo = openRepo(path());
         GitMailmap mailmap;
         git_mailmap_from_repository(mailmap, repo);
 
@@ -1207,7 +1212,7 @@ QList<QGitCommit> QGit::getCommitsFromCommitToHead(const QString &commitHash) co
 {
     QList<QGitCommit> commits;
     try {
-        GitRepository repo = openRepo(m_path);
+        GitRepository repo = openRepo(path());
         GitRevWalk walker;
         int res = git_revwalk_new(walker, repo);
         if (res) return commits;
@@ -1254,7 +1259,7 @@ QList<QGitCommit> QGit::getLastNCommits(int count) const
     if (count <= 0) return commits;
 
     try {
-        GitRepository repo = openRepo(m_path);
+        GitRepository repo = openRepo(path());
         GitRevWalk walker;
         int res = git_revwalk_new(walker, repo);
         if (res) return commits;
@@ -1286,7 +1291,7 @@ QList<QGitCommit> QGit::getCommitsFromRevSpec(const QString &spec) const
     if (spec.trimmed().isEmpty()) return commits;
 
     try {
-        GitRepository repo = openRepo(m_path);
+        GitRepository repo = openRepo(path());
         git_revspec rev;
         int res = git_revparse(&rev, repo, spec.toUtf8().constData());
         if (res != 0) return commits;
@@ -1328,16 +1333,15 @@ QList<QGitCommit> QGit::getCommitsFromRevSpec(const QString &spec) const
 git_repository_state_t QGit::repositoryState() const
 {
     try {
-        GitRepository repo = openRepo(m_path);
+        GitRepository repo = openRepo(path());
         return (git_repository_state_t)git_repository_state(repo);
     } catch (...) {
         return GIT_REPOSITORY_STATE_NONE;
     }
 }
 
-QString QGit::repositoryStateDescription() const
+QString QGit::repositoryStateDescription(git_repository_state_t state)
 {
-    git_repository_state_t state = repositoryState();
     switch (state) {
     case GIT_REPOSITORY_STATE_MERGE:
         return tr("Merge in progress");
@@ -1362,10 +1366,15 @@ QString QGit::repositoryStateDescription() const
     }
 }
 
+QString QGit::repositoryStateDescription() const
+{
+    return repositoryStateDescription(repositoryState());
+}
+
 bool QGit::isAncestor(const QString &ancestor, const QString &descendant) const
 {
     GitRepository repo;
-    int res = git_repository_open(repo, m_path.absolutePath().toUtf8().constData());
+    int res = git_repository_open(repo, path().absolutePath().toUtf8().constData());
     if (res)
     {
         return false;
@@ -1386,7 +1395,7 @@ QList<QGitBranch> QGit::branches(git_branch_t type) const
     QList<QGitBranch> ret;
 
     GitRepository repo;
-    int res = git_repository_open(repo, m_path.absolutePath().toUtf8().constData());
+    int res = git_repository_open(repo, path().absolutePath().toUtf8().constData());
     if (res)
     {
         return ret;
@@ -1435,7 +1444,7 @@ QList<QGitTag> QGit::tags() const
     QList<QGitTag> ret;
 
     GitRepository repo;
-    int res = git_repository_open(repo, m_path.absolutePath().toUtf8().constData());
+    int res = git_repository_open(repo, path().absolutePath().toUtf8().constData());
     if (res)
     {
         return ret;
@@ -1474,7 +1483,7 @@ bool QGit::hasCommitId(const QString &commitId) const
     GitRepository repo;
     GitObject obj;
 
-    int res = git_repository_open(repo, m_path.absolutePath().toUtf8().constData());
+    int res = git_repository_open(repo, path().absolutePath().toUtf8().constData());
     if (res)
     {
         return false;
@@ -1567,7 +1576,7 @@ void QGit::createLocalBranchInternal(const QString &name, const QString &commit_
         throw QGitError("createLocalBranch", -1);
     }
 
-    GitRepository repo = openRepo(m_path);
+    GitRepository repo = openRepo(path());
     GitReference branch;
     GitCommit commit_obj;
     git_oid oid;
@@ -1636,7 +1645,7 @@ void QGit::cherrypick(const QString &commitId)
     QGitError error;
     try
     {
-        GitRepository repo = openRepo(m_path);
+        GitRepository repo = openRepo(path());
 
         git_repository_state_t state = (git_repository_state_t)git_repository_state(repo);
         if (state != GIT_REPOSITORY_STATE_NONE)
@@ -1749,7 +1758,7 @@ void QGit::revert(const QString &commitId)
     QGitError error;
     try
     {
-        GitRepository repo = openRepo(m_path);
+        GitRepository repo = openRepo(path());
 
         git_repository_state_t state = (git_repository_state_t)git_repository_state(repo);
         if (state != GIT_REPOSITORY_STATE_NONE)
@@ -1871,7 +1880,7 @@ void QGit::revert(const QString &commitId)
 
 void QGit::resetInternal(const QString &commitId, git_reset_t type)
 {
-    GitRepository repo = openRepo(m_path);
+    GitRepository repo = openRepo(path());
 
     git_oid oid;
     int res = resolveToCommitOid(oid, repo, commitId);
@@ -1917,7 +1926,7 @@ QString QGit::configString(const QString &key) const
 {
     GitRepository repo;
     GitConfig cfg;
-    int res = git_repository_open(repo, m_path.absolutePath().toUtf8().constData());
+    int res = git_repository_open(repo, path().absolutePath().toUtf8().constData());
     if (res == 0)
     {
         res = git_repository_config(cfg, repo);
@@ -1963,7 +1972,7 @@ void QGit::setConfigString(const QString &key, const QString &value, bool global
     else
     {
         GitRepository repo;
-        res = git_repository_open(repo, m_path.absolutePath().toUtf8().constData());
+        res = git_repository_open(repo, path().absolutePath().toUtf8().constData());
         if (res) throw QGitError("git_repository_open", res);
 
         GitConfig cascade_cfg;
@@ -1995,7 +2004,7 @@ void QGit::deleteConfigEntry(const QString &key, bool global)
     else
     {
         GitRepository repo;
-        res = git_repository_open(repo, m_path.absolutePath().toUtf8().constData());
+        res = git_repository_open(repo, path().absolutePath().toUtf8().constData());
         if (res) throw QGitError("git_repository_open", res);
 
         GitConfig cascade_cfg;
@@ -2029,7 +2038,7 @@ QMap<QString, QString> QGit::configEntries() const
     QMap<QString, QString> entries;
     GitRepository repo;
     GitConfig cfg;
-    int res = git_repository_open(repo, m_path.absolutePath().toUtf8().constData());
+    int res = git_repository_open(repo, path().absolutePath().toUtf8().constData());
     if (res == 0)
     {
         res = git_repository_config(cfg, repo);
@@ -2049,7 +2058,7 @@ QMap<QString, QString> QGit::configEntries() const
 bool QGit::hasConflicts() const
 {
     GitRepository repo;
-    int res = git_repository_open(repo, m_path.absolutePath().toUtf8().constData());
+    int res = git_repository_open(repo, path().absolutePath().toUtf8().constData());
     if (res) return false;
 
     GitIndex index;
@@ -2063,7 +2072,7 @@ QList<QString> QGit::conflictedFiles() const
 {
     QList<QString> files;
     GitRepository repo;
-    int res = git_repository_open(repo, m_path.absolutePath().toUtf8().constData());
+    int res = git_repository_open(repo, path().absolutePath().toUtf8().constData());
     if (res) return files;
 
     GitIndex index;
@@ -2101,7 +2110,7 @@ bool QGit::conflictContents(const QString &path, QString &ancestor, QString &our
     theirs.clear();
 
     GitRepository repo;
-    int res = git_repository_open(repo, m_path.absolutePath().toUtf8().constData());
+    int res = git_repository_open(repo, this->path().absolutePath().toUtf8().constData());
     if (res) throw QGitError("git_repository_open", res);
 
     GitIndex index;
@@ -2142,7 +2151,7 @@ bool QGit::conflictContents(const QString &path, QString &ancestor, QString &our
 void QGit::resolveConflict(const QString &path, const QString &resolvedContent)
 {
     // 1. Write the resolved content to working directory file
-    QString fullPath = m_path.absoluteFilePath(path);
+    QString fullPath = this->path().absoluteFilePath(path);
     QFile file(fullPath);
     if (!file.open(QIODevice::WriteOnly | QIODevice::Text))
     {
@@ -2154,7 +2163,7 @@ void QGit::resolveConflict(const QString &path, const QString &resolvedContent)
 
     // 2. Clear conflict stages and stage resolved file in the Git index
     GitRepository repo;
-    int res = git_repository_open(repo, m_path.absolutePath().toUtf8().constData());
+    int res = git_repository_open(repo, this->path().absolutePath().toUtf8().constData());
     if (res) throw QGitError("git_repository_open", res);
 
     GitIndex index;
@@ -2213,7 +2222,7 @@ QList<QGitSubmodule> QGit::submodules() const
 {
     QList<QGitSubmodule> list;
     GitRepository repo;
-    int res = git_repository_open(repo, m_path.absolutePath().toUtf8().constData());
+    int res = git_repository_open(repo, path().absolutePath().toUtf8().constData());
     if (res == 0)
     {
         git_submodule_foreach(repo, submoduleForeachCallback, &list);
@@ -2226,7 +2235,7 @@ void QGit::initSubmodule(const QString &name)
     QGitError error;
     try {
         GitRepository repo;
-        int res = git_repository_open(repo, m_path.absolutePath().toUtf8().constData());
+        int res = git_repository_open(repo, path().absolutePath().toUtf8().constData());
         if (res) throw QGitError("git_repository_open", res);
 
         GitSubmodule sm;
@@ -2246,7 +2255,7 @@ void QGit::syncSubmodule(const QString &name)
     QGitError error;
     try {
         GitRepository repo;
-        int res = git_repository_open(repo, m_path.absolutePath().toUtf8().constData());
+        int res = git_repository_open(repo, path().absolutePath().toUtf8().constData());
         if (res) throw QGitError("git_repository_open", res);
 
         GitSubmodule sm;
@@ -2267,7 +2276,7 @@ void QGit::addSubmodule(const QString &url, const QString &path, const QString &
     QGitError error;
     try {
         GitRepository repo;
-        int res = git_repository_open(repo, m_path.absolutePath().toUtf8().constData());
+        int res = git_repository_open(repo, this->path().absolutePath().toUtf8().constData());
         if (res) throw QGitError("git_repository_open", res);
 
         QString cleanPath = path.trimmed();
@@ -2318,7 +2327,7 @@ void QGit::removeSubmodule(const QString &name, bool removeWorkingDirectory, boo
     QGitError error;
     try {
         GitRepository repo;
-        int res = git_repository_open(repo, m_path.absolutePath().toUtf8().constData());
+        int res = git_repository_open(repo, path().absolutePath().toUtf8().constData());
         if (res) throw QGitError("git_repository_open", res);
 
         QString subName = name;
@@ -2388,7 +2397,7 @@ void QGit::removeSubmodule(const QString &name, bool removeWorkingDirectory, boo
         }
 
         // 2. Remove from .gitmodules
-        QString gitmodulesPath = m_path.filePath(QStringLiteral(".gitmodules"));
+        QString gitmodulesPath = path().filePath(QStringLiteral(".gitmodules"));
         if (QFile::exists(gitmodulesPath)) {
             GitConfig submodules_cfg;
             if (git_config_open_ondisk(submodules_cfg, gitmodulesPath.toUtf8().constData()) == 0) {
@@ -2444,7 +2453,7 @@ void QGit::removeSubmodule(const QString &name, bool removeWorkingDirectory, boo
 
         // 4. Remove working directory files
         if (removeWorkingDirectory && !subPath.isEmpty()) {
-            QString workingDirPath = m_path.filePath(subPath);
+            QString workingDirPath = path().filePath(subPath);
             QDir workingDir(workingDirPath);
             if (workingDir.exists()) {
                 workingDir.removeRecursively();
@@ -2479,7 +2488,7 @@ void QGit::setSubmodulePointer(const QString &name, const QString &targetRefOrCo
     QGitError error;
     try {
         GitRepository repo;
-        int res = git_repository_open(repo, m_path.absolutePath().toUtf8().constData());
+        int res = git_repository_open(repo, path().absolutePath().toUtf8().constData());
         if (res) throw QGitError("git_repository_open", res);
 
         GitSubmodule sm;
@@ -2562,7 +2571,7 @@ void QGit::addRemote(const QString &name, const QString &url)
     }
 
     GitRepository repo;
-    int res = git_repository_open(repo, m_path.absolutePath().toUtf8().constData());
+    int res = git_repository_open(repo, path().absolutePath().toUtf8().constData());
     if (res) throw QGitError("git_repository_open", res);
 
     GitRemote remote;
@@ -2573,7 +2582,7 @@ void QGit::addRemote(const QString &name, const QString &url)
 void QGit::deleteRemote(const QString &name)
 {
     GitRepository repo;
-    int res = git_repository_open(repo, m_path.absolutePath().toUtf8().constData());
+    int res = git_repository_open(repo, path().absolutePath().toUtf8().constData());
     if (res) throw QGitError("git_repository_open", res);
 
     res = git_remote_delete(repo, name.toUtf8().constData());
@@ -2589,7 +2598,7 @@ void QGit::renameRemote(const QString &oldName, const QString &newName)
     }
 
     GitRepository repo;
-    int res = git_repository_open(repo, m_path.absolutePath().toUtf8().constData());
+    int res = git_repository_open(repo, path().absolutePath().toUtf8().constData());
     if (res) throw QGitError("git_repository_open", res);
 
     GitStrArray problems;
@@ -2606,7 +2615,7 @@ void QGit::setRemoteUrl(const QString &name, const QString &url, bool isPushUrl)
     }
 
     GitRepository repo;
-    int res = git_repository_open(repo, m_path.absolutePath().toUtf8().constData());
+    int res = git_repository_open(repo, path().absolutePath().toUtf8().constData());
     if (res) throw QGitError("git_repository_open", res);
 
     if (isPushUrl) {
@@ -2622,14 +2631,14 @@ QList<QGitWorktree> QGit::worktrees() const
 {
     QList<QGitWorktree> list;
     GitRepository repo;
-    int res = git_repository_open(repo, m_path.absolutePath().toUtf8().constData());
+    int res = git_repository_open(repo, path().absolutePath().toUtf8().constData());
     if (res != 0)
         return list;
 
     // Always include the main worktree first
     {
         const char *workdir = git_repository_workdir(repo);
-        QString mainPath = workdir ? QString::fromUtf8(workdir) : m_path.absolutePath();
+        QString mainPath = workdir ? QString::fromUtf8(workdir) : path().absolutePath();
         // Remove trailing slash
         while (mainPath.endsWith('/') || mainPath.endsWith('\\'))
             mainPath.chop(1);
@@ -2719,7 +2728,7 @@ void QGit::addWorktree(const QString &name, const QString &path, const QString &
     QGitError error;
     try {
         GitRepository repo;
-        int res = git_repository_open(repo, m_path.absolutePath().toUtf8().constData());
+        int res = git_repository_open(repo, this->path().absolutePath().toUtf8().constData());
         if (res) throw QGitError("git_repository_open", res);
 
         git_worktree_add_options opts = GIT_WORKTREE_ADD_OPTIONS_INIT;
@@ -2758,7 +2767,7 @@ void QGit::removeWorktree(const QString &name)
     QGitError error;
     try {
         GitRepository repo;
-        int res = git_repository_open(repo, m_path.absolutePath().toUtf8().constData());
+        int res = git_repository_open(repo, path().absolutePath().toUtf8().constData());
         if (res) throw QGitError("git_repository_open", res);
 
         GitWorktree wt;
@@ -2780,7 +2789,7 @@ void QGit::lockWorktree(const QString &name, bool lock)
     QGitError error;
     try {
         GitRepository repo;
-        int res = git_repository_open(repo, m_path.absolutePath().toUtf8().constData());
+        int res = git_repository_open(repo, path().absolutePath().toUtf8().constData());
         if (res) throw QGitError("git_repository_open", res);
 
         GitWorktree wt;
@@ -2870,7 +2879,7 @@ void QGit::updateSubmodule(const QString &name, bool recursive)
     QGitError error;
     try {
         GitRepository repo;
-        int res = git_repository_open(repo, m_path.absolutePath().toUtf8().constData());
+        int res = git_repository_open(repo, path().absolutePath().toUtf8().constData());
         if (res) throw QGitError("git_repository_open", res);
 
         GitSubmodule sm;
@@ -2904,7 +2913,7 @@ void QGit::updateAllSubmodules(bool recursive)
     QGitError error;
     try {
         GitRepository repo;
-        int res = git_repository_open(repo, m_path.absolutePath().toUtf8().constData());
+        int res = git_repository_open(repo, path().absolutePath().toUtf8().constData());
         if (res) throw QGitError("git_repository_open", res);
 
         updateRepoSubmodulesRecursive(repo, true, recursive, this);
@@ -2917,7 +2926,7 @@ void QGit::updateAllSubmodules(bool recursive)
 void QGit::checkoutBranchInternal(const QString &name)
 {
     GitRepository repo;
-    int res = git_repository_open(repo, m_path.absolutePath().toUtf8().constData());
+    int res = git_repository_open(repo, path().absolutePath().toUtf8().constData());
     if(res) throw QGitError("git_repository_open", res);
 
     GitObject treeish;
@@ -2956,7 +2965,7 @@ void QGit::renameBranch(const QString &oldName, const QString &newName)
         }
 
         GitRepository repo;
-        int res = git_repository_open(repo, m_path.absolutePath().toUtf8().constData());
+        int res = git_repository_open(repo, path().absolutePath().toUtf8().constData());
         if(res) throw QGitError("git_repository_open", res);
 
         // 1. Check if name is already present
@@ -3011,7 +3020,7 @@ void QGit::renameTag(const QString &oldName, const QString &newName)
         }
 
         GitRepository repo;
-        int res = git_repository_open(repo, m_path.absolutePath().toUtf8().constData());
+        int res = git_repository_open(repo, path().absolutePath().toUtf8().constData());
         if(res) throw QGitError("git_repository_open", res);
 
         // 1. Check if tag name is already present
@@ -3053,7 +3062,7 @@ void QGit::deleteTag(const QString &name)
     QGitError error;
     try {
         GitRepository repo;
-        int res = git_repository_open(repo, m_path.absolutePath().toUtf8().constData());
+        int res = git_repository_open(repo, path().absolutePath().toUtf8().constData());
         if(res) throw QGitError("git_repository_open", res);
 
         res = git_tag_delete(repo, name.toUtf8().constData());
@@ -3074,7 +3083,7 @@ void QGit::createTagInternal(const QString &name, const QString &targetObjectId,
     }
 
     GitRepository repo;
-    int res = git_repository_open(repo, m_path.absolutePath().toUtf8().constData());
+    int res = git_repository_open(repo, path().absolutePath().toUtf8().constData());
     if (res) throw QGitError("git_repository_open", res);
 
     // Resolve the target OID from the commit hash string
@@ -3119,7 +3128,7 @@ void QGit::clean(bool includeIgnored, bool removeDirectories)
     QGitError error;
     try {
         GitRepository repo;
-        int res = git_repository_open(repo, m_path.absolutePath().toUtf8().constData());
+        int res = git_repository_open(repo, path().absolutePath().toUtf8().constData());
         if (res) throw QGitError("git_repository_open", res);
 
         git_status_options opts = GIT_STATUS_OPTIONS_INIT;
@@ -3143,7 +3152,7 @@ void QGit::clean(bool includeIgnored, bool removeDirectories)
             if (!delta) continue;
 
             QString relPath = QString::fromUtf8(delta->new_file.path);
-            QString absPath = m_path.absoluteFilePath(relPath);
+            QString absPath = path().absoluteFilePath(relPath);
 
             git_status_t status = entry->status;
             bool isUntracked = (status & GIT_STATUS_WT_NEW);
@@ -3162,13 +3171,13 @@ void QGit::clean(bool includeIgnored, bool removeDirectories)
                     if (sub == ".git") continue;
                     pruneEmptyDirs(dir.absoluteFilePath(sub));
                 }
-                if (dirPath != m_path.absolutePath()) {
+                if (dirPath != path().absolutePath()) {
                     if (dir.entryList(QDir::AllEntries | QDir::NoDotAndDotDot | QDir::Hidden).isEmpty()) {
                         dir.rmdir(dirPath);
                     }
                 }
             };
-            pruneEmptyDirs(m_path.absolutePath());
+            pruneEmptyDirs(path().absolutePath());
         }
 
     } catch (const QGitError &ex) {
@@ -3209,7 +3218,7 @@ void QGit::exportPatches(const QStringList &commitIds, const QString &outputDir,
     QStringList createdFiles;
     try {
         GitRepository repo;
-        int res = git_repository_open(repo, m_path.absolutePath().toUtf8().constData());
+        int res = git_repository_open(repo, path().absolutePath().toUtf8().constData());
         if (res) throw QGitError("git_repository_open", res);
 
         QDir dir(outputDir);
@@ -3447,7 +3456,7 @@ void QGit::exportArchive(const QString &refOrCommit, const QString &outputFilePa
     QString createdFile;
     try {
         GitRepository repo;
-        int res = git_repository_open(repo, m_path.absolutePath().toUtf8().constData());
+        int res = git_repository_open(repo, path().absolutePath().toUtf8().constData());
         if (res) throw QGitError("git_repository_open", res);
 
         QString refSpec = refOrCommit.trimmed().isEmpty() ? QStringLiteral("HEAD") : refOrCommit.trimmed();
@@ -3697,7 +3706,7 @@ void QGit::applyPatches(const QStringList &patchPaths)
     QStringList successfullyApplied;
     try {
         GitRepository repo;
-        int res = git_repository_open(repo, m_path.absolutePath().toUtf8().constData());
+        int res = git_repository_open(repo, path().absolutePath().toUtf8().constData());
         if (res) throw QGitError("git_repository_open", res);
 
         for (const QString &patchPath : patchPaths)
@@ -3744,7 +3753,7 @@ void QGit::setUpstream(const QString &branchName, const QString &upstreamBranchN
     QGitError error;
     try {
         GitRepository repo;
-        int res = git_repository_open(repo, m_path.absolutePath().toUtf8().constData());
+        int res = git_repository_open(repo, path().absolutePath().toUtf8().constData());
         if(res) throw QGitError("git_repository_open", res);
 
         GitReference branch;
@@ -3765,7 +3774,7 @@ void QGit::deleteBranchesInternal(const QList<QGitBranch> &branches, bool force)
     Q_UNUSED(force);
 
     GitRepository repo;
-    int res = git_repository_open(repo, m_path.absolutePath().toUtf8().constData());
+    int res = git_repository_open(repo, path().absolutePath().toUtf8().constData());
     if(res)
     {
         throw QGitError("git_repository_open", res);
@@ -3822,8 +3831,9 @@ void QGit::deleteBranchesInternal(const QList<QGitBranch> &branches, bool force)
                 res = git_remote_push(remote, &refspecs.value, &push_opts);
                 if (res)
                 {
-                    if (!m_lastPushError.isEmpty()) {
-                        throw QGitError("git_remote_push", res, m_lastPushError);
+                    QString pushErr = lastPushError();
+                    if (!pushErr.isEmpty()) {
+                        throw QGitError("git_remote_push", res, pushErr);
                     }
                     throw QGitError("git_remote_push", res);
                 }
@@ -3851,7 +3861,7 @@ void QGit::init()
     try
     {
         GitRepository repo;
-        int res = git_repository_init(repo, m_path.absolutePath().toUtf8().constData(), 0);
+        int res = git_repository_init(repo, path().absolutePath().toUtf8().constData(), 0);
         if(res)
         {
             throw QGitError("git_repository_init", res);
@@ -3873,7 +3883,7 @@ void QGit::signature()
     try
     {
         GitRepository repo;
-        int res = git_repository_open(repo, m_path.absolutePath().toUtf8().constData());
+        int res = git_repository_open(repo, path().absolutePath().toUtf8().constData());
         if (res)
         {
             throw QGitError("git_repository_open", res);
@@ -3904,7 +3914,7 @@ void QGit::status()
     try
     {
         GitRepository repo;
-        int res = git_repository_open(repo, m_path.absolutePath().toUtf8().constData());
+        int res = git_repository_open(repo, path().absolutePath().toUtf8().constData());
         if (res)
         {
             throw QGitError("git_repository_open", res);
@@ -3944,7 +3954,7 @@ void QGit::listBranchesAndTags()
     try
     {
         GitRepository repo;
-        int res = git_repository_open(repo, m_path.absolutePath().toUtf8().constData());
+        int res = git_repository_open(repo, path().absolutePath().toUtf8().constData());
         if (res)
         {
             throw QGitError("git_repository_open", res);
@@ -4035,6 +4045,32 @@ void QGit::listBranchesAndTags()
 
         hasCommitsToPush = hasCommitsToPushHelper(repo);
 
+        git_repository_state_t repoState = (git_repository_state_t)git_repository_state(repo);
+        QString headCommitId;
+        QString headCommitMessage;
+        GitReference headRef;
+        if (git_repository_head(headRef, repo) == 0) {
+            const git_oid *oid = git_reference_target(headRef);
+            if (!oid) {
+                GitReference resolved;
+                if (git_reference_resolve(resolved, headRef) == 0) {
+                    oid = git_reference_target(resolved);
+                }
+            }
+            if (oid) {
+                char oidStr[GIT_OID_HEXSZ + 1];
+                git_oid_tostr(oidStr, sizeof(oidStr), oid);
+                headCommitId = QString::fromLatin1(oidStr);
+
+                GitCommit headCommit;
+                if (git_commit_lookup(headCommit, repo, oid) == 0) {
+                    const char *msg = git_commit_message(headCommit);
+                    if (msg) headCommitMessage = QString::fromUtf8(msg);
+                }
+            }
+        }
+        emit repositoryStateReply(static_cast<int>(repoState), headCommitId, headCommitMessage);
+
         GitStrArray remotes_list;
         if (git_remote_list(remotes_list, repo) == 0)
         {
@@ -4072,7 +4108,7 @@ void QGit::stashSave(const QString &name, bool keepIndex, bool includeUntracked,
     try
     {
         GitRepository repo;
-        int res = git_repository_open(repo, m_path.absolutePath().toUtf8().constData());
+        int res = git_repository_open(repo, path().absolutePath().toUtf8().constData());
         if (res)
         {
             throw QGitError("git_repository_open", res);
@@ -4111,7 +4147,7 @@ void QGit::stashRemove(const QString &name)
     try
     {
         GitRepository repo;
-        int res = git_repository_open(repo, m_path.absolutePath().toUtf8().constData());
+        int res = git_repository_open(repo, path().absolutePath().toUtf8().constData());
         if (res)
         {
             throw QGitError("git_repository_open", res);
@@ -4165,7 +4201,7 @@ void QGit::listStashes()
     try
     {
         GitRepository repo;
-        int res = git_repository_open(repo, m_path.absolutePath().toUtf8().constData());
+        int res = git_repository_open(repo, path().absolutePath().toUtf8().constData());
         if (res)
         {
             throw QGitError("git_repository_open", res);
@@ -4201,7 +4237,7 @@ void QGit::stashApply(const QString &name)
     try
     {
         GitRepository repo;
-        int res = git_repository_open(repo, m_path.absolutePath().toUtf8().constData());
+        int res = git_repository_open(repo, path().absolutePath().toUtf8().constData());
         if (res)
         {
             throw QGitError("git_repository_open", res);
@@ -4252,7 +4288,7 @@ void QGit::stashPop(const QString &name)
     try
     {
         GitRepository repo;
-        int res = git_repository_open(repo, m_path.absolutePath().toUtf8().constData());
+        int res = git_repository_open(repo, path().absolutePath().toUtf8().constData());
         if (res)
         {
             throw QGitError("git_repository_open", res);
@@ -4304,7 +4340,7 @@ void QGit::listChangedFiles(int show, int sort, bool reversed)
     try
     {
         GitRepository repo;
-        int res = git_repository_open(repo, m_path.absolutePath().toUtf8().constData());
+        int res = git_repository_open(repo, path().absolutePath().toUtf8().constData());
         if (res)
         {
             throw QGitError("git_repository_open", res);
@@ -4443,7 +4479,7 @@ void QGit::commitDiff(const QString &commitId, bool ignoreWhitespace)
     try
     {
         GitRepository repo;
-        int res = git_repository_open(repo, m_path.absolutePath().toUtf8().constData());
+        int res = git_repository_open(repo, path().absolutePath().toUtf8().constData());
         if (res)
         {
             throw QGitError("git_repository_open", res);
@@ -4613,7 +4649,7 @@ void QGit::commitDiffContent(const QString &first, const QString &second, const 
     try
     {
         GitRepository repo;
-        int res = git_repository_open(repo, m_path.absolutePath().toUtf8().constData());
+        int res = git_repository_open(repo, path().absolutePath().toUtf8().constData());
         if (res)
         {
             throw QGitError("git_repository_open", res);
@@ -4803,7 +4839,7 @@ void QGit::stageFiles(const QStringList &items)
         }
 
         GitRepository repo;
-        int res = git_repository_open(repo, m_path.absolutePath().toUtf8().constData());
+        int res = git_repository_open(repo, path().absolutePath().toUtf8().constData());
         if (res)
         {
             throw QGitError("git_repository_open", res);
@@ -4857,7 +4893,7 @@ void QGit::unstageFiles(const QStringList &items)
         }
 
         GitRepository repo;
-        int res = git_repository_open(repo, m_path.absolutePath().toUtf8().constData());
+        int res = git_repository_open(repo, path().absolutePath().toUtf8().constData());
         if (res)
         {
             throw QGitError("git_repository_open", res);
@@ -4902,7 +4938,7 @@ void QGit::stageFileLines(const QString &filename, const QVector<QGitDiffWidgetL
         }
 
         GitRepository repo;
-        int res = git_repository_open(repo, m_path.absolutePath().toUtf8().constData());
+        int res = git_repository_open(repo, path().absolutePath().toUtf8().constData());
         if (res)
         {
             throw QGitError("git_repository_open", res);
@@ -5028,7 +5064,7 @@ void QGit::unstageFileLines(const QString &filename, const QVector<QGitDiffWidge
         }
 
         GitRepository repo;
-        int res = git_repository_open(repo, m_path.absolutePath().toUtf8().constData());
+        int res = git_repository_open(repo, path().absolutePath().toUtf8().constData());
         if (res)
         {
             throw QGitError("git_repository_open", res);
@@ -5154,7 +5190,7 @@ void QGit::discardFiles(const QStringList &items)
         }
 
         GitRepository repo;
-        int res = git_repository_open(repo, m_path.absolutePath().toUtf8().constData());
+        int res = git_repository_open(repo, path().absolutePath().toUtf8().constData());
         if (res)
         {
             throw QGitError("git_repository_open", res);
@@ -5177,7 +5213,7 @@ void QGit::discardFiles(const QStringList &items)
 
             if (status_res == 0 && ((status_flags & GIT_STATUS_WT_NEW) || (status_flags & GIT_STATUS_INDEX_NEW)))
             {
-                QString absolutePath = m_path.absoluteFilePath(item);
+                QString absolutePath = path().absoluteFilePath(item);
                 QFile::remove(absolutePath);
 
                 if (status_flags & GIT_STATUS_INDEX_NEW)
@@ -5235,7 +5271,7 @@ void QGit::discardFileLines(const QString &filename, const QVector<QGitDiffWidge
             throw QGitError(tr("No lines selected to discard"), -1);
         }
 
-        QString filePath = m_path.absoluteFilePath(filename);
+        QString filePath = path().absoluteFilePath(filename);
         QFile file(filePath);
         if (!file.open(QIODevice::ReadOnly))
         {
@@ -5328,7 +5364,7 @@ QString QGit::commitInternal(const QString &message, bool withPush, bool amend)
     git_oid new_commit_id = { {0} };
 
     GitRepository repo;
-        int res = git_repository_open(repo, m_path.absolutePath().toUtf8().constData());
+        int res = git_repository_open(repo, path().absolutePath().toUtf8().constData());
         if (res)
         {
             throw QGitError("git_repository_open", res);
@@ -5562,8 +5598,9 @@ QString QGit::commitInternal(const QString &message, bool withPush, bool amend)
             res = git_remote_push(remote, &refspecs.value, &push_opts);
             if (res)
             {
-                if (!m_lastPushError.isEmpty()) {
-                    throw QGitError("git_remote_push", res, m_lastPushError);
+                QString pushErr = lastPushError();
+                if (!pushErr.isEmpty()) {
+                    throw QGitError("git_remote_push", res, pushErr);
                 }
                 throw QGitError("git_remote_push", res);
             }
@@ -5605,7 +5642,7 @@ void QGit::clone(const QUrl &url)
         {
             throw QGitError(tr("Invalid clone URL"), -1);
         }
-        if (m_path.absolutePath().isEmpty())
+        if (path().absolutePath().isEmpty())
         {
             throw QGitError(tr("Invalid clone destination path"), -1);
         }
@@ -5645,7 +5682,7 @@ void QGit::clone(const QUrl &url)
         };
 
         GitRepository repo;
-        res = git_clone(repo, url.toString().toUtf8().constData(), m_path.absolutePath().toUtf8().constData(), &opts);
+        res = git_clone(repo, url.toString().toUtf8().constData(), path().absolutePath().toUtf8().constData(), &opts);
         if (res)
         {
             throw QGitError("git_clone", res);
@@ -5665,7 +5702,7 @@ void QGit::pull(const QString &remote, const QString &branch, bool rebase, bool 
     try
     {
         GitRepository repo;
-        int res = git_repository_open(repo, m_path.absolutePath().toUtf8().constData());
+        int res = git_repository_open(repo, path().absolutePath().toUtf8().constData());
         if (res)
         {
             throw QGitError("git_repository_open", res);
@@ -5723,7 +5760,7 @@ void QGit::rebaseInternal(const QString &upstream, const QString &branch, const 
     GitRebase rebase;
 
     GitRepository repo;
-    int res = git_repository_open(repo, m_path.absolutePath().toUtf8().constData());
+    int res = git_repository_open(repo, path().absolutePath().toUtf8().constData());
         if (res)
         {
             throw QGitError("git_repository_open", res);
@@ -5832,7 +5869,7 @@ void QGit::interactiveRebase(const QString &baseCommitId, const QList<QGitRebase
     QGitError error;
     try
     {
-        GitRepository repo = openRepo(m_path);
+        GitRepository repo = openRepo(path());
 
         git_repository_state_t state = (git_repository_state_t)git_repository_state(repo);
         if (state != GIT_REPOSITORY_STATE_NONE)
@@ -6106,7 +6143,7 @@ void QGit::continueOperation()
     QGitError error;
     try
     {
-        GitRepository repo = openRepo(m_path);
+        GitRepository repo = openRepo(path());
         git_repository_state_t state = (git_repository_state_t)git_repository_state(repo);
 
         if (state == GIT_REPOSITORY_STATE_NONE)
@@ -6188,7 +6225,7 @@ void QGit::continueOperation()
             }
 
             const char *gitDirPathRaw = git_repository_path(repo);
-            QDir gitDir = gitDirPathRaw ? QDir(QString::fromUtf8(gitDirPathRaw)) : QDir(m_path.filePath(QStringLiteral(".git")));
+            QDir gitDir = gitDirPathRaw ? QDir(QString::fromUtf8(gitDirPathRaw)) : QDir(path().filePath(QStringLiteral(".git")));
 
             QString mergeMsg;
             QFile mergeMsgFile(gitDir.filePath(QStringLiteral("MERGE_MSG")));
@@ -6217,7 +6254,7 @@ void QGit::continueOperation()
             }
 
             const char *gitDirPathRaw = git_repository_path(repo);
-            QDir gitDir = gitDirPathRaw ? QDir(QString::fromUtf8(gitDirPathRaw)) : QDir(m_path.filePath(QStringLiteral(".git")));
+            QDir gitDir = gitDirPathRaw ? QDir(QString::fromUtf8(gitDirPathRaw)) : QDir(path().filePath(QStringLiteral(".git")));
 
             QString cherryMsg;
             QFile mergeMsgFile(gitDir.filePath(QStringLiteral("MERGE_MSG")));
@@ -6264,7 +6301,7 @@ void QGit::continueOperation()
             }
 
             const char *gitDirPathRaw = git_repository_path(repo);
-            QDir gitDir = gitDirPathRaw ? QDir(QString::fromUtf8(gitDirPathRaw)) : QDir(m_path.filePath(QStringLiteral(".git")));
+            QDir gitDir = gitDirPathRaw ? QDir(QString::fromUtf8(gitDirPathRaw)) : QDir(path().filePath(QStringLiteral(".git")));
 
             QString revertMsg;
             QFile mergeMsgFile(gitDir.filePath(QStringLiteral("MERGE_MSG")));
@@ -6324,7 +6361,7 @@ void QGit::abortOperation()
     QGitError error;
     try
     {
-        GitRepository repo = openRepo(m_path);
+        GitRepository repo = openRepo(path());
         git_repository_state_t state = (git_repository_state_t)git_repository_state(repo);
 
         if (state == GIT_REPOSITORY_STATE_NONE)
@@ -6368,7 +6405,7 @@ void QGit::skipRebase()
     QGitError error;
     try
     {
-        GitRepository repo = openRepo(m_path);
+        GitRepository repo = openRepo(path());
         git_repository_state_t state = (git_repository_state_t)git_repository_state(repo);
 
         if (state != GIT_REPOSITORY_STATE_REBASE &&
@@ -6454,7 +6491,7 @@ void QGit::skipRebase()
 void QGit::mergeInternal(const QString &branchName)
 {
     GitRepository repo;
-    int res = git_repository_open(repo, m_path.absolutePath().toUtf8().constData());
+    int res = git_repository_open(repo, path().absolutePath().toUtf8().constData());
     if(res) throw QGitError("git_repository_open", res);
 
         GitAnnotatedCommit annotated;
@@ -6571,7 +6608,7 @@ void QGit::fetch(bool fetchFromAllRemotes, bool purgeDeletedBranches, bool fetch
     try
     {
         GitRepository repo;
-        int res = git_repository_open(repo, m_path.absolutePath().toUtf8().constData());
+        int res = git_repository_open(repo, path().absolutePath().toUtf8().constData());
         if (res)
         {
             throw QGitError("git_repository_open", res);
@@ -6662,7 +6699,7 @@ void QGit::fetchRemote(const QString &remoteName, bool purgeDeletedBranches, boo
     try
     {
         GitRepository repo;
-        int res = git_repository_open(repo, m_path.absolutePath().toUtf8().constData());
+        int res = git_repository_open(repo, path().absolutePath().toUtf8().constData());
         if (res)
         {
             throw QGitError("git_repository_open", res);
@@ -6704,7 +6741,7 @@ void QGit::push(const QString &remote, const QStringList &branches, bool tags, b
     try
     {
         GitRepository repo;
-        int res = git_repository_open(repo, m_path.absolutePath().toUtf8().constData());
+        int res = git_repository_open(repo, path().absolutePath().toUtf8().constData());
         if (res)
         {
             throw QGitError("git_repository_open", res);
@@ -6783,8 +6820,9 @@ void QGit::push(const QString &remote, const QStringList &branches, bool tags, b
         res = git_remote_push(libgit2_remote, &refspecs.value, &push_opts);
         if (res)
         {
-            if (!m_lastPushError.isEmpty()) {
-                throw QGitError("git_remote_push", res, m_lastPushError);
+            QString pushErr = lastPushError();
+            if (!pushErr.isEmpty()) {
+                throw QGitError("git_remote_push", res, pushErr);
             }
             throw QGitError("git_remote_push", res);
         }
@@ -6804,7 +6842,7 @@ void QGit::listCommits(const QString &branchRef, int offset, int length)
     try
     {
         GitRepository repo;
-        int res = git_repository_open(repo, m_path.absolutePath().toUtf8().constData());
+        int res = git_repository_open(repo, path().absolutePath().toUtf8().constData());
         if (res)
         {
             throw QGitError("git_repository_open", res);
@@ -6960,7 +6998,7 @@ void QGit::searchCommits(const QString &text, const QString &type)
     try
     {
         GitRepository repo;
-        int res = git_repository_open(repo, m_path.absolutePath().toUtf8().constData());
+        int res = git_repository_open(repo, path().absolutePath().toUtf8().constData());
         if (res)
         {
             throw QGitError("git_repository_open", res);
@@ -7158,7 +7196,7 @@ QString QGit::getNote(const QString &commitHash) const
     QString noteText;
     try {
         GitRepository repo;
-        int res = git_repository_open(repo, m_path.absolutePath().toUtf8().constData());
+        int res = git_repository_open(repo, path().absolutePath().toUtf8().constData());
         if (res) throw QGitError("git_repository_open", res);
 
         git_oid oid;
@@ -7197,7 +7235,7 @@ QList<QGitReflogEntry> QGit::getReflog(const QString &refName) const
     QList<QGitReflogEntry> entries;
     try {
         GitRepository repo;
-        int res = git_repository_open(repo, m_path.absolutePath().toUtf8().constData());
+        int res = git_repository_open(repo, path().absolutePath().toUtf8().constData());
         if (res) throw QGitError("git_repository_open", res);
 
         GitReflog reflog;
@@ -7264,7 +7302,7 @@ QList<QGitBlameHunk> QGit::blameFile(const QString &filePath, const QString &com
     QList<QGitBlameHunk> hunks;
     try {
         GitRepository repo;
-        int res = git_repository_open(repo, m_path.absolutePath().toUtf8().constData());
+        int res = git_repository_open(repo, path().absolutePath().toUtf8().constData());
         if (res) throw QGitError("git_repository_open", res);
 
         git_blame_options opts = GIT_BLAME_OPTIONS_INIT;
@@ -7330,7 +7368,7 @@ void QGit::setNote(const QString &commitHash, const QString &noteText)
     QGitError error;
     try {
         GitRepository repo;
-        int res = git_repository_open(repo, m_path.absolutePath().toUtf8().constData());
+        int res = git_repository_open(repo, path().absolutePath().toUtf8().constData());
         if (res) throw QGitError("git_repository_open", res);
 
         git_oid oid;
@@ -7356,7 +7394,7 @@ void QGit::removeNote(const QString &commitHash)
     QGitError error;
     try {
         GitRepository repo;
-        int res = git_repository_open(repo, m_path.absolutePath().toUtf8().constData());
+        int res = git_repository_open(repo, path().absolutePath().toUtf8().constData());
         if (res) throw QGitError("git_repository_open", res);
 
         git_oid oid;

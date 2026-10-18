@@ -15,6 +15,7 @@ class QGitBlameDialog : public QDialog
 
 public:
     // Opens the blame browser rooted at the repository's working directory
+    explicit QGitBlameDialog(const QDir &repoPath, QWidget *parent = nullptr);
     explicit QGitBlameDialog(QGit *git, QWidget *parent = nullptr);
     ~QGitBlameDialog();
 
@@ -45,7 +46,7 @@ private:
     void showBlameForFile(const QString &relPath);
 
     Ui::QGitBlameDialog *ui = nullptr;
-    QGit *m_git = nullptr;
+    QGit m_gitInstance;
     QString m_pinnedCommitId; // when set, blame is shown as-of this commit
 
     // Palette of pastel background colours rotated per unique commit hash

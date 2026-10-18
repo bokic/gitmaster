@@ -215,6 +215,7 @@ private slots:
     void on_pushButton_continueOperation_clicked();
     void on_pushButton_skipOperation_clicked();
     void on_pushButton_abortOperation_clicked();
+    void repositoryStateReply(int state, const QString &headCommitId, const QString &headCommitMessage);
 
 protected:
     void dragEnterEvent(QDragEnterEvent *event) override;
@@ -270,6 +271,8 @@ private:
     QList<QPair<QString, git_status_t>> m_changedFiles;
     QString m_headCommitId;
     QString m_headCommitMessage;
+    git_repository_state_t m_repositoryState = GIT_REPOSITORY_STATE_NONE;
+    bool m_hasConflicts = false;
     void updateStatusViews();
     void updateCommitButtonState();
     void collectFilePaths(QTreeWidgetItem *item, QStringList &paths);

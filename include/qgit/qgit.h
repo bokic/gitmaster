@@ -147,9 +147,11 @@ public:
     QList<QGitCommit> getCommitsFromRevSpec(const QString &spec) const;
     git_repository_state_t repositoryState() const;
     QString repositoryStateDescription() const;
+    static QString repositoryStateDescription(git_repository_state_t state);
+    static QString currentBranchPushTarget(const QDir &path);
 
-    void setCredentialHandler(QObject *handler) { m_credentialHandler = handler; }
-    QObject *credentialHandler() const { return m_credentialHandler; }
+    void setCredentialHandler(QObject *handler) { m_credentialHandler.store(handler, std::memory_order_release); }
+    QObject *credentialHandler() const { return m_credentialHandler.load(std::memory_order_acquire); }
 
     static QString getBranchNameFromPath(const QString &path);
     static int createLocalRepository(const QDir &path);
@@ -292,6 +294,7 @@ signals:
     void addWorktreeReply(const QGitError &error);
     void removeWorktreeReply(const QGitError &error);
     void lockWorktreeReply(const QGitError &error);
+    void repositoryStateReply(int state, const QString &headCommitId, const QString &headCommitMessage);
 
 private:
     QString commitInternal(const QString &message, bool withPush, bool amend);
@@ -301,5 +304,5 @@ private:
     QDir m_path;
     std::atomic<bool> m_abortSearch{false};
     QString m_lastPushError;
-    QObject *m_credentialHandler = nullptr;
+    std::atomic<QObject*> m_credentialHandler{nullptr};
 };

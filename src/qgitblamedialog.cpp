@@ -51,10 +51,10 @@ QColor QGitBlameDialog::hunkColor(const QString &hash, int index)
 // Construction
 // ---------------------------------------------------------------------------
 
-QGitBlameDialog::QGitBlameDialog(QGit *git, QWidget *parent)
+QGitBlameDialog::QGitBlameDialog(const QDir &repoPath, QWidget *parent)
     : QDialog(parent)
     , ui(new Ui::QGitBlameDialog)
-    , m_git(git)
+    , m_gitInstance(repoPath)
 {
     ui->setupUi(this);
     setWindowTitle(tr("Git Blame Browser"));
@@ -82,7 +82,12 @@ QGitBlameDialog::QGitBlameDialog(QGit *git, QWidget *parent)
     // File tree
     ui->fileTree->setIconSize(QSize(16, 16));
 
-    populateFileTree(git->path().absolutePath());
+    populateFileTree(m_gitInstance.path().absolutePath());
+}
+
+QGitBlameDialog::QGitBlameDialog(QGit *git, QWidget *parent)
+    : QGitBlameDialog(git ? git->path() : QDir(), parent)
+{
 }
 
 QGitBlameDialog::~QGitBlameDialog()
@@ -209,7 +214,7 @@ void QGitBlameDialog::showBlameForFile(const QString &relPath)
     QApplication::processEvents();
 
     // Read the actual file lines
-    QString absPath = m_git->path().absoluteFilePath(relPath);
+    QString absPath = m_gitInstance.path().absoluteFilePath(relPath);
     QFile f(absPath);
     if (!f.open(QIODevice::ReadOnly | QIODevice::Text)) {
         ui->label_status->setText(tr("Cannot open file: %1").arg(relPath));
@@ -226,7 +231,7 @@ void QGitBlameDialog::showBlameForFile(const QString &relPath)
     }
 
     // Compute blame hunks (pinned to m_pinnedCommitId if set, otherwise HEAD)
-    QList<QGitBlameHunk> hunks = m_git->blameFile(relPath, m_pinnedCommitId);
+    QList<QGitBlameHunk> hunks = m_gitInstance.blameFile(relPath, m_pinnedCommitId);
     if (hunks.isEmpty()) {
         ui->label_status->setText(tr("No blame data (file may be untracked)."));
         return;
