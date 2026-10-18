@@ -12,8 +12,13 @@ QGitError::QGitError()
 
 QGitError::QGitError(const QString &functionName, int errorCode)
     : m_functionName(functionName)
-    , m_errorCode(errorCode)
+    , m_errorCode((errorCode == 0 && !functionName.isEmpty()) ? -1 : errorCode)
 {
+    if (m_errorCode == -1) {
+        m_errorString = functionName;
+        return;
+    }
+
     const git_error *err = git_error_last();
     if (err && err->message) {
         m_errorString = QString::fromUtf8(err->message);
@@ -25,7 +30,7 @@ QGitError::QGitError(const QString &functionName, int errorCode)
 QGitError::QGitError(const QString &functionName, int errorCode, const QString &customMessage)
     : m_functionName(functionName)
     , m_errorString(customMessage.isEmpty() ? QObject::tr("Git error %1: %2").arg(errorCode).arg(functionName) : customMessage)
-    , m_errorCode(errorCode)
+    , m_errorCode((errorCode == 0 && (!functionName.isEmpty() || !customMessage.isEmpty())) ? -1 : errorCode)
 {
 }
 

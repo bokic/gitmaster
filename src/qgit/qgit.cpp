@@ -1108,7 +1108,7 @@ QList<QGitCommit> QGit::getCommitsForRebase(const QString &baseCommitId, const Q
             res = git_repository_head(head_ref, repo);
             if (res) throw QGitError("git_repository_head", res);
             const git_oid *h_oid = git_reference_target(head_ref);
-            if (!h_oid) throw QGitError("git_reference_target (head)", -1);
+            if (!h_oid) throw QGitError("git_reference_target (head)");
             target_oid = *h_oid;
         }
 
@@ -1592,7 +1592,7 @@ void QGit::createLocalBranchInternal(const QString &name, const QString &commit_
     if (!isValidRefName(QStringLiteral("refs/heads/"), name))
     {
         git_error_set_str(GIT_ERROR_INVALID, "Invalid branch name");
-        throw QGitError("createLocalBranch", -1);
+        throw QGitError("createLocalBranch");
     }
 
     GitRepository repo = openRepo(path());
@@ -1669,7 +1669,7 @@ void QGit::cherrypick(const QString &commitId)
         git_repository_state_t state = (git_repository_state_t)git_repository_state(repo);
         if (state != GIT_REPOSITORY_STATE_NONE)
         {
-            throw QGitError(tr("Repository is not in a clean state. Please resolve or abort the active merge, rebase, or cherry-pick first."), -1);
+            throw QGitError(tr("Repository is not in a clean state. Please resolve or abort the active merge, rebase, or cherry-pick first."));
         }
 
         git_oid oid;
@@ -1704,7 +1704,7 @@ void QGit::cherrypick(const QString &commitId)
 
         if (git_index_has_conflicts(index))
         {
-            throw QGitError(tr("Cherry-pick completed with conflicts. Please resolve conflicts and commit manually."), -1);
+            throw QGitError(tr("Cherry-pick completed with conflicts. Please resolve conflicts and commit manually."));
         }
 
         // No conflicts, auto-commit
@@ -1782,7 +1782,7 @@ void QGit::revert(const QString &commitId)
         git_repository_state_t state = (git_repository_state_t)git_repository_state(repo);
         if (state != GIT_REPOSITORY_STATE_NONE)
         {
-            throw QGitError(tr("Repository is not in a clean state. Please resolve or abort the active merge, rebase, or cherry-pick first."), -1);
+            throw QGitError(tr("Repository is not in a clean state. Please resolve or abort the active merge, rebase, or cherry-pick first."));
         }
 
         git_oid oid;
@@ -1817,7 +1817,7 @@ void QGit::revert(const QString &commitId)
 
         if (git_index_has_conflicts(index))
         {
-            throw QGitError(tr("Revert completed with conflicts. Please resolve conflicts and commit manually."), -1);
+            throw QGitError(tr("Revert completed with conflicts. Please resolve conflicts and commit manually."));
         }
 
         // No conflicts, auto-commit
@@ -2174,7 +2174,7 @@ void QGit::resolveConflict(const QString &path, const QString &resolvedContent)
     QFile file(fullPath);
     if (!file.open(QIODevice::WriteOnly | QIODevice::Text))
     {
-        throw QGitError(tr("Could not open file to write resolved content: %1").arg(fullPath), -1);
+        throw QGitError(tr("Could not open file to write resolved content: %1").arg(fullPath));
     }
     QTextStream out(&file);
     out << resolvedContent;
@@ -2581,12 +2581,12 @@ void QGit::addRemote(const QString &name, const QString &url)
     if (!isValidRemoteName(name))
     {
         git_error_set_str(GIT_ERROR_INVALID, "Invalid remote name");
-        throw QGitError("addRemote", -1);
+        throw QGitError("addRemote");
     }
     if (!isValidUrl(url))
     {
         git_error_set_str(GIT_ERROR_INVALID, "Invalid remote URL");
-        throw QGitError("addRemote", -1);
+        throw QGitError("addRemote");
     }
 
     GitRepository repo;
@@ -2613,7 +2613,7 @@ void QGit::renameRemote(const QString &oldName, const QString &newName)
     if (!isValidRemoteName(newName))
     {
         git_error_set_str(GIT_ERROR_INVALID, "Invalid remote name");
-        throw QGitError("renameRemote", -1);
+        throw QGitError("renameRemote");
     }
 
     GitRepository repo;
@@ -2630,7 +2630,7 @@ void QGit::setRemoteUrl(const QString &name, const QString &url, bool isPushUrl)
     if (!isValidUrl(url))
     {
         git_error_set_str(GIT_ERROR_INVALID, "Invalid remote URL");
-        throw QGitError("setRemoteUrl", -1);
+        throw QGitError("setRemoteUrl");
     }
 
     GitRepository repo;
@@ -2980,7 +2980,7 @@ void QGit::renameBranch(const QString &oldName, const QString &newName)
         if (!isValidRefName(QStringLiteral("refs/heads/"), newName))
         {
             git_error_set_str(GIT_ERROR_INVALID, "Invalid branch name");
-            throw QGitError("renameBranch", -1);
+            throw QGitError("renameBranch");
         }
 
         GitRepository repo;
@@ -2991,7 +2991,7 @@ void QGit::renameBranch(const QString &oldName, const QString &newName)
         GitReference existing_branch;
         res = git_branch_lookup(existing_branch, repo, newName.toUtf8().constData(), GIT_BRANCH_LOCAL);
         if (res == 0) {
-            throw QGitError(tr("Branch '%1' already exists.").arg(newName), -1);
+            throw QGitError(tr("Branch '%1' already exists.").arg(newName));
         }
 
         // 2. Lookup old branch
@@ -3035,7 +3035,7 @@ void QGit::renameTag(const QString &oldName, const QString &newName)
         if (!isValidRefName(QStringLiteral("refs/tags/"), newName))
         {
             git_error_set_str(GIT_ERROR_INVALID, "Invalid tag name");
-            throw QGitError("renameTag", -1);
+            throw QGitError("renameTag");
         }
 
         GitRepository repo;
@@ -3047,7 +3047,7 @@ void QGit::renameTag(const QString &oldName, const QString &newName)
         QString newTagFullName = "refs/tags/" + newName;
         res = git_reference_lookup(existing_tag, repo, newTagFullName.toUtf8().constData());
         if (res == 0) {
-            throw QGitError(tr("Tag '%1' already exists.").arg(newName), -1);
+            throw QGitError(tr("Tag '%1' already exists.").arg(newName));
         }
 
         // 2. Lookup old tag reference
@@ -3098,7 +3098,7 @@ void QGit::createTagInternal(const QString &name, const QString &targetObjectId,
     if (!isValidRefName(QStringLiteral("refs/tags/"), name))
     {
         git_error_set_str(GIT_ERROR_INVALID, "Invalid tag name");
-        throw QGitError("createTag", -1);
+        throw QGitError("createTag");
     }
 
     GitRepository repo;
@@ -3246,7 +3246,7 @@ void QGit::exportPatches(const QStringList &commitIds, const QString &outputDir,
         }
         if (!dir.exists()) {
             if (!dir.mkpath(".")) {
-                throw QGitError(tr("Failed to create destination directory: %1").arg(dir.absolutePath()), -1);
+                throw QGitError(tr("Failed to create destination directory: %1").arg(dir.absolutePath()));
             }
         }
 
@@ -3263,7 +3263,7 @@ void QGit::exportPatches(const QStringList &commitIds, const QString &outputDir,
 
             unsigned int parentCount = git_commit_parentcount(commit);
             if (parentCount > 1) {
-                throw QGitError(tr("Commit %1 is a merge commit. Git format-patch cannot generate patches for merge commits.").arg(commitId.left(7)), -1);
+                throw QGitError(tr("Commit %1 is a merge commit. Git format-patch cannot generate patches for merge commits.").arg(commitId.left(7)));
             }
 
             git_email_create_options opts = GIT_EMAIL_CREATE_OPTIONS_INIT;
@@ -3303,7 +3303,7 @@ void QGit::exportPatches(const QStringList &commitIds, const QString &outputDir,
 
             QFile outFile(filePath);
             if (!outFile.open(QIODevice::WriteOnly | QIODevice::Text | QIODevice::Truncate)) {
-                throw QGitError(tr("Could not open file for writing: %1").arg(filePath), -1);
+                throw QGitError(tr("Could not open file for writing: %1").arg(filePath));
             }
 
             if (buf.value.ptr && buf.value.size > 0) {
@@ -3510,13 +3510,13 @@ void QGit::exportArchive(const QString &refOrCommit, const QString &outputFilePa
                 res = git_tree_lookup(tree, repo, git_object_id(targetObj));
                 if (res) throw QGitError("git_tree_lookup", res);
             } else {
-                throw QGitError(tr("Unsupported tag target type for archive export"), -1);
+                throw QGitError(tr("Unsupported tag target type for archive export"));
             }
         } else if (objType == GIT_OBJECT_TREE) {
             res = git_tree_lookup(tree, repo, git_object_id(obj));
             if (res) throw QGitError("git_tree_lookup", res);
         } else {
-            throw QGitError(tr("Object is not a commit, tag, or tree"), -1);
+            throw QGitError(tr("Object is not a commit, tag, or tree"));
         }
 
         struct ArchiveEntry {
@@ -3559,7 +3559,7 @@ void QGit::exportArchive(const QString &refOrCommit, const QString &outputFilePa
         QFileInfo outFi(outputFilePath);
         QDir outDir = outFi.dir();
         if (!outDir.exists() && !outDir.mkpath(".")) {
-            throw QGitError(tr("Failed to create directory: %1").arg(outDir.absolutePath()), -1);
+            throw QGitError(tr("Failed to create directory: %1").arg(outDir.absolutePath()));
         }
 
         QString normPrefix = prefix;
@@ -3585,7 +3585,7 @@ void QGit::exportArchive(const QString &refOrCommit, const QString &outputFilePa
         if (actualFormat == QStringLiteral("zip")) {
             QFile zipFile(outputFilePath);
             if (!zipFile.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
-                throw QGitError(tr("Could not open output file for writing: %1").arg(outputFilePath), -1);
+                throw QGitError(tr("Could not open output file for writing: %1").arg(outputFilePath));
             }
 
             std::vector<ZipCentralDirHeader> cdHeaders;
@@ -3685,11 +3685,11 @@ void QGit::exportArchive(const QString &refOrCommit, const QString &outputFilePa
             if (actualFormat == QStringLiteral("tar.gz")) {
                 std::vector<uint8_t> gzData;
                 if (!deflateBufferHelper(uncompressedTar.data(), uncompressedTar.size(), gzData, false)) {
-                    throw QGitError(tr("Failed to compress tarball with gzip"), -1);
+                    throw QGitError(tr("Failed to compress tarball with gzip"));
                 }
                 QFile gzFile(outputFilePath);
                 if (!gzFile.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
-                    throw QGitError(tr("Could not open file for writing: %1").arg(outputFilePath), -1);
+                    throw QGitError(tr("Could not open file for writing: %1").arg(outputFilePath));
                 }
                 gzFile.write(reinterpret_cast<const char*>(gzData.data()), gzData.size());
                 gzFile.close();
@@ -3697,7 +3697,7 @@ void QGit::exportArchive(const QString &refOrCommit, const QString &outputFilePa
                 // Use qCompress with fallback or tar file
                 QFile tarFile(outputFilePath);
                 if (!tarFile.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
-                    throw QGitError(tr("Could not open file for writing: %1").arg(outputFilePath), -1);
+                    throw QGitError(tr("Could not open file for writing: %1").arg(outputFilePath));
                 }
                 tarFile.write(reinterpret_cast<const char*>(uncompressedTar.data()), uncompressedTar.size());
                 tarFile.close();
@@ -3705,7 +3705,7 @@ void QGit::exportArchive(const QString &refOrCommit, const QString &outputFilePa
                 // Pure .tar
                 QFile tarFile(outputFilePath);
                 if (!tarFile.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
-                    throw QGitError(tr("Could not open file for writing: %1").arg(outputFilePath), -1);
+                    throw QGitError(tr("Could not open file for writing: %1").arg(outputFilePath));
                 }
                 tarFile.write(reinterpret_cast<const char*>(uncompressedTar.data()), uncompressedTar.size());
                 tarFile.close();
@@ -3733,7 +3733,7 @@ void QGit::applyPatches(const QStringList &patchPaths)
             QFile file(patchPath);
             if (!file.open(QIODevice::ReadOnly | QIODevice::Text))
             {
-                throw QGitError(tr("Could not open patch file: %1").arg(patchPath), -1);
+                throw QGitError(tr("Could not open patch file: %1").arg(patchPath));
             }
 
             QByteArray content = file.readAll();
@@ -3743,14 +3743,14 @@ void QGit::applyPatches(const QStringList &patchPaths)
             res = git_diff_from_buffer(diff, content.constData(), content.length());
             if (res) {
                 QFileInfo fi(patchPath);
-                throw QGitError(tr("Failed to parse patch '%1': %2").arg(fi.fileName(), git_error_last() ? QString::fromUtf8(git_error_last()->message) : tr("Invalid patch format")), res);
+                throw QGitError("git_diff_from_buffer", res, tr("Failed to parse patch '%1': %2").arg(fi.fileName(), git_error_last() ? QString::fromUtf8(git_error_last()->message) : tr("Invalid patch format")));
             }
 
             git_apply_options opts = GIT_APPLY_OPTIONS_INIT;
             res = git_apply(repo, diff, GIT_APPLY_LOCATION_WORKDIR, &opts);
             if (res) {
                 QFileInfo fi(patchPath);
-                throw QGitError(tr("Failed to apply patch '%1': %2").arg(fi.fileName(), git_error_last() ? QString::fromUtf8(git_error_last()->message) : tr("Application error / conflict")), res);
+                throw QGitError("git_apply", res, tr("Failed to apply patch '%1': %2").arg(fi.fileName(), git_error_last() ? QString::fromUtf8(git_error_last()->message) : tr("Application error / conflict")));
             }
             successfullyApplied.append(patchPath);
         }
@@ -4196,7 +4196,7 @@ void QGit::stashRemove(const QString &name)
 
         if (!ctx.found)
         {
-            throw QGitError(tr("Stash not found"), -1);
+            throw QGitError(tr("Stash not found"));
         }
 
         res = git_stash_drop(repo, ctx.foundIndex);
@@ -4283,7 +4283,7 @@ void QGit::stashApply(const QString &name)
 
         if (!ctx.found)
         {
-            throw QGitError(tr("Stash not found"), -1);
+            throw QGitError(tr("Stash not found"));
         }
 
         git_stash_apply_options opts = GIT_STASH_APPLY_OPTIONS_INIT;
@@ -4334,7 +4334,7 @@ void QGit::stashPop(const QString &name)
 
         if (!ctx.found)
         {
-            throw QGitError(tr("Stash not found"), -1);
+            throw QGitError(tr("Stash not found"));
         }
 
         git_stash_apply_options opts = GIT_STASH_APPLY_OPTIONS_INIT;
@@ -4393,7 +4393,7 @@ void QGit::listChangedFiles(int show, int sort, bool reversed)
 
             if ((item->index_to_workdir == nullptr)&&(item->head_to_index == nullptr))
             {
-                throw QGitError("unknown scenario", res);
+                throw QGitError("unknown scenario");
             }
 
             QString path1;
@@ -4854,7 +4854,7 @@ void QGit::stageFiles(const QStringList &items)
     {
         if (items.count() == 0)
         {
-            throw QGitError(tr("No files selected to stage"), 0);
+            throw QGitError(tr("No files selected to stage"));
         }
 
         GitRepository repo;
@@ -4908,7 +4908,7 @@ void QGit::unstageFiles(const QStringList &items)
     {
         if (items.count() == 0)
         {
-            throw QGitError(tr("No files selected to unstage"), 0);
+            throw QGitError(tr("No files selected to unstage"));
         }
 
         GitRepository repo;
@@ -4953,7 +4953,7 @@ void QGit::stageFileLines(const QString &filename, const QVector<QGitDiffWidgetL
     {
         if (lines.count() == 0)
         {
-            throw QGitError(tr("No lines selected to stage"), -1);
+            throw QGitError(tr("No lines selected to stage"));
         }
 
         GitRepository repo;
@@ -4973,7 +4973,7 @@ void QGit::stageFileLines(const QString &filename, const QVector<QGitDiffWidgetL
         const git_index_entry *entry = git_index_get_bypath(index, filename.toUtf8().constData(), GIT_INDEX_STAGE_NORMAL);
         if (entry == nullptr)
         {
-            throw QGitError("git_index_get_bypath", res);
+            throw QGitError("git_index_get_bypath");
         }
 
         GitBlob blob;
@@ -4987,7 +4987,7 @@ void QGit::stageFileLines(const QString &filename, const QVector<QGitDiffWidgetL
         git_off_t blob_size = git_blob_rawsize(blob);
         if (blob_size > std::numeric_limits<int>::max())
         {
-            throw QGitError(tr("File size exceeds 2GB limit for QByteArray"), -1);
+            throw QGitError(tr("File size exceeds 2GB limit for QByteArray"));
         }
         QByteArray buffer = QByteArray(blob_content, static_cast<int>(blob_size));
         auto bufferLines = buffer.split(LINE_END);
@@ -5047,7 +5047,7 @@ void QGit::stageFileLines(const QString &filename, const QVector<QGitDiffWidgetL
                 }
                 break;
             default:
-                throw QGitError(tr("Unknown operation"), -1);
+                throw QGitError(tr("Unknown operation"));
             }
         }
 
@@ -5079,7 +5079,7 @@ void QGit::unstageFileLines(const QString &filename, const QVector<QGitDiffWidge
     {
         if (lines.count() == 0)
         {
-            throw QGitError(tr("No lines selected to unstage"), -1);
+            throw QGitError(tr("No lines selected to unstage"));
         }
 
         GitRepository repo;
@@ -5099,7 +5099,7 @@ void QGit::unstageFileLines(const QString &filename, const QVector<QGitDiffWidge
         const git_index_entry *entry = git_index_get_bypath(index, filename.toUtf8().constData(), GIT_INDEX_STAGE_NORMAL);
         if (entry == nullptr)
         {
-            throw QGitError("git_index_get_bypath", res);
+            throw QGitError("git_index_get_bypath");
         }
 
         GitBlob blob;
@@ -5113,7 +5113,7 @@ void QGit::unstageFileLines(const QString &filename, const QVector<QGitDiffWidge
         git_off_t blob_size = git_blob_rawsize(blob);
         if (blob_size > std::numeric_limits<int>::max())
         {
-            throw QGitError(tr("File size exceeds 2GB limit for QByteArray"), -1);
+            throw QGitError(tr("File size exceeds 2GB limit for QByteArray"));
         }
         QByteArray buffer = QByteArray(blob_content, static_cast<int>(blob_size));
         auto bufferLines = buffer.split(LINE_END);
@@ -5173,7 +5173,7 @@ void QGit::unstageFileLines(const QString &filename, const QVector<QGitDiffWidge
                 }
                 break;
             default:
-                throw QGitError(tr("Unknown operation"), -1);
+                throw QGitError(tr("Unknown operation"));
             }
         }
         buffer = bufferLines.join(LINE_END);
@@ -5205,7 +5205,7 @@ void QGit::discardFiles(const QStringList &items)
     {
         if (items.count() == 0)
         {
-            throw QGitError(tr("No files selected to discard"), -1);
+            throw QGitError(tr("No files selected to discard"));
         }
 
         GitRepository repo;
@@ -5287,14 +5287,14 @@ void QGit::discardFileLines(const QString &filename, const QVector<QGitDiffWidge
     {
         if (lines.count() == 0)
         {
-            throw QGitError(tr("No lines selected to discard"), -1);
+            throw QGitError(tr("No lines selected to discard"));
         }
 
         QString filePath = path().absoluteFilePath(filename);
         QFile file(filePath);
         if (!file.open(QIODevice::ReadOnly))
         {
-            throw QGitError("QFile::open(ReadOnly)", -1);
+            throw QGitError("QFile::open(ReadOnly)");
         }
 
         QByteArray buffer = file.readAll();
@@ -5357,7 +5357,7 @@ void QGit::discardFileLines(const QString &filename, const QVector<QGitDiffWidge
                 }
                 break;
             default:
-                throw QGitError(tr("Unknown operation"), -1);
+                throw QGitError(tr("Unknown operation"));
             }
         }
 
@@ -5365,7 +5365,7 @@ void QGit::discardFileLines(const QString &filename, const QVector<QGitDiffWidge
 
         if (!file.open(QIODevice::WriteOnly | QIODevice::Truncate))
         {
-            throw QGitError("QFile::open(WriteOnly)", -1);
+            throw QGitError("QFile::open(WriteOnly)");
         }
 
         file.write(buffer);
@@ -5412,7 +5412,7 @@ QString QGit::commitInternal(const QString &message, bool withPush, bool amend)
         int _count = git_diff_num_deltas(diff);
         if (_count == 0 && !amend)
         {
-            throw QGitError(tr("Nothing staged."), res);
+            throw QGitError(tr("Nothing staged."));
         }
 
         GitSignature me;
@@ -5659,11 +5659,11 @@ void QGit::clone(const QUrl &url)
     {
         if (url.isEmpty() || !url.isValid())
         {
-            throw QGitError(tr("Invalid clone URL"), -1);
+            throw QGitError(tr("Invalid clone URL"));
         }
         if (path().absolutePath().isEmpty())
         {
-            throw QGitError(tr("Invalid clone destination path"), -1);
+            throw QGitError(tr("Invalid clone destination path"));
         }
 
         git_clone_options opts;
@@ -5852,7 +5852,7 @@ void QGit::rebaseInternal(const QString &upstream, const QString &branch, const 
 
         if (has_conflict)
         {
-            throw QGitError(tr("Rebase conflicts detected. Please resolve conflicts or abort rebase."), -1);
+            throw QGitError(tr("Rebase conflicts detected. Please resolve conflicts or abort rebase."));
         }
 
         if (res != GIT_ITEROVER && res != 0)
@@ -5893,7 +5893,7 @@ void QGit::interactiveRebase(const QString &baseCommitId, const QList<QGitRebase
         git_repository_state_t state = (git_repository_state_t)git_repository_state(repo);
         if (state != GIT_REPOSITORY_STATE_NONE)
         {
-            throw QGitError(tr("Repository is not in a clean state. Please resolve or abort the active merge, rebase, or cherry-pick first."), -1);
+            throw QGitError(tr("Repository is not in a clean state. Please resolve or abort the active merge, rebase, or cherry-pick first."));
         }
 
         // Check if there are unstaged/staged tracked modifications
@@ -5913,7 +5913,7 @@ void QGit::interactiveRebase(const QString &baseCommitId, const QList<QGitRebase
             }
             git_status_list_free(status_list);
             if (hasDirtyTracked) {
-                throw QGitError(tr("Working directory has unstaged or staged changes. Please commit or stash them before rebasing."), -1);
+                throw QGitError(tr("Working directory has unstaged or staged changes. Please commit or stash them before rebasing."));
             }
         }
 
@@ -5978,7 +5978,7 @@ void QGit::interactiveRebase(const QString &baseCommitId, const QList<QGitRebase
                 if (git_index_has_conflicts(cherry_index)) {
                     git_index_free(cherry_index);
                     git_commit_free(currentHeadCommit);
-                    throw QGitError(tr("Conflict detected when applying commit %1 (%2). Interactive rebase aborted to keep repository safe.").arg(item.shortHash, item.summary), -1);
+                    throw QGitError(tr("Conflict detected when applying commit %1 (%2). Interactive rebase aborted to keep repository safe.").arg(item.shortHash, item.summary));
                 }
 
                 git_oid tree_oid;
@@ -6036,7 +6036,7 @@ void QGit::interactiveRebase(const QString &baseCommitId, const QList<QGitRebase
             else if (item.action == QGitRebaseAction::Squash || item.action == QGitRebaseAction::Fixup) {
                 if (!hasAppliedCommit) {
                     git_commit_free(currentHeadCommit);
-                    throw QGitError(tr("Cannot squash or fixup the first commit in the rebase sequence."), -1);
+                    throw QGitError(tr("Cannot squash or fixup the first commit in the rebase sequence."));
                 }
 
                 git_index *cherry_index = nullptr;
@@ -6050,7 +6050,7 @@ void QGit::interactiveRebase(const QString &baseCommitId, const QList<QGitRebase
                 if (git_index_has_conflicts(cherry_index)) {
                     git_index_free(cherry_index);
                     git_commit_free(currentHeadCommit);
-                    throw QGitError(tr("Conflict detected when squashing commit %1 (%2). Interactive rebase aborted.").arg(item.shortHash, item.summary), -1);
+                    throw QGitError(tr("Conflict detected when squashing commit %1 (%2). Interactive rebase aborted.").arg(item.shortHash, item.summary));
                 }
 
                 git_oid tree_oid;
@@ -6167,7 +6167,7 @@ void QGit::continueOperation()
 
         if (state == GIT_REPOSITORY_STATE_NONE)
         {
-            throw QGitError(tr("No active operation to continue."), -1);
+            throw QGitError(tr("No active operation to continue."));
         }
 
         if (state == GIT_REPOSITORY_STATE_REBASE ||
@@ -6193,7 +6193,7 @@ void QGit::continueOperation()
             res = git_rebase_commit(&commit_id, rebase, nullptr, committer, nullptr, nullptr);
             if (res == GIT_EUNMERGED)
             {
-                throw QGitError(tr("Conflicts still exist in the index. Please resolve and stage all conflicts before continuing."), -1);
+                throw QGitError(tr("Conflicts still exist in the index. Please resolve and stage all conflicts before continuing."));
             }
             else if (res < 0 && res != GIT_EAPPLIED)
             {
@@ -6219,7 +6219,7 @@ void QGit::continueOperation()
 
             if (has_conflict)
             {
-                throw QGitError(tr("Rebase paused due to conflicts on the next commit. Please resolve conflicts and continue."), -1);
+                throw QGitError(tr("Rebase paused due to conflicts on the next commit. Please resolve conflicts and continue."));
             }
 
             if (res != GIT_ITEROVER && res != 0)
@@ -6240,7 +6240,7 @@ void QGit::continueOperation()
             if (res) throw QGitError("git_repository_index", res);
             if (git_index_has_conflicts(index))
             {
-                throw QGitError(tr("Conflicts still exist in the index. Please resolve and stage all conflicts before continuing merge."), -1);
+                throw QGitError(tr("Conflicts still exist in the index. Please resolve and stage all conflicts before continuing merge."));
             }
 
             const char *gitDirPathRaw = git_repository_path(repo);
@@ -6269,7 +6269,7 @@ void QGit::continueOperation()
             if (res) throw QGitError("git_repository_index", res);
             if (git_index_has_conflicts(index))
             {
-                throw QGitError(tr("Conflicts still exist in the index. Please resolve and stage all conflicts before continuing cherry-pick."), -1);
+                throw QGitError(tr("Conflicts still exist in the index. Please resolve and stage all conflicts before continuing cherry-pick."));
             }
 
             const char *gitDirPathRaw = git_repository_path(repo);
@@ -6316,7 +6316,7 @@ void QGit::continueOperation()
             if (res) throw QGitError("git_repository_index", res);
             if (git_index_has_conflicts(index))
             {
-                throw QGitError(tr("Conflicts still exist in the index. Please resolve and stage all conflicts before continuing revert."), -1);
+                throw QGitError(tr("Conflicts still exist in the index. Please resolve and stage all conflicts before continuing revert."));
             }
 
             const char *gitDirPathRaw = git_repository_path(repo);
@@ -6385,7 +6385,7 @@ void QGit::abortOperation()
 
         if (state == GIT_REPOSITORY_STATE_NONE)
         {
-            throw QGitError(tr("No active operation to abort."), -1);
+            throw QGitError(tr("No active operation to abort."));
         }
 
         if (state == GIT_REPOSITORY_STATE_REBASE ||
@@ -6431,7 +6431,7 @@ void QGit::skipRebase()
             state != GIT_REPOSITORY_STATE_REBASE_INTERACTIVE &&
             state != GIT_REPOSITORY_STATE_REBASE_MERGE)
         {
-            throw QGitError(tr("No active rebase operation to skip."), -1);
+            throw QGitError(tr("No active rebase operation to skip."));
         }
 
         GitRebase rebase;
@@ -6472,7 +6472,7 @@ void QGit::skipRebase()
 
             if (has_conflict)
             {
-                throw QGitError(tr("Rebase paused due to conflicts on the next commit. Please resolve conflicts and continue."), -1);
+                throw QGitError(tr("Rebase paused due to conflicts on the next commit. Please resolve conflicts and continue."));
             }
 
             if (res != GIT_ITEROVER && res != 0)
@@ -6559,7 +6559,7 @@ void QGit::mergeInternal(const QString &branchName)
             if(res) throw QGitError("git_repository_index", res);
 
             if (git_index_has_conflicts(index)) {
-                throw QGitError(tr("Merge conflicts detected. Please resolve them manually."), -1);
+                throw QGitError(tr("Merge conflicts detected. Please resolve them manually."));
             }
 
             // Create merge commit
@@ -6796,7 +6796,7 @@ void QGit::push(const QString &remote, const QStringList &branches, bool tags, b
             res = git_branch_lookup(ref, repo, branch.toUtf8().constData(), GIT_BRANCH_LOCAL);
             if (res)
             {
-                throw QGitError(tr("Local branch not found!"), res);
+                throw QGitError("git_branch_lookup", res, tr("Local branch not found!"));
             }
 
         }

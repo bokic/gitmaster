@@ -7,7 +7,7 @@ class QGitError
 {
 public:
     QGitError();
-    QGitError(const QString &functionName, int errorCode);
+    explicit QGitError(const QString &functionName, int errorCode = -1);
     QGitError(const QString &functionName, int errorCode, const QString &customMessage);
     QGitError(const QGitError &other) = default;
     QGitError(QGitError &&other) noexcept;
@@ -19,8 +19,8 @@ public:
     QString functionName() const;
     QString errorString() const;
     int errorCode() const;
-    bool hasError() const { return m_errorCode != 0; }
-    bool isOk() const { return m_errorCode == 0; }
+    bool hasError() const { return m_errorCode != 0 || !m_errorString.isEmpty(); }
+    bool isOk() const { return !hasError(); }
     explicit operator bool() const { return hasError(); }
 
 private:
