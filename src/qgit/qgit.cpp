@@ -4530,15 +4530,15 @@ void QGit::commitDiff(const QString &commitId, bool ignoreWhitespace)
             effectiveCommitId = QStringLiteral("HEAD");
         }
 
-        GitObject obj;
-        res = git_revparse_single(obj, repo, effectiveCommitId.toUtf8());
+        git_oid commit_oid;
+        res = resolveToCommitOid(commit_oid, repo, effectiveCommitId);
         if (res)
         {
-            throw QGitError("git_revparse_single", res);
+            throw QGitError("resolveToCommitOid", res);
         }
 
         GitCommit commit;
-        res = git_commit_lookup(commit, repo, git_object_id(obj));
+        res = git_commit_lookup(commit, repo, &commit_oid);
         if (res)
         {
             throw QGitError("git_commit_lookup", res);
@@ -4577,7 +4577,7 @@ void QGit::commitDiff(const QString &commitId, bool ignoreWhitespace)
 
         {
             GitNote note;
-            if (git_note_read(note, repo, nullptr, git_object_id(obj)) == 0)
+            if (git_note_read(note, repo, nullptr, git_commit_id(commit)) == 0)
             {
                 const char *noteMsg = git_note_message(note);
                 if (noteMsg)
@@ -4704,18 +4704,16 @@ void QGit::commitDiffContent(const QString &first, const QString &second, const 
         GitDiff diff;
         if (second == "staged")
         {
+            GitTree first_tree;
             GitObject first_obj;
             res = git_revparse_single(first_obj, repo, "HEAD^{tree}");
-            if (res)
+            if (res == 0)
             {
-                throw QGitError("git_revparse_single(staged)", res);
-            }
-
-            GitTree first_tree;
-            res = git_tree_lookup(first_tree, repo, git_object_id(first_obj));
-            if (res)
-            {
-                throw QGitError("git_tree_lookup(staged)", res);
+                res = git_tree_lookup(first_tree, repo, git_object_id(first_obj));
+                if (res)
+                {
+                    throw QGitError("git_tree_lookup(staged)", res);
+                }
             }
 
             git_diff_options options;
@@ -4758,15 +4756,15 @@ void QGit::commitDiffContent(const QString &first, const QString &second, const 
             options.context_lines = context_lines;
             options.pathspec = pathspec;
 
-            GitObject second_obj;
-            res = git_revparse_single(second_obj, repo, second.toUtf8());
+            git_oid second_oid;
+            res = resolveToCommitOid(second_oid, repo, second);
             if (res)
             {
-                throw QGitError("git_revparse_single(second)", res);
+                throw QGitError("resolveToCommitOid(second)", res);
             }
 
             GitCommit second_commit;
-            res = git_commit_lookup(second_commit, repo, git_object_id(second_obj));
+            res = git_commit_lookup(second_commit, repo, &second_oid);
             if (res)
             {
                 throw QGitError("git_commit_lookup(second)", res);
@@ -4785,15 +4783,15 @@ void QGit::commitDiffContent(const QString &first, const QString &second, const 
             }
             else
             {
-                GitObject first_obj;
-                res = git_revparse_single(first_obj, repo, first.toUtf8());
+                git_oid first_oid;
+                res = resolveToCommitOid(first_oid, repo, first);
                 if (res)
                 {
-                    throw QGitError("git_revparse_single(first)", res);
+                    throw QGitError("resolveToCommitOid(first)", res);
                 }
 
                 GitCommit first_commit;
-                res = git_commit_lookup(first_commit, repo, git_object_id(first_obj));
+                res = git_commit_lookup(first_commit, repo, &first_oid);
                 if (res)
                 {
                     throw QGitError("git_commit_lookup(first)", res);
@@ -4820,7 +4818,7 @@ void QGit::commitDiffContent(const QString &first, const QString &second, const 
             const git_diff_delta *delta = git_diff_get_delta(diff, c);
             QGitDiffFile item(delta);
 
-            if (files.contains(item.new_file().path()))
+            if (files.isEmpty() || files.contains(item.new_file().path()) || files.contains(item.old_file().path()))
             {
                 GitPatch patch;
                 res = git_patch_from_diff(patch, diff, c);
