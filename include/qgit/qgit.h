@@ -287,6 +287,10 @@ signals:
     void lockWorktreeReply(const QGitError &error);
 
 private:
+    QString commitInternal(const QString &message, bool withPush, bool amend);
+    void mergeInternal(const QString &branchName);
+    void rebaseInternal(const QString &upstream, const QString &branch = "", const QString &onto = "");
+
     mutable QMutex m_mutex;
     QDir m_path;
     std::atomic<bool> m_abortSearch{false};

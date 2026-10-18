@@ -5301,14 +5301,11 @@ void QGit::discardFileLines(const QString &filename, const QVector<QGitDiffWidge
     emit discardFilesReply(error);
 }
 
-void QGit::commit(const QString &message, bool withPush, bool amend)
+QString QGit::commitInternal(const QString &message, bool withPush, bool amend)
 {
     git_oid new_commit_id = { {0} };
-    QGitError error;
 
-    try
-    {
-        GitRepository repo;
+    GitRepository repo;
         int res = git_repository_open(repo, m_path.absolutePath().toUtf8().constData());
         if (res)
         {
@@ -5556,11 +5553,24 @@ void QGit::commit(const QString &message, bool withPush, bool amend)
             }
         }
 
-    } catch(const QGitError &ex) {
+    return QString::fromUtf8(git_oid_tostr_s(&new_commit_id));
+}
+
+void QGit::commit(const QString &message, bool withPush, bool amend)
+{
+    QString commitId;
+    QGitError error;
+
+    try
+    {
+        commitId = commitInternal(message, withPush, amend);
+    }
+    catch (const QGitError &ex)
+    {
         error = ex;
     }
 
-    emit commitReply(QString::fromUtf8(git_oid_tostr_s(&new_commit_id)), error);
+    emit commitReply(commitId, error);
 }
 
 void QGit::clone(const QUrl &url)
@@ -5670,9 +5680,9 @@ void QGit::pull(const QString &remote, const QString &branch, bool rebase, bool 
         QString targetRef = is_anonymous ? QStringLiteral("FETCH_HEAD") : (remote + "/" + branch);
 
         if (rebase) {
-            this->rebase(targetRef);
+            rebaseInternal(targetRef);
         } else {
-            merge(targetRef);
+            mergeInternal(targetRef);
         }
 
         if (recurseSubmodules) {
@@ -5686,15 +5696,12 @@ void QGit::pull(const QString &remote, const QString &branch, bool rebase, bool 
     emit pullReply(error);
 }
 
-void QGit::rebase(const QString &upstream, const QString &branch, const QString &onto)
+void QGit::rebaseInternal(const QString &upstream, const QString &branch, const QString &onto)
 {
-    QGitError error;
     GitRebase rebase;
 
-    try
-    {
-        GitRepository repo;
-        int res = git_repository_open(repo, m_path.absolutePath().toUtf8().constData());
+    GitRepository repo;
+    int res = git_repository_open(repo, m_path.absolutePath().toUtf8().constData());
         if (res)
         {
             throw QGitError("git_repository_open", res);
@@ -5781,6 +5788,14 @@ void QGit::rebase(const QString &upstream, const QString &branch, const QString 
         {
             throw QGitError("git_rebase_finish", res);
         }
+}
+
+void QGit::rebase(const QString &upstream, const QString &branch, const QString &onto)
+{
+    QGitError error;
+    try
+    {
+        rebaseInternal(upstream, branch, onto);
     }
     catch (const QGitError &ex)
     {
@@ -6150,15 +6165,23 @@ void QGit::continueOperation()
                 throw QGitError(tr("Conflicts still exist in the index. Please resolve and stage all conflicts before continuing merge."), -1);
             }
 
-            QString mergeMsg = tr("Merge branch");
-            QFile mergeMsgFile(m_path.filePath(QStringLiteral(".git/MERGE_MSG")));
+            const char *gitDirPathRaw = git_repository_path(repo);
+            QDir gitDir = gitDirPathRaw ? QDir(QString::fromUtf8(gitDirPathRaw)) : QDir(m_path.filePath(QStringLiteral(".git")));
+
+            QString mergeMsg;
+            QFile mergeMsgFile(gitDir.filePath(QStringLiteral("MERGE_MSG")));
             if (mergeMsgFile.open(QIODevice::ReadOnly))
             {
                 mergeMsg = QString::fromUtf8(mergeMsgFile.readAll()).trimmed();
                 mergeMsgFile.close();
             }
+            if (mergeMsg.isEmpty())
+            {
+                mergeMsg = tr("Merge branch");
+            }
 
-            this->commit(mergeMsg, false, false);
+            commitInternal(mergeMsg, false, false);
+            git_repository_state_cleanup(repo);
         }
         else if (state == GIT_REPOSITORY_STATE_CHERRYPICK ||
                  state == GIT_REPOSITORY_STATE_CHERRYPICK_SEQUENCE)
@@ -6171,18 +6194,40 @@ void QGit::continueOperation()
                 throw QGitError(tr("Conflicts still exist in the index. Please resolve and stage all conflicts before continuing cherry-pick."), -1);
             }
 
-            QString cherryMsg = tr("Cherry-pick commit");
-            QFile mergeMsgFile(m_path.filePath(QStringLiteral(".git/MERGE_MSG")));
-            if (!mergeMsgFile.exists()) {
-                mergeMsgFile.setFileName(m_path.filePath(QStringLiteral(".git/CHERRY_PICK_HEAD")));
-            }
+            const char *gitDirPathRaw = git_repository_path(repo);
+            QDir gitDir = gitDirPathRaw ? QDir(QString::fromUtf8(gitDirPathRaw)) : QDir(m_path.filePath(QStringLiteral(".git")));
+
+            QString cherryMsg;
+            QFile mergeMsgFile(gitDir.filePath(QStringLiteral("MERGE_MSG")));
             if (mergeMsgFile.open(QIODevice::ReadOnly))
             {
                 cherryMsg = QString::fromUtf8(mergeMsgFile.readAll()).trimmed();
                 mergeMsgFile.close();
             }
 
-            this->commit(cherryMsg, false, false);
+            if (cherryMsg.isEmpty())
+            {
+                git_oid cherry_oid;
+                if (git_reference_name_to_id(&cherry_oid, repo, "CHERRY_PICK_HEAD") == 0)
+                {
+                    GitCommit cherry_commit;
+                    if (git_commit_lookup(cherry_commit, repo, &cherry_oid) == 0)
+                    {
+                        const char *msg = git_commit_message(cherry_commit);
+                        if (msg && *msg)
+                        {
+                            cherryMsg = QString::fromUtf8(msg).trimmed();
+                        }
+                    }
+                }
+            }
+
+            if (cherryMsg.isEmpty())
+            {
+                cherryMsg = tr("Cherry-pick commit");
+            }
+
+            commitInternal(cherryMsg, false, false);
             git_repository_state_cleanup(repo);
         }
         else if (state == GIT_REPOSITORY_STATE_REVERT ||
@@ -6196,15 +6241,47 @@ void QGit::continueOperation()
                 throw QGitError(tr("Conflicts still exist in the index. Please resolve and stage all conflicts before continuing revert."), -1);
             }
 
-            QString revertMsg = tr("Revert commit");
-            QFile mergeMsgFile(m_path.filePath(QStringLiteral(".git/MERGE_MSG")));
+            const char *gitDirPathRaw = git_repository_path(repo);
+            QDir gitDir = gitDirPathRaw ? QDir(QString::fromUtf8(gitDirPathRaw)) : QDir(m_path.filePath(QStringLiteral(".git")));
+
+            QString revertMsg;
+            QFile mergeMsgFile(gitDir.filePath(QStringLiteral("MERGE_MSG")));
             if (mergeMsgFile.open(QIODevice::ReadOnly))
             {
                 revertMsg = QString::fromUtf8(mergeMsgFile.readAll()).trimmed();
                 mergeMsgFile.close();
             }
 
-            this->commit(revertMsg, false, false);
+            if (revertMsg.isEmpty())
+            {
+                git_oid revert_oid;
+                if (git_reference_name_to_id(&revert_oid, repo, "REVERT_HEAD") == 0)
+                {
+                    GitCommit revert_commit;
+                    if (git_commit_lookup(revert_commit, repo, &revert_oid) == 0)
+                    {
+                        const char *msg = git_commit_message(revert_commit);
+                        const char *summary = git_commit_summary(revert_commit);
+                        char oid_str[GIT_OID_HEXSZ + 1] = {0};
+                        git_oid_tostr(oid_str, sizeof(oid_str), &revert_oid);
+                        if (summary && *summary)
+                        {
+                            revertMsg = QStringLiteral("Revert \"%1\"\n\nThis reverts commit %2.").arg(QString::fromUtf8(summary), QString::fromUtf8(oid_str));
+                        }
+                        else if (msg && *msg)
+                        {
+                            revertMsg = QString::fromUtf8(msg).trimmed();
+                        }
+                    }
+                }
+            }
+
+            if (revertMsg.isEmpty())
+            {
+                revertMsg = tr("Revert commit");
+            }
+
+            commitInternal(revertMsg, false, false);
             git_repository_state_cleanup(repo);
         }
         else
@@ -6352,13 +6429,11 @@ void QGit::skipRebase()
     emit skipRebaseReply(error);
 }
 
-void QGit::merge(const QString &branchName)
+void QGit::mergeInternal(const QString &branchName)
 {
-    QGitError error;
-    try {
-        GitRepository repo;
-        int res = git_repository_open(repo, m_path.absolutePath().toUtf8().constData());
-        if(res) throw QGitError("git_repository_open", res);
+    GitRepository repo;
+    int res = git_repository_open(repo, m_path.absolutePath().toUtf8().constData());
+    if(res) throw QGitError("git_repository_open", res);
 
         GitAnnotatedCommit annotated;
         res = git_annotated_commit_from_revspec(annotated, repo, branchName.toUtf8().constData());
@@ -6454,7 +6529,13 @@ void QGit::merge(const QString &branchName)
 
             git_repository_state_cleanup(repo);
         }
+}
 
+void QGit::merge(const QString &branchName)
+{
+    QGitError error;
+    try {
+        mergeInternal(branchName);
     } catch(const QGitError &ex) {
         error = ex;
     }
