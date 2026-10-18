@@ -1,6 +1,8 @@
 #include "qgitclonerepositorydialog.h"
 #include "ui_qgitclonerepositorydialog.h"
 #include <QShowEvent>
+#include <QMessageBox>
+#include <git2/errors.h>
 
 static void updateProgressBar(QProgressBar *bar, size_t current, size_t total)
 {
@@ -51,8 +53,10 @@ QGitCloneRepositoryDialog::~QGitCloneRepositoryDialog()
 
 void QGitCloneRepositoryDialog::showEvent(QShowEvent *event)
 {
-    if (event->type() == QEvent::Show)
+    QDialog::showEvent(event);
+    if (event->type() == QEvent::Show && !m_started)
     {
+        m_started = true;
         emit clone(m_url);
     }
 }
@@ -61,7 +65,7 @@ void QGitCloneRepositoryDialog::on_pushButton_close_clicked()
 {
     if (ui->pushButton_close->text() == tr("&Close"))
     {
-        accept();
+        reject();
     }
     else
     {
@@ -77,11 +81,14 @@ void QGitCloneRepositoryDialog::on_pushButton_close_clicked()
 
 void QGitCloneRepositoryDialog::cloneReply(const QGitError &error)
 {
-    if (error.errorCode() != 0)
+    if (error.hasError())
     {
-        ui->label_status->setText(tr("Clone failed: %1").arg(error.errorString()));
-        ui->pushButton_close->setText(tr("&Close"));
-        ui->pushButton_close->setEnabled(true);
+        if (error.errorCode() != GIT_EUSER && !m_thread.isInterruptionRequested())
+        {
+            QMessageBox::critical(this, tr("Clone Failed"),
+                                 tr("Failed to clone repository:\n%1").arg(error.errorString()));
+        }
+        reject();
         return;
     }
 
