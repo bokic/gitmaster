@@ -34,8 +34,11 @@ QGitCloneRepositoryDialog::QGitCloneRepositoryDialog(const QString &url, const Q
 
 QGitCloneRepositoryDialog::~QGitCloneRepositoryDialog()
 {
-    m_git->disconnect(this);
-    this->disconnect(m_git);
+    if (m_git) {
+        m_git->setCredentialHandler(nullptr);
+        m_git->disconnect(this);
+        this->disconnect(m_git);
+    }
 
     m_thread.requestInterruption();
     m_thread.quit();

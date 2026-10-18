@@ -507,6 +507,7 @@ static int gitCredentialCallback(
 {
     try {
         if (!out) return -1;
+        if (QThread::currentThread()->isInterruptionRequested()) return -1;
 
         if (allowed_types & GIT_CREDENTIAL_DEFAULT) {
             if (git_credential_default_new(out) == 0) {
@@ -562,16 +563,25 @@ static int gitCredentialCallback(
             }
 
             if (found) {
+                if (QThread::currentThread()->isInterruptionRequested()) {
+                    return -1;
+                }
                 QString pass;
                 auto _this = static_cast<QGit *>(payload);
                 if (_this) {
                     QObject *handler = _this->credentialHandler();
-                    if (handler) {
+                    if (handler && !QThread::currentThread()->isInterruptionRequested()) {
+                        const auto connType = (QThread::currentThread() == handler->thread())
+                                                  ? Qt::DirectConnection
+                                                  : Qt::BlockingQueuedConnection;
                         QMetaObject::invokeMethod(handler, "getPassword",
-                                                  Qt::BlockingQueuedConnection, Q_ARG(QString&, pass));
-                    } else {
+                                                  connType, Q_ARG(QString&, pass));
+                    } else if (!handler) {
                         emit _this->requestPassword(pass);
                     }
+                }
+                if (QThread::currentThread()->isInterruptionRequested()) {
+                    return -1;
                 }
 
                 auto privkeyPathname = privkeyFileInfo.absoluteFilePath().toUtf8();
@@ -592,6 +602,9 @@ static int gitCredentialCallback(
         }
 
         if (allowed_types & GIT_CREDENTIAL_USERPASS_PLAINTEXT) {
+            if (QThread::currentThread()->isInterruptionRequested()) {
+                return -1;
+            }
             QString username = (username_from_url && *username_from_url) ? QString::fromUtf8(username_from_url) : QString();
             QString password;
             auto _this = static_cast<QGit *>(payload);
@@ -599,16 +612,22 @@ static int gitCredentialCallback(
                 QString urlStr = url ? QString::fromUtf8(url) : QString();
                 QString usernameFromUrlStr = username;
                 QObject *handler = _this->credentialHandler();
-                if (handler) {
+                if (handler && !QThread::currentThread()->isInterruptionRequested()) {
+                    const auto connType = (QThread::currentThread() == handler->thread())
+                                              ? Qt::DirectConnection
+                                              : Qt::BlockingQueuedConnection;
                     QMetaObject::invokeMethod(handler, "getUserCredentials",
-                                              Qt::BlockingQueuedConnection,
+                                              connType,
                                               Q_ARG(QString, urlStr),
                                               Q_ARG(QString, usernameFromUrlStr),
                                               Q_ARG(QString&, username),
                                               Q_ARG(QString&, password));
-                } else {
+                } else if (!handler) {
                     emit _this->requestUserCredentials(urlStr, usernameFromUrlStr, username, password);
                 }
+            }
+            if (QThread::currentThread()->isInterruptionRequested()) {
+                return -1;
             }
 
             if (!username.isEmpty() || !password.isEmpty()) {
