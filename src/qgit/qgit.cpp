@@ -7038,32 +7038,11 @@ void QGit::listCommits(const QString &branchRef, int offset, int length)
             }
         }
 
-        QGitCommit item;
-        unsigned int parents = 0;
-
-        QString commit_id;
-        QList<QGitCommitDiffParent> commit_parents;
-        QDateTime commit_time;
-        QGitSignature commit_author;
-        QGitSignature commit_commiter;
-        QString commit_message;
-
-        QByteArray parentStr;
-        QString author_name;
-        QString author_email;
-        QDateTime author_when;
-
-        QString commiter_name;
-        QString commiter_email;
-        QDateTime commiter_when;
-
         GitMailmap mailmap;
         git_mailmap_from_repository(mailmap, repo);
 
         int count = 0;
-        while ((!git_revwalk_next(&oid, walker))&&(count < length)) {
-            commit_parents.clear();
-
+        while ((!git_revwalk_next(&oid, walker)) && (count < length)) {
             GitCommit commit;
             res = git_commit_lookup(commit, repo, &oid);
             if (res)
@@ -7071,50 +7050,7 @@ void QGit::listCommits(const QString &branchRef, int offset, int length)
                 throw QGitError("git_commit_lookup", res);
             }
 
-            commit_id = QString::fromUtf8(git_oid_tostr_s(&oid));
-
-            parents = git_commit_parentcount(commit);
-            for(unsigned int index = 0; index < parents; index++)
-            {
-                GitCommit parent;
-
-                res = git_commit_parent(parent, commit, index);
-                if (res)
-                {
-                    throw QGitError("git_commit_parent", res);
-                }
-
-                const git_oid *parent_iod =  git_commit_id(parent);
-                parentStr = QByteArray(git_oid_tostr_s(parent_iod));
-
-                commit_parents.append(QGitCommitDiffParent(parentStr));
-            }
-
-            auto time = git_commit_time(commit);
-            auto timeOffset = git_commit_time_offset(commit);
-            commit_time = QDateTime::fromMSecsSinceEpoch(time * 1000);
-            commit_time.setTimeZone(QTimeZone(timeOffset * 60));
-
-            author_name = QString::fromUtf8(git_commit_author(commit)->name);
-            author_email = QString::fromUtf8(git_commit_author(commit)->email);
-            resolveMailmap(mailmap, author_name, author_email);
-            author_when = QDateTime::fromMSecsSinceEpoch(git_commit_author(commit)->when.time * 1000);
-            author_when.setTimeZone(QTimeZone(git_commit_author(commit)->when.offset * 60));
-            commit_author = QGitSignature(author_name, author_email, author_when);
-
-            commiter_name =  QString::fromUtf8(git_commit_committer(commit)->name);
-            commiter_email = QString::fromUtf8(git_commit_committer(commit)->email);
-            resolveMailmap(mailmap, commiter_name, commiter_email);
-            commiter_when = QDateTime::fromMSecsSinceEpoch(git_commit_committer(commit)->when.time * 1000);
-            commiter_when.setTimeZone(QTimeZone(git_commit_committer(commit)->when.offset * 60));
-            commit_commiter = QGitSignature(commiter_name, commiter_email, commiter_when);
-
-            commit_message = QString::fromUtf8(git_commit_message(commit));
-
-            item = QGitCommit(commit_id, commit_parents, commit_time, commit_author, commit_commiter, commit_message);
-
-            commits.push_back(item);
-
+            commits.push_back(commitFromGitCommit(commit, oid, mailmap));
             count++;
         }
 
@@ -7280,45 +7216,7 @@ void QGit::searchCommits(const QString &text, const QString &type)
 
             if (matched)
             {
-                QString commit_id = QString::fromUtf8(git_oid_tostr_s(&oid));
-                QList<QGitCommitDiffParent> commit_parents;
-                unsigned int parents = git_commit_parentcount(commit);
-                for (unsigned int index = 0; index < parents; index++)
-                {
-                    GitCommit parent;
-                    res = git_commit_parent(parent, commit, index);
-                    if (res == 0)
-                    {
-                        const git_oid *parent_oid = git_commit_id(parent);
-                        QByteArray parentStr = QByteArray(git_oid_tostr_s(parent_oid));
-                        commit_parents.append(QGitCommitDiffParent(parentStr));
-                    }
-                }
-
-                auto time = git_commit_time(commit);
-                auto timeOffset = git_commit_time_offset(commit);
-                QDateTime commit_time = QDateTime::fromMSecsSinceEpoch(time * 1000);
-                commit_time.setTimeZone(QTimeZone(timeOffset * 60));
-
-                QString author_name = QString::fromUtf8(git_commit_author(commit)->name);
-                QString author_email = QString::fromUtf8(git_commit_author(commit)->email);
-                resolveMailmap(mailmap, author_name, author_email);
-                QDateTime author_when = QDateTime::fromMSecsSinceEpoch(git_commit_author(commit)->when.time * 1000);
-                author_when.setTimeZone(QTimeZone(git_commit_author(commit)->when.offset * 60));
-                QGitSignature commit_author(author_name, author_email, author_when);
-
-                QString commiter_name = QString::fromUtf8(git_commit_committer(commit)->name);
-                QString commiter_email = QString::fromUtf8(git_commit_committer(commit)->email);
-                resolveMailmap(mailmap, commiter_name, commiter_email);
-                QDateTime commiter_when = QDateTime::fromMSecsSinceEpoch(git_commit_committer(commit)->when.time * 1000);
-                commiter_when.setTimeZone(QTimeZone(git_commit_committer(commit)->when.offset * 60));
-                QGitSignature commit_commiter(commiter_name, commiter_email, commiter_when);
-
-                QString commit_message = QString::fromUtf8(git_commit_message(commit));
-
-                QGitCommit item(commit_id, commit_parents, commit_time, commit_author, commit_commiter, commit_message);
-
-                emit commitFound(item);
+                emit commitFound(commitFromGitCommit(commit, oid, mailmap));
             }
         }
 
