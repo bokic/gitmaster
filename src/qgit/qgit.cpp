@@ -44,7 +44,7 @@ struct GitRepository {
         return *this;
     }
     operator git_repository*() { return value; }
-    operator git_repository**() { return &value; }
+    operator git_repository**() { if (value) { git_repository_free(value); value = nullptr; } return &value; }
     ~GitRepository() { if (value) { git_repository_free(value); value = nullptr; }}
     git_repository *value = nullptr;
 };
@@ -56,7 +56,7 @@ struct GitReference {
     GitReference(GitReference&&) = delete;
     GitReference& operator=(GitReference&&) = delete;
     operator git_reference*() { return value; }
-    operator git_reference**() { return &value; }
+    operator git_reference**() { if (value) { git_reference_free(value); value = nullptr; } return &value; }
     ~GitReference() { if (value) { git_reference_free(value); value = nullptr; }}
     git_reference *value = nullptr;
 };
@@ -68,7 +68,7 @@ struct GitSignature {
     GitSignature(GitSignature&&) = delete;
     GitSignature& operator=(GitSignature&&) = delete;
     operator git_signature*() { return value; }
-    operator git_signature**() { return &value; }
+    operator git_signature**() { if (value) { git_signature_free(value); value = nullptr; } return &value; }
     ~GitSignature() { if (value) { git_signature_free(value); value = nullptr; }}
     git_signature *value = nullptr;
 };
@@ -80,7 +80,7 @@ struct GitStatusList {
     GitStatusList(GitStatusList&&) = delete;
     GitStatusList& operator=(GitStatusList&&) = delete;
     operator git_status_list*() { return value; }
-    operator git_status_list**() { return &value; }
+    operator git_status_list**() { if (value) { git_status_list_free(value); value = nullptr; } return &value; }
     ~GitStatusList() { if (value) { git_status_list_free(value); value = nullptr; }}
     git_status_list *value = nullptr;
 };
@@ -92,7 +92,7 @@ struct GitBranchIterator {
     GitBranchIterator(GitBranchIterator&&) = delete;
     GitBranchIterator& operator=(GitBranchIterator&&) = delete;
     operator git_branch_iterator*() { return value; }
-    operator git_branch_iterator**() { return &value; }
+    operator git_branch_iterator**() { if (value) { git_branch_iterator_free(value); value = nullptr; } return &value; }
     ~GitBranchIterator() { if (value) { git_branch_iterator_free(value); value = nullptr; }}
     git_branch_iterator *value = nullptr;
 };
@@ -104,7 +104,7 @@ struct GitTree {
     GitTree(GitTree&&) = delete;
     GitTree& operator=(GitTree&&) = delete;
     operator git_tree*() { return value; }
-    operator git_tree**() { return &value; }
+    operator git_tree**() { if (value) { git_tree_free(value); value = nullptr; } return &value; }
     ~GitTree() { if (value) { git_tree_free(value); value = nullptr; }}
     git_tree *value = nullptr;
 };
@@ -116,7 +116,7 @@ struct GitCommit {
     GitCommit(GitCommit&&) = delete;
     GitCommit& operator=(GitCommit&&) = delete;
     operator git_commit*() { return value; }
-    operator git_commit**() { return &value; }
+    operator git_commit**() { if (value) { git_commit_free(value); value = nullptr; } return &value; }
     ~GitCommit() { if (value) { git_commit_free(value); value = nullptr; }}
     git_commit *value = nullptr;
 };
@@ -128,7 +128,7 @@ struct GitDiff {
     GitDiff(GitDiff&&) = delete;
     GitDiff& operator=(GitDiff&&) = delete;
     operator git_diff*() { return value; }
-    operator git_diff**() { return &value; }
+    operator git_diff**() { if (value) { git_diff_free(value); value = nullptr; } return &value; }
     ~GitDiff() { if (value) { git_diff_free(value); value = nullptr; }}
     git_diff *value = nullptr;
 };
@@ -140,7 +140,7 @@ struct GitRemote {
     GitRemote(GitRemote&&) = delete;
     GitRemote& operator=(GitRemote&&) = delete;
     operator git_remote*() { return value; }
-    operator git_remote**() { return &value; }
+    operator git_remote**() { if (value) { git_remote_free(value); value = nullptr; } return &value; }
     ~GitRemote() { if (value) { git_remote_free(value); value = nullptr; }}
     git_remote *value = nullptr;
 };
@@ -152,7 +152,7 @@ struct GitObject {
     GitObject(GitObject&&) = delete;
     GitObject& operator=(GitObject&&) = delete;
     operator git_object*() { return value; }
-    operator git_object**() { return &value; }
+    operator git_object**() { if (value) { git_object_free(value); value = nullptr; } return &value; }
     const git_commit* asCommit() const { return reinterpret_cast<const git_commit*>(value); }
     git_commit* asCommit() { return reinterpret_cast<git_commit*>(value); }
     ~GitObject() { if (value) { git_object_free(value); value = nullptr; }}
@@ -166,7 +166,7 @@ struct GitPatch {
     GitPatch(GitPatch&&) = delete;
     GitPatch& operator=(GitPatch&&) = delete;
     operator git_patch*() { return value; }
-    operator git_patch**() { return &value; }
+    operator git_patch**() { if (value) { git_patch_free(value); value = nullptr; } return &value; }
     ~GitPatch() { if (value) { git_patch_free(value); value = nullptr; }}
     git_patch *value = nullptr;
 };
@@ -178,7 +178,7 @@ struct GitDescribeResult {
     GitDescribeResult(GitDescribeResult&&) = delete;
     GitDescribeResult& operator=(GitDescribeResult&&) = delete;
     operator git_describe_result*() { return value; }
-    operator git_describe_result**() { return &value; }
+    operator git_describe_result**() { if (value) { git_describe_result_free(value); value = nullptr; } return &value; }
     ~GitDescribeResult() { if (value) { git_describe_result_free(value); value = nullptr; }}
     git_describe_result *value = nullptr;
 };
@@ -190,7 +190,7 @@ struct GitMailmap {
     GitMailmap(GitMailmap&&) = delete;
     GitMailmap& operator=(GitMailmap&&) = delete;
     operator git_mailmap*() { return value; }
-    operator git_mailmap**() { return &value; }
+    operator git_mailmap**() { if (value) { git_mailmap_free(value); value = nullptr; } return &value; }
     ~GitMailmap() { if (value) { git_mailmap_free(value); value = nullptr; }}
     git_mailmap *value = nullptr;
 };
@@ -270,7 +270,7 @@ struct GitIndex {
     GitIndex(GitIndex&&) = delete;
     GitIndex& operator=(GitIndex&&) = delete;
     operator git_index*() { return value; }
-    operator git_index**() { return &value; }
+    operator git_index**() { if (value) { git_index_free(value); value = nullptr; } return &value; }
     ~GitIndex() { if (value) { git_index_free(value); value = nullptr; }}
     git_index *value = nullptr;
 };
@@ -282,7 +282,7 @@ struct GitConfig {
     GitConfig(GitConfig&&) = delete;
     GitConfig& operator=(GitConfig&&) = delete;
     operator git_config*() { return value; }
-    operator git_config**() { return &value; }
+    operator git_config**() { if (value) { git_config_free(value); value = nullptr; } return &value; }
     ~GitConfig() { if (value) { git_config_free(value); value = nullptr; }}
     git_config *value = nullptr;
 };
@@ -305,7 +305,7 @@ struct GitIndexConflictIterator {
     GitIndexConflictIterator(GitIndexConflictIterator&&) = delete;
     GitIndexConflictIterator& operator=(GitIndexConflictIterator&&) = delete;
     operator git_index_conflict_iterator*() { return value; }
-    operator git_index_conflict_iterator**() { return &value; }
+    operator git_index_conflict_iterator**() { if (value) { git_index_conflict_iterator_free(value); value = nullptr; } return &value; }
     ~GitIndexConflictIterator() { if (value) { git_index_conflict_iterator_free(value); value = nullptr; }}
     git_index_conflict_iterator *value = nullptr;
 };
@@ -317,7 +317,7 @@ struct GitSubmodule {
     GitSubmodule(GitSubmodule&&) = delete;
     GitSubmodule& operator=(GitSubmodule&&) = delete;
     operator git_submodule*() { return value; }
-    operator git_submodule**() { return &value; }
+    operator git_submodule**() { if (value) { git_submodule_free(value); value = nullptr; } return &value; }
     ~GitSubmodule() { if (value) { git_submodule_free(value); value = nullptr; }}
     git_submodule *value = nullptr;
 };
@@ -329,7 +329,7 @@ struct GitAnnotatedCommit {
     GitAnnotatedCommit(GitAnnotatedCommit&&) = delete;
     GitAnnotatedCommit& operator=(GitAnnotatedCommit&&) = delete;
     operator git_annotated_commit*() { return value; }
-    operator git_annotated_commit**() { return &value; }
+    operator git_annotated_commit**() { if (value) { git_annotated_commit_free(value); value = nullptr; } return &value; }
     ~GitAnnotatedCommit() { if (value) { git_annotated_commit_free(value); value = nullptr; }}
     git_annotated_commit *value = nullptr;
 };
@@ -341,7 +341,7 @@ struct GitBlob {
     GitBlob(GitBlob&&) = delete;
     GitBlob& operator=(GitBlob&&) = delete;
     operator git_blob*() { return value; }
-    operator git_blob**() { return &value; }
+    operator git_blob**() { if (value) { git_blob_free(value); value = nullptr; } return &value; }
     ~GitBlob() { if (value) { git_blob_free(value); value = nullptr; }}
     git_blob *value = nullptr;
 };
@@ -353,7 +353,7 @@ struct GitRevWalk {
     GitRevWalk(GitRevWalk&&) = delete;
     GitRevWalk& operator=(GitRevWalk&&) = delete;
     operator git_revwalk*() { return value; }
-    operator git_revwalk**() { return &value; }
+    operator git_revwalk**() { if (value) { git_revwalk_free(value); value = nullptr; } return &value; }
     ~GitRevWalk() { if (value) { git_revwalk_free(value); value = nullptr; }}
     git_revwalk *value = nullptr;
 };
@@ -365,7 +365,7 @@ struct GitNote {
     GitNote(GitNote&&) = delete;
     GitNote& operator=(GitNote&&) = delete;
     operator git_note*() { return value; }
-    operator git_note**() { return &value; }
+    operator git_note**() { if (value) { git_note_free(value); value = nullptr; } return &value; }
     ~GitNote() { if (value) { git_note_free(value); value = nullptr; }}
     git_note *value = nullptr;
 };
@@ -377,7 +377,7 @@ struct GitRebase {
     GitRebase(GitRebase&&) = delete;
     GitRebase& operator=(GitRebase&&) = delete;
     operator git_rebase*() { return value; }
-    operator git_rebase**() { return &value; }
+    operator git_rebase**() { if (value) { git_rebase_free(value); value = nullptr; } return &value; }
     ~GitRebase() { if (value) { git_rebase_free(value); value = nullptr; }}
     git_rebase *value = nullptr;
 };
@@ -478,8 +478,8 @@ struct GitTag {
     GitTag(GitTag&&) = delete;
     GitTag& operator=(GitTag&&) = delete;
     operator git_tag*() { return value; }
-    operator git_tag**() { return &value; }
-    ~GitTag() {  git_tag_free(value); value = nullptr; }
+    operator git_tag**() { if (value) { git_tag_free(value); value = nullptr; } return &value; }
+    ~GitTag() { if (value) { git_tag_free(value); value = nullptr; }}
     git_tag *value = nullptr;
 };
 
@@ -490,7 +490,7 @@ struct GitWorktree {
     GitWorktree(GitWorktree&&) = delete;
     GitWorktree& operator=(GitWorktree&&) = delete;
     operator git_worktree*() { return value; }
-    operator git_worktree**() { return &value; }
+    operator git_worktree**() { if (value) { git_worktree_free(value); value = nullptr; } return &value; }
     ~GitWorktree() { if (value) { git_worktree_free(value); value = nullptr; }}
     git_worktree *value = nullptr;
 };
@@ -5487,12 +5487,12 @@ QString QGit::commitInternal(const QString &message, bool withPush, bool amend)
         }
 
         /// Check if something is staged
-        GitTree tree;
+        GitTree headTree;
         GitObject git_obj;
         res = git_revparse_single(git_obj, repo, "HEAD^{tree}");
         if (res == 0)
         {
-            res = git_tree_lookup(tree, repo, git_object_id(git_obj));
+            res = git_tree_lookup(headTree, repo, git_object_id(git_obj));
             if (res)
             {
                 throw QGitError("git_tree_lookup(staged)", res);
@@ -5500,7 +5500,7 @@ QString QGit::commitInternal(const QString &message, bool withPush, bool amend)
         }
 
         GitDiff diff;
-        res = git_diff_tree_to_index(diff, repo, tree, nullptr, nullptr);
+        res = git_diff_tree_to_index(diff, repo, headTree, nullptr, nullptr);
         if (res)
         {
             throw QGitError("git_diff_tree_to_index(staged)", res);
@@ -5533,6 +5533,7 @@ QString QGit::commitInternal(const QString &message, bool withPush, bool amend)
             throw QGitError("git_index_write_tree", res);
         }
 
+        GitTree tree;
         res = git_tree_lookup(tree, repo, &tree_id);
         if (res)
         {
@@ -7381,7 +7382,7 @@ struct GitReflog {
     GitReflog(GitReflog&&) = delete;
     GitReflog& operator=(GitReflog&&) = delete;
     operator git_reflog*() { return value; }
-    operator git_reflog**() { return &value; }
+    operator git_reflog**() { if (value) { git_reflog_free(value); value = nullptr; } return &value; }
     ~GitReflog() { if (value) { git_reflog_free(value); value = nullptr; }}
     git_reflog *value = nullptr;
 };
@@ -7448,7 +7449,7 @@ struct GitBlame {
     GitBlame(const GitBlame &) = delete;
     GitBlame &operator=(const GitBlame &) = delete;
     operator git_blame *() { return value; }
-    operator git_blame **() { return &value; }
+    operator git_blame **() { if (value) { git_blame_free(value); value = nullptr; } return &value; }
     ~GitBlame() { if (value) { git_blame_free(value); value = nullptr; } }
     git_blame *value = nullptr;
 };
