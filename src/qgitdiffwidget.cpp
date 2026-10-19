@@ -12,11 +12,18 @@ struct QGitDiffInlineRange
 {
     int start = 0; // byte offset in the UTF-8 content
     int length = 0;
+    int charStart = 0;
+    int charLength = 0;
 };
 
 class QGitDiffWidgetPrivateLine
 {
 public:
+    struct CharEntry {
+        QChar ch;
+        int   byteOffset = 0;
+    };
+
     QByteArray content;
     git_off_t offset = 0;
     int new_lineno = 0;
@@ -25,6 +32,12 @@ public:
     QRect rect;
     // Inline diff highlight ranges (in the displayed text, character positions)
     QVector<QGitDiffInlineRange> inlineRanges;
+
+    // Precomputed decoded characters and mappings
+    QString displayText;
+    QVector<CharEntry> chars;
+    bool hasTrailingNewline = false;
+    int newlineByteOffset = 0;
 };
 
 // A single row in side-by-side diff view (pairing old/left and new/right)
@@ -197,46 +210,16 @@ static bool byteIsInInlineRange(int byteOffset, const QVector<QGitDiffInlineRang
 // substitutes outside ranges use a muted 45%-opacity colour.
 static void drawLineContent(
     QPainter &painter,
-    const QFont &font,
-    const QByteArray &rawContent,
+    const QFontMetrics &fm,
+    const QGitDiffWidgetPrivateLine &line,
     int x,
     int yBaseline,
     bool showWhitespaceChars,
-    const QColor &normalColor,
-    const QVector<QGitDiffInlineRange> &inlineRanges)
+    const QColor &normalColor)
 {
-    QFontMetrics fm(font);
-
-    // Decode UTF-8, recording the byte offset of every character so we can
-    // check it against the inline ranges (which are in byte coordinates).
-    struct CharEntry {
-        QChar ch;
-        int   byteOffset;
-    };
-
-    QVector<CharEntry> chars;
-    {
-        const QByteArray &raw = rawContent;
-        QString decoded = QString::fromUtf8(raw);
-        int bOff = 0;
-        for (const QChar &qch : decoded)
-        {
-            chars.append({qch, bOff});
-            bOff += QString(qch).toUtf8().size();
-        }
-    }
-
-    // Strip trailing CR/LF, recording the byte offset of the first stripped
-    // byte so we can check whether the newline itself is in an inline range.
-    bool hasTrailingNewline = false;
-    int  newlineByteOffset  = rawContent.size(); // safe default: past the end
-    while (!chars.isEmpty()
-           && (chars.back().ch == u'\n' || chars.back().ch == u'\r'))
-    {
-        hasTrailingNewline  = true;
-        newlineByteOffset   = chars.back().byteOffset;
-        chars.pop_back();
-    }
+    const auto &chars = line.chars;
+    if (chars.isEmpty() && !line.hasTrailingNewline)
+        return;
 
     QColor wsColor = normalColor;
     wsColor.setAlphaF(0.45f);   // muted — visible but clearly secondary
@@ -248,31 +231,30 @@ static void drawLineContent(
     while (i < n)
     {
         bool isWs   = (chars[i].ch == u' ' || chars[i].ch == u'\t');
-        bool inRange = byteIsInInlineRange(chars[i].byteOffset, inlineRanges);
+        bool inRange = byteIsInInlineRange(chars[i].byteOffset, line.inlineRanges);
 
         // Collect a run of characters sharing the same (isWs, inRange) pair
         int start = i;
         while (i < n
                && (chars[i].ch == u' ' || chars[i].ch == u'\t') == isWs
-               && byteIsInInlineRange(chars[i].byteOffset, inlineRanges) == inRange)
+               && byteIsInInlineRange(chars[i].byteOffset, line.inlineRanges) == inRange)
         {
             ++i;
         }
 
-        // Build the original string (for width measurement) and the display
-        // string (potentially with whitespace substitutes).
+        // Build the display string (potentially with whitespace substitutes).
         bool substitute = isWs && (showWhitespaceChars || inRange);
-        QString orig, display;
+        QString display;
+        display.reserve(i - start);
         for (int k = start; k < i; ++k)
         {
-            orig += chars[k].ch;
             if (substitute)
                 display += (chars[k].ch == u'\t') ? QChar(u'→') : QChar(u'·');
             else
                 display += chars[k].ch;
         }
 
-        int segWidth = fm.horizontalAdvance(orig);
+        int segWidth = fm.horizontalAdvance(display);
 
         if (substitute)
         {
@@ -292,8 +274,8 @@ static void drawLineContent(
 
     // Trailing newline symbol — only shown when showWhitespaceChars is on or
     // the newline itself is inside an inline range.
-    bool newlineInRange = byteIsInInlineRange(newlineByteOffset, inlineRanges);
-    if (hasTrailingNewline && (showWhitespaceChars || newlineInRange))
+    bool newlineInRange = byteIsInInlineRange(line.newlineByteOffset, line.inlineRanges);
+    if (line.hasTrailingNewline && (showWhitespaceChars || newlineInRange))
     {
         painter.setPen(newlineInRange ? normalColor : wsColor);
         painter.drawText(cx, yBaseline, QStringLiteral("↵"));
@@ -621,6 +603,41 @@ void QGitDiffWidget::responseGitDiff(const QString &first, const QString &second
                 line.old_lineno = line_item.old_lineno();
                 line.origin = line_item.origin();
 
+                // Precompute decoded characters and character-to-byte mapping
+                QString decoded = QString::fromUtf8(line.content);
+                line.chars.reserve(decoded.size());
+                int bOff = 0;
+                for (int i = 0; i < decoded.size(); ++i)
+                {
+                    QChar qch = decoded.at(i);
+                    line.chars.append({qch, bOff});
+                    if (qch.isHighSurrogate() && i + 1 < decoded.size() && decoded.at(i + 1).isLowSurrogate()) {
+                        line.chars.append({decoded.at(i + 1), bOff});
+                        bOff += 4;
+                        ++i;
+                    } else {
+                        ushort u = qch.unicode();
+                        if (u < 0x80) bOff += 1;
+                        else if (u < 0x800) bOff += 2;
+                        else bOff += 3;
+                    }
+                }
+
+                line.hasTrailingNewline = false;
+                line.newlineByteOffset = line.content.size();
+                while (!line.chars.isEmpty() && (line.chars.back().ch == u'\n' || line.chars.back().ch == u'\r'))
+                {
+                    line.hasTrailingNewline = true;
+                    line.newlineByteOffset = line.chars.back().byteOffset;
+                    line.chars.pop_back();
+                }
+
+                line.displayText.reserve(line.chars.size());
+                for (const auto &c : line.chars)
+                {
+                    line.displayText += (c.ch == u'\t') ? QChar(u'→') : c.ch;
+                }
+
                 line.rect.setTop(y + file_h + hunk_h);
                 line.rect.setLeft(contentsMargins().left());
                 line.rect.setWidth(totalDiffWidth);
@@ -674,6 +691,26 @@ void QGitDiffWidget::responseGitDiff(const QString &first, const QString &second
 
                             delLine.inlineRanges = computeChangedRanges(addContent, delContent, wordLevel);
                             addLine.inlineRanges = computeChangedRanges(delContent, addContent, wordLevel);
+
+                            auto updateCharOffsets = [](QGitDiffWidgetPrivateLine &l) {
+                                for (auto &range : l.inlineRanges) {
+                                    int charStart = 0;
+                                    int charLength = 0;
+                                    for (int i = 0; i < l.chars.size(); ++i) {
+                                        if (l.chars[i].byteOffset < range.start)
+                                            charStart = i + 1;
+                                        if (l.chars[i].byteOffset >= range.start &&
+                                            l.chars[i].byteOffset < range.start + range.length)
+                                        {
+                                            charLength++;
+                                        }
+                                    }
+                                    range.charStart = charStart;
+                                    range.charLength = charLength;
+                                }
+                            };
+                            updateCharOffsets(delLine);
+                            updateCharOffsets(addLine);
                         }
                     }
 
@@ -759,6 +796,7 @@ void QGitDiffWidget::responseGitDiff(const QString &first, const QString &second
 void QGitDiffWidget::paintEvent(QPaintEvent *event)
 {
     QStylePainter painter(this);
+    QFontMetrics fm(m_font);
     int fileIndex = 0, hunkIndex = 0, lineIndex = 0;
 
     const auto &files = m_private->files;
@@ -839,19 +877,14 @@ void QGitDiffWidget::paintEvent(QPaintEvent *event)
                                     // Inline diff highlights on deleted line
                                     if (!oldLine.inlineRanges.isEmpty())
                                     {
-                                        QFontMetrics fm(m_font);
-                                        QString fullText = QString::fromUtf8(oldLine.content);
                                         QColor hlColor = QColor(200, 100, 100);
 
                                         for (const auto &range : oldLine.inlineRanges)
                                         {
-                                            QByteArray rawContent = oldLine.content;
-                                            int charStart = QString::fromUtf8(rawContent.left(range.start)).length();
-                                            int charLength = QString::fromUtf8(rawContent.mid(range.start, range.length)).length();
-                                            if (charLength <= 0) continue;
+                                            if (range.charLength <= 0) continue;
 
-                                            int xRangeStart = leftContentX + fm.horizontalAdvance(fullText, charStart);
-                                            int xRangeEnd   = leftContentX + fm.horizontalAdvance(fullText, charStart + charLength);
+                                            int xRangeStart = leftContentX + fm.horizontalAdvance(oldLine.displayText, range.charStart);
+                                            int xRangeEnd   = leftContentX + fm.horizontalAdvance(oldLine.displayText, range.charStart + range.charLength);
 
                                             painter.setPen(Qt::NoPen);
                                             painter.setBrush(QBrush(hlColor));
@@ -861,10 +894,9 @@ void QGitDiffWidget::paintEvent(QPaintEvent *event)
                                     }
 
                                     QColor normalColor = (oldLine.origin == '-') ? Qt::darkRed : Qt::black;
-                                    drawLineContent(painter, m_font, oldLine.content,
+                                    drawLineContent(painter, fm, oldLine,
                                                     leftContentX, yFont,
-                                                    m_showWhitespaceChars, normalColor,
-                                                    oldLine.inlineRanges);
+                                                    m_showWhitespaceChars, normalColor);
                                 }
                                 else
                                 {
@@ -907,19 +939,14 @@ void QGitDiffWidget::paintEvent(QPaintEvent *event)
                                     // Inline diff highlights on added line
                                     if (!newLine.inlineRanges.isEmpty())
                                     {
-                                        QFontMetrics fm(m_font);
-                                        QString fullText = QString::fromUtf8(newLine.content);
                                         QColor hlColor = QColor(100, 185, 80);
 
                                         for (const auto &range : newLine.inlineRanges)
                                         {
-                                            QByteArray rawContent = newLine.content;
-                                            int charStart = QString::fromUtf8(rawContent.left(range.start)).length();
-                                            int charLength = QString::fromUtf8(rawContent.mid(range.start, range.length)).length();
-                                            if (charLength <= 0) continue;
+                                            if (range.charLength <= 0) continue;
 
-                                            int xRangeStart = rightContentX + fm.horizontalAdvance(fullText, charStart);
-                                            int xRangeEnd   = rightContentX + fm.horizontalAdvance(fullText, charStart + charLength);
+                                            int xRangeStart = rightContentX + fm.horizontalAdvance(newLine.displayText, range.charStart);
+                                            int xRangeEnd   = rightContentX + fm.horizontalAdvance(newLine.displayText, range.charStart + range.charLength);
 
                                             painter.setPen(Qt::NoPen);
                                             painter.setBrush(QBrush(hlColor));
@@ -929,10 +956,9 @@ void QGitDiffWidget::paintEvent(QPaintEvent *event)
                                     }
 
                                     QColor normalColor = (newLine.origin == '+') ? Qt::darkGreen : Qt::black;
-                                    drawLineContent(painter, m_font, newLine.content,
+                                    drawLineContent(painter, fm, newLine,
                                                     rightContentX, yFont,
-                                                    m_showWhitespaceChars, normalColor,
-                                                    newLine.inlineRanges);
+                                                    m_showWhitespaceChars, normalColor);
                                 }
                                 else
                                 {
@@ -1012,9 +1038,6 @@ void QGitDiffWidget::paintEvent(QPaintEvent *event)
                                 // -----------------------------------------------
                                 if (!line.inlineRanges.isEmpty())
                                 {
-                                    QFontMetrics fm(m_font);
-                                    QString fullText = QString::fromUtf8(line.content);
-
                                     // Choose highlight colour: deeper shade of line background
                                     QColor hlColor = (line.origin == '-')
                                         ? QColor(200, 100, 100)   // deeper red for deleted parts
@@ -1022,17 +1045,11 @@ void QGitDiffWidget::paintEvent(QPaintEvent *event)
 
                                     for (const auto &range : line.inlineRanges)
                                     {
-                                        // Convert byte offsets to QString character positions
-                                        // because the content might be multi-byte UTF-8
-                                        QByteArray rawContent = line.content;
-                                        int charStart = QString::fromUtf8(rawContent.left(range.start)).length();
-                                        int charLength = QString::fromUtf8(rawContent.mid(range.start, range.length)).length();
-
-                                        if (charLength <= 0) continue;
+                                        if (range.charLength <= 0) continue;
 
                                         // Pixel position of the range start/end inside the content area
-                                        int xRangeStart = contentX + fm.horizontalAdvance(fullText, charStart);
-                                        int xRangeEnd   = contentX + fm.horizontalAdvance(fullText, charStart + charLength);
+                                        int xRangeStart = contentX + fm.horizontalAdvance(line.displayText, range.charStart);
+                                        int xRangeEnd   = contentX + fm.horizontalAdvance(line.displayText, range.charStart + range.charLength);
 
                                         painter.setPen(Qt::NoPen);
                                         painter.setBrush(QBrush(hlColor));
@@ -1050,10 +1067,9 @@ void QGitDiffWidget::paintEvent(QPaintEvent *event)
                                 else if (line.origin == '+') normalColor = Qt::darkGreen;
                                 else                         normalColor = Qt::black;
 
-                                drawLineContent(painter, m_font, line.content,
+                                drawLineContent(painter, fm, line,
                                                 contentX, yFont,
-                                                m_showWhitespaceChars, normalColor,
-                                                line.inlineRanges);
+                                                m_showWhitespaceChars, normalColor);
 
                                 if ((fileIndex == m_hoverFile)&&(hunkIndex == m_hoverHunk)&&(lineIndex == m_hoverLine))
                                 {
