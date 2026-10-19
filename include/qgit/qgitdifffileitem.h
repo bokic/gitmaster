@@ -12,7 +12,7 @@ public:
     explicit QGitDiffFileItem(const git_diff_file &file);
     QGitDiffFileItem(const QGitDiffFileItem &other) = default;
     QGitDiffFileItem(QGitDiffFileItem &&other) noexcept;
-    virtual ~QGitDiffFileItem() = default;
+    ~QGitDiffFileItem() = default;
 
     QGitDiffFileItem &operator=(QGitDiffFileItem &&other) noexcept;
     QGitDiffFileItem &operator=(const QGitDiffFileItem &other) = default;

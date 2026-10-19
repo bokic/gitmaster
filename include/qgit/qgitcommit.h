@@ -14,7 +14,7 @@ public:
     QGitCommit(const QString &id, const QList<QGitCommitDiffParent> &parents, const QDateTime &time, const QGitSignature &author, const QGitSignature &commiter, const QString &message, const QString &description = QString(), const QString &note = QString());
     QGitCommit(const QGitCommit &other) = default;
     QGitCommit(QGitCommit &&other) noexcept;
-    virtual ~QGitCommit() = default;
+    ~QGitCommit() = default;
 
     QGitCommit &operator=(QGitCommit &&other) noexcept;
     QGitCommit &operator=(const QGitCommit &other) = default;

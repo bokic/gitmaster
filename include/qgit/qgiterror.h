@@ -11,7 +11,7 @@ public:
     QGitError(const QString &functionName, int errorCode, const QString &customMessage);
     QGitError(const QGitError &other) = default;
     QGitError(QGitError &&other) noexcept;
-    virtual ~QGitError() = default;
+    ~QGitError() = default;
 
     QGitError &operator=(QGitError &&other) noexcept;
     QGitError &operator=(const QGitError &other) = default;

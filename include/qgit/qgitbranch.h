@@ -12,7 +12,7 @@ public:
     QGitBranch(const QString &name, const QString &hash, int64_t time, git_branch_t type = GIT_BRANCH_ALL, int ahead = 0, int behind = 0);
     QGitBranch(const QGitBranch &other) = default;
     QGitBranch(QGitBranch &&other) noexcept;
-    virtual ~QGitBranch() = default;
+    ~QGitBranch() = default;
 
     QGitBranch &operator=(QGitBranch &&other) noexcept;
     QGitBranch &operator=(const QGitBranch &other) = default;

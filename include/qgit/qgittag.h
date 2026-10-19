@@ -11,7 +11,7 @@ public:
     QGitTag(const QString &name, const QString &hash, int64_t time);
     QGitTag(const QGitTag &other) = default;
     QGitTag(QGitTag &&other) noexcept;
-    virtual ~QGitTag() = default;
+    ~QGitTag() = default;
 
     QGitTag &operator=(QGitTag &&other) noexcept;
     QGitTag &operator=(const QGitTag &other) = default;
