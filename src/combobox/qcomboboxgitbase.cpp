@@ -68,7 +68,7 @@ void QComboBoxGitBase::changeEvent(QEvent *event)
         updateIconColor();
     }
 
-    QWidget::changeEvent(event);
+    QComboBox::changeEvent(event);
 }
 
 void QComboBoxGitBase::showPopup()
