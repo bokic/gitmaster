@@ -113,9 +113,17 @@ struct GitCommit {
     GitCommit() = default;
     GitCommit(const GitCommit&) = delete;
     GitCommit& operator=(const GitCommit&) = delete;
-    GitCommit(GitCommit&&) = delete;
-    GitCommit& operator=(GitCommit&&) = delete;
+    GitCommit(GitCommit&& other) noexcept : value(other.value) { other.value = nullptr; }
+    GitCommit& operator=(GitCommit&& other) noexcept {
+        if (this != &other) {
+            if (value) { git_commit_free(value); value = nullptr; }
+            value = other.value;
+            other.value = nullptr;
+        }
+        return *this;
+    }
     operator git_commit*() { return value; }
+    operator const git_commit*() const { return value; }
     operator git_commit**() { if (value) { git_commit_free(value); value = nullptr; } return &value; }
     ~GitCommit() { if (value) { git_commit_free(value); value = nullptr; }}
     git_commit *value = nullptr;
@@ -285,6 +293,25 @@ struct GitConfig {
     operator git_config**() { if (value) { git_config_free(value); value = nullptr; } return &value; }
     ~GitConfig() { if (value) { git_config_free(value); value = nullptr; }}
     git_config *value = nullptr;
+};
+
+struct GitConfigIterator {
+    GitConfigIterator() = default;
+    GitConfigIterator(const GitConfigIterator&) = delete;
+    GitConfigIterator& operator=(const GitConfigIterator&) = delete;
+    GitConfigIterator(GitConfigIterator&& other) noexcept : value(other.value) { other.value = nullptr; }
+    GitConfigIterator& operator=(GitConfigIterator&& other) noexcept {
+        if (this != &other) {
+            if (value) git_config_iterator_free(value);
+            value = other.value;
+            other.value = nullptr;
+        }
+        return *this;
+    }
+    operator git_config_iterator*() { return value; }
+    operator git_config_iterator**() { if (value) { git_config_iterator_free(value); value = nullptr; } return &value; }
+    ~GitConfigIterator() { if (value) { git_config_iterator_free(value); value = nullptr; }}
+    git_config_iterator *value = nullptr;
 };
 
 struct GitBuf {
@@ -1308,22 +1335,23 @@ QList<QGitCommit> QGit::getCommitsFromRevSpec(const QString &spec) const
         git_revspec rev;
         int res = git_revparse(&rev, repo, spec.toUtf8().constData());
         if (res != 0) return commits;
+        GitObject revFrom, revTo;
+        revFrom.value = rev.from;
+        revTo.value = rev.to;
 
         GitRevWalk walker;
         res = git_revwalk_new(walker, repo);
         if (res != 0) {
-            if (rev.from) git_object_free(rev.from);
-            if (rev.to) git_object_free(rev.to);
             return commits;
         }
 
         git_revwalk_sorting(walker, GIT_SORT_TOPOLOGICAL | GIT_SORT_REVERSE);
 
         if (rev.flags & GIT_REVSPEC_RANGE) {
-            if (rev.to) git_revwalk_push(walker, git_object_id(rev.to));
-            if (rev.from) git_revwalk_hide(walker, git_object_id(rev.from));
+            if (revTo.value) git_revwalk_push(walker, git_object_id(revTo));
+            if (revFrom.value) git_revwalk_hide(walker, git_object_id(revFrom));
         } else if (rev.flags & GIT_REVSPEC_SINGLE) {
-            if (rev.from) git_revwalk_push(walker, git_object_id(rev.from));
+            if (revFrom.value) git_revwalk_push(walker, git_object_id(revFrom));
         }
 
         GitMailmap mailmap;
@@ -1336,9 +1364,6 @@ QList<QGitCommit> QGit::getCommitsFromRevSpec(const QString &spec) const
                 commits.append(commitFromGitCommit(commit, oid, mailmap));
             }
         }
-
-        if (rev.from) git_object_free(rev.from);
-        if (rev.to) git_object_free(rev.to);
     } catch (...) {}
     return commits;
 }
@@ -2412,10 +2437,9 @@ void QGit::removeSubmodule(const QString &name, bool removeWorkingDirectory, boo
                 git_status_options opt = GIT_STATUS_OPTIONS_INIT;
                 opt.show = GIT_STATUS_SHOW_INDEX_AND_WORKDIR;
                 opt.flags = GIT_STATUS_OPT_INCLUDE_UNTRACKED | GIT_STATUS_OPT_RECURSE_UNTRACKED_DIRS;
-                git_status_list *statusList = nullptr;
-                if (git_status_list_new(&statusList, sub_repo, &opt) == 0) {
+                GitStatusList statusList;
+                if (git_status_list_new(statusList, sub_repo, &opt) == 0) {
                     size_t count = git_status_list_entrycount(statusList);
-                    git_status_list_free(statusList);
                     if (count > 0) {
                         throw QGitError("removeSubmodule", -1, tr("Submodule '%1' contains uncommitted changes. Use force removal to proceed.").arg(subName));
                     }
@@ -2426,8 +2450,8 @@ void QGit::removeSubmodule(const QString &name, bool removeWorkingDirectory, boo
         // 1. De-initialize in .git/config (remove submodule.<name>.*)
         GitConfig repo_cfg;
         if (git_repository_config(repo_cfg, repo) == 0) {
-            git_config_iterator *iter = nullptr;
-            if (git_config_iterator_new(&iter, repo_cfg) == 0) {
+            GitConfigIterator iter;
+            if (git_config_iterator_new(iter, repo_cfg) == 0) {
                 git_config_entry *entry = nullptr;
                 QStringList keysToDelete;
                 QString prefix1 = QStringLiteral("submodule.%1.").arg(subName).toLower();
@@ -2438,7 +2462,6 @@ void QGit::removeSubmodule(const QString &name, bool removeWorkingDirectory, boo
                         keysToDelete.append(QString::fromUtf8(entry->name));
                     }
                 }
-                git_config_iterator_free(iter);
                 for (const QString &k : keysToDelete) {
                     git_config_delete_entry(repo_cfg, k.toUtf8().constData());
                 }
@@ -2450,8 +2473,8 @@ void QGit::removeSubmodule(const QString &name, bool removeWorkingDirectory, boo
         if (QFile::exists(gitmodulesPath)) {
             GitConfig submodules_cfg;
             if (git_config_open_ondisk(submodules_cfg, gitmodulesPath.toUtf8().constData()) == 0) {
-                git_config_iterator *iter = nullptr;
-                if (git_config_iterator_new(&iter, submodules_cfg) == 0) {
+                GitConfigIterator iter;
+                if (git_config_iterator_new(iter, submodules_cfg) == 0) {
                     git_config_entry *entry = nullptr;
                     QStringList keysToDelete;
                     QString prefix1 = QStringLiteral("submodule.%1.").arg(subName).toLower();
@@ -2462,7 +2485,6 @@ void QGit::removeSubmodule(const QString &name, bool removeWorkingDirectory, boo
                             keysToDelete.append(QString::fromUtf8(entry->name));
                         }
                     }
-                    git_config_iterator_free(iter);
                     for (const QString &k : keysToDelete) {
                         git_config_delete_entry(submodules_cfg, k.toUtf8().constData());
                     }
@@ -2473,13 +2495,12 @@ void QGit::removeSubmodule(const QString &name, bool removeWorkingDirectory, boo
             bool hasRemainingEntries = false;
             GitConfig check_cfg;
             if (git_config_open_ondisk(check_cfg, gitmodulesPath.toUtf8().constData()) == 0) {
-                git_config_iterator *iter = nullptr;
-                if (git_config_iterator_new(&iter, check_cfg) == 0) {
+                GitConfigIterator iter;
+                if (git_config_iterator_new(iter, check_cfg) == 0) {
                     git_config_entry *entry = nullptr;
                     if (git_config_next(&entry, iter) == 0) {
                         hasRemainingEntries = true;
                     }
-                    git_config_iterator_free(iter);
                 }
             }
             if (!hasRemainingEntries) {
@@ -5997,8 +6018,8 @@ void QGit::interactiveRebase(const QString &baseCommitId, const QList<QGitRebase
         // Check if there are unstaged/staged tracked modifications
         git_status_options status_opts = GIT_STATUS_OPTIONS_INIT;
         status_opts.show = GIT_STATUS_SHOW_INDEX_AND_WORKDIR;
-        git_status_list *status_list = nullptr;
-        int status_res = git_status_list_new(&status_list, repo, &status_opts);
+        GitStatusList status_list;
+        int status_res = git_status_list_new(status_list, repo, &status_opts);
         if (status_res == 0) {
             size_t count = git_status_list_entrycount(status_list);
             bool hasDirtyTracked = false;
@@ -6009,7 +6030,6 @@ void QGit::interactiveRebase(const QString &baseCommitId, const QList<QGitRebase
                     break;
                 }
             }
-            git_status_list_free(status_list);
             if (hasDirtyTracked) {
                 throw QGitError(tr("Working directory has unstaged or staged changes. Please commit or stash them before rebasing."));
             }
@@ -6021,8 +6041,8 @@ void QGit::interactiveRebase(const QString &baseCommitId, const QList<QGitRebase
             throw QGitError("resolveToCommitOid (base)", res);
         }
 
-        git_commit *currentHeadCommit = nullptr;
-        res = git_commit_lookup(&currentHeadCommit, repo, &base_oid);
+        GitCommit currentHeadCommit;
+        res = git_commit_lookup(currentHeadCommit, repo, &base_oid);
         if (res) {
             throw QGitError("git_commit_lookup (base)", res);
         }
@@ -6030,14 +6050,12 @@ void QGit::interactiveRebase(const QString &baseCommitId, const QList<QGitRebase
         GitSignature committer;
         res = git_signature_default(committer, repo);
         if (res) {
-            git_commit_free(currentHeadCommit);
             throw QGitError("git_signature_default", res);
         }
 
         GitReference head_ref;
         res = git_repository_head(head_ref, repo);
         if (res) {
-            git_commit_free(currentHeadCommit);
             throw QGitError("git_repository_head", res);
         }
 
@@ -6051,46 +6069,37 @@ void QGit::interactiveRebase(const QString &baseCommitId, const QList<QGitRebase
             git_oid orig_oid;
             res = git_oid_fromstr(&orig_oid, item.commitId.toUtf8().constData());
             if (res) {
-                git_commit_free(currentHeadCommit);
                 throw QGitError("git_oid_fromstr", res);
             }
 
             GitCommit origCommit;
             res = git_commit_lookup(origCommit, repo, &orig_oid);
             if (res) {
-                git_commit_free(currentHeadCommit);
                 throw QGitError("git_commit_lookup (orig)", res);
             }
 
             unsigned int mainline = (git_commit_parentcount(origCommit) > 1) ? 1 : 0;
 
             if (item.action == QGitRebaseAction::Pick || item.action == QGitRebaseAction::Reword) {
-                git_index *cherry_index = nullptr;
-                res = git_cherrypick_commit(&cherry_index, repo, origCommit.value, currentHeadCommit, mainline, nullptr);
+                GitIndex cherry_index;
+                res = git_cherrypick_commit(cherry_index, repo, origCommit.value, currentHeadCommit, mainline, nullptr);
                 if (res != 0) {
-                    if (cherry_index) git_index_free(cherry_index);
-                    git_commit_free(currentHeadCommit);
                     throw QGitError(QString("git_cherrypick_commit failed on %1: %2").arg(item.shortHash, item.summary), res);
                 }
 
                 if (git_index_has_conflicts(cherry_index)) {
-                    git_index_free(cherry_index);
-                    git_commit_free(currentHeadCommit);
                     throw QGitError(tr("Conflict detected when applying commit %1 (%2). Interactive rebase aborted to keep repository safe.").arg(item.shortHash, item.summary));
                 }
 
                 git_oid tree_oid;
                 res = git_index_write_tree_to(&tree_oid, cherry_index, repo);
-                git_index_free(cherry_index);
                 if (res) {
-                    git_commit_free(currentHeadCommit);
                     throw QGitError("git_index_write_tree_to", res);
                 }
 
                 GitTree tree;
                 res = git_tree_lookup(tree, repo, &tree_oid);
                 if (res) {
-                    git_commit_free(currentHeadCommit);
                     throw QGitError("git_tree_lookup", res);
                 }
 
@@ -6117,60 +6126,47 @@ void QGit::interactiveRebase(const QString &baseCommitId, const QList<QGitRebase
                     parents
                 );
                 if (res) {
-                    git_commit_free(currentHeadCommit);
                     throw QGitError("git_commit_create", res);
                 }
 
-                git_commit *nextCommit = nullptr;
-                res = git_commit_lookup(&nextCommit, repo, &new_commit_oid);
+                res = git_commit_lookup(currentHeadCommit, repo, &new_commit_oid);
                 if (res) {
-                    git_commit_free(currentHeadCommit);
                     throw QGitError("git_commit_lookup (new)", res);
                 }
-                git_commit_free(currentHeadCommit);
-                currentHeadCommit = nextCommit;
                 hasAppliedCommit = true;
             }
             else if (item.action == QGitRebaseAction::Squash || item.action == QGitRebaseAction::Fixup) {
                 if (!hasAppliedCommit) {
-                    git_commit_free(currentHeadCommit);
                     throw QGitError(tr("Cannot squash or fixup the first commit in the rebase sequence."));
                 }
 
-                git_index *cherry_index = nullptr;
-                res = git_cherrypick_commit(&cherry_index, repo, origCommit.value, currentHeadCommit, mainline, nullptr);
+                GitIndex cherry_index;
+                res = git_cherrypick_commit(cherry_index, repo, origCommit.value, currentHeadCommit, mainline, nullptr);
                 if (res != 0) {
-                    if (cherry_index) git_index_free(cherry_index);
-                    git_commit_free(currentHeadCommit);
                     throw QGitError(QString("git_cherrypick_commit failed on %1: %2").arg(item.shortHash, item.summary), res);
                 }
 
                 if (git_index_has_conflicts(cherry_index)) {
-                    git_index_free(cherry_index);
-                    git_commit_free(currentHeadCommit);
                     throw QGitError(tr("Conflict detected when squashing commit %1 (%2). Interactive rebase aborted.").arg(item.shortHash, item.summary));
                 }
 
                 git_oid tree_oid;
                 res = git_index_write_tree_to(&tree_oid, cherry_index, repo);
-                git_index_free(cherry_index);
                 if (res) {
-                    git_commit_free(currentHeadCommit);
                     throw QGitError("git_index_write_tree_to", res);
                 }
 
                 GitTree tree;
                 res = git_tree_lookup(tree, repo, &tree_oid);
                 if (res) {
-                    git_commit_free(currentHeadCommit);
                     throw QGitError("git_tree_lookup", res);
                 }
 
                 unsigned int pcount = git_commit_parentcount(currentHeadCommit);
-                std::vector<git_commit*> parent_objs(pcount, nullptr);
+                std::vector<GitCommit> parent_objs(pcount);
                 std::vector<const git_commit*> parents(pcount, nullptr);
                 for (unsigned int p = 0; p < pcount; ++p) {
-                    git_commit_parent(&parent_objs[p], currentHeadCommit, p);
+                    git_commit_parent(parent_objs[p], currentHeadCommit, p);
                     parents[p] = parent_objs[p];
                 }
 
@@ -6202,23 +6198,14 @@ void QGit::interactiveRebase(const QString &baseCommitId, const QList<QGitRebase
                     parents.empty() ? nullptr : parents.data()
                 );
 
-                for (auto *p : parent_objs) {
-                    if (p) git_commit_free(p);
-                }
-
                 if (res) {
-                    git_commit_free(currentHeadCommit);
                     throw QGitError("git_commit_create (squash)", res);
                 }
 
-                git_commit *nextCommit = nullptr;
-                res = git_commit_lookup(&nextCommit, repo, &new_commit_oid);
+                res = git_commit_lookup(currentHeadCommit, repo, &new_commit_oid);
                 if (res) {
-                    git_commit_free(currentHeadCommit);
                     throw QGitError("git_commit_lookup (squashed)", res);
                 }
-                git_commit_free(currentHeadCommit);
-                currentHeadCommit = nextCommit;
             }
         }
 
@@ -6227,18 +6214,14 @@ void QGit::interactiveRebase(const QString &baseCommitId, const QList<QGitRebase
             GitReference new_ref;
             res = git_reference_set_target(new_ref, head_ref, final_oid, "rebase interactive: finish");
             if (res) {
-                git_commit_free(currentHeadCommit);
                 throw QGitError("git_reference_set_target", res);
             }
         } else {
             res = git_repository_set_head_detached(repo, final_oid);
             if (res) {
-                git_commit_free(currentHeadCommit);
                 throw QGitError("git_repository_set_head_detached", res);
             }
         }
-
-        git_commit_free(currentHeadCommit);
 
         git_checkout_options checkout_opts = GIT_CHECKOUT_OPTIONS_INIT;
         checkout_opts.checkout_strategy = GIT_CHECKOUT_FORCE;

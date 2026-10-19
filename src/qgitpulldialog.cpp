@@ -64,27 +64,39 @@ void QGitPullDialog::loadBranches()
                 QString shortName = branchName.mid(remotePrefix.length());
                 if (shortName == QStringLiteral("HEAD")) continue;
 
-                QStandardItem *item = new QStandardItem(shortName);
                 if (shortName == currentLocalBranch)
                 {
-                    auto font = item->font();
-                    font.setBold(true);
-                    item->setFont(font);
                     defaultBranch = shortName;
                 }
+
                 if (branch_comboBox_model)
+                {
+                    QStandardItem *item = new QStandardItem(shortName);
+                    if (shortName == currentLocalBranch)
+                    {
+                        auto font = item->font();
+                        font.setBold(true);
+                        item->setFont(font);
+                    }
                     branch_comboBox_model->appendRow(item);
+                }
                 else
+                {
                     ui->branch_comboBox->addItem(shortName);
+                }
             }
         }
         else
         {
-            QStandardItem *item = new QStandardItem(branchName);
             if (branch_comboBox_model)
+            {
+                QStandardItem *item = new QStandardItem(branchName);
                 branch_comboBox_model->appendRow(item);
+            }
             else
+            {
                 ui->branch_comboBox->addItem(branchName);
+            }
         }
     }
 
@@ -93,18 +105,26 @@ void QGitPullDialog::loadBranches()
         auto localBranches = git->branches(GIT_BRANCH_LOCAL);
         for (const auto &branch : std::as_const(localBranches))
         {
-            QStandardItem *item = new QStandardItem(branch.name());
             if (branch.name() == currentLocalBranch)
             {
-                auto font = item->font();
-                font.setBold(true);
-                item->setFont(font);
                 defaultBranch = branch.name();
             }
+
             if (branch_comboBox_model)
+            {
+                QStandardItem *item = new QStandardItem(branch.name());
+                if (branch.name() == currentLocalBranch)
+                {
+                    auto font = item->font();
+                    font.setBold(true);
+                    item->setFont(font);
+                }
                 branch_comboBox_model->appendRow(item);
+            }
             else
+            {
                 ui->branch_comboBox->addItem(branch.name());
+            }
         }
     }
 
