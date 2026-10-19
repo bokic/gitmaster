@@ -4,8 +4,8 @@ cmake_minimum_required(VERSION 3.16)
 #add_compile_options(-fsanitize=address)
 #add_link_options(-fsanitize=address)
 
-SET(GITMASTER_VERSION_TAG CACHE STRING "")
-SET(GITMASTER_VERSION_REVISION CACHE STRING "0")
+set(GITMASTER_VERSION_TAG "" CACHE STRING "GitMaster version tag")
+set(GITMASTER_VERSION_REVISION "0" CACHE STRING "GitMaster revision count")
 
 if(NOT GITMASTER_VERSION_TAG)
     find_package(Git QUIET)
@@ -219,7 +219,10 @@ endif()
 
 if (CMAKE_BUILD_TYPE STREQUAL "Release")
     target_precompile_headers(gitmaster PRIVATE
-        ${PROJECT_HEADERS}
+        <QtCore>
+        <QtGui>
+        <QtWidgets>
+        <git2.h>
     )
 endif()
 
@@ -286,7 +289,7 @@ add_custom_command(TARGET gitmaster POST_BUILD
 endif()
 
 set_target_properties(gitmaster PROPERTIES
-    MACOSX_BUNDLE_GUI_IDENTIFIER my.example.com
+    MACOSX_BUNDLE_GUI_IDENTIFIER io.github.bokic.gitmaster
     MACOSX_BUNDLE_BUNDLE_VERSION ${PROJECT_VERSION}
     MACOSX_BUNDLE_SHORT_VERSION_STRING ${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}
     MACOSX_BUNDLE TRUE
