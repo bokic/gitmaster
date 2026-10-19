@@ -52,7 +52,11 @@ QVariant QExtTextBrowser::loadResource(int type, const QUrl &name)
         }
         else
         {
-            m_nam.get(QNetworkRequest(name));
+            if (!m_inFlightUrls.contains(name))
+            {
+                m_inFlightUrls.insert(name);
+                m_nam.get(QNetworkRequest(name));
+            }
         }
     }
 
@@ -61,23 +65,33 @@ QVariant QExtTextBrowser::loadResource(int type, const QUrl &name)
 
 void QExtTextBrowser::imgDownloaded(QNetworkReply *reply)
 {
-    QByteArray ba = reply->readAll();
+    if (!reply) return;
 
-    if (!ba.isEmpty())
+    QUrl url = reply->request().url();
+    m_inFlightUrls.remove(url);
+
+    if (reply->error() == QNetworkReply::NoError)
     {
-        QByteArray urlHash = QCryptographicHash::hash(reply->request().url().url().toUtf8(), QCryptographicHash::Sha1).toHex();
-        QString filename = m_imgPath + "/" + urlHash;
+        QByteArray ba = reply->readAll();
 
-        QFile file(filename);
-        if (file.open(QIODevice::WriteOnly | QIODevice::Truncate) == true)
-            file.write(ba);
+        if (!ba.isEmpty())
+        {
+            QByteArray urlHash = QCryptographicHash::hash(url.url().toUtf8(), QCryptographicHash::Sha1).toHex();
+            QString filename = m_imgPath + "/" + urlHash;
 
-        QPixmap mPixmap;
-        mPixmap.loadFromData(ba);
-        if (!mPixmap.isNull()) {
-            document()->addResource(QTextDocument::ImageResource, reply->request().url(), mPixmap);
-            document()->markContentsDirty(0, document()->characterCount());
-            viewport()->update();
+            QFile file(filename);
+            if (file.open(QIODevice::WriteOnly | QIODevice::Truncate) == true)
+                file.write(ba);
+
+            QPixmap mPixmap;
+            mPixmap.loadFromData(ba);
+            if (!mPixmap.isNull()) {
+                document()->addResource(QTextDocument::ImageResource, url, mPixmap);
+                document()->markContentsDirty(0, document()->characterCount());
+                viewport()->update();
+            }
         }
     }
+
+    reply->deleteLater();
 }

@@ -4,11 +4,14 @@
 #include <QTextBrowser>
 #include <QVariant>
 #include <QString>
+#include <QSet>
 #include <QUrl>
 
 
 class QExtTextBrowser : public QTextBrowser
 {
+    Q_OBJECT
+
 public:
     explicit QExtTextBrowser(QWidget* parent = nullptr);
     ~QExtTextBrowser() = default;
@@ -21,4 +24,5 @@ private slots:
 private:    
     QNetworkAccessManager m_nam;
     QString m_imgPath;
+    QSet<QUrl> m_inFlightUrls;
 };
