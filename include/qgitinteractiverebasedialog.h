@@ -56,7 +56,7 @@ private:
     static QString actionToString(QGitRebaseAction action);
     static QString actionToolTip(QGitRebaseAction action);
 
-    Ui::QGitInteractiveRebaseDialog *ui;
+    Ui::QGitInteractiveRebaseDialog *ui = nullptr;
     QGit *m_git = nullptr;
     QString m_baseCommitId;
     QString m_branchName;

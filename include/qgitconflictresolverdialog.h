@@ -32,7 +32,7 @@ private:
     void scrollToConflict(int index);
     void resolveConflictBlock(int index, bool useOurs);
 
-    Ui::QGitConflictResolverDialog *ui;
-    QGit *m_git;
+    Ui::QGitConflictResolverDialog *ui = nullptr;
+    QGit *m_git = nullptr;
     QString m_filePath;
 };

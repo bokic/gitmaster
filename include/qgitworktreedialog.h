@@ -31,6 +31,6 @@ private slots:
 private:
     void validate();
 
-    Ui::QGitWorktreeDialog *ui;
+    Ui::QGitWorktreeDialog *ui = nullptr;
     QGit m_git;
 };

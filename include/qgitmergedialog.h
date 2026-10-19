@@ -41,7 +41,7 @@ private:
     void populateBranches();
     void populateLogTable();
 
-    Ui::QGitMergeDialog *ui;
+    Ui::QGitMergeDialog *ui = nullptr;
     QDir m_repoPath;
     QGit m_git;
     QList<QGitBranch> m_allBranches;

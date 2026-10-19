@@ -30,7 +30,7 @@ private:
     void loadSettings();
     void populateTable();
 
-    Ui::QGitSettingsDialog *ui;
-    QGit *m_git;
+    Ui::QGitSettingsDialog *ui = nullptr;
+    QGit *m_git = nullptr;
     QMap<QString, QString> m_allConfigs;
 };

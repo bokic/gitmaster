@@ -43,7 +43,7 @@ private slots:
 private:
     void checkForNewBranch();
 
-    Ui::QGitBranchDialog *ui;
+    Ui::QGitBranchDialog *ui = nullptr;
     QList<QGitBranch> m_currentBranches;
     QGit m_git;
     QTimer *m_commitValidationTimer = nullptr;

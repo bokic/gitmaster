@@ -234,7 +234,7 @@ private:
     Ui::QGitRepository *ui = nullptr;
     QNetworkAccessManager m_networkManager;
     QString m_path;
-    bool m_allCommitsLoaded;
+    bool m_allCommitsLoaded = false;
     QGitCommit m_stagedDiff;
     QGitCommit m_unstagedDiff;
     QGitCommit m_commitDiff;
@@ -265,7 +265,7 @@ private:
     int m_logCommitsOffset = 0;
     QString m_lastRemote;
     QStringList m_lastBranches;
-    bool m_lastTags;
+    bool m_lastTags = false;
     QGit *m_git = nullptr;
     bool m_refreshing = false;
     bool m_hasRemotes = false;

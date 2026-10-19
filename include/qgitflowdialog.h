@@ -34,7 +34,7 @@ private:
     QString detectMainBranch() const;
     bool ensureDevelopBranch();
 
-    Ui::QGitFlowDialog *ui;
-    QGitRepository *m_repo;
+    Ui::QGitFlowDialog *ui = nullptr;
+    QGitRepository *m_repo = nullptr;
     QGit m_git;
 };

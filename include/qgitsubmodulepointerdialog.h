@@ -43,7 +43,7 @@ private:
     void populateTagsTable();
     void populateCommitsTable();
 
-    Ui::QGitSubmodulePointerDialog *ui;
+    Ui::QGitSubmodulePointerDialog *ui = nullptr;
     QDir m_repoPath;
     QGitSubmodule m_submodule;
     QList<QGitBranch> m_branches;

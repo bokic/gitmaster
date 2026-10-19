@@ -26,7 +26,7 @@ public:
     bool force() const;
 
 private:
-    Ui::QGitRemoveSubmoduleDialog *ui;
+    Ui::QGitRemoveSubmoduleDialog *ui = nullptr;
     QDir m_repoPath;
     QGitSubmodule m_submodule;
 };

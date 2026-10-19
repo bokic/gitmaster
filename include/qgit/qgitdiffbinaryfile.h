@@ -22,7 +22,7 @@ public:
     size_t inflatedLen() const;
 
 private:
-    git_diff_binary_t m_type;
+    git_diff_binary_t m_type = GIT_DIFF_BINARY_NONE;
     QByteArray m_data;
-    size_t m_inflatedLen;
+    size_t m_inflatedLen = 0;
 };
