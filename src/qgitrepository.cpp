@@ -474,7 +474,12 @@ void QGitRepository::merge()
                 emit repositoryRebase(branchName);
             } else {
                 emit statusMessage(tr("Merging branch %1...").arg(branchName));
-                emit repositoryMerge(branchName);
+                emit repositoryMerge(branchName,
+                                     dlg.commitImmediately(),
+                                     dlg.includeMessages(),
+                                     dlg.createCommitEvenIfFastForward(),
+                                     dlg.detectRenames(),
+                                     dlg.renameSimilarity());
             }
         }
     }
@@ -2070,8 +2075,8 @@ void QGitRepository::on_branchesTreeView_customContextMenuRequested(const QPoint
                                                  tr("Enter local branch name:"), QLineEdit::Normal, 
                                                   localName, &ok);
             if (ok && !name.isEmpty()) {
-                emit statusMessage(tr("Checking out %1...").arg(fullName));
-                emit repositoryCheckoutBranch(fullName);
+                emit statusMessage(tr("Checking out %1 as %2...").arg(fullName, name));
+                emit repositoryCreateLocalBranch(name, fullName, true, false);
             }
         }
         else if (selectedAction == exportArchiveAction)

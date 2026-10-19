@@ -38,5 +38,4 @@ private Q_SLOTS:
 private:
     QIcon m_iconChecked;
     QIcon m_iconUnchecked;
-    bool m_showIcons = false;
 };

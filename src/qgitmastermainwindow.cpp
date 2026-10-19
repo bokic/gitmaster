@@ -762,7 +762,7 @@ void QGitMasterMainWindow::on_actionSettings_triggered()
             widget->refreshData();
         }
     } else {
-        QGit tempGit(this);
+        QGit tempGit(QDir(QString()), this);
         QGitSettingsDialog dlg(&tempGit, this);
         dlg.exec();
     }

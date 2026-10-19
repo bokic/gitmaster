@@ -24,5 +24,4 @@ private:
     QIcon m_iconNoStaging;
     QIcon m_iconSplitViewStaging;
     int m_currentView = 0;
-    bool m_showIcons = false;
 };

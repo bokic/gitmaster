@@ -84,11 +84,13 @@ void QGitBranchTreeWidget::populateBranchesAndTags(
                         }
 
                         QTreeWidgetItem *child = new QTreeWidgetItem(QStringList() << displayName);
-                        child->setData(0, Qt::UserRole, branch.hash());
                         if (depth == branchItems.count() - 1) {
+                            child->setData(0, Qt::UserRole, branch.hash());
                             child->setData(0, Qt::UserRole + 1, branchItems.mid(2).join('/'));
                             child->setData(0, Qt::UserRole + 2, "LocalBranch");
                             child->setFlags(child->flags() | Qt::ItemIsEditable);
+                        } else {
+                            child->setData(0, Qt::UserRole + 2, "Folder");
                         }
 
                         bool isCurrent = false;
@@ -138,7 +140,6 @@ void QGitBranchTreeWidget::populateBranchesAndTags(
                     if (!found)
                     {
                         QTreeWidgetItem *child = new QTreeWidgetItem(QStringList() << name);
-                        child->setData(0, Qt::UserRole, branch.hash());
                         if (depth == 2)
                         {
                             child->setData(0, Qt::UserRole + 1, name);
@@ -149,8 +150,13 @@ void QGitBranchTreeWidget::populateBranchesAndTags(
                         {
                             child->setIcon(0, m_iconRemoteBranch);
                             if (depth == branchItems.count() - 1) {
+                                child->setData(0, Qt::UserRole, branch.hash());
                                 child->setData(0, Qt::UserRole + 1, branchItems.mid(2).join('/'));
                                 child->setData(0, Qt::UserRole + 2, "RemoteBranch");
+                            }
+                            else
+                            {
+                                child->setData(0, Qt::UserRole + 2, "Folder");
                             }
                         }
 

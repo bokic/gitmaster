@@ -1549,6 +1549,11 @@ int QGit::createLocalRepository(const QDir &path)
 
 bool QGit::isGitRepository(const QDir &path)
 {
+    if (path.path().isEmpty())
+    {
+        return false;
+    }
+
     GitRepository repo;
     int res = git_repository_open(repo, path.absolutePath().toUtf8().constData());
     if (res)
@@ -1612,6 +1617,11 @@ void QGit::createLocalBranchInternal(const QString &name, const QString &commit_
     if(res)
     {
         throw QGitError("git_branch_create", res);
+    }
+
+    if (!commit_id.isEmpty())
+    {
+        git_branch_set_upstream(branch, commit_id.toUtf8().constData());
     }
 
     if (checkout)
@@ -1935,18 +1945,31 @@ void QGit::reset(const QString &commitId, git_reset_t type)
     emit resetReply(error);
 }
 
-QString QGit::configString(const QString &key) const
+QString QGit::configString(const QString &key, bool global) const
 {
-    GitRepository repo;
     GitConfig cfg;
-    int res = git_repository_open(repo, path().absolutePath().toUtf8().constData());
-    if (res == 0)
+    int res;
+    if (global)
     {
-        res = git_repository_config(cfg, repo);
+        GitConfig cascade_cfg;
+        res = git_config_open_default(cascade_cfg);
+        if (res == 0)
+        {
+            res = git_config_open_global(cfg, cascade_cfg);
+        }
     }
     else
     {
-        res = git_config_open_default(cfg);
+        GitRepository repo;
+        res = git_repository_open(repo, path().absolutePath().toUtf8().constData());
+        if (res == 0)
+        {
+            res = git_repository_config(cfg, repo);
+        }
+        else
+        {
+            res = git_config_open_default(cfg);
+        }
     }
 
     if (res)
@@ -2046,19 +2069,32 @@ static int configForeachCallback(const git_config_entry *entry, void *payload)
     }
 }
 
-QMap<QString, QString> QGit::configEntries() const
+QMap<QString, QString> QGit::configEntries(bool global) const
 {
     QMap<QString, QString> entries;
-    GitRepository repo;
     GitConfig cfg;
-    int res = git_repository_open(repo, path().absolutePath().toUtf8().constData());
-    if (res == 0)
+    int res;
+    if (global)
     {
-        res = git_repository_config(cfg, repo);
+        GitConfig cascade_cfg;
+        res = git_config_open_default(cascade_cfg);
+        if (res == 0)
+        {
+            res = git_config_open_global(cfg, cascade_cfg);
+        }
     }
     else
     {
-        res = git_config_open_default(cfg);
+        GitRepository repo;
+        res = git_repository_open(repo, path().absolutePath().toUtf8().constData());
+        if (res == 0)
+        {
+            res = git_repository_config(cfg, repo);
+        }
+        else
+        {
+            res = git_config_open_default(cfg);
+        }
     }
 
     if (res == 0)
@@ -3129,7 +3165,7 @@ void QGit::createTagInternal(const QString &name, const QString &targetObjectId,
     if (res) throw QGitError("git_object_lookup", res);
 
     git_oid tag_oid;
-    if (message.isEmpty()) {
+    if (message.isNull()) {
         // Create a lightweight tag
         res = git_tag_create_lightweight(&tag_oid, repo, name.toUtf8().constData(), target_obj, force ? 1 : 0);
         if (res) throw QGitError("git_tag_create_lightweight", res);
@@ -3811,8 +3847,6 @@ void QGit::setUpstream(const QString &branchName, const QString &upstreamBranchN
 
 void QGit::deleteBranchesInternal(const QList<QGitBranch> &branches, bool force)
 {
-    Q_UNUSED(force);
-
     GitRepository repo;
     int res = git_repository_open(repo, path().absolutePath().toUtf8().constData());
     if(res)
@@ -3829,6 +3863,50 @@ void QGit::deleteBranchesInternal(const QList<QGitBranch> &branches, bool force)
             if (res)
             {
                 throw QGitError("git_branch_lookup", res);
+            }
+
+            if (!force)
+            {
+                bool merged = false;
+                git_oid branch_oid;
+                res = git_reference_name_to_id(&branch_oid, repo, git_reference_name(branch_ref));
+                if (res != 0)
+                {
+                    const git_oid *target = git_reference_target(branch_ref);
+                    if (target) branch_oid = *target;
+                }
+
+                git_oid head_oid;
+                if (git_reference_name_to_id(&head_oid, repo, "HEAD") == 0)
+                {
+                    if (git_oid_equal(&head_oid, &branch_oid) ||
+                        git_graph_descendant_of(repo, &head_oid, &branch_oid) == 1)
+                    {
+                        merged = true;
+                    }
+                }
+
+                if (!merged)
+                {
+                    GitReference upstream_ref;
+                    if (git_branch_upstream(upstream_ref, branch_ref) == 0 && upstream_ref.value)
+                    {
+                        git_oid upstream_oid;
+                        if (git_reference_name_to_id(&upstream_oid, repo, git_reference_name(upstream_ref)) == 0)
+                        {
+                            if (git_oid_equal(&upstream_oid, &branch_oid) ||
+                                git_graph_descendant_of(repo, &upstream_oid, &branch_oid) == 1)
+                            {
+                                merged = true;
+                            }
+                        }
+                    }
+                }
+
+                if (!merged)
+                {
+                    throw QGitError(tr("The branch '%1' is not fully merged.\nIf you are sure you want to delete it, enable 'Force Delete'.").arg(branch.name()));
+                }
             }
 
             res = git_branch_delete(branch_ref);
@@ -6526,113 +6604,153 @@ void QGit::skipRebase()
     emit skipRebaseReply(error);
 }
 
-void QGit::mergeInternal(const QString &branchName)
+void QGit::mergeInternal(const QString &branchName,
+                         bool commitImmediately,
+                         bool includeMessages,
+                         bool createCommitEvenIfFastForward,
+                         bool detectRenames,
+                         int renameSimilarity)
 {
     GitRepository repo;
     int res = git_repository_open(repo, path().absolutePath().toUtf8().constData());
     if(res) throw QGitError("git_repository_open", res);
 
-        GitAnnotatedCommit annotated;
-        res = git_annotated_commit_from_revspec(annotated, repo, branchName.toUtf8().constData());
-        if(res) throw QGitError("git_annotated_commit_from_revspec", res);
+    GitAnnotatedCommit annotated;
+    res = git_annotated_commit_from_revspec(annotated, repo, branchName.toUtf8().constData());
+    if(res) throw QGitError("git_annotated_commit_from_revspec", res);
 
-        git_merge_analysis_t analysis;
-        git_merge_preference_t preference;
-        const git_annotated_commit *sources[] = { annotated.value };
+    git_merge_analysis_t analysis;
+    git_merge_preference_t preference;
+    const git_annotated_commit *sources[] = { annotated.value };
 
-        res = git_merge_analysis(&analysis, &preference, repo, sources, 1);
-        if(res) throw QGitError("git_merge_analysis", res);
+    res = git_merge_analysis(&analysis, &preference, repo, sources, 1);
+    if(res) throw QGitError("git_merge_analysis", res);
 
-        if (analysis & GIT_MERGE_ANALYSIS_UP_TO_DATE) {
-            // Already up to date
-        } else if (analysis & GIT_MERGE_ANALYSIS_FASTFORWARD) {
-            // Fast-forward
-            GitObject target_obj;
-            res = git_object_lookup(target_obj, repo, git_annotated_commit_id(annotated), GIT_OBJECT_COMMIT);
-            if(res) throw QGitError("git_object_lookup", res);
+    if (analysis & GIT_MERGE_ANALYSIS_UP_TO_DATE) {
+        // Already up to date
+    } else if ((analysis & GIT_MERGE_ANALYSIS_FASTFORWARD) && !createCommitEvenIfFastForward) {
+        // Fast-forward
+        GitObject target_obj;
+        res = git_object_lookup(target_obj, repo, git_annotated_commit_id(annotated), GIT_OBJECT_COMMIT);
+        if(res) throw QGitError("git_object_lookup", res);
 
-            git_checkout_options opts = GIT_CHECKOUT_OPTIONS_INIT;
-            opts.checkout_strategy = GIT_CHECKOUT_SAFE;
-            res = git_checkout_tree(repo, target_obj, &opts);
-            if(res) throw QGitError("git_checkout_tree", res);
+        git_checkout_options opts = GIT_CHECKOUT_OPTIONS_INIT;
+        opts.checkout_strategy = GIT_CHECKOUT_SAFE;
+        res = git_checkout_tree(repo, target_obj, &opts);
+        if(res) throw QGitError("git_checkout_tree", res);
 
-            GitReference head_ref;
-            res = git_repository_head(head_ref, repo);
-            if(res) throw QGitError("git_repository_head", res);
+        GitReference head_ref;
+        res = git_repository_head(head_ref, repo);
+        if(res) throw QGitError("git_repository_head", res);
 
-            GitReference new_ref;
-            res = git_reference_set_target(new_ref, head_ref, git_object_id(target_obj), "Fast-forward merge");
-            if(res) throw QGitError("git_reference_set_target", res);
+        GitReference new_ref;
+        res = git_reference_set_target(new_ref, head_ref, git_object_id(target_obj), "Fast-forward merge");
+        if(res) throw QGitError("git_reference_set_target", res);
 
-        } else if (analysis & GIT_MERGE_ANALYSIS_NORMAL) {
-            // Normal merge
-            git_merge_options merge_opts = GIT_MERGE_OPTIONS_INIT;
-            git_checkout_options checkout_opts = makeCheckoutOptions(GIT_CHECKOUT_SAFE);
-
-            res = git_merge(repo, sources, 1, &merge_opts, &checkout_opts);
-            if(res) throw QGitError("git_merge", res);
-
-            // Check for conflicts
-            GitIndex index;
-            res = git_repository_index(index, repo);
-            if(res) throw QGitError("git_repository_index", res);
-
-            if (git_index_has_conflicts(index)) {
-                throw QGitError(tr("Merge conflicts detected. Please resolve them manually."));
-            }
-
-            // Create merge commit
-            git_oid tree_id;
-            res = git_index_write_tree(&tree_id, index);
-            if (res) throw QGitError("git_index_write_tree", res);
-
-            GitTree tree;
-            res = git_tree_lookup(tree, repo, &tree_id);
-            if (res) throw QGitError("git_tree_lookup", res);
-
-            GitSignature sig;
-            res = git_signature_default(sig, repo);
-            if (res) throw QGitError("git_signature_default", res);
-
-            GitReference head_ref;
-            res = git_repository_head(head_ref, repo);
-            if (res) throw QGitError("git_repository_head", res);
-
-            GitCommit parent1; // HEAD
-            res = git_commit_lookup(parent1, repo, git_reference_target(head_ref));
-            if (res) throw QGitError("git_commit_lookup (HEAD)", res);
-
-            GitCommit parent2; // MERGED branch
-            res = git_commit_lookup(parent2, repo, git_annotated_commit_id(annotated));
-            if (res) throw QGitError("git_commit_lookup (MERGE)", res);
-
-            QString msg = QString("Merge branch '%1'").arg(branchName);
-
-            git_oid new_commit_id;
-            const git_commit *parents[] = { parent1.value, parent2.value };
-            res = git_commit_create(
-                &new_commit_id,
-                repo,
-                "HEAD",
-                sig,
-                sig,
-                nullptr,
-                msg.toUtf8().constData(),
-                tree,
-                2,
-                parents
-            );
-            if (res) throw QGitError("git_commit_create", res);
-
-            git_repository_state_cleanup(repo);
+    } else if ((analysis & GIT_MERGE_ANALYSIS_NORMAL) || ((analysis & GIT_MERGE_ANALYSIS_FASTFORWARD) && createCommitEvenIfFastForward)) {
+        // Normal merge (or fast-forward with createCommitEvenIfFastForward / --no-ff)
+        git_merge_options merge_opts = GIT_MERGE_OPTIONS_INIT;
+        if (detectRenames) {
+            merge_opts.flags |= GIT_MERGE_FIND_RENAMES;
+            merge_opts.rename_threshold = static_cast<unsigned int>(renameSimilarity);
+        } else {
+            merge_opts.flags &= ~GIT_MERGE_FIND_RENAMES;
         }
+        git_checkout_options checkout_opts = makeCheckoutOptions(GIT_CHECKOUT_SAFE);
+
+        res = git_merge(repo, sources, 1, &merge_opts, &checkout_opts);
+        if(res) throw QGitError("git_merge", res);
+
+        // Check for conflicts
+        GitIndex index;
+        res = git_repository_index(index, repo);
+        if(res) throw QGitError("git_repository_index", res);
+
+        if (git_index_has_conflicts(index)) {
+            throw QGitError(tr("Merge conflicts detected. Please resolve them manually."));
+        }
+
+        if (!commitImmediately) {
+            return;
+        }
+
+        // Create merge commit
+        git_oid tree_id;
+        res = git_index_write_tree(&tree_id, index);
+        if (res) throw QGitError("git_index_write_tree", res);
+
+        GitTree tree;
+        res = git_tree_lookup(tree, repo, &tree_id);
+        if (res) throw QGitError("git_tree_lookup", res);
+
+        GitSignature sig;
+        res = git_signature_default(sig, repo);
+        if (res) throw QGitError("git_signature_default", res);
+
+        GitReference head_ref;
+        res = git_repository_head(head_ref, repo);
+        if (res) throw QGitError("git_repository_head", res);
+
+        GitCommit parent1; // HEAD
+        res = git_commit_lookup(parent1, repo, git_reference_target(head_ref));
+        if (res) throw QGitError("git_commit_lookup (HEAD)", res);
+
+        GitCommit parent2; // MERGED branch
+        res = git_commit_lookup(parent2, repo, git_annotated_commit_id(annotated));
+        if (res) throw QGitError("git_commit_lookup (MERGE)", res);
+
+        QString msg = QString("Merge branch '%1'").arg(branchName);
+        if (includeMessages) {
+            GitRevWalk walker;
+            if (git_revwalk_new(walker, repo) == 0) {
+                git_revwalk_sorting(walker, GIT_SORT_TOPOLOGICAL);
+                git_revwalk_push(walker, git_annotated_commit_id(annotated));
+                git_revwalk_hide(walker, git_reference_target(head_ref));
+                git_oid oid;
+                QStringList commitSummaries;
+                while (git_revwalk_next(&oid, walker) == 0) {
+                    GitCommit c;
+                    if (git_commit_lookup(c, repo, &oid) == 0) {
+                        const char *s = git_commit_summary(c);
+                        if (s) commitSummaries << QString("  * %1").arg(QString::fromUtf8(s));
+                    }
+                }
+                if (!commitSummaries.isEmpty()) {
+                    msg += "\n\n" + commitSummaries.join("\n");
+                }
+            }
+        }
+
+        git_oid new_commit_id;
+        const git_commit *parents[] = { parent1.value, parent2.value };
+        res = git_commit_create(
+            &new_commit_id,
+            repo,
+            "HEAD",
+            sig,
+            sig,
+            nullptr,
+            msg.toUtf8().constData(),
+            tree,
+            2,
+            parents
+        );
+        if (res) throw QGitError("git_commit_create", res);
+
+        git_repository_state_cleanup(repo);
+    }
 }
 
-void QGit::merge(const QString &branchName)
+void QGit::merge(const QString &branchName,
+                 bool commitImmediately,
+                 bool includeMessages,
+                 bool createCommitEvenIfFastForward,
+                 bool detectRenames,
+                 int renameSimilarity)
 {
     QGitError error;
     try {
-        mergeInternal(branchName);
+        mergeInternal(branchName, commitImmediately, includeMessages, createCommitEvenIfFastForward, detectRenames, renameSimilarity);
     } catch(const QGitError &ex) {
         error = ex;
     }
@@ -7399,6 +7517,62 @@ QList<QGitBlameHunk> QGit::blameFile(const QString &filePath, const QString &com
         qWarning("QGit::blameFile: Unknown error during file blame calculation.");
     }
     return hunks;
+}
+
+QByteArray QGit::fileContent(const QString &filePath, const QString &commitId) const
+{
+    QByteArray result;
+    try {
+        GitRepository repo;
+        int res = git_repository_open(repo, path().absolutePath().toUtf8().constData());
+        if (res) throw QGitError("git_repository_open", res);
+
+        GitCommit commit;
+        if (!commitId.isEmpty()) {
+            git_oid oid;
+            res = git_oid_fromstr(&oid, commitId.toUtf8().constData());
+            if (res) throw QGitError("git_oid_fromstr", res);
+            res = git_commit_lookup(commit, repo, &oid);
+            if (res) throw QGitError("git_commit_lookup", res);
+        } else {
+            git_oid headOid;
+            res = git_reference_name_to_id(&headOid, repo, "HEAD");
+            if (res == 0) {
+                git_commit_lookup(commit, repo, &headOid);
+            }
+        }
+
+        if (commit.value) {
+            GitTree tree;
+            res = git_commit_tree(tree, commit);
+            if (res == 0) {
+                git_tree_entry *entry = nullptr;
+                res = git_tree_entry_bypath(&entry, tree, filePath.toUtf8().constData());
+                if (res == 0 && entry) {
+                    GitBlob blob;
+                    res = git_blob_lookup(blob, repo, git_tree_entry_id(entry));
+                    git_tree_entry_free(entry);
+                    if (res == 0 && blob.value) {
+                        const char *data = static_cast<const char *>(git_blob_rawcontent(blob));
+                        git_object_size_t size = git_blob_rawsize(blob);
+                        result = QByteArray(data, static_cast<int>(size));
+                        return result;
+                    }
+                }
+            }
+        }
+
+        QFile f(path().absoluteFilePath(filePath));
+        if (f.open(QIODevice::ReadOnly)) {
+            result = f.readAll();
+            f.close();
+        }
+    } catch (const std::exception &ex) {
+        qWarning("QGit::fileContent: %s", ex.what());
+    } catch (...) {
+        qWarning("QGit::fileContent: Unknown error");
+    }
+    return result;
 }
 
 void QGit::setNote(const QString &commitHash, const QString &noteText)

@@ -30,5 +30,4 @@ private:
     QString m_text;
     QIcon m_iconChecked;
     QIcon m_iconUnchecked;
-    bool m_showIcons = false;
 };

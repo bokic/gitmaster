@@ -121,13 +121,14 @@ public:
     QString getNote(const QString &commitHash) const;
     QList<QGitReflogEntry> getReflog(const QString &refName = QStringLiteral("HEAD")) const;
     QList<QGitBlameHunk> blameFile(const QString &filePath, const QString &commitId = QString()) const;
+    QByteArray fileContent(const QString &filePath, const QString &commitId = QString()) const;
     QList<QGitBranch> branches(git_branch_t type) const;
     QList<QGitTag> tags() const;
     bool hasCommitId(const QString &commitId) const;
-    QString configString(const QString &key) const;
+    QString configString(const QString &key, bool global = false) const;
     void setConfigString(const QString &key, const QString &value, bool global = false);
     void deleteConfigEntry(const QString &key, bool global = false);
-    QMap<QString, QString> configEntries() const;
+    QMap<QString, QString> configEntries(bool global = false) const;
     bool hasConflicts() const;
     QList<QString> conflictedFiles() const;
     bool conflictContents(const QString &path, QString &ancestor, QString &ours, QString &theirs) const;
@@ -160,7 +161,12 @@ public:
 
     void createLocalBranchInternal(const QString &name, const QString &commit_id = "", bool checkout = false, bool force = false);
     void checkoutBranchInternal(const QString &name);
-    void mergeInternal(const QString &branchName);
+    void mergeInternal(const QString &branchName,
+                       bool commitImmediately = true,
+                       bool includeMessages = false,
+                       bool createCommitEvenIfFastForward = false,
+                       bool detectRenames = false,
+                       int renameSimilarity = 50);
     void createTagInternal(const QString &name, const QString &targetObjectId, const QString &message, bool force);
     void deleteBranchesInternal(const QList<QGitBranch> &branches, bool force);
     void resetInternal(const QString &commitId, git_reset_t type);
@@ -213,7 +219,12 @@ public slots:
     void renameTag(const QString &oldName, const QString &newName);
     void deleteTag(const QString &name);
     void setUpstream(const QString &branchName, const QString &upstreamBranchName);
-    void merge(const QString &branchName);
+    void merge(const QString &branchName,
+               bool commitImmediately = true,
+               bool includeMessages = false,
+               bool createCommitEvenIfFastForward = false,
+               bool detectRenames = false,
+               int renameSimilarity = 50);
     void rebase(const QString &upstream, const QString &branch = "", const QString &onto = "");
     void interactiveRebase(const QString &baseCommitId, const QList<QGitRebaseTodoItem> &todoList);
     void createTag(const QString &name, const QString &targetObjectId, const QString &message, bool force);

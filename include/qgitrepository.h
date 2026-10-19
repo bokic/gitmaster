@@ -76,7 +76,12 @@ signals:
     void repositoryDiscardFiles(const QStringList &items);
     void repositoryDiscardFileLines(const QString &filename, const QVector<QGitDiffWidgetLine> &lines);
     void deleteBranches(const QList<QGitBranch> &branches, bool force);
-    void repositoryMerge(const QString &branchName);
+    void repositoryMerge(const QString &branchName,
+                         bool commitImmediately = true,
+                         bool includeMessages = false,
+                         bool createCommitEvenIfFastForward = false,
+                         bool detectRenames = false,
+                         int renameSimilarity = 50);
     void repositoryRebase(const QString &upstream, const QString &branch = "", const QString &onto = "");
     void repositoryInteractiveRebase(const QString &baseCommitId, const QList<QGitRebaseTodoItem> &todoList);
     void repositoryRenameBranch(const QString &oldName, const QString &newName);

@@ -69,6 +69,8 @@ QGitSubmodulePointerDialog::QGitSubmodulePointerDialog(
     populateBranchesTable();
     populateTagsTable();
     populateCommitsTable();
+
+    connect(ui->lineEdit_trackedBranch, &QLineEdit::textChanged, this, &QGitSubmodulePointerDialog::updateButtons);
     updateButtons();
 }
 
@@ -164,7 +166,7 @@ void QGitSubmodulePointerDialog::loadSubmoduleData()
                         }
                     }
 
-                    m_commits.append(QGitCommit(hash, parents, dateTime, author, committer, summary, desc));
+                    m_commits.append(QGitCommit(hash, parents, dateTime, author, committer, fullMsg, desc));
                     git_commit_free(commit);
                     count++;
                 }
@@ -352,11 +354,11 @@ void QGitSubmodulePointerDialog::on_checkBox_updateTrackedBranch_toggled(bool ch
 void QGitSubmodulePointerDialog::updateButtons()
 {
     bool hasTarget = !selectedTarget().isEmpty();
-    bool hasTrackedBranchChange = shouldUpdateTrackedBranch();
+    bool validTrackedBranch = !shouldUpdateTrackedBranch() || !trackedBranch().isEmpty();
 
     QPushButton *okBtn = ui->buttonBox->button(QDialogButtonBox::Ok);
     if (okBtn) {
-        okBtn->setEnabled(hasTarget || hasTrackedBranchChange);
+        okBtn->setEnabled(hasTarget && validTrackedBranch);
     }
 }
 

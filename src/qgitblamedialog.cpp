@@ -213,20 +213,28 @@ void QGitBlameDialog::showBlameForFile(const QString &relPath)
     ui->label_status->setText(tr("Loading blame for %1...").arg(relPath));
     QApplication::processEvents();
 
-    // Read the actual file lines
-    QString absPath = m_gitInstance.path().absoluteFilePath(relPath);
-    QFile f(absPath);
-    if (!f.open(QIODevice::ReadOnly | QIODevice::Text)) {
-        ui->label_status->setText(tr("Cannot open file: %1").arg(relPath));
-        return;
-    }
+    // Read the file lines (from commit blob if pinned to a commit, otherwise from working tree)
     QStringList lines;
-    QTextStream ts(&f);
-    while (!ts.atEnd()) lines << ts.readLine();
-    f.close();
+    if (!m_pinnedCommitId.isEmpty()) {
+        QByteArray content = m_gitInstance.fileContent(relPath, m_pinnedCommitId);
+        QTextStream ts(content);
+        while (!ts.atEnd()) lines << ts.readLine();
+    } else {
+        QString absPath = m_gitInstance.path().absoluteFilePath(relPath);
+        QFile f(absPath);
+        if (f.open(QIODevice::ReadOnly | QIODevice::Text)) {
+            QTextStream ts(&f);
+            while (!ts.atEnd()) lines << ts.readLine();
+            f.close();
+        } else {
+            QByteArray content = m_gitInstance.fileContent(relPath);
+            QTextStream ts(content);
+            while (!ts.atEnd()) lines << ts.readLine();
+        }
+    }
 
     if (lines.isEmpty()) {
-        ui->label_status->setText(tr("File is empty."));
+        ui->label_status->setText(tr("File is empty or cannot be opened: %1").arg(relPath));
         return;
     }
 

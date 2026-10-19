@@ -432,6 +432,7 @@ QVector<QGitDiffWidgetLine> QGitDiffWidget::linesAt(int fileIdx, int hunkIdx, in
     if (fileIdx < 0 || fileIdx >= m_private->files.count()) return lines;
     const auto &file = m_private->files.at(fileIdx);
     fileName = file.new_file.path();
+    if (fileName.isEmpty()) fileName = file.old_file.path();
 
     if (hunkIdx < 0 || hunkIdx >= file.hunks.count()) return lines;
     const auto &hunk = file.hunks.at(hunkIdx);
@@ -790,7 +791,8 @@ void QGitDiffWidget::paintEvent(QPaintEvent *event)
             }
 
             painter.setPen(Qt::black);
-            painter.drawText(file.rect.left() + 10, file.rect.top() + 20, file.new_file.path());
+            const QString &displayPath = file.new_file.path().isEmpty() ? file.old_file.path() : file.new_file.path();
+            painter.drawText(file.rect.left() + 10, file.rect.top() + 20, displayPath);
 
             hunkIndex = 0;
             for(const auto &hunk: file.hunks)
@@ -1175,6 +1177,12 @@ void QGitDiffWidget::updatePosition()
                                         l_hoverLine = sRow.oldLineIdx;
                                         l_hoverSide = 0;
                                     }
+                                    else
+                                    {
+                                        l_hoverFile = -1;
+                                        l_hoverHunk = -1;
+                                        l_hoverLine = -1;
+                                    }
                                 }
                                 else if (sRow.rightRect.contains(point) && sRow.newLineIdx >= 0)
                                 {
@@ -1184,6 +1192,18 @@ void QGitDiffWidget::updatePosition()
                                         l_hoverLine = sRow.newLineIdx;
                                         l_hoverSide = 1;
                                     }
+                                    else
+                                    {
+                                        l_hoverFile = -1;
+                                        l_hoverHunk = -1;
+                                        l_hoverLine = -1;
+                                    }
+                                }
+                                else
+                                {
+                                    l_hoverFile = -1;
+                                    l_hoverHunk = -1;
+                                    l_hoverLine = -1;
                                 }
 
                                 break;

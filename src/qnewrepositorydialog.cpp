@@ -13,6 +13,7 @@ QNewRepositoryDialog::QNewRepositoryDialog(QWidget *parent)
 {
     ui->setupUi(this);
 
+    connect(ui->tabWidget, &QTabWidget::currentChanged, this, &QNewRepositoryDialog::updateWidgets);
     connect(ui->lineEditCloneRepositorySourceURL, &QLineEdit::textChanged, this,  &QNewRepositoryDialog::updateWidgets);
     connect(ui->lineEditCloneRepositoryDestinationPath, &QLineEdit::textChanged, this,  &QNewRepositoryDialog::updateWidgets);
     connect(ui->lineEditCloneRepositoryBookmark, &QLineEdit::textChanged, this,  &QNewRepositoryDialog::updateWidgets);
@@ -150,6 +151,11 @@ void QNewRepositoryDialog::updateWidgets()
                 }
             }
         }
+        else
+        {
+            ui->lineEditCloneRepositoryBookmark->setStyleSheet("");
+            ui->lineEditCloneRepositoryBookmark->setToolTip("");
+        }
         break;
     case QAddWorkingCopy:
         if (
@@ -210,6 +216,11 @@ void QNewRepositoryDialog::updateWidgets()
                 }
             }
         }
+        else
+        {
+            ui->lineEditAddWorkingCopyBookmark->setStyleSheet("");
+            ui->lineEditAddWorkingCopyBookmark->setToolTip("");
+        }
         break;
     case QCreateNewRepository:
         if (
@@ -269,6 +280,11 @@ void QNewRepositoryDialog::updateWidgets()
                     }
                 }
             }
+        }
+        else
+        {
+            ui->lineEditCreateNewRepositoryBookmark->setStyleSheet("");
+            ui->lineEditCreateNewRepositoryBookmark->setToolTip("");
         }
 
         break;

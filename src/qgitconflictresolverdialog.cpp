@@ -88,6 +88,20 @@ void QGitConflictResolverDialog::loadConflictFiles()
     }
 }
 
+namespace {
+int findMarker(const QString &text, const QString &marker, int from = 0)
+{
+    int pos = from;
+    while ((pos = text.indexOf(marker, pos)) != -1) {
+        if (pos == 0 || text[pos - 1] == '\n') {
+            return pos;
+        }
+        pos += marker.length();
+    }
+    return -1;
+}
+}
+
 void QGitConflictResolverDialog::refreshConflictList()
 {
     int currentSelected = ui->listConflicts->currentRow();
@@ -97,7 +111,7 @@ void QGitConflictResolverDialog::refreshConflictList()
 
     int pos = 0;
     int count = 0;
-    while ((pos = text.indexOf("<<<<<<<", pos)) != -1) {
+    while ((pos = findMarker(text, "<<<<<<<", pos)) != -1) {
         count++;
         // Calculate line number
         int line = 1;
@@ -124,7 +138,7 @@ void QGitConflictResolverDialog::scrollToConflict(int index)
     QString text = ui->plainTextEdit_merged->toPlainText();
     int pos = 0;
     for (int i = 0; i <= index; ++i) {
-        pos = text.indexOf("<<<<<<<", pos);
+        pos = findMarker(text, "<<<<<<<", pos);
         if (pos == -1) return;
         if (i < index) pos += 7;
     }
@@ -145,15 +159,15 @@ void QGitConflictResolverDialog::resolveConflictBlock(int index, bool useOurs)
     QString text = ui->plainTextEdit_merged->toPlainText();
     int pos = 0;
     for (int i = 0; i <= index; ++i) {
-        pos = text.indexOf("<<<<<<<", pos);
+        pos = findMarker(text, "<<<<<<<", pos);
         if (pos == -1) return;
         if (i < index) pos += 7;
     }
 
-    int endOurs = text.indexOf("=======", pos);
+    int endOurs = findMarker(text, "=======", pos);
     if (endOurs == -1) return;
 
-    int endTheirs = text.indexOf(">>>>>>>", endOurs);
+    int endTheirs = findMarker(text, ">>>>>>>", endOurs);
     if (endTheirs == -1) return;
 
     int endLine = text.indexOf("\n", endTheirs);
@@ -207,7 +221,7 @@ void QGitConflictResolverDialog::on_pushButton_useTheirs_clicked()
 void QGitConflictResolverDialog::on_pushButton_resolve_clicked()
 {
     QString content = ui->plainTextEdit_merged->toPlainText();
-    if (content.contains("<<<<<<<") || content.contains("=======") || content.contains(">>>>>>>")) {
+    if (findMarker(content, "<<<<<<<") != -1 || findMarker(content, "=======") != -1 || findMarker(content, ">>>>>>>") != -1) {
         auto response = QMessageBox::warning(this, tr("Unresolved Conflicts"),
                                              tr("The file still contains conflict markers. Are you sure you want to mark it resolved?"),
                                              QMessageBox::Yes | QMessageBox::No);

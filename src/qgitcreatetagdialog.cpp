@@ -10,6 +10,7 @@ QGitCreateTagDialog::QGitCreateTagDialog(const QString &commitHash, QWidget *par
 
     // Display the shortened commit hash in the form label
     ui->commitHash_label->setText(QString("<b>%1</b>").arg(commitHash.left(12)));
+    ui->createTag_pushButton->setEnabled(!ui->tagName_lineEdit->text().trimmed().isEmpty());
 }
 
 QGitCreateTagDialog::~QGitCreateTagDialog()
