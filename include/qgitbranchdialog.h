@@ -6,6 +6,7 @@
 
 #include <QTableWidgetItem>
 #include <QDialog>
+#include <QTimer>
 
 
 namespace Ui {
@@ -29,12 +30,15 @@ public:
     QList<QGitBranch> deleteBranches() const;
     bool forceDelete() const;
 
+    void accept() override;
+
 private slots:
     void on_newBranch_pushButton_clicked();
     void on_deleteBranch_pushButton_clicked();
     void on_newBranch_lineEdit_textChanged(const QString &text);
     void on_newBranchCommitId_lineEdit_textChanged(const QString &text);
     void on_deleteBranches_tableWidget_itemChanged(QTableWidgetItem *item);
+    void validateCommitId();
 
 private:
     void checkForNewBranch();
@@ -42,4 +46,6 @@ private:
     Ui::QGitBranchDialog *ui;
     QList<QGitBranch> m_currentBranches;
     QGit m_git;
+    QTimer *m_commitValidationTimer = nullptr;
+    bool m_commitIdValid = true;
 };

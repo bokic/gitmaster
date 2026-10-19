@@ -2,6 +2,7 @@
 
 #include <QDialog>
 #include <QStringList>
+#include <QTimer>
 #include "qgitcommit.h"
 
 namespace Ui {
@@ -43,4 +44,5 @@ private:
     QGit *m_git = nullptr;
     QString m_selectedHash;
     QList<QGitCommit> m_currentCommits;
+    QTimer *m_debounceTimer = nullptr;
 };

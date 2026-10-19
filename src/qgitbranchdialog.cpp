@@ -17,6 +17,11 @@ QGitBranchDialog::QGitBranchDialog(QGitRepository *parent)
     ui->currentBranch_label->setText(m_git.currentBranch());
     m_currentBranches = m_git.branches(GIT_BRANCH_LOCAL);
 
+    m_commitValidationTimer = new QTimer(this);
+    m_commitValidationTimer->setSingleShot(true);
+    m_commitValidationTimer->setInterval(250);
+    connect(m_commitValidationTimer, &QTimer::timeout, this, &QGitBranchDialog::validateCommitId);
+
     ui->newBranch_lineEdit->setFocus();
 }
 
@@ -52,6 +57,22 @@ QString QGitBranchDialog::newBranchCommitId() const
 bool QGitBranchDialog::newBranchCheckout() const
 {
     return ui->newBranchCheckout_checkBox->isChecked();
+}
+
+void QGitBranchDialog::accept()
+{
+    if (m_commitValidationTimer && m_commitValidationTimer->isActive())
+    {
+        m_commitValidationTimer->stop();
+        validateCommitId();
+    }
+
+    if (operation() == NewBranchOperation && !ui->createBranch_pushButton->isEnabled())
+    {
+        return;
+    }
+
+    QDialog::accept();
 }
 
 void QGitBranchDialog::on_newBranch_pushButton_clicked()
@@ -133,8 +154,42 @@ void QGitBranchDialog::on_newBranch_lineEdit_textChanged(const QString &text)
 
 void QGitBranchDialog::on_newBranchCommitId_lineEdit_textChanged(const QString &text)
 {
-    Q_UNUSED(text);
+    QString commitId = text.trimmed();
+    if (commitId.isEmpty())
+    {
+        m_commitValidationTimer->stop();
+        m_commitIdValid = true;
+        ui->newBranchCommitId_lineEdit->setStyleSheet(QString());
+        checkForNewBranch();
+    }
+    else
+    {
+        ui->specifiedCommit_radioButton->setChecked(true);
+        m_commitValidationTimer->start(250);
+        checkForNewBranch();
+    }
+}
 
+void QGitBranchDialog::validateCommitId()
+{
+    QString commitId = ui->newBranchCommitId_lineEdit->text().trimmed();
+    if (commitId.isEmpty())
+    {
+        m_commitIdValid = true;
+        ui->newBranchCommitId_lineEdit->setStyleSheet(QString());
+    }
+    else
+    {
+        m_commitIdValid = m_git.hasCommitId(commitId);
+        if (m_commitIdValid)
+        {
+            ui->newBranchCommitId_lineEdit->setStyleSheet(QString());
+        }
+        else
+        {
+            ui->newBranchCommitId_lineEdit->setStyleSheet(QStringLiteral("background: red"));
+        }
+    }
     checkForNewBranch();
 }
 
@@ -182,18 +237,16 @@ void QGitBranchDialog::checkForNewBranch()
         enable = false;
     }
 
-    QString commitId = ui->newBranchCommitId_lineEdit->text();
+    QString commitId = ui->newBranchCommitId_lineEdit->text().trimmed();
     if (!commitId.isEmpty())
     {
         ui->specifiedCommit_radioButton->setChecked(true);
-
-        if (m_git.hasCommitId(commitId))
+        if (m_commitValidationTimer && m_commitValidationTimer->isActive())
         {
-            ui->newBranchCommitId_lineEdit->setStyleSheet("");
+            enable = false;
         }
-        else
+        else if (!m_commitIdValid)
         {
-            ui->newBranchCommitId_lineEdit->setStyleSheet("background: red");
             enable = false;
         }
     }

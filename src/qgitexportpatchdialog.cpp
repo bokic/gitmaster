@@ -39,6 +39,11 @@ QGitExportPatchDialog::QGitExportPatchDialog(QGit *git, const QString &selectedC
         ui->radioButton_selected->setChecked(true);
     }
 
+    m_debounceTimer = new QTimer(this);
+    m_debounceTimer->setSingleShot(true);
+    m_debounceTimer->setInterval(300);
+    connect(m_debounceTimer, &QTimer::timeout, this, &QGitExportPatchDialog::updateCommitList);
+
     updateCommitList();
 }
 
@@ -93,7 +98,10 @@ void QGitExportPatchDialog::on_radioButton_lastN_toggled(bool checked)
 
 void QGitExportPatchDialog::on_radioButton_custom_toggled(bool checked)
 {
-    if (checked) updateCommitList();
+    if (checked) {
+        m_debounceTimer->stop();
+        updateCommitList();
+    }
 }
 
 void QGitExportPatchDialog::on_spinBox_lastN_valueChanged(int)
@@ -103,7 +111,9 @@ void QGitExportPatchDialog::on_spinBox_lastN_valueChanged(int)
 
 void QGitExportPatchDialog::on_lineEdit_custom_textChanged(const QString &)
 {
-    if (ui->radioButton_custom->isChecked()) updateCommitList();
+    if (ui->radioButton_custom->isChecked()) {
+        m_debounceTimer->start();
+    }
 }
 
 void QGitExportPatchDialog::on_pushButton_browse_clicked()
@@ -187,6 +197,11 @@ void QGitExportPatchDialog::populateTable(const QList<QGitCommit> &commits)
 
 void QGitExportPatchDialog::accept()
 {
+    if (m_debounceTimer && m_debounceTimer->isActive()) {
+        m_debounceTimer->stop();
+        updateCommitList();
+    }
+
     QString outDir = outputDirectory();
     if (outDir.isEmpty()) {
         QMessageBox::warning(this, tr("Invalid Destination"), tr("Please specify a valid output directory."));

@@ -2379,6 +2379,10 @@ void QGitRepository::on_checkBox_amendCommit_clicked(bool checked)
     if (checked)
     {
         m_draftCommitMessage = ui->plainTextEdit_commitMessage->toPlainText();
+        if (m_headCommitMessage.isEmpty() && m_git)
+        {
+            m_headCommitMessage = m_git->headCommitMessage();
+        }
         QString headMessage = m_headCommitMessage;
         ui->plainTextEdit_commitMessage->setPlainText(headMessage);
     }
