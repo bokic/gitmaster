@@ -1022,8 +1022,10 @@ void QGitDiffWidget::paintEvent(QPaintEvent *event)
                                     painter.drawRect(line.rect);
                                     painter.setPen(Qt::darkGreen);
                                 } else {
-                                    painter.setPen(Qt::SolidLine);
-                                    painter.setBrush(QBrush(QColor(Qt::black)));
+                                    painter.setPen(Qt::NoPen);
+                                    painter.setBrush(QBrush(QColor(245, 245, 245)));
+                                    painter.drawRect(line.rect);
+                                    painter.setPen(Qt::gray);
                                 }
 
                                 int oldColX = 10;
