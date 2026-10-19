@@ -2292,16 +2292,23 @@ static int submoduleForeachCallback(git_submodule *sm, const char *name, void *p
     }
 }
 
-QList<QGitSubmodule> QGit::submodules() const
+static QList<QGitSubmodule> submodulesHelper(git_repository *repo)
 {
     QList<QGitSubmodule> list;
-    GitRepository repo;
-    int res = git_repository_open(repo, path().absolutePath().toUtf8().constData());
-    if (res == 0)
+    if (repo)
     {
         git_submodule_foreach(repo, submoduleForeachCallback, &list);
     }
     return list;
+}
+
+QList<QGitSubmodule> QGit::submodules() const
+{
+    GitRepository repo;
+    int res = git_repository_open(repo, path().absolutePath().toUtf8().constData());
+    if (res != 0)
+        return {};
+    return submodulesHelper(repo);
 }
 
 void QGit::initSubmodule(const QString &name)
@@ -2697,18 +2704,16 @@ void QGit::setRemoteUrl(const QString &name, const QString &url, bool isPushUrl)
     }
 }
 
-QList<QGitWorktree> QGit::worktrees() const
+static QList<QGitWorktree> worktreesHelper(git_repository *repo, const QString &defaultPath)
 {
     QList<QGitWorktree> list;
-    GitRepository repo;
-    int res = git_repository_open(repo, path().absolutePath().toUtf8().constData());
-    if (res != 0)
+    if (!repo)
         return list;
 
     // Always include the main worktree first
     {
         const char *workdir = git_repository_workdir(repo);
-        QString mainPath = workdir ? QString::fromUtf8(workdir) : path().absolutePath();
+        QString mainPath = workdir ? QString::fromUtf8(workdir) : defaultPath;
         // Remove trailing slash
         while (mainPath.endsWith('/') || mainPath.endsWith('\\'))
             mainPath.chop(1);
@@ -2791,6 +2796,15 @@ QList<QGitWorktree> QGit::worktrees() const
     }
 
     return list;
+}
+
+QList<QGitWorktree> QGit::worktrees() const
+{
+    GitRepository repo;
+    int res = git_repository_open(repo, path().absolutePath().toUtf8().constData());
+    if (res != 0)
+        return {};
+    return worktreesHelper(repo, path().absolutePath());
 }
 
 void QGit::addWorktree(const QString &name, const QString &path, const QString &branch, bool newBranch)
@@ -4144,6 +4158,10 @@ void QGit::listBranchesAndTags()
                             {
                                 ahead = static_cast<int>(qMin<size_t>(size_ahead, INT_MAX));
                                 behind = static_cast<int>(qMin<size_t>(size_behind, INT_MAX));
+                                if (ahead > 0)
+                                {
+                                    hasCommitsToPush = true;
+                                }
                             }
                         }
                     }
@@ -4182,8 +4200,6 @@ void QGit::listBranchesAndTags()
             tags.append(tag);
         }
 
-        hasCommitsToPush = hasCommitsToPushHelper(repo);
-
         git_repository_state_t repoState = (git_repository_state_t)git_repository_state(repo);
         QString headCommitId;
         QString headCommitMessage;
@@ -4217,7 +4233,7 @@ void QGit::listBranchesAndTags()
         }
 
         try {
-            submods = submodules();
+            submods = submodulesHelper(repo);
         } catch (const std::exception &ex) {
             qWarning("QGit::listBranchesAndTags: Failed to retrieve submodules: %s", ex.what());
         } catch (...) {
@@ -4225,7 +4241,7 @@ void QGit::listBranchesAndTags()
         }
 
         try {
-            worktreeList = worktrees();
+            worktreeList = worktreesHelper(repo, path().absolutePath());
         } catch (const std::exception &ex) {
             qWarning("QGit::listBranchesAndTags: Failed to retrieve worktrees: %s", ex.what());
         } catch (...) {
@@ -4565,7 +4581,12 @@ void QGit::listChangedFiles(int show, int sort, bool reversed)
             break;
         case QGIT_SORT_FILENAME:
             std::sort(items.begin(), items.end(), [](const auto &a, const auto &b) {
-                return QFileInfo(a.first).fileName() < QFileInfo(b.first).fileName();
+                auto fileNameOf = [](const QString &path) {
+                    qsizetype idx = path.lastIndexOf(u'/');
+                    if (idx == -1) idx = path.lastIndexOf(u'\\');
+                    return (idx >= 0) ? QStringView(path).mid(idx + 1) : QStringView(path);
+                };
+                return fileNameOf(a.first) < fileNameOf(b.first);
             });
             break;
         case QGIT_SORT_STATUS:
@@ -4654,16 +4675,19 @@ void QGit::commitDiff(const QString &commitId, bool ignoreWhitespace)
             throw QGitError("git_commit_tree", res);
         }
 
+        GitMailmap mailmap;
+        git_mailmap_from_repository(mailmap, repo);
+
         const git_signature *authorSig = git_commit_author(commit);
         QString authorName = authorSig && authorSig->name ? QString::fromUtf8(authorSig->name) : QString();
         QString authorEmail = authorSig && authorSig->email ? QString::fromUtf8(authorSig->email) : QString();
-        resolveMailmap(repo, authorName, authorEmail);
+        resolveMailmap(mailmap, authorName, authorEmail);
         commitAuthor = QGitSignature(authorName, authorEmail, authorSig ? QDateTime::fromMSecsSinceEpoch(authorSig->when.time * 1000) : QDateTime());
 
         const git_signature *committerSig = git_commit_committer(commit);
         QString committerName = committerSig && committerSig->name ? QString::fromUtf8(committerSig->name) : QString();
         QString committerEmail = committerSig && committerSig->email ? QString::fromUtf8(committerSig->email) : QString();
-        resolveMailmap(repo, committerName, committerEmail);
+        resolveMailmap(mailmap, committerName, committerEmail);
         commitCommiter = QGitSignature(committerName, committerEmail, committerSig ? QDateTime::fromMSecsSinceEpoch(committerSig->when.time * 1000) : QDateTime());
 
         auto time = git_commit_time(commit);
@@ -4684,16 +4708,25 @@ void QGit::commitDiff(const QString &commitId, bool ignoreWhitespace)
             }
         }
 
-        // Attempt git describe (best-effort: silently skip if no tags found)
+        // Attempt git describe (best-effort: skip if no tags exist in the repo)
         {
-            git_describe_options descOpts = GIT_DESCRIBE_OPTIONS_INIT;
-            descOpts.max_candidates_tags = 10;
-            GitDescribeResult descResult;
-            if (git_describe_commit(descResult, (git_object *)commit.value, &descOpts) == 0) {
-                git_describe_format_options fmtOpts = GIT_DESCRIBE_FORMAT_OPTIONS_INIT;
-                GitBuf gbuf;
-                if (git_describe_format(gbuf, descResult, &fmtOpts) == 0) {
-                    commitDescription = QString::fromUtf8(gbuf.value.ptr);
+            bool hasTags = false;
+            git_tag_foreach(repo, [](const char *, git_oid *, void *payload) -> int {
+                *static_cast<bool *>(payload) = true;
+                return 1;
+            }, &hasTags);
+
+            if (hasTags) {
+                git_describe_options descOpts = GIT_DESCRIBE_OPTIONS_INIT;
+                descOpts.max_candidates_tags = 10;
+                descOpts.describe_strategy = GIT_DESCRIBE_TAGS;
+                GitDescribeResult descResult;
+                if (git_describe_commit(descResult, (git_object *)commit.value, &descOpts) == 0) {
+                    git_describe_format_options fmtOpts = GIT_DESCRIBE_FORMAT_OPTIONS_INIT;
+                    GitBuf gbuf;
+                    if (git_describe_format(gbuf, descResult, &fmtOpts) == 0) {
+                        commitDescription = QString::fromUtf8(gbuf.value.ptr);
+                    }
                 }
             }
         }
@@ -7357,6 +7390,7 @@ QList<QGitBlameHunk> QGit::blameFile(const QString &filePath, const QString &com
 
         uint32_t count = git_blame_get_hunk_count(blame);
         hunks.reserve(static_cast<int>(count));
+        QHash<QString, QString> summaryCache;
 
         for (uint32_t i = 0; i < count; i++) {
             const git_blame_hunk *hunk = git_blame_get_hunk_byindex(blame, i);
@@ -7379,11 +7413,17 @@ QList<QGitBlameHunk> QGit::blameFile(const QString &filePath, const QString &com
                 qHunk.authorTime  = hunk->final_signature->when.time;
             }
 
-            // Commit summary — look up the commit object
-            GitObject obj;
-            if (git_object_lookup(obj, repo, &hunk->final_commit_id, GIT_OBJECT_COMMIT) == 0) {
-                const char *msg = git_commit_summary(obj.asCommit());
-                if (msg) qHunk.summary = QString::fromUtf8(msg);
+            // Commit summary — look up the commit object (cached to avoid N+1 lookups)
+            auto itSummary = summaryCache.constFind(qHunk.commitHash);
+            if (itSummary != summaryCache.constEnd()) {
+                qHunk.summary = *itSummary;
+            } else {
+                GitObject obj;
+                if (git_object_lookup(obj, repo, &hunk->final_commit_id, GIT_OBJECT_COMMIT) == 0) {
+                    const char *msg = git_commit_summary(obj.asCommit());
+                    if (msg) qHunk.summary = QString::fromUtf8(msg);
+                }
+                summaryCache.insert(qHunk.commitHash, qHunk.summary);
             }
 
             // Original path

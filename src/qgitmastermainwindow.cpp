@@ -72,7 +72,8 @@ bool QGitMasterMainWindow::event(QEvent *event)
     if (event->type() == QEvent::WindowActivate)
     {
         ui->treeWidget->refreshItems();
-        on_tabWidget_currentChanged(ui->tabWidget->currentIndex());
+        auto panel = dynamic_cast<QGitRepository *>(ui->tabWidget->currentWidget());
+        updateActionsState(panel);
     }
 
     return QMainWindow::event(event);
@@ -588,23 +589,17 @@ void QGitMasterMainWindow::on_tabWidget_tabCloseRequested(int index)
     delete ui->tabWidget->widget(index);
 }
 
-void QGitMasterMainWindow::on_tabWidget_currentChanged(int index)
+void QGitMasterMainWindow::updateActionsState(QGitRepository *panel)
 {
-    if (index >= 0)
+    if (panel)
     {
-        auto panel = dynamic_cast<QGitRepository *>(ui->tabWidget->currentWidget());
-        if (panel)
-        {
-            panel->refreshData();
-        }
-
         ui->actionCommit->setEnabled(true);
         updateRemoteActions(panel);
         ui->actionBranch->setEnabled(true);
         ui->actionMerge->setEnabled(true);
         ui->actionRebase->setEnabled(true);
         ui->actionWorktrees->setEnabled(true);
-        ui->actionStash->setEnabled(panel ? panel->hasStashableChanges() : false);
+        ui->actionStash->setEnabled(panel->hasStashableChanges());
         ui->actionGit_Flow->setEnabled(true);
         ui->actionTerminal->setEnabled(true);
     }
@@ -622,6 +617,16 @@ void QGitMasterMainWindow::on_tabWidget_currentChanged(int index)
         ui->actionGit_Flow->setEnabled(false);
         ui->actionTerminal->setEnabled(false);
     }
+}
+
+void QGitMasterMainWindow::on_tabWidget_currentChanged(int index)
+{
+    auto panel = (index >= 0) ? dynamic_cast<QGitRepository *>(ui->tabWidget->currentWidget()) : nullptr;
+    if (panel)
+    {
+        panel->refreshData();
+    }
+    updateActionsState(panel);
 }
 
 void QGitMasterMainWindow::setStashEnabled(QGitRepository *panel, bool enabled)

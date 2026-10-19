@@ -1,6 +1,7 @@
 #include "qgitrepotreeitemdelegate.h"
 
 #include <QStandardPaths>
+#include <QDir>
 #include <QApplication>
 #include <QPainter>
 #include <QPalette>
@@ -68,10 +69,10 @@ void QGitRepoTreeItemDelegate::paint(QPainter *painter, const QStyleOptionViewIt
     {
 
 #ifdef Q_OS_UNIX
-        auto homePath = QStandardPaths::locate(QStandardPaths::HomeLocation, "", QStandardPaths::LocateDirectory);
-        if (text.startsWith(homePath))
+        static const QString homePath = QDir::homePath();
+        if (!homePath.isEmpty() && text.startsWith(homePath))
         {
-            text = QString("~/") + text.right(text.length() - homePath.length());
+            text = QStringLiteral("~/") + text.sliced(homePath.length());
         }
 #endif
         painter->setFont(normalFont);

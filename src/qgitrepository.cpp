@@ -2213,7 +2213,9 @@ void QGitRepository::on_repositoryDetail_currentChanged(int index)
         connect(ui->logHistory_diff, &QGitDiffWidget::requestGitDiff, m_git, &QGit::commitDiffContent);
         connect(m_git, &QGit::commitDiffContentReply, ui->logHistory_diff, &QGitDiffWidget::responseGitDiff);
 
-        fetchCommits();
+        if (ui->logHistory_commits->rowCount() == 0) {
+            fetchCommits();
+        }
         break;
     case 2:
         connect(ui->search_diff, &QGitDiffWidget::requestGitDiff, m_git, &QGit::commitDiffContent);

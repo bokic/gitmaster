@@ -24,6 +24,7 @@ public:
     void clearStatusBarText();
     void setStashEnabled(class QGitRepository *panel, bool enabled);
     void updateRemoteActions(class QGitRepository *panel);
+    void updateActionsState(class QGitRepository *panel);
     void refreshRepositoryTree();
     void openRepository(const QString &path);
 
