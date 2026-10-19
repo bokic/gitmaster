@@ -27,6 +27,7 @@ public:
     void updateActionsState(class QGitRepository *panel);
     void refreshRepositoryTree();
     void openRepository(const QString &path);
+    void openRepository(const QString &path, const QString &displayName);
 
 public slots:
     void getPassword(QString &password);

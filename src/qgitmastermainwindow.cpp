@@ -516,8 +516,13 @@ void QGitMasterMainWindow::on_actionPush_triggered()
 
 void QGitMasterMainWindow::openRepository(const QString &repositoryPath)
 {
+    openRepository(repositoryPath, QString());
+}
+
+void QGitMasterMainWindow::openRepository(const QString &repositoryPath, const QString &displayName)
+{
     QDir dir(repositoryPath);
-    QString repositoryName = dir.dirName();
+    QString repositoryName = !displayName.isEmpty() ? displayName : dir.dirName();
 
     for(int index = 0; index < ui->tabWidget->count(); index++)
     {
@@ -547,7 +552,9 @@ void QGitMasterMainWindow::connectRepositorySignals(QGitRepository *widget)
     }
     connect(widget, &QGitRepository::statusMessage, this, &QGitMasterMainWindow::updateStatusBarText, Qt::UniqueConnection);
     connect(widget, &QGitRepository::clearStatusMessage, this, &QGitMasterMainWindow::clearStatusBarText, Qt::UniqueConnection);
-    connect(widget, &QGitRepository::openRepositoryRequested, this, &QGitMasterMainWindow::openRepository, Qt::UniqueConnection);
+    connect(widget, &QGitRepository::openRepositoryRequested, this, [this](const QString &path) {
+        openRepository(path);
+    });
     connect(widget, &QGitRepository::updateRemoteActionsRequested, this, [this, widget]() {
         if (ui->tabWidget->currentWidget() == widget) {
             updateRemoteActions(widget);
@@ -563,25 +570,16 @@ void QGitMasterMainWindow::connectRepositorySignals(QGitRepository *widget)
 
 void QGitMasterMainWindow::on_treeWidget_itemDoubleClicked(QTreeWidgetItem *item, int column)
 {
+    if (!item) return;
+
     QString repositoryName = item->data(column, Qt::DisplayRole).toString();
     QString repositoryPath = item->data(column, QGitRepoTreeItemDelegate::QItemPath).toString();
-
-    for(int index = 0; index < ui->tabWidget->count(); index++)
-    {
-        if (repositoryName == ui->tabWidget->tabText(index))
-        {
-            ui->tabWidget->setCurrentIndex(index);
-
-            return;
-        }
+    if (repositoryPath.isEmpty()) {
+        repositoryPath = item->data(0, QGitRepoTreeItemDelegate::QItemPath).toString();
     }
+    if (repositoryPath.isEmpty()) return;
 
-    auto widget = new QGitRepository(repositoryPath, this);
-    connectRepositorySignals(widget);
-
-    ui->tabWidget->addTab(widget, repositoryName);
-
-    ui->tabWidget->setCurrentWidget(widget);
+    openRepository(repositoryPath, repositoryName);
 }
 
 void QGitMasterMainWindow::on_tabWidget_tabCloseRequested(int index)
