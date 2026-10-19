@@ -1,5 +1,4 @@
 #include <qgit.h>
-#include <qgitmastermainwindow.h>
 #include <qgitdifffile.h>
 #include <qgitdiffhunk.h>
 #include <qgitdiffline.h>
