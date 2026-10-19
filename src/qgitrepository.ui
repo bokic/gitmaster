@@ -468,7 +468,7 @@
              <item>
               <widget class="QCheckBox" name="checkBox_pushChangesImmidietely">
                <property name="text">
-                <string>Push changes immidiately to[origin/branch]</string>
+                <string>Push changes immediately to [origin/branch]</string>
                </property>
               </widget>
              </item>

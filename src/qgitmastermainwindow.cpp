@@ -466,7 +466,7 @@ void QGitMasterMainWindow::on_toolButton_RemoveItem_clicked()
 
     if (item)
     {
-        if (QMessageBox::question(this, tr("Remove git bookmark?"), tr("Remote git bookmark?\nIt will not remove files.")) == QMessageBox::Yes)
+        if (QMessageBox::question(this, tr("Remove git bookmark?"), tr("Remove git bookmark?\nIt will not remove files.")) == QMessageBox::Yes)
         {
             ui->treeWidget->takeTopLevelItem(ui->treeWidget->indexOfTopLevelItem(item));
 
