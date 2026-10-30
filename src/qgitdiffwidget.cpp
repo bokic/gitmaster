@@ -693,12 +693,13 @@ void QGitDiffWidget::responseGitDiff(const QString &first, const QString &second
                             addLine.inlineRanges = computeChangedRanges(delContent, addContent, wordLevel);
 
                             auto updateCharOffsets = [](QGitDiffWidgetPrivateLine &l) {
-                                for (auto &range : l.inlineRanges) {
+                                for (qsizetype r = 0; r < l.inlineRanges.size(); ++r) {
+                                    auto &range = l.inlineRanges[r];
                                     int charStart = 0;
                                     int charLength = 0;
-                                    for (int i = 0; i < l.chars.size(); ++i) {
+                                    for (qsizetype i = 0; i < l.chars.size(); ++i) {
                                         if (l.chars[i].byteOffset < range.start)
-                                            charStart = i + 1;
+                                            charStart = static_cast<int>(i + 1);
                                         if (l.chars[i].byteOffset >= range.start &&
                                             l.chars[i].byteOffset < range.start + range.length)
                                         {
