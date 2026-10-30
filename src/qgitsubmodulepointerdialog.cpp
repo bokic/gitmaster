@@ -81,6 +81,10 @@ QGitSubmodulePointerDialog::~QGitSubmodulePointerDialog()
 
 void QGitSubmodulePointerDialog::loadSubmoduleData()
 {
+    m_tags.clear();
+    m_commits.clear();
+    m_branches.clear();
+
     QDir subDir(m_repoPath.absoluteFilePath(m_submodule.path));
     if (!QGit::isGitRepository(subDir)) {
         m_isInitialized = false;

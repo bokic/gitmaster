@@ -72,6 +72,11 @@ void QGitDiffHunk::addLine(const QGitDiffLine &line)
     m_lines.append(line);
 }
 
+void QGitDiffHunk::clear()
+{
+    m_lines.clear();
+}
+
 bool operator==(const QGitDiffHunk &l, const git_diff_hunk &r)
 {
 

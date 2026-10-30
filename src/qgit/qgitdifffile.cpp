@@ -98,3 +98,9 @@ void QGitDiffFile::addBinary(const QGitDiffBinary &binary)
 {
     m_binary.append(binary);
 }
+
+void QGitDiffFile::clear()
+{
+    m_hunks.clear();
+    m_binary.clear();
+}

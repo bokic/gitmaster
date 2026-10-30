@@ -36,3 +36,8 @@ void QGitCommitDiffParent::addFile(const git_diff_delta *delta)
 
     m_files.append(file);
 }
+
+void QGitCommitDiffParent::clear()
+{
+    m_files.clear();
+}

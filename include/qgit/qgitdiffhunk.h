@@ -27,6 +27,7 @@ public:
     const QList<QGitDiffLine> &lines() const;
 
     void addLine(const QGitDiffLine &line);
+    void clear();
 
 private:
     QString m_header;

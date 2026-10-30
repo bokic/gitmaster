@@ -35,6 +35,7 @@ public:
 
     void addHunk(const QGitDiffHunk &hunk);
     void addBinary(const QGitDiffBinary &binary);
+    void clear();
 
 private:
     QGitDiffFileItem m_new_file;

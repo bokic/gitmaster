@@ -24,6 +24,7 @@ public:
     const QList<QGitDiffFile> &files() const;
 
     void addFile(const git_diff_delta *delta);
+    void clear();
 
 private:
     QByteArray m_commitHash;
