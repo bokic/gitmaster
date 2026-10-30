@@ -94,7 +94,7 @@ void QLogHistoryTableWidget::addCommit(const QGitCommit &commit)
 
     // Determine parents and build connections
     QList<QVariantList> parentConnections;
-    QList<QString> nextHashIndex = m_hashIndex;
+    QStringList nextHashIndex = m_hashIndex;
 
     // Clear all merging lanes from nextHashIndex so they don't continue down
     for (int lane : mergingLanes)
@@ -296,7 +296,7 @@ void QLogHistoryTableWidget::setReferences(const QList<QGitBranch> &branches, co
             refType = QGitRef::RemoteBranch;
         }
 
-        QGitRef refObj{refName, refType};
+        QGitRef refObj = {refName, refType};
         m_refMap[branch.hash().toUpper()].append(refObj);
         m_refMap[branch.hash().toLower()].append(refObj);
     }
@@ -308,7 +308,7 @@ void QLogHistoryTableWidget::setReferences(const QList<QGitBranch> &branches, co
         {
             refName = refName.mid(10);
         }
-        QGitRef refObj{refName, QGitRef::Tag};
+        QGitRef refObj = {refName, QGitRef::Tag};
         m_refMap[tag.hash().toUpper()].append(refObj);
         m_refMap[tag.hash().toLower()].append(refObj);
     }

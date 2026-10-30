@@ -39,7 +39,7 @@ public:
     bool isCommitHighlighted(const QString &sha) const;
 
 private:
-    QList<QString> m_hashIndex;
+    QStringList m_hashIndex;
     QHash<QString, QList<QGitRef>> m_refMap;
     QSet<QString> m_highlightedCommits;
 };

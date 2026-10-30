@@ -2631,7 +2631,7 @@ void QGitRepository::on_comboBox_gitDiffOptions_optionsChanged()
 
 void QGitRepository::on_treeWidget_staged_itemSelectionChanged()
 {
-    QList<QString> files;
+    QStringList files;
     QMap<QString, git_status_t> statuses;
 
     if (ui->treeWidget_staged->isActiveWindow())
@@ -2659,7 +2659,7 @@ void QGitRepository::on_treeWidget_staged_itemSelectionChanged()
 
 void QGitRepository::on_treeWidget_unstaged_itemSelectionChanged()
 {
-    QList<QString> files;
+    QStringList files;
     QMap<QString, git_status_t> statuses;
 
     if (ui->treeWidget_unstaged->isActiveWindow())
@@ -2687,7 +2687,7 @@ void QGitRepository::on_treeWidget_unstaged_itemSelectionChanged()
 
 void QGitRepository::on_treeWidget_pending_itemSelectionChanged()
 {
-    QList<QString> files;
+    QStringList files;
     QMap<QString, git_status_t> statuses;
 
     if (ui->treeWidget_pending->isActiveWindow())

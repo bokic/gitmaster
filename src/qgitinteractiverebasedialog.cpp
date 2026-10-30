@@ -114,19 +114,19 @@ void QGitInteractiveRebaseDialog::populateTable()
         QFont monoFont(QStringLiteral("Monospace"));
         monoFont.setStyleHint(QFont::TypeWriter);
         itemHash->setFont(monoFont);
-        itemHash->setFlags(itemHash->flags() & ~Qt::ItemIsEditable);
+        itemHash->setFlags(Qt::ItemIsEnabled | Qt::ItemIsSelectable);
         ui->tableWidget->setItem(row, 1, itemHash);
 
         auto *itemSubj = new QTableWidgetItem(item.summary);
-        itemSubj->setFlags(itemSubj->flags() & ~Qt::ItemIsEditable);
+        itemSubj->setFlags(Qt::ItemIsEnabled | Qt::ItemIsSelectable);
         ui->tableWidget->setItem(row, 2, itemSubj);
 
         auto *itemAuth = new QTableWidgetItem(item.author);
-        itemAuth->setFlags(itemAuth->flags() & ~Qt::ItemIsEditable);
+        itemAuth->setFlags(Qt::ItemIsEnabled | Qt::ItemIsSelectable);
         ui->tableWidget->setItem(row, 3, itemAuth);
 
         auto *itemDate = new QTableWidgetItem(item.timeStr);
-        itemDate->setFlags(itemDate->flags() & ~Qt::ItemIsEditable);
+        itemDate->setFlags(Qt::ItemIsEnabled | Qt::ItemIsSelectable);
         ui->tableWidget->setItem(row, 4, itemDate);
 
         updateRowAppearance(row);

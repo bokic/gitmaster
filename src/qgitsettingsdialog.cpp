@@ -77,8 +77,8 @@ void QGitSettingsDialog::populateTable()
         QTableWidgetItem *keyItem = new QTableWidgetItem(it.key());
         QTableWidgetItem *valueItem = new QTableWidgetItem(it.value());
 
-        keyItem->setFlags(keyItem->flags() & ~Qt::ItemIsEditable);
-        valueItem->setFlags(valueItem->flags() & ~Qt::ItemIsEditable);
+        keyItem->setFlags(Qt::ItemIsEnabled | Qt::ItemIsSelectable);
+        valueItem->setFlags(Qt::ItemIsEnabled | Qt::ItemIsSelectable);
 
         ui->tableWidget->setItem(row, 0, keyItem);
         ui->tableWidget->setItem(row, 1, valueItem);

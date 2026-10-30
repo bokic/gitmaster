@@ -88,7 +88,7 @@ void QGitBranchTreeWidget::populateBranchesAndTags(
                             child->setData(0, Qt::UserRole, branch.hash());
                             child->setData(0, Qt::UserRole + 1, branchItems.mid(2).join('/'));
                             child->setData(0, Qt::UserRole + 2, "LocalBranch");
-                            child->setFlags(child->flags() | Qt::ItemIsEditable);
+                            if (depth == branchItems.size() - 1) child->setFlags(child->flags() | Qt::ItemIsEditable);
                         } else {
                             child->setData(0, Qt::UserRole + 2, "Folder");
                         }
@@ -179,7 +179,7 @@ void QGitBranchTreeWidget::populateBranchesAndTags(
         child->setData(0, Qt::UserRole, tag.hash());
         child->setData(0, Qt::UserRole + 1, tag.name());
         child->setData(0, Qt::UserRole + 2, "Tag");
-        child->setFlags(child->flags() | Qt::ItemIsEditable);
+        if (!tag.name().isEmpty()) child->setFlags(child->flags() | Qt::ItemIsEditable);
 
         child->setIcon(0, m_iconTag);
         itemTags->addChild(child);

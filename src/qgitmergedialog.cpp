@@ -190,22 +190,22 @@ void QGitMergeDialog::populateLogTable()
         ui->tableWidget->insertRow(row);
 
         auto nameItem = new QTableWidgetItem(branch.name());
-        nameItem->setFlags(nameItem->flags() & ~Qt::ItemIsEditable);
+        nameItem->setFlags(Qt::ItemIsEnabled | Qt::ItemIsSelectable);
         ui->tableWidget->setItem(row, 0, nameItem);
 
         auto typeStr = (branch.type() == GIT_BRANCH_LOCAL) ? tr("Local") : tr("Remote");
         auto typeItem = new QTableWidgetItem(typeStr);
-        typeItem->setFlags(typeItem->flags() & ~Qt::ItemIsEditable);
+        typeItem->setFlags(Qt::ItemIsEnabled | Qt::ItemIsSelectable);
         ui->tableWidget->setItem(row, 1, typeItem);
 
         auto hashItem = new QTableWidgetItem(branch.hash().left(8));
-        hashItem->setFlags(hashItem->flags() & ~Qt::ItemIsEditable);
+        hashItem->setFlags(Qt::ItemIsEnabled | Qt::ItemIsSelectable);
         hashItem->setData(Qt::UserRole, branch.hash());
         ui->tableWidget->setItem(row, 2, hashItem);
 
         QDateTime dateTime = QDateTime::fromSecsSinceEpoch(branch.time());
         auto timeItem = new QTableWidgetItem(dateTime.toString());
-        timeItem->setFlags(timeItem->flags() & ~Qt::ItemIsEditable);
+        timeItem->setFlags(Qt::ItemIsEnabled | Qt::ItemIsSelectable);
         ui->tableWidget->setItem(row, 3, timeItem);
 
         row++;

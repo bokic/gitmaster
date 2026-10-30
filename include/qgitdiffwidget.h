@@ -32,7 +32,7 @@ public:
     explicit QGitDiffWidget(QWidget *parent = nullptr);
     ~QGitDiffWidget() = default;
 
-    void setGitDiff(const QString &first, const QString &second, const QList<QString> &files, const QMap<QString, git_status_t> &statuses = QMap<QString, git_status_t>());
+    void setGitDiff(const QString &first, const QString &second, const QStringList &files, const QMap<QString, git_status_t> &statuses = QMap<QString, git_status_t>());
     void setReadonly(bool readonly = true);
     void setIgnoreWhitespace(bool ignore);
     void setLinesOfContent(int lines);
@@ -48,7 +48,7 @@ public:
     QVector<QGitDiffWidgetLine> linesAt(int fileIdx, int hunkIdx, int lineIdx, QString &fileName) const;
 
 signals:
-    void requestGitDiff(const QString &first, const QString &second, const QList<QString> &files, uint32_t context_lines, bool ignoreWhitespace);
+    void requestGitDiff(const QString &first, const QString &second, const QStringList &files, uint32_t context_lines, bool ignoreWhitespace);
     void select(const QString &file, const QVector<QGitDiffWidgetLine> &lines);
 
 public slots:
@@ -67,7 +67,7 @@ private:
     QGitDiffWidgetPrivate *m_private = nullptr;
     QString m_requestedFirst;
     QString m_requestedSecond;
-    QList<QString> m_requestedFiles;
+    QStringList m_requestedFiles;
     QMap<QString, git_status_t> m_fileStatuses;
     QFont m_font;
     int m_fontHeight = 0;

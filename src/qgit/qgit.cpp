@@ -2144,9 +2144,9 @@ bool QGit::hasConflicts() const
     return git_index_has_conflicts(index) != 0;
 }
 
-QList<QString> QGit::conflictedFiles() const
+QStringList QGit::conflictedFiles() const
 {
-    QList<QString> files;
+    QStringList files;
     GitRepository repo;
     int res = git_repository_open(repo, path().absolutePath().toUtf8().constData());
     if (res) return files;
@@ -4845,7 +4845,7 @@ void QGit::commitDiff(const QString &commitId, bool ignoreWhitespace)
     emit commitDiffReply(effectiveCommitId, commitDiff, error);
 }
 
-void QGit::commitDiffContent(const QString &first, const QString &second, const QList<QString> &files, uint32_t context_lines, bool ignoreWhitespace)
+void QGit::commitDiffContent(const QString &first, const QString &second, const QStringList &files, uint32_t context_lines, bool ignoreWhitespace)
 {
     QList<QGitDiffFile> items;
     QGitError error;

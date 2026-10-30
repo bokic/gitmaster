@@ -105,7 +105,7 @@ void QGitBranchDialog::on_deleteBranch_pushButton_clicked()
         const auto &branch = branches.at(c);
 
         auto nameItem = new QTableWidgetItem(branch.name());
-        nameItem->setFlags(nameItem->flags() & ~Qt::ItemIsEditable);
+        nameItem->setFlags(Qt::ItemIsEnabled | Qt::ItemIsSelectable | Qt::ItemIsUserCheckable);
         nameItem->setCheckState(Qt::Unchecked);
 
         if (branch.name() == currentBranch)
@@ -127,7 +127,7 @@ void QGitBranchDialog::on_deleteBranch_pushButton_clicked()
         ui->deleteBranches_tableWidget->setItem(c, 0, nameItem);
 
         auto typeItem = new QTableWidgetItem();
-        typeItem->setFlags(nameItem->flags() & ~Qt::ItemIsEditable);
+        typeItem->setFlags(Qt::ItemIsEnabled | Qt::ItemIsSelectable);
 
         switch (branch.type())
         {

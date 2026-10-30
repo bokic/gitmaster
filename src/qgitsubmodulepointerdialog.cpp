@@ -195,18 +195,18 @@ void QGitSubmodulePointerDialog::populateBranchesTable()
         ui->branchesTable->insertRow(row);
 
         auto nameItem = new QTableWidgetItem(branch.name());
-        nameItem->setFlags(nameItem->flags() & ~Qt::ItemIsEditable);
+        nameItem->setFlags(Qt::ItemIsEnabled | Qt::ItemIsSelectable);
         nameItem->setData(Qt::UserRole, branch.name());
         nameItem->setData(Qt::UserRole + 1, branch.hash());
         ui->branchesTable->setItem(row, 0, nameItem);
 
         QString typeStr = (branch.type() == GIT_BRANCH_LOCAL) ? tr("Local") : tr("Remote");
         auto typeItem = new QTableWidgetItem(typeStr);
-        typeItem->setFlags(typeItem->flags() & ~Qt::ItemIsEditable);
+        typeItem->setFlags(Qt::ItemIsEnabled | Qt::ItemIsSelectable);
         ui->branchesTable->setItem(row, 1, typeItem);
 
         auto hashItem = new QTableWidgetItem(branch.hash().left(8));
-        hashItem->setFlags(hashItem->flags() & ~Qt::ItemIsEditable);
+        hashItem->setFlags(Qt::ItemIsEnabled | Qt::ItemIsSelectable);
         ui->branchesTable->setItem(row, 2, hashItem);
 
         row++;
@@ -227,18 +227,18 @@ void QGitSubmodulePointerDialog::populateTagsTable()
         ui->tagsTable->insertRow(row);
 
         auto nameItem = new QTableWidgetItem(tag.name());
-        nameItem->setFlags(nameItem->flags() & ~Qt::ItemIsEditable);
+        nameItem->setFlags(Qt::ItemIsEnabled | Qt::ItemIsSelectable);
         nameItem->setData(Qt::UserRole, tag.name());
         nameItem->setData(Qt::UserRole + 1, tag.hash());
         ui->tagsTable->setItem(row, 0, nameItem);
 
         auto hashItem = new QTableWidgetItem(tag.hash().left(8));
-        hashItem->setFlags(hashItem->flags() & ~Qt::ItemIsEditable);
+        hashItem->setFlags(Qt::ItemIsEnabled | Qt::ItemIsSelectable);
         ui->tagsTable->setItem(row, 1, hashItem);
 
         QDateTime dateTime = QDateTime::fromSecsSinceEpoch(tag.time());
         auto dateItem = new QTableWidgetItem(dateTime.toString(QStringLiteral("yyyy-MM-dd hh:mm")));
-        dateItem->setFlags(dateItem->flags() & ~Qt::ItemIsEditable);
+        dateItem->setFlags(Qt::ItemIsEnabled | Qt::ItemIsSelectable);
         ui->tagsTable->setItem(row, 2, dateItem);
 
         row++;
@@ -262,20 +262,20 @@ void QGitSubmodulePointerDialog::populateCommitsTable()
         ui->commitsTable->insertRow(row);
 
         auto hashItem = new QTableWidgetItem(commit.id().left(8));
-        hashItem->setFlags(hashItem->flags() & ~Qt::ItemIsEditable);
+        hashItem->setFlags(Qt::ItemIsEnabled | Qt::ItemIsSelectable);
         hashItem->setData(Qt::UserRole, commit.id());
         ui->commitsTable->setItem(row, 0, hashItem);
 
         auto msgItem = new QTableWidgetItem(commit.message());
-        msgItem->setFlags(msgItem->flags() & ~Qt::ItemIsEditable);
+        msgItem->setFlags(Qt::ItemIsEnabled | Qt::ItemIsSelectable);
         ui->commitsTable->setItem(row, 1, msgItem);
 
         auto authorItem = new QTableWidgetItem(commit.author().name());
-        authorItem->setFlags(authorItem->flags() & ~Qt::ItemIsEditable);
+        authorItem->setFlags(Qt::ItemIsEnabled | Qt::ItemIsSelectable);
         ui->commitsTable->setItem(row, 2, authorItem);
 
         auto dateItem = new QTableWidgetItem(commit.time().toString(QStringLiteral("yyyy-MM-dd hh:mm")));
-        dateItem->setFlags(dateItem->flags() & ~Qt::ItemIsEditable);
+        dateItem->setFlags(Qt::ItemIsEnabled | Qt::ItemIsSelectable);
         ui->commitsTable->setItem(row, 3, dateItem);
 
         row++;

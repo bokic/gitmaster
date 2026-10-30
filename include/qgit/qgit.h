@@ -226,7 +226,7 @@ public:
     void deleteConfigEntry(const QString &key, bool global = false);
     QMap<QString, QString> configEntries(bool global = false) const;
     bool hasConflicts() const;
-    QList<QString> conflictedFiles() const;
+    QStringList conflictedFiles() const;
     bool conflictContents(const QString &path, QString &ancestor, QString &ours, QString &theirs) const;
     void resolveConflict(const QString &path, const QString &resolvedContent);
     QList<QGitSubmodule> submodules() const;
@@ -291,7 +291,7 @@ public slots:
     void stashPop(const QString &name);
     void listChangedFiles(int show, int sort, bool reversed);
     void commitDiff(const QString &commitId, bool ignoreWhitespace = false);
-    void commitDiffContent(const QString &first, const QString &second, const QList<QString> &files, uint32_t context_lines, bool ignoreWhitespace = false);
+    void commitDiffContent(const QString &first, const QString &second, const QStringList &files, uint32_t context_lines, bool ignoreWhitespace = false);
     void stageFiles(const QStringList &items);
     void unstageFiles(const QStringList &items);
     void stageFileLines(const QString &filename, const QVector<QGitDiffWidgetLine> &lines);

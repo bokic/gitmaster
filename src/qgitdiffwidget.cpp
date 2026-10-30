@@ -118,7 +118,7 @@ QGitDiffWidget::QGitDiffWidget(QWidget *parent)
     setMouseTracking(true);
 }
 
-void QGitDiffWidget::setGitDiff(const QString &first, const QString &second, const QList<QString> &files, const QMap<QString, git_status_t> &statuses)
+void QGitDiffWidget::setGitDiff(const QString &first, const QString &second, const QStringList &files, const QMap<QString, git_status_t> &statuses)
 {
     m_private->clear();
 
