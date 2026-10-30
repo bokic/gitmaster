@@ -89,7 +89,7 @@ void QLogHistoryTableWidget::addCommit(const QGitCommit &commit)
     {
         // Start a new lane
         m_hashIndex.append(commitId);
-        commitLane = m_hashIndex.length() - 1;
+        commitLane = m_hashIndex.size() - 1;
     }
 
     // Determine parents and build connections
@@ -102,7 +102,7 @@ void QLogHistoryTableWidget::addCommit(const QGitCommit &commit)
         nextHashIndex[lane] = "";
     }
 
-    if (commit.parents().count() > 0)
+    if (commit.parents().size() > 0)
     {
         // First parent continues in our commit's main lane
         const QString firstParent = commit.parents().at(0).commitHash().toLower();
@@ -111,7 +111,7 @@ void QLogHistoryTableWidget::addCommit(const QGitCommit &commit)
         parentConnections.append(QVariantList{commitLane, commitLane});
 
         // Other parents (merges)
-        for (int c = 1; c < commit.parents().count(); c++)
+        for (int c = 1; c < commit.parents().size(); c++)
         {
             const QString otherParent = commit.parents().at(c).commitHash().toLower();
             int parentIdx = -1;
@@ -145,7 +145,7 @@ void QLogHistoryTableWidget::addCommit(const QGitCommit &commit)
                 else
                 {
                     nextHashIndex.append(otherParent);
-                    parentConnections.append(QVariantList{commitLane, nextHashIndex.length() - 1});
+                    parentConnections.append(QVariantList{commitLane, nextHashIndex.size() - 1});
                 }
             }
             else

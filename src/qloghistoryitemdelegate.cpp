@@ -57,7 +57,7 @@ void QLogHistoryItemDelegate::paint(QPainter *painter, const QStyleOptionViewIte
             }
         }
 
-        if (data.count() >= 4)
+        if (data.size() >= 4)
         {
             painter->save();
             painter->setClipRect(option.rect);
@@ -147,7 +147,7 @@ void QLogHistoryItemDelegate::paint(QPainter *painter, const QStyleOptionViewIte
             }
 
             // 4. Draw child connections (merging from top to center)
-            if (data.count() >= 5)
+            if (data.size() >= 5)
             {
                 auto childConnections = data.at(4).toList();
                 for (int i = 0; i < childConnections.size() - 1; i += 2)

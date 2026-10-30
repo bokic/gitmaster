@@ -44,3 +44,4 @@ ninja # or make -j$(nproc)
    - Hooking the frontend (`QGitRepository` slots) to process the `QGit` signal.
 2. **Adding UI Toolbars / Actions**: UI tools are typically mounted via `QAction` in the UI designer (`qgitmastermainwindow.ui`) and handled automatically leveraging standard Qt naming mappings (`void on_action*Name*_triggered()`).
 3. **Refreshing State Models**: Ensure to call `refreshData()` across the `QGitRepository` reference when operations finalize to invalidate and update list widgets properly (e.g., after staging, un-staging, fetching, commits).
+4. **Code Readability & Modern Standards**: Prioritize clean, idiomatic, readable modern C++ (C++20). Never compromise code readability or introduce contorted syntax to appease obsolete compiler quirks or legacy preprocessor hazards; resolve toolchain issues at the build configuration level.

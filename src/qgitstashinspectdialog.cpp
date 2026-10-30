@@ -96,7 +96,7 @@ void QGitStashInspectDialog::onCommitDiffReply(const QString &commit_id, const Q
         m_activeCommitDiff = diff;
 
         m_parentHashes.clear();
-        for (int i = 0; i < m_stashCommit.parents().count(); ++i)
+        for (int i = 0; i < m_stashCommit.parents().size(); ++i)
         {
             m_parentHashes.insert(m_stashCommit.parents().at(i).commitHash().toLower());
         }
@@ -118,7 +118,7 @@ void QGitStashInspectDialog::onCommitDiffReply(const QString &commit_id, const Q
     // Populate metadata HTML
     QString html;
     QStringList parentsHtml;
-    for (int i = 0; i < m_activeCommitDiff.parents().count(); i++)
+    for (int i = 0; i < m_activeCommitDiff.parents().size(); i++)
     {
         parentsHtml << m_activeCommitDiff.parents().at(i).commitHash().left(10);
     }
@@ -137,7 +137,7 @@ void QGitStashInspectDialog::onCommitDiffReply(const QString &commit_id, const Q
     html += tr("<b>Commit:</b> ") + m_activeCommitDiff.id() + QStringLiteral("<br />");
     if (!parentsHtml.isEmpty())
     {
-        html += (parentsHtml.count() > 1 ? tr("<b>Parents:</b> ") : tr("<b>Parent:</b> ")) + parentsHtml.join(", ") + QStringLiteral("<br />");
+        html += (parentsHtml.size() > 1 ? tr("<b>Parents:</b> ") : tr("<b>Parent:</b> ")) + parentsHtml.join(", ") + QStringLiteral("<br />");
     }
     html += tr("<b>Date:</b> ") + m_activeCommitDiff.time().toString() + QStringLiteral("<br />");
     html += tr("<b>Author:</b> ") + m_activeCommitDiff.author().name().toHtmlEscaped() + QStringLiteral(" &lt;") + email.toHtmlEscaped() + QStringLiteral("&gt;<br />");
@@ -150,7 +150,7 @@ void QGitStashInspectDialog::onCommitDiffReply(const QString &commit_id, const Q
     ui->tableWidget_files->clearContents();
 
     QMap<QString, QGitDiffFile> uniqueFiles;
-    for (int i = 0; i < m_activeCommitDiff.parents().count(); i++)
+    for (int i = 0; i < m_activeCommitDiff.parents().size(); i++)
     {
         const auto parentFiles = m_activeCommitDiff.parents().at(i).files();
         for (const auto &f : parentFiles)
@@ -164,16 +164,16 @@ void QGitStashInspectDialog::onCommitDiffReply(const QString &commit_id, const Q
     }
 
     QList<QGitDiffFile> files = uniqueFiles.values();
-    ui->tableWidget_files->setRowCount(files.count());
+    ui->tableWidget_files->setRowCount(files.size());
 
-    for (int c = 0; c < files.count(); ++c)
+    for (int c = 0; c < files.size(); ++c)
     {
         QString path = files.at(c).new_file().path();
         QString filename = QFileInfo(path).fileName();
-        QString pathname = path.left(path.length() - filename.length());
+        QString pathname = path.left(path.size() - filename.size());
         if (pathname.endsWith('/') || pathname.endsWith('\\'))
         {
-            pathname.resize(pathname.length() - 1);
+            pathname.resize(pathname.size() - 1);
         }
 
         QIcon item_icon;

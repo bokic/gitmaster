@@ -73,6 +73,8 @@ if (WIN32 AND NOT DEFINED ZLIB_ROOT)
     set(ZLIB_ROOT "${CMAKE_SOURCE_DIR}")
 endif()
 
+add_compile_definitions(NOMINMAX)
+
 find_package(Qt6 COMPONENTS Gui Widgets Network Svg REQUIRED)
 find_package(ZLIB REQUIRED)
 

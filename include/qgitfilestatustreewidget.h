@@ -3,7 +3,7 @@
 #include <QTreeWidget>
 #include <QIcon>
 #include <QList>
-#include <QPair>
+#include <utility>
 #include <QString>
 #include <git2.h>
 
@@ -27,7 +27,7 @@ public:
     static QString getStatusText(git_status_t status);
 
     void populateFiles(
-        const QList<QPair<QString, git_status_t>> &files,
+        const QList<std::pair<QString, git_status_t>> &files,
         bool isStagedCategory,
         bool isPendingCategory);
 

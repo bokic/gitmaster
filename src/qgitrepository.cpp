@@ -1214,7 +1214,7 @@ void QGitRepository::repositoryStashesReply(const QStringList &stashes, const QG
     ui->branchesTreeView->populateStashes(stashes);
 }
 
-void QGitRepository::repositoryChangedFilesReply(const QList<QPair<QString, git_status_t>> &files, const QGitError &error)
+void QGitRepository::repositoryChangedFilesReply(const QList<std::pair<QString, git_status_t>> &files, const QGitError &error)
 {
     Q_UNUSED(error)
     m_changedFiles = files;
@@ -1277,8 +1277,8 @@ void QGitRepository::updateStatusViews()
         }
 
         ui->checkBox_PendingFiles->blockSignals(true);
-        ui->checkBox_PendingFiles->setText(tr("Pending files (%1/%2 files)").arg(stagedCnt).arg(m_changedFiles.count()));
-        if (stagedCnt == m_changedFiles.count() && m_changedFiles.count() > 0)
+        ui->checkBox_PendingFiles->setText(tr("Pending files (%1/%2 files)").arg(stagedCnt).arg(m_changedFiles.size()));
+        if (stagedCnt == m_changedFiles.size() && m_changedFiles.size() > 0)
         {
             ui->checkBox_PendingFiles->setCheckState(Qt::Checked);
         }
@@ -1408,9 +1408,9 @@ void QGitRepository::repositoryGetCommitsReply(const QList<QGitCommit> &commits,
         ui->logHistory_commits->addCommit(commit);
     }
 
-    m_logCommitsOffset += commits.count();
+    m_logCommitsOffset += commits.size();
 
-    if (commits.count() < COMMIT_COUNT_TO_LOAD)
+    if (commits.size() < COMMIT_COUNT_TO_LOAD)
     {
         m_allCommitsLoaded = true;
     }
@@ -1479,7 +1479,7 @@ void QGitRepository::repositoryGetCommitDiffReply(const QString &commitId, const
             QStringList parentsHtml;
             QStringList labelsHtml;
 
-            for (int i = 0; i < m_commitDiff.parents().count(); i++)
+            for (int i = 0; i < m_commitDiff.parents().size(); i++)
             {
                 parentsHtml << QStringLiteral("<a href = \"") + m_commitDiff.parents().at(i).commitHash() + QStringLiteral("\">") + m_commitDiff.parents().at(i).commitHash().left(10) + QStringLiteral("</a>");
             }
@@ -1488,7 +1488,7 @@ void QGitRepository::repositoryGetCommitDiffReply(const QString &commitId, const
             html += QStringLiteral("<img src=\"https://www.gravatar.com/avatar/") + QCryptographicHash::hash(email.trimmed().toUtf8(), QCryptographicHash::Md5).toHex() + QStringLiteral("?s=32\" width=\"32\" height=\"32\" style=\"float: right\" />");
             html += QStringLiteral("</div>");
             html += tr("<b>Commit:</b> ") + commit_id + QStringLiteral("<br />");
-            html += (parentsHtml.count() > 1 ? tr("<b>Parents:</b> ") : tr("<b>Parent:</b> ")) + parentsHtml.join(", ") + QStringLiteral("<br />");
+            html += (parentsHtml.size() > 1 ? tr("<b>Parents:</b> ") : tr("<b>Parent:</b> ")) + parentsHtml.join(", ") + QStringLiteral("<br />");
             html += tr("<b>Date:</b> ") + m_commitDiff.time().toString() + QStringLiteral("<br />");
             if (!m_commitDiff.description().isEmpty()) {
                 html += tr("<b>Describe:</b> ") + m_commitDiff.description() + QStringLiteral("<br />");
@@ -1505,7 +1505,7 @@ void QGitRepository::repositoryGetCommitDiffReply(const QString &commitId, const
             ui->search_files->clearContents();
 
             QMap<QString, QGitDiffFile> uniqueFiles;
-            for (int i = 0; i < m_commitDiff.parents().count(); i++) {
+            for (int i = 0; i < m_commitDiff.parents().size(); i++) {
                 auto parentFiles = m_commitDiff.parents().at(i).files();
                 for (const auto &f : parentFiles) {
                     QString path = f.new_file().path();
@@ -1516,17 +1516,17 @@ void QGitRepository::repositoryGetCommitDiffReply(const QString &commitId, const
             }
 
             QList<QGitDiffFile> files = uniqueFiles.values();
-            ui->search_files->setRowCount(files.count());
+            ui->search_files->setRowCount(files.size());
 
-            for(int c = 0; c < files.count(); c++)
+            for(int c = 0; c < files.size(); c++)
             {
                 QString path = files.at(c).new_file().path();
 
                 QString filename = QFileInfo(path).fileName();
-                QString pathname = path.left(path.length() - filename.length());
+                QString pathname = path.left(path.size() - filename.size());
                 if ((pathname.endsWith('/'))||(pathname.endsWith('\\')))
                 {
-                    pathname.resize(pathname.length() - 1);
+                    pathname.resize(pathname.size() - 1);
                 }
 
                 QIcon item_icon;
@@ -1580,7 +1580,7 @@ void QGitRepository::repositoryGetCommitDiffReply(const QString &commitId, const
             QStringList parentsHtml;
             QStringList labelsHtml;
 
-            for (int i = 0; i < m_commitDiff.parents().count(); i++)
+            for (int i = 0; i < m_commitDiff.parents().size(); i++)
             {
                 parentsHtml << QStringLiteral("<a href = \"") + m_commitDiff.parents().at(i).commitHash() + QStringLiteral("\">") + m_commitDiff.parents().at(i).commitHash().left(10) + QStringLiteral("</a>");
             }
@@ -1589,7 +1589,7 @@ void QGitRepository::repositoryGetCommitDiffReply(const QString &commitId, const
             html += QStringLiteral("<img src=\"https://www.gravatar.com/avatar/") + QCryptographicHash::hash(email.trimmed().toUtf8(), QCryptographicHash::Md5).toHex() + QStringLiteral("?s=32\" width=\"32\" height=\"32\" style=\"float: right\" />");
             html += QStringLiteral("</div>");
             html += tr("<b>Commit:</b> ") + commit_id + QStringLiteral("<br />");
-            html += (parentsHtml.count() > 1 ? tr("<b>Parents:</b> ") : tr("<b>Parent:</b> ")) + parentsHtml.join(", ") + QStringLiteral("<br />");
+            html += (parentsHtml.size() > 1 ? tr("<b>Parents:</b> ") : tr("<b>Parent:</b> ")) + parentsHtml.join(", ") + QStringLiteral("<br />");
             html += tr("<b>Date:</b> ") + m_commitDiff.time().toString() + QStringLiteral("<br />");
             if (!m_commitDiff.description().isEmpty()) {
                 html += tr("<b>Describe:</b> ") + m_commitDiff.description() + QStringLiteral("<br />");
@@ -1606,7 +1606,7 @@ void QGitRepository::repositoryGetCommitDiffReply(const QString &commitId, const
             ui->logHistory_files->clearContents();
 
             QMap<QString, QGitDiffFile> uniqueFiles;
-            for (int i = 0; i < m_commitDiff.parents().count(); i++) {
+            for (int i = 0; i < m_commitDiff.parents().size(); i++) {
                 auto parentFiles = m_commitDiff.parents().at(i).files();
                 for (const auto &f : parentFiles) {
                     QString path = f.new_file().path();
@@ -1617,17 +1617,17 @@ void QGitRepository::repositoryGetCommitDiffReply(const QString &commitId, const
             }
 
             QList<QGitDiffFile> files = uniqueFiles.values();
-            ui->logHistory_files->setRowCount(files.count());
+            ui->logHistory_files->setRowCount(files.size());
 
-            for(int c = 0; c < files.count(); c++)
+            for(int c = 0; c < files.size(); c++)
             {
                 QString path = files.at(c).new_file().path();
 
                 QString filename = QFileInfo(path).fileName();
-                QString pathname = path.left(path.length() - filename.length());
+                QString pathname = path.left(path.size() - filename.size());
                 if ((pathname.endsWith('/'))||(pathname.endsWith('\\')))
                 {
-                    pathname.resize(pathname.length() - 1);
+                    pathname.resize(pathname.size() - 1);
                 }
 
                 QIcon item_icon;
@@ -2260,7 +2260,7 @@ void QGitRepository::on_checkBox_StagedFiles_clicked()
         }
     }
 
-    if (items.count() > 0)
+    if (items.size() > 0)
     {
         emit repositoryUnstageFiles(items);
     }
@@ -2281,7 +2281,7 @@ void QGitRepository::on_checkBox_UnstagedFiles_clicked()
         }
     }
 
-    if (items.count() > 0)
+    if (items.size() > 0)
     {
         emit repositoryStageFiles(items);
     }
@@ -3287,7 +3287,7 @@ void QGitRepository::applyPatchesPrompt(const QStringList &patchFiles)
             .arg(m_git ? m_git->path().dirName() : QString());
     } else {
         QString fileList;
-        for (int i = 0; i < qMin(sortedFiles.size(), 10); ++i) {
+        for (int i = 0; i < std::min(static_cast<int>(sortedFiles.size()), 10); ++i) {
             fileList += QString("• %1\n").arg(QFileInfo(sortedFiles[i]).fileName());
         }
         if (sortedFiles.size() > 10) {
@@ -3575,7 +3575,7 @@ void QGitRepository::fetchRepositoryChangedFiles()
 void QGitRepository::on_lineEdit_search_returnPressed()
 {
     QString text = ui->lineEdit_search->text();
-    if (text.length() >= 3)
+    if (text.size() >= 3)
     {
         m_searchingCommits = true;
         ui->lineEdit_search->setEnabled(false);

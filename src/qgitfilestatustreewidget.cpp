@@ -75,7 +75,7 @@ QString QGitFileStatusTreeWidget::getStatusText(git_status_t status)
 }
 
 void QGitFileStatusTreeWidget::populateFiles(
-    const QList<QPair<QString, git_status_t>> &files,
+    const QList<std::pair<QString, git_status_t>> &files,
     bool isStagedCategory,
     bool isPendingCategory)
 {

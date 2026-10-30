@@ -9,6 +9,7 @@
 #include <QThread>
 #include <QWidget>
 #include <QIcon>
+#include <utility>
 
 #include "qgit.h"
 #include "qgitcommit.h"
@@ -163,7 +164,7 @@ private slots:
     void repositoryLockWorktreeReply(const QGitError &error);
     void repositoryBranchesAndTagsReply(const QList<QGitBranch> &branches, const QList<QGitTag> &tags, const QList<QGitSubmodule> &submodules, const QList<QGitWorktree> &worktrees, bool hasRemotes, bool hasCommitsToPush, const QGitError &error);
     void repositoryStashesReply(const QStringList &stashes, const QGitError &error);
-    void repositoryChangedFilesReply(const QList<QPair<QString, git_status_t>> &files, const QGitError &error);
+    void repositoryChangedFilesReply(const QList<std::pair<QString, git_status_t>> &files, const QGitError &error);
     void repositoryStageFilesReply(const QGitError &error);
     void repositoryUnstageFilesReply(const QGitError &error);
     void repositoryDiscardFilesReply(const QGitError &error);
@@ -279,7 +280,7 @@ private:
     bool m_hasStashableChanges = false;
     int m_layoutOption = 0;
     QList<QGitSubmodule> m_submodules;
-    QList<QPair<QString, git_status_t>> m_changedFiles;
+    QList<std::pair<QString, git_status_t>> m_changedFiles;
     QString m_headCommitId;
     QString m_headCommitMessage;
     git_repository_state_t m_repositoryState = GIT_REPOSITORY_STATE_NONE;

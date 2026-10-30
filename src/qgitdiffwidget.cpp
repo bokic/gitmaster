@@ -5,6 +5,7 @@
 #include <QPaintEvent>
 #include <QScrollBar>
 #include <QObject>
+#include <algorithm>
 
 
 // A single highlighted segment within a diff line (character or word range)
@@ -20,7 +21,9 @@ class QGitDiffWidgetPrivateLine
 {
 public:
     struct CharEntry {
-        QChar ch;
+        CharEntry() = default;
+        CharEntry(char16_t c, int off) : ch(c), byteOffset(off) {}
+        char16_t ch = 0;
         int   byteOffset = 0;
     };
 
@@ -343,7 +346,7 @@ static QVector<QGitDiffInlineRange> computeChangedRanges(const QByteArray &a, co
     for (int i = 1; i <= m; ++i)
         for (int j = 1; j <= n; ++j)
             dp[i][j] = (ta[i-1] == tb[j-1]) ? dp[i-1][j-1] + 1
-                                              : qMax(dp[i-1][j], dp[i][j-1]);
+                                              : std::max(dp[i-1][j], dp[i][j-1]);
 
     // Back-trace to find which tokens in b are changed (i.e., not matched)
     QVector<bool> matched(n, false);
@@ -411,12 +414,12 @@ QVector<QGitDiffWidgetLine> QGitDiffWidget::linesAt(int fileIdx, int hunkIdx, in
 {
     QVector<QGitDiffWidgetLine> lines;
 
-    if (fileIdx < 0 || fileIdx >= m_private->files.count()) return lines;
+    if (fileIdx < 0 || fileIdx >= m_private->files.size()) return lines;
     const auto &file = m_private->files.at(fileIdx);
     fileName = file.new_file.path();
     if (fileName.isEmpty()) fileName = file.old_file.path();
 
-    if (hunkIdx < 0 || hunkIdx >= file.hunks.count()) return lines;
+    if (hunkIdx < 0 || hunkIdx >= file.hunks.size()) return lines;
     const auto &hunk = file.hunks.at(hunkIdx);
     if (hunk.lines.isEmpty()) return lines;
 
@@ -453,7 +456,7 @@ QVector<QGitDiffWidgetLine> QGitDiffWidget::linesAt(int fileIdx, int hunkIdx, in
         }
     } else {
         // Collect single line
-        if (lineIdx >= hunk.lines.count()) return lines;
+        if (lineIdx >= hunk.lines.size()) return lines;
         
         int v_old = hunk.lines.first().old_lineno - 1;
         int v_new = hunk.lines.first().new_lineno - 1;
@@ -533,12 +536,12 @@ void QGitDiffWidget::responseGitDiff(const QString &first, const QString &second
     for (const QGitDiffFile &diffFile : diff) {
         for (const QGitDiffHunk &diffHunk : diffFile.hunks()) {
             for (const QGitDiffLine &diffLine : diffHunk.lines()) {
-                maxLineNum = qMax(maxLineNum, qMax(diffLine.old_lineno(), diffLine.new_lineno()));
+                maxLineNum = std::max({maxLineNum, diffLine.old_lineno(), diffLine.new_lineno()});
             }
         }
     }
     m_private->maxLineNum = maxLineNum;
-    m_private->lineNumWidth = fm.horizontalAdvance(QString(QString::number(maxLineNum).length(), '9')) + 10;
+    m_private->lineNumWidth = fm.horizontalAdvance(QString(QString::number(maxLineNum).size(), '9')) + 10;
     m_private->contentOffset = m_private->lineNumWidth * 2 + 20;
 
     const int contentOffset = m_private->contentOffset;
@@ -553,7 +556,7 @@ void QGitDiffWidget::responseGitDiff(const QString &first, const QString &second
     const bool isSideBySide = (m_diffViewMode == DiffViewMode::SideBySide);
     const int totalDiffWidth = isSideBySide ? (sidePanelWidth * 2 + 10) : (contentOffset + lineMax);
 
-    for(int c = 0; c < diff.count(); c++)
+    for(int c = 0; c < diff.size(); c++)
     {
         const auto &file_item = diff.at(c);
         QGitDiffWidgetPrivateFile file;
@@ -573,7 +576,7 @@ void QGitDiffWidget::responseGitDiff(const QString &first, const QString &second
 
         file_h = m_fontHeight * 2;
 
-        for(int pos_hunk = 0; pos_hunk < file_item.hunks().count(); pos_hunk++)
+        for(int pos_hunk = 0; pos_hunk < file_item.hunks().size(); pos_hunk++)
         {
             const auto &hunk_item = file_item.hunks().at(pos_hunk);
             QGitDiffWidgetPrivateHunk hunk;
@@ -592,7 +595,7 @@ void QGitDiffWidget::responseGitDiff(const QString &first, const QString &second
             hunk.rect.setLeft(contentsMargins().left());
             hunk.rect.setWidth(totalDiffWidth);
 
-            for(int pos_line = 0; pos_line < hunk_item.lines().count(); pos_line++)
+            for(int pos_line = 0; pos_line < hunk_item.lines().size(); pos_line++)
             {
                 const auto &line_item = hunk_item.lines().at(pos_line);
                 QGitDiffWidgetPrivateLine line;
@@ -609,10 +612,10 @@ void QGitDiffWidget::responseGitDiff(const QString &first, const QString &second
                 int bOff = 0;
                 for (int i = 0; i < decoded.size(); ++i)
                 {
-                    QChar qch = decoded.at(i);
-                    line.chars.append({qch, bOff});
+                    auto qch = decoded.at(i);
+                    line.chars.append({qch.unicode(), bOff});
                     if (qch.isHighSurrogate() && i + 1 < decoded.size() && decoded.at(i + 1).isLowSurrogate()) {
-                        line.chars.append({decoded.at(i + 1), bOff});
+                        line.chars.append({decoded.at(i + 1).unicode(), bOff});
                         bOff += 4;
                         ++i;
                     } else {
@@ -675,7 +678,7 @@ void QGitDiffWidget::responseGitDiff(const QString &first, const QString &second
                     if (delCount > 0 && addCount > 0)
                     {
                         // Pair them up 1-to-1; remaining unpaired lines get full-line highlight
-                        int pairs = qMin(delCount, addCount);
+                        int pairs = std::min(delCount, addCount);
                         for (int p = 0; p < pairs; ++p)
                         {
                             auto &delLine = hunk.lines[delStart + p];
@@ -754,7 +757,7 @@ void QGitDiffWidget::responseGitDiff(const QString &first, const QString &second
 
                         int delCount = delEnd - delStart;
                         int addCount = addEnd - addStart;
-                        int maxCount = qMax(delCount, addCount);
+                        int maxCount = std::max(delCount, addCount);
 
                         for (int k = 0; k < maxCount; ++k)
                         {

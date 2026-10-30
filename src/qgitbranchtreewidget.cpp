@@ -46,11 +46,11 @@ void QGitBranchTreeWidget::populateBranchesAndTags(
 
         if (branch.type() & GIT_BRANCH_LOCAL)
         {
-            if ((branchItems.count() >= 3) && (branchItems[0] == QStringLiteral("refs")) && (branchItems[1] == QStringLiteral("heads")))
+            if ((branchItems.size() >= 3) && (branchItems[0] == QStringLiteral("refs")) && (branchItems[1] == QStringLiteral("heads")))
             {
                 QTreeWidgetItem *item = itemLocalBranches;
 
-                for (int depth = 2; depth < branchItems.count(); depth++)
+                for (int depth = 2; depth < branchItems.size(); depth++)
                 {
                     const QString &name = branchItems.at(depth);
                     bool found = false;
@@ -68,7 +68,7 @@ void QGitBranchTreeWidget::populateBranchesAndTags(
                     if (!found)
                     {
                         QString displayName = name;
-                        if (depth == branchItems.count() - 1)
+                        if (depth == branchItems.size() - 1)
                         {
                             if (branch.ahead() > 0 || branch.behind() > 0)
                             {
@@ -84,7 +84,7 @@ void QGitBranchTreeWidget::populateBranchesAndTags(
                         }
 
                         QTreeWidgetItem *child = new QTreeWidgetItem(QStringList() << displayName);
-                        if (depth == branchItems.count() - 1) {
+                        if (depth == branchItems.size() - 1) {
                             child->setData(0, Qt::UserRole, branch.hash());
                             child->setData(0, Qt::UserRole + 1, branchItems.mid(2).join('/'));
                             child->setData(0, Qt::UserRole + 2, "LocalBranch");
@@ -94,7 +94,7 @@ void QGitBranchTreeWidget::populateBranchesAndTags(
                         }
 
                         bool isCurrent = false;
-                        if (depth == branchItems.count() - 1 && branchItems.mid(2).join('/') == currentBranch) {
+                        if (depth == branchItems.size() - 1 && branchItems.mid(2).join('/') == currentBranch) {
                             isCurrent = true;
                         }
 
@@ -118,11 +118,11 @@ void QGitBranchTreeWidget::populateBranchesAndTags(
         }
         if (branch.type() & GIT_BRANCH_REMOTE)
         {
-            if ((branchItems.count() >= 4) && (branchItems[0] == QStringLiteral("refs")) && (branchItems[1] == QStringLiteral("remotes")))
+            if ((branchItems.size() >= 4) && (branchItems[0] == QStringLiteral("refs")) && (branchItems[1] == QStringLiteral("remotes")))
             {
                 QTreeWidgetItem *item = itemRemoteBranches;
 
-                for (int depth = 2; depth < branchItems.count(); depth++)
+                for (int depth = 2; depth < branchItems.size(); depth++)
                 {
                     const QString &name = branchItems.at(depth);
                     bool found = false;
@@ -149,7 +149,7 @@ void QGitBranchTreeWidget::populateBranchesAndTags(
                         else
                         {
                             child->setIcon(0, m_iconRemoteBranch);
-                            if (depth == branchItems.count() - 1) {
+                            if (depth == branchItems.size() - 1) {
                                 child->setData(0, Qt::UserRole, branch.hash());
                                 child->setData(0, Qt::UserRole + 1, branchItems.mid(2).join('/'));
                                 child->setData(0, Qt::UserRole + 2, "RemoteBranch");

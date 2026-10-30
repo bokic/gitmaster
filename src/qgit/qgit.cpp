@@ -263,7 +263,7 @@ static bool isValidUrl(const QString &url)
 {
     if (url.trimmed().isEmpty())
         return false;
-    for (QChar c : url) {
+    for (auto c : url) {
         if (c.isSpace() || c.unicode() < 32)
             return false;
     }
@@ -427,13 +427,13 @@ struct SafeGitStrArray {
         SafeGitStrArray arr;
         if (list.isEmpty()) return arr;
 
-        arr.value.count = static_cast<size_t>(list.count());
+        arr.value.count = static_cast<size_t>(list.size());
         arr.value.strings = static_cast<char **>(calloc(arr.value.count, sizeof(char *)));
         if (!arr.value.strings) {
             throw QGitError("malloc", -1, QObject::tr("Memory allocation failed"));
         }
 
-        for (int i = 0; i < list.count(); ++i) {
+        for (int i = 0; i < list.size(); ++i) {
             arr.value.strings[i] = strdup(list.at(i).toUtf8().constData());
             if (!arr.value.strings[i]) {
                 throw QGitError("strdup", -1, QObject::tr("Memory allocation failed"));
@@ -2771,7 +2771,7 @@ static QList<QGitWorktree> worktreesHelper(git_repository *repo, const QString &
                         } else if (headLine.startsWith("ref: ")) {
                             branch = QString::fromUtf8(headLine.mid(5).trimmed());
                             resolved = true;
-                        } else if (headLine.length() == 40 || headLine.length() == 64) {
+                        } else if (headLine.size() == 40 || headLine.size() == 64) {
                             branch = QStringLiteral("HEAD");
                             resolved = true;
                         }
@@ -3302,7 +3302,7 @@ static QString slugifyPatchSubject(const QString &subject)
     while (slug.endsWith('-')) {
         slug.chop(1);
     }
-    if (slug.length() > 50) {
+    if (slug.size() > 50) {
         slug = slug.left(50);
         while (slug.endsWith('-')) {
             slug.chop(1);
@@ -3518,17 +3518,17 @@ static bool deflateBufferHelper(const uint8_t *inData, size_t inSize, std::vecto
 static void fillTarHeaderHelper(UstarTarHeader &hdr, const std::string &path, size_t size, uint32_t mode, time_t mtime, char typeflag, const std::string &linkname = std::string())
 {
     memset(&hdr, 0, sizeof(hdr));
-    if (path.length() > sizeof(hdr.name)) {
+    if (path.size() > sizeof(hdr.name)) {
         bool splitFound = false;
-        size_t minSplit = (path.length() > sizeof(hdr.name)) ? (path.length() - sizeof(hdr.name)) : 0;
-        size_t maxSplit = std::min(sizeof(hdr.prefix), path.length() - 1);
+        size_t minSplit = (path.size() > sizeof(hdr.name)) ? (path.size() - sizeof(hdr.name)) : 0;
+        size_t maxSplit = std::min(sizeof(hdr.prefix), path.size() - 1);
         for (size_t pos = maxSplit; pos >= minSplit; --pos) {
             if (path[pos] == '/') {
                 std::string prefix = path.substr(0, pos);
                 std::string name = path.substr(pos + 1);
-                if (prefix.length() <= sizeof(hdr.prefix) && name.length() <= sizeof(hdr.name)) {
-                    memcpy(hdr.prefix, prefix.c_str(), prefix.length());
-                    memcpy(hdr.name, name.c_str(), name.length());
+                if (prefix.size() <= sizeof(hdr.prefix) && name.size() <= sizeof(hdr.name)) {
+                    memcpy(hdr.prefix, prefix.c_str(), prefix.size());
+                    memcpy(hdr.name, name.c_str(), name.size());
                     splitFound = true;
                     break;
                 }
@@ -3536,10 +3536,10 @@ static void fillTarHeaderHelper(UstarTarHeader &hdr, const std::string &path, si
             if (pos == 0) break;
         }
         if (!splitFound) {
-            memcpy(hdr.name, path.c_str(), std::min(path.length(), sizeof(hdr.name)));
+            memcpy(hdr.name, path.c_str(), std::min(path.size(), sizeof(hdr.name)));
         }
     } else {
-        memcpy(hdr.name, path.c_str(), path.length());
+        memcpy(hdr.name, path.c_str(), path.size());
     }
 
     snprintf(hdr.mode, sizeof(hdr.mode), "%07o", mode & 07777);
@@ -3549,7 +3549,7 @@ static void fillTarHeaderHelper(UstarTarHeader &hdr, const std::string &path, si
     snprintf(hdr.mtime, sizeof(hdr.mtime), "%011lo", (unsigned long)mtime);
     hdr.typeflag = typeflag;
     if (!linkname.empty()) {
-        memcpy(hdr.linkname, linkname.c_str(), std::min(linkname.length(), (size_t)100));
+        memcpy(hdr.linkname, linkname.c_str(), std::min(linkname.size(), (size_t)100));
     }
     memcpy(hdr.magic, "ustar ", 6);
     memcpy(hdr.version, " ", 2);
@@ -3716,11 +3716,11 @@ void QGit::exportArchive(const QString &refOrCommit, const QString &outputFilePa
                 lfh.crc32 = crc;
                 lfh.compressed_size = compSize;
                 lfh.uncompressed_size = static_cast<uint32_t>(ae.data.size());
-                lfh.filename_length = static_cast<uint16_t>(entryPath.length());
+                lfh.filename_length = static_cast<uint16_t>(entryPath.size());
                 lfh.extra_field_length = 0;
 
                 zipFile.write(reinterpret_cast<const char*>(&lfh), sizeof(lfh));
-                zipFile.write(entryPath.data(), entryPath.length());
+                zipFile.write(entryPath.data(), entryPath.size());
                 if (compSize > 0 && writePtr) {
                     zipFile.write(reinterpret_cast<const char*>(writePtr), compSize);
                 }
@@ -3732,7 +3732,7 @@ void QGit::exportArchive(const QString &refOrCommit, const QString &outputFilePa
                 cdh.crc32 = crc;
                 cdh.compressed_size = compSize;
                 cdh.uncompressed_size = static_cast<uint32_t>(ae.data.size());
-                cdh.filename_length = static_cast<uint16_t>(entryPath.length());
+                cdh.filename_length = static_cast<uint16_t>(entryPath.size());
                 cdh.external_file_attributes = (static_cast<uint32_t>(ae.filemode & 07777)) << 16;
                 cdh.relative_offset_local_header = localHeaderOffset;
 
@@ -3743,7 +3743,7 @@ void QGit::exportArchive(const QString &refOrCommit, const QString &outputFilePa
             uint32_t cdOffset = static_cast<uint32_t>(zipFile.pos());
             for (size_t i = 0; i < cdHeaders.size(); ++i) {
                 zipFile.write(reinterpret_cast<const char*>(&cdHeaders[i]), sizeof(ZipCentralDirHeader));
-                zipFile.write(cdFilenames[i].data(), cdFilenames[i].length());
+                zipFile.write(cdFilenames[i].data(), cdFilenames[i].size());
             }
             uint32_t cdSize = static_cast<uint32_t>(zipFile.pos()) - cdOffset;
 
@@ -3834,7 +3834,7 @@ void QGit::applyPatches(const QStringList &patchPaths)
             file.close();
 
             GitDiff diff;
-            res = git_diff_from_buffer(diff, content.constData(), content.length());
+            res = git_diff_from_buffer(diff, content.constData(), content.size());
             if (res) {
                 QFileInfo fi(patchPath);
                 throw QGitError("git_diff_from_buffer", res, tr("Failed to parse patch '%1': %2").arg(fi.fileName(), git_error_last() ? QString::fromUtf8(git_error_last()->message) : tr("Invalid patch format")));
@@ -4491,7 +4491,7 @@ void QGit::stashPop(const QString &name)
 
 void QGit::listChangedFiles(int show, int sort, bool reversed)
 {
-    QList<QPair<QString, git_status_t>> items;
+    QList<std::pair<QString, git_status_t>> items;
     QGitError error;
 
     try
@@ -5005,7 +5005,7 @@ void QGit::stageFiles(const QStringList &items)
 
     try
     {
-        if (items.count() == 0)
+        if (items.size() == 0)
         {
             throw QGitError(tr("No files selected to stage"));
         }
@@ -5059,7 +5059,7 @@ void QGit::unstageFiles(const QStringList &items)
 
     try
     {
-        if (items.count() == 0)
+        if (items.size() == 0)
         {
             throw QGitError(tr("No files selected to unstage"));
         }
@@ -5104,7 +5104,7 @@ void QGit::stageFileLines(const QString &filename, const QVector<QGitDiffWidgetL
 
     try
     {
-        if (lines.count() == 0)
+        if (lines.size() == 0)
         {
             throw QGitError(tr("No lines selected to stage"));
         }
@@ -5206,7 +5206,7 @@ void QGit::stageFileLines(const QString &filename, const QVector<QGitDiffWidgetL
 
         buffer = bufferLines.join(LINE_END);
 
-        res = git_index_add_from_buffer(index, entry, buffer.constData(), buffer.length());
+        res = git_index_add_from_buffer(index, entry, buffer.constData(), buffer.size());
         if (res)
         {
             throw QGitError("git_index_add_frombuffer", res);
@@ -5230,7 +5230,7 @@ void QGit::unstageFileLines(const QString &filename, const QVector<QGitDiffWidge
 
     try
     {
-        if (lines.count() == 0)
+        if (lines.size() == 0)
         {
             throw QGitError(tr("No lines selected to unstage"));
         }
@@ -5331,7 +5331,7 @@ void QGit::unstageFileLines(const QString &filename, const QVector<QGitDiffWidge
         }
         buffer = bufferLines.join(LINE_END);
 
-        res = git_index_add_from_buffer(index, entry, buffer.constData(), buffer.length());
+        res = git_index_add_from_buffer(index, entry, buffer.constData(), buffer.size());
         if (res)
         {
             throw QGitError("git_index_add_frombuffer", res);
@@ -5356,7 +5356,7 @@ void QGit::discardFiles(const QStringList &items)
 
     try
     {
-        if (items.count() == 0)
+        if (items.size() == 0)
         {
             throw QGitError(tr("No files selected to discard"));
         }
@@ -5438,7 +5438,7 @@ void QGit::discardFileLines(const QString &filename, const QVector<QGitDiffWidge
 
     try
     {
-        if (lines.count() == 0)
+        if (lines.size() == 0)
         {
             throw QGitError(tr("No lines selected to discard"));
         }

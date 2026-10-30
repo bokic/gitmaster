@@ -34,9 +34,9 @@ void QGitReflogDialog::loadReflog()
     ui->tableWidget->setSortingEnabled(false);
 
     QList<QGitReflogEntry> entries = m_repository->git()->getReflog(m_refName);
-    ui->tableWidget->setRowCount(entries.count());
+    ui->tableWidget->setRowCount(entries.size());
 
-    for (int row = 0; row < entries.count(); ++row) {
+    for (int row = 0; row < entries.size(); ++row) {
         const auto &entry = entries.at(row);
 
         auto *itemHash = new QTableWidgetItem(entry.commitHash.left(8));

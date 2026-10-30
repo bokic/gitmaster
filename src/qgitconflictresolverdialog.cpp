@@ -6,6 +6,7 @@
 #include <QFile>
 #include <QTextStream>
 #include <QMessageBox>
+#include <algorithm>
 
 QGitConflictResolverDialog::QGitConflictResolverDialog(QGit *git, const QString &filePath, QWidget *parent)
     : QDialog(parent)
@@ -96,7 +97,7 @@ int findMarker(const QString &text, const QString &marker, int from = 0)
         if (pos == 0 || text[pos - 1] == '\n') {
             return pos;
         }
-        pos += marker.length();
+        pos += marker.size();
     }
     return -1;
 }
@@ -123,7 +124,7 @@ void QGitConflictResolverDialog::refreshConflictList()
     }
 
     if (count > 0) {
-        int nextRow = qMin(currentSelected >= 0 ? currentSelected : 0, count - 1);
+        int nextRow = std::min(currentSelected >= 0 ? currentSelected : 0, count - 1);
         ui->listConflicts->setCurrentRow(nextRow);
         ui->pushButton_useOurs->setEnabled(true);
         ui->pushButton_useTheirs->setEnabled(true);
@@ -171,7 +172,7 @@ void QGitConflictResolverDialog::resolveConflictBlock(int index, bool useOurs)
     if (endTheirs == -1) return;
 
     int endLine = text.indexOf("\n", endTheirs);
-    if (endLine == -1) endLine = text.length();
+    if (endLine == -1) endLine = text.size();
     else endLine += 1; // Include the newline
 
     QString replacement;

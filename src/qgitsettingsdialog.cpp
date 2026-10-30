@@ -65,9 +65,7 @@ void QGitSettingsDialog::populateTable()
     QString filter = ui->lineEdit_search->text().trimmed();
     int row = 0;
 
-    QMapIterator<QString, QString> it(m_allConfigs);
-    while (it.hasNext()) {
-        it.next();
+    for (auto it = m_allConfigs.cbegin(); it != m_allConfigs.cend(); ++it) {
         if (!filter.isEmpty() && 
             !it.key().contains(filter, Qt::CaseInsensitive) && 
             !it.value().contains(filter, Qt::CaseInsensitive)) {
