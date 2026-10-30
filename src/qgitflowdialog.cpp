@@ -84,7 +84,7 @@ bool QGitFlowDialog::ensureDevelopBranch()
             return false;
         }
         try {
-            m_git.createLocalBranchInternal(QStringLiteral("develop"), mainBranch, false);
+            m_git.createLocalBranchInternal(QStringLiteral("develop"), mainBranch, QGit::BranchCreateOption::None);
             QMessageBox::information(this, tr("Git Flow Initialization"),
                                      tr("Branch 'develop' was automatically created from '%1'.").arg(mainBranch));
         } catch (const QGitError &err) {
@@ -109,7 +109,7 @@ void QGitFlowDialog::on_pushButton_startFeature_clicked()
 
     try {
         if (!ensureDevelopBranch()) return;
-        m_git.createLocalBranchInternal(branchName, QStringLiteral("develop"), true);
+        m_git.createLocalBranchInternal(branchName, QStringLiteral("develop"), QGit::BranchCreateOption::Checkout);
         ui->lineEdit_featureName->clear();
         refreshBranches();
         m_repo->refreshData();
@@ -155,7 +155,7 @@ void QGitFlowDialog::on_pushButton_startRelease_clicked()
 
     try {
         if (!ensureDevelopBranch()) return;
-        m_git.createLocalBranchInternal(branchName, QStringLiteral("develop"), true);
+        m_git.createLocalBranchInternal(branchName, QStringLiteral("develop"), QGit::BranchCreateOption::Checkout);
         ui->lineEdit_releaseName->clear();
         refreshBranches();
         m_repo->refreshData();
@@ -212,7 +212,7 @@ void QGitFlowDialog::on_pushButton_startHotfix_clicked()
 
     try {
         QString mainBranch = detectMainBranch();
-        m_git.createLocalBranchInternal(branchName, mainBranch, true);
+        m_git.createLocalBranchInternal(branchName, mainBranch, QGit::BranchCreateOption::Checkout);
         ui->lineEdit_hotfixName->clear();
         refreshBranches();
         m_repo->refreshData();

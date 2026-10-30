@@ -95,7 +95,7 @@ void QGitReflogDialog::on_checkoutButton_clicked()
                                                  &ok);
     if (ok && !branchName.isEmpty()) {
         try {
-            m_repository->git()->createLocalBranchInternal(branchName, hash, true);
+            m_repository->git()->createLocalBranchInternal(branchName, hash, QGit::BranchCreateOption::Checkout);
             m_repository->refreshData();
             accept();
         } catch (const QGitError &error) {
@@ -117,7 +117,7 @@ void QGitReflogDialog::on_createBranchButton_clicked()
                                                  &ok);
     if (ok && !branchName.isEmpty()) {
         try {
-            m_repository->git()->createLocalBranchInternal(branchName, hash, false);
+            m_repository->git()->createLocalBranchInternal(branchName, hash, QGit::BranchCreateOption::None);
             m_repository->refreshData();
             loadReflog();
             QMessageBox::information(this, tr("Branch Created"), tr("Branch '%1' successfully created.").arg(branchName));

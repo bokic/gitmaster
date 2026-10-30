@@ -657,7 +657,11 @@ void QGitMasterMainWindow::on_actionStash_triggered()
     if (widget) {
         QGitStashDialog dlg(this);
         if (dlg.exec() == QDialog::Accepted) {
-            widget->stash(dlg.message(), dlg.keepIndex(), dlg.includeUntracked(), dlg.includeIgnored());
+            QGit::StashOptions options = QGit::StashOption::None;
+            if (dlg.keepIndex()) options |= QGit::StashOption::KeepIndex;
+            if (dlg.includeUntracked()) options |= QGit::StashOption::IncludeUntracked;
+            if (dlg.includeIgnored()) options |= QGit::StashOption::IncludeIgnored;
+            widget->stash(dlg.message(), options);
         }
     }
 }

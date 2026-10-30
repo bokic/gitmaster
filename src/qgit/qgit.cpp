@@ -1610,8 +1610,11 @@ bool QGit::gitRepositoryDefaultSignature(const QDir &path, QString &name, QStrin
     return true;
 }
 
-void QGit::createLocalBranchInternal(const QString &name, const QString &commit_id, bool checkout, bool force)
+void QGit::createLocalBranchInternal(const QString &name, const QString &commit_id, BranchCreateOptions options)
 {
+    const bool checkout = options.testFlag(BranchCreateOption::Checkout);
+    const bool force = options.testFlag(BranchCreateOption::Force);
+
     if (!isValidRefName(QStringLiteral("refs/heads/"), name))
     {
         git_error_set_str(GIT_ERROR_INVALID, "Invalid branch name");
@@ -1675,12 +1678,12 @@ void QGit::createLocalBranchInternal(const QString &name, const QString &commit_
     }
 }
 
-void QGit::createLocalBranch(const QString &name, const QString &commit_id, bool checkout, bool force)
+void QGit::createLocalBranch(const QString &name, const QString &commit_id, BranchCreateOptions options)
 {
     QGitError error;
     try
     {
-        createLocalBranchInternal(name, commit_id, checkout, force);
+        createLocalBranchInternal(name, commit_id, options);
     } catch (const QGitError &ex) {
         error = ex;
     }
@@ -2402,8 +2405,12 @@ void QGit::addSubmodule(const QString &url, const QString &path, const QString &
     emit addSubmoduleReply(error);
 }
 
-void QGit::removeSubmodule(const QString &name, bool removeWorkingDirectory, bool removeGitDir, bool force)
+void QGit::removeSubmodule(const QString &name, SubmoduleRemoveOptions options)
 {
+    const bool removeWorkingDirectory = options.testFlag(SubmoduleRemoveOption::RemoveWorkingDirectory);
+    const bool removeGitDir = options.testFlag(SubmoduleRemoveOption::RemoveGitDir);
+    const bool force = options.testFlag(SubmoduleRemoveOption::Force);
+
     QGitError error;
     try {
         GitRepository repo;
@@ -2725,7 +2732,7 @@ static QList<QGitWorktree> worktreesHelper(git_repository *repo, const QString &
             if (shorthand)
                 branch = QString::fromUtf8(shorthand);
         }
-        list.append(QGitWorktree(QStringLiteral("(main)"), mainPath, branch, true, false, false));
+        list.append(QGitWorktree(QStringLiteral("(main)"), mainPath, branch, QGitWorktree::Flag::Main));
     }
 
     GitStrArray names;
@@ -2791,7 +2798,10 @@ static QList<QGitWorktree> worktreesHelper(git_repository *repo, const QString &
             }
         }
 
-        list.append(QGitWorktree(QString::fromUtf8(wtName), path, branch, false, locked, prunable));
+        QGitWorktree::Flags flags;
+        if (locked) flags |= QGitWorktree::Flag::Locked;
+        if (prunable) flags |= QGitWorktree::Flag::Prunable;
+        list.append(QGitWorktree(QString::fromUtf8(wtName), path, branch, flags));
     }
 
     return list;
@@ -2892,13 +2902,12 @@ void QGit::lockWorktree(const QString &name, bool lock)
     emit lockWorktreeReply(error);
 }
 
-static void fetchRepoSubmodulesRecursive(git_repository *repo, bool purgeDeletedBranches, bool fetchAllTags, QGit *gitContext)
+static void fetchRepoSubmodulesRecursive(git_repository *repo, QGit::FetchOptions options, QGit *gitContext)
 {
     struct SubmoduleFetchContext {
-        bool purge;
-        bool tags;
+        QGit::FetchOptions options;
         QGit *context;
-    } ctx = { purgeDeletedBranches, fetchAllTags, gitContext };
+    } ctx = { options, gitContext };
 
     auto cb = [](git_submodule *sm, const char *name, void *payload) -> int {
         Q_UNUSED(name);
@@ -2908,8 +2917,8 @@ static void fetchRepoSubmodulesRecursive(git_repository *repo, bool purgeDeleted
             GitStrArray remotes;
             if (git_remote_list(remotes, subRepo) == 0) {
                 git_fetch_options fetch_opts = makeFetchOptions(c->context);
-                fetch_opts.prune = c->purge ? GIT_FETCH_PRUNE : GIT_FETCH_NO_PRUNE;
-                fetch_opts.download_tags = c->tags ? GIT_REMOTE_DOWNLOAD_TAGS_ALL : GIT_REMOTE_DOWNLOAD_TAGS_AUTO;
+                fetch_opts.prune = c->options.testFlag(QGit::FetchOption::PurgeDeletedBranches) ? GIT_FETCH_PRUNE : GIT_FETCH_NO_PRUNE;
+                fetch_opts.download_tags = c->options.testFlag(QGit::FetchOption::FetchAllTags) ? GIT_REMOTE_DOWNLOAD_TAGS_ALL : GIT_REMOTE_DOWNLOAD_TAGS_AUTO;
                 for (size_t i = 0; i < remotes.value.count; ++i) {
                     GitRemote remote;
                     if (git_remote_lookup(remote, subRepo, remotes.value.strings[i]) == 0) {
@@ -2918,7 +2927,7 @@ static void fetchRepoSubmodulesRecursive(git_repository *repo, bool purgeDeleted
                 }
             }
             // Recurse into nested submodules
-            fetchRepoSubmodulesRecursive(subRepo, c->purge, c->tags, c->context);
+            fetchRepoSubmodulesRecursive(subRepo, c->options, c->context);
         }
         return 0;
     };
@@ -2926,13 +2935,20 @@ static void fetchRepoSubmodulesRecursive(git_repository *repo, bool purgeDeleted
     git_submodule_foreach(repo, cb, &ctx);
 }
 
-static void updateRepoSubmodulesRecursive(git_repository *repo, bool init, bool recursive, QGit *gitContext)
+enum class SubmoduleUpdateOption : uint32_t {
+    None      = 0,
+    Init      = 1 << 0,
+    Recursive = 1 << 1
+};
+Q_DECLARE_FLAGS(SubmoduleUpdateOptions, SubmoduleUpdateOption)
+Q_DECLARE_OPERATORS_FOR_FLAGS(SubmoduleUpdateOptions)
+
+static void updateRepoSubmodulesRecursive(git_repository *repo, SubmoduleUpdateOptions options, QGit *gitContext)
 {
     struct SubmoduleUpdateContext {
-        bool init;
-        bool recursive;
+        SubmoduleUpdateOptions options;
         QGit *context;
-    } ctx = { init, recursive, gitContext };
+    } ctx = { options, gitContext };
 
     auto cb = [](git_submodule *sm, const char *name, void *payload) -> int {
         Q_UNUSED(name);
@@ -2944,11 +2960,11 @@ static void updateRepoSubmodulesRecursive(git_repository *repo, bool init, bool 
         opts.fetch_opts.callbacks.payload = c->context;
         opts.allow_fetch = 1;
 
-        int res = git_submodule_update(sm, c->init ? 1 : 0, &opts);
-        if (res == 0 && c->recursive) {
+        int res = git_submodule_update(sm, c->options.testFlag(SubmoduleUpdateOption::Init) ? 1 : 0, &opts);
+        if (res == 0 && c->options.testFlag(SubmoduleUpdateOption::Recursive)) {
             GitRepository subRepo;
             if (git_submodule_open(subRepo, sm) == 0) {
-                updateRepoSubmodulesRecursive(subRepo, c->init, c->recursive, c->context);
+                updateRepoSubmodulesRecursive(subRepo, c->options, c->context);
             }
         }
         return 0;
@@ -2981,7 +2997,7 @@ void QGit::updateSubmodule(const QString &name, bool recursive)
         if (recursive) {
             GitRepository subRepo;
             if (git_submodule_open(subRepo, sm) == 0) {
-                updateRepoSubmodulesRecursive(subRepo, true, true, this);
+                updateRepoSubmodulesRecursive(subRepo, SubmoduleUpdateOption::Init | SubmoduleUpdateOption::Recursive, this);
             }
         }
 
@@ -2999,7 +3015,9 @@ void QGit::updateAllSubmodules(bool recursive)
         int res = git_repository_open(repo, path().absolutePath().toUtf8().constData());
         if (res) throw QGitError("git_repository_open", res);
 
-        updateRepoSubmodulesRecursive(repo, true, recursive, this);
+        SubmoduleUpdateOptions options = SubmoduleUpdateOption::Init;
+        if (recursive) options |= SubmoduleUpdateOption::Recursive;
+        updateRepoSubmodulesRecursive(repo, options, this);
     } catch (const QGitError &ex) {
         error = ex;
     }
@@ -3225,8 +3243,11 @@ void QGit::createTag(const QString &name, const QString &targetObjectId, const Q
     emit createTagReply(error);
 }
 
-void QGit::clean(bool includeIgnored, bool removeDirectories)
+void QGit::clean(CleanOptions options)
 {
+    const bool includeIgnored = options.testFlag(CleanOption::IncludeIgnored);
+    const bool removeDirectories = options.testFlag(CleanOption::RemoveDirectories);
+
     QGitError error;
     try {
         GitRepository repo;
@@ -3314,8 +3335,11 @@ static QString slugifyPatchSubject(const QString &subject)
     return slug;
 }
 
-void QGit::exportPatches(const QStringList &commitIds, const QString &outputDir, const QString &customFilePath, const QString &subjectPrefix, bool numbered, bool detectRenames)
+void QGit::exportPatches(const QStringList &commitIds, const QString &outputDir, const QString &customFilePath, const QString &subjectPrefix, ExportPatchOptions options)
 {
+    const bool numbered = options.testFlag(ExportPatchOption::Numbered);
+    const bool detectRenames = options.testFlag(ExportPatchOption::DetectRenames);
+
     QGitError error;
     QStringList createdFiles;
     try {
@@ -4254,11 +4278,17 @@ void QGit::listBranchesAndTags()
         error = ex;
     }
 
-    emit listBranchesAndTagsReply(branches, tags, submods, worktreeList, hasRemotes, hasCommitsToPush, error);
+    RepoStatusFlags statusFlags = RepoStatusFlag::None;
+    if (hasRemotes) statusFlags |= RepoStatusFlag::HasRemotes;
+    if (hasCommitsToPush) statusFlags |= RepoStatusFlag::HasCommitsToPush;
+    emit listBranchesAndTagsReply(branches, tags, submods, worktreeList, statusFlags, error);
 }
 
-void QGit::stashSave(const QString &name, bool keepIndex, bool includeUntracked, bool includeIgnored)
+void QGit::stashSave(const QString &name, StashOptions options)
 {
+    const bool keepIndex = options.testFlag(StashOption::KeepIndex);
+    const bool includeUntracked = options.testFlag(StashOption::IncludeUntracked);
+    const bool includeIgnored = options.testFlag(StashOption::IncludeIgnored);
 
     QGitError error;
 
@@ -5531,8 +5561,11 @@ void QGit::discardFileLines(const QString &filename, const QVector<QGitDiffWidge
     emit discardFilesReply(error);
 }
 
-QString QGit::commitInternal(const QString &message, bool withPush, bool amend)
+QString QGit::commitInternal(const QString &message, CommitOptions options)
 {
+    const bool withPush = options.testFlag(CommitOption::WithPush);
+    const bool amend = options.testFlag(CommitOption::Amend);
+
     git_oid new_commit_id = { {0} };
 
     GitRepository repo;
@@ -5788,14 +5821,14 @@ QString QGit::commitInternal(const QString &message, bool withPush, bool amend)
     return QString::fromUtf8(git_oid_tostr_s(&new_commit_id));
 }
 
-void QGit::commit(const QString &message, bool withPush, bool amend)
+void QGit::commit(const QString &message, CommitOptions options)
 {
     QString commitId;
     QGitError error;
 
     try
     {
-        commitId = commitInternal(message, withPush, amend);
+        commitId = commitInternal(message, options);
     }
     catch (const QGitError &ex)
     {
@@ -5868,8 +5901,11 @@ void QGit::clone(const QUrl &url)
     emit cloneReply(error);
 }
 
-void QGit::pull(const QString &remote, const QString &branch, bool rebase, bool recurseSubmodules)
+void QGit::pull(const QString &remote, const QString &branch, PullOptions options)
 {
+    const bool rebase = options.testFlag(PullOption::Rebase);
+    const bool recurseSubmodules = options.testFlag(PullOption::RecurseSubmodules);
+
     QGitError error;
 
     try
@@ -5918,7 +5954,7 @@ void QGit::pull(const QString &remote, const QString &branch, bool rebase, bool 
         }
 
         if (recurseSubmodules) {
-            updateRepoSubmodulesRecursive(repo, true, true, this);
+            updateRepoSubmodulesRecursive(repo, SubmoduleUpdateOption::Init | SubmoduleUpdateOption::Recursive, this);
         }
 
     } catch(const QGitError &ex) {
@@ -6374,7 +6410,7 @@ void QGit::continueOperation()
                 mergeMsg = tr("Merge branch");
             }
 
-            commitInternal(mergeMsg, false, false);
+            commitInternal(mergeMsg, CommitOption::None);
             git_repository_state_cleanup(repo);
         }
         else if (state == GIT_REPOSITORY_STATE_CHERRYPICK ||
@@ -6421,7 +6457,7 @@ void QGit::continueOperation()
                 cherryMsg = tr("Cherry-pick commit");
             }
 
-            commitInternal(cherryMsg, false, false);
+            commitInternal(cherryMsg, CommitOption::None);
             git_repository_state_cleanup(repo);
         }
         else if (state == GIT_REPOSITORY_STATE_REVERT ||
@@ -6475,7 +6511,7 @@ void QGit::continueOperation()
                 revertMsg = tr("Revert commit");
             }
 
-            commitInternal(revertMsg, false, false);
+            commitInternal(revertMsg, CommitOption::None);
             git_repository_state_cleanup(repo);
         }
         else
@@ -6624,12 +6660,14 @@ void QGit::skipRebase()
 }
 
 void QGit::mergeInternal(const QString &branchName,
-                         bool commitImmediately,
-                         bool includeMessages,
-                         bool createCommitEvenIfFastForward,
-                         bool detectRenames,
+                         MergeOptions options,
                          int renameSimilarity)
 {
+    const bool commitImmediately = options.testFlag(MergeOption::CommitImmediately);
+    const bool includeMessages = options.testFlag(MergeOption::IncludeMessages);
+    const bool createCommitEvenIfFastForward = options.testFlag(MergeOption::CreateCommitEvenIfFastForward);
+    const bool detectRenames = options.testFlag(MergeOption::DetectRenames);
+
     GitRepository repo;
     int res = git_repository_open(repo, path().absolutePath().toUtf8().constData());
     if(res) throw QGitError("git_repository_open", res);
@@ -6761,23 +6799,25 @@ void QGit::mergeInternal(const QString &branchName,
 }
 
 void QGit::merge(const QString &branchName,
-                 bool commitImmediately,
-                 bool includeMessages,
-                 bool createCommitEvenIfFastForward,
-                 bool detectRenames,
+                 MergeOptions options,
                  int renameSimilarity)
 {
     QGitError error;
     try {
-        mergeInternal(branchName, commitImmediately, includeMessages, createCommitEvenIfFastForward, detectRenames, renameSimilarity);
+        mergeInternal(branchName, options, renameSimilarity);
     } catch(const QGitError &ex) {
         error = ex;
     }
     emit mergeReply(error);
 }
 
-void QGit::fetch(bool fetchFromAllRemotes, bool purgeDeletedBranches, bool fetchAllTags, bool recurseSubmodules)
+void QGit::fetch(FetchOptions options)
 {
+    const bool fetchFromAllRemotes = options.testFlag(FetchOption::FetchFromAllRemotes);
+    const bool purgeDeletedBranches = options.testFlag(FetchOption::PurgeDeletedBranches);
+    const bool fetchAllTags = options.testFlag(FetchOption::FetchAllTags);
+    const bool recurseSubmodules = options.testFlag(FetchOption::RecurseSubmodules);
+
     QGitError error;
 
     try
@@ -6857,7 +6897,7 @@ void QGit::fetch(bool fetchFromAllRemotes, bool purgeDeletedBranches, bool fetch
 
         if (recurseSubmodules)
         {
-            fetchRepoSubmodulesRecursive(repo, purgeDeletedBranches, fetchAllTags, this);
+            fetchRepoSubmodulesRecursive(repo, options, this);
         }
 
     } catch(const QGitError &ex) {
@@ -6867,8 +6907,12 @@ void QGit::fetch(bool fetchFromAllRemotes, bool purgeDeletedBranches, bool fetch
     emit fetchReply(error);
 }
 
-void QGit::fetchRemote(const QString &remoteName, bool purgeDeletedBranches, bool fetchAllTags, bool recurseSubmodules)
+void QGit::fetchRemote(const QString &remoteName, FetchOptions options)
 {
+    const bool purgeDeletedBranches = options.testFlag(FetchOption::PurgeDeletedBranches);
+    const bool fetchAllTags = options.testFlag(FetchOption::FetchAllTags);
+    const bool recurseSubmodules = options.testFlag(FetchOption::RecurseSubmodules);
+
     QGitError error;
 
     try
@@ -6899,7 +6943,7 @@ void QGit::fetchRemote(const QString &remoteName, bool purgeDeletedBranches, boo
 
         if (recurseSubmodules)
         {
-            fetchRepoSubmodulesRecursive(repo, purgeDeletedBranches, fetchAllTags, this);
+            fetchRepoSubmodulesRecursive(repo, options, this);
         }
 
     } catch(const QGitError &ex) {
@@ -6909,8 +6953,11 @@ void QGit::fetchRemote(const QString &remoteName, bool purgeDeletedBranches, boo
     emit fetchReply(error);
 }
 
-void QGit::push(const QString &remote, const QStringList &branches, bool tags, bool force)
+void QGit::push(const QString &remote, const QStringList &branches, PushOptions options)
 {
+    const bool tags = options.testFlag(PushOption::Tags);
+    const bool force = options.testFlag(PushOption::Force);
+
     QGitError error;
 
     try

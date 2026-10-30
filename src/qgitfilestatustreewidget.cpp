@@ -76,8 +76,7 @@ QString QGitFileStatusTreeWidget::getStatusText(git_status_t status)
 
 void QGitFileStatusTreeWidget::populateFiles(
     const QList<std::pair<QString, git_status_t>> &files,
-    bool isStagedCategory,
-    bool isPendingCategory)
+    FileCategory category)
 {
     blockSignals(true);
     clear();
@@ -94,14 +93,14 @@ void QGitFileStatusTreeWidget::populateFiles(
         Qt::CheckState state = Qt::Unchecked;
         QIcon icon;
 
-        if (isPendingCategory)
+        if (category == FileCategory::Pending)
         {
             state = Qt::PartiallyChecked;
             if (hasStaged && !hasUnstaged) state = Qt::Checked;
             else if (!hasStaged && hasUnstaged) state = Qt::Unchecked;
             icon = getFileIcon(status, hasStaged);
         }
-        else if (isStagedCategory)
+        else if (category == FileCategory::Staged)
         {
             if (!hasStaged) continue;
             state = Qt::Checked;

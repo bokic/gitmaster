@@ -19,6 +19,7 @@
 #include <QUrl>
 #include <QMutex>
 #include <QMutexLocker>
+#include <QFlags>
 #include <atomic>
 #include <utility>
 
@@ -106,6 +107,100 @@ public:
         QGIT_SORT_CHECKED
     };
 
+    enum class CleanOption : uint32_t {
+        None              = 0,
+        IncludeIgnored    = 1 << 0,
+        RemoveDirectories = 1 << 1
+    };
+    Q_DECLARE_FLAGS(CleanOptions, CleanOption)
+    Q_FLAG(CleanOptions)
+
+    enum class BranchCreateOption : uint32_t {
+        None     = 0,
+        Checkout = 1 << 0,
+        Force    = 1 << 1
+    };
+    Q_DECLARE_FLAGS(BranchCreateOptions, BranchCreateOption)
+    Q_FLAG(BranchCreateOptions)
+
+    enum class CommitOption : uint32_t {
+        None     = 0,
+        WithPush = 1 << 0,
+        Amend    = 1 << 1
+    };
+    Q_DECLARE_FLAGS(CommitOptions, CommitOption)
+    Q_FLAG(CommitOptions)
+
+    enum class StashOption : uint32_t {
+        None             = 0,
+        KeepIndex        = 1 << 0,
+        IncludeUntracked = 1 << 1,
+        IncludeIgnored   = 1 << 2
+    };
+    Q_DECLARE_FLAGS(StashOptions, StashOption)
+    Q_FLAG(StashOptions)
+
+    enum class PushOption : uint32_t {
+        None  = 0,
+        Tags  = 1 << 0,
+        Force = 1 << 1
+    };
+    Q_DECLARE_FLAGS(PushOptions, PushOption)
+    Q_FLAG(PushOptions)
+
+    enum class PullOption : uint32_t {
+        None              = 0,
+        Rebase            = 1 << 0,
+        RecurseSubmodules = 1 << 1
+    };
+    Q_DECLARE_FLAGS(PullOptions, PullOption)
+    Q_FLAG(PullOptions)
+
+    enum class FetchOption : uint32_t {
+        None                 = 0,
+        FetchFromAllRemotes  = 1 << 0,
+        PurgeDeletedBranches = 1 << 1,
+        FetchAllTags         = 1 << 2,
+        RecurseSubmodules    = 1 << 3
+    };
+    Q_DECLARE_FLAGS(FetchOptions, FetchOption)
+    Q_FLAG(FetchOptions)
+
+    enum class MergeOption : uint32_t {
+        None                          = 0,
+        CommitImmediately             = 1 << 0,
+        IncludeMessages               = 1 << 1,
+        CreateCommitEvenIfFastForward = 1 << 2,
+        DetectRenames                 = 1 << 3
+    };
+    Q_DECLARE_FLAGS(MergeOptions, MergeOption)
+    Q_FLAG(MergeOptions)
+
+    enum class SubmoduleRemoveOption : uint32_t {
+        None                   = 0,
+        RemoveWorkingDirectory = 1 << 0,
+        RemoveGitDir           = 1 << 1,
+        Force                  = 1 << 2
+    };
+    Q_DECLARE_FLAGS(SubmoduleRemoveOptions, SubmoduleRemoveOption)
+    Q_FLAG(SubmoduleRemoveOptions)
+
+    enum class ExportPatchOption : uint32_t {
+        None          = 0,
+        Numbered      = 1 << 0,
+        DetectRenames = 1 << 1
+    };
+    Q_DECLARE_FLAGS(ExportPatchOptions, ExportPatchOption)
+    Q_FLAG(ExportPatchOptions)
+
+    enum class RepoStatusFlag : uint32_t {
+        None             = 0,
+        HasRemotes       = 1 << 0,
+        HasCommitsToPush = 1 << 1
+    };
+    Q_DECLARE_FLAGS(RepoStatusFlags, RepoStatusFlag)
+    Q_FLAG(RepoStatusFlags)
+
     explicit QGit(const QDir &path, QObject *parent = nullptr);
     explicit QGit(QObject *parent = nullptr);
     ~QGit() = default;
@@ -160,13 +255,10 @@ public:
     static bool isGitRepository(const QDir &path);
     static bool gitRepositoryDefaultSignature(const QDir &path, QString &name, QString &email);
 
-    void createLocalBranchInternal(const QString &name, const QString &commit_id = "", bool checkout = false, bool force = false);
+    void createLocalBranchInternal(const QString &name, const QString &commit_id = QString(), BranchCreateOptions options = BranchCreateOption::None);
     void checkoutBranchInternal(const QString &name);
     void mergeInternal(const QString &branchName,
-                       bool commitImmediately = true,
-                       bool includeMessages = false,
-                       bool createCommitEvenIfFastForward = false,
-                       bool detectRenames = false,
+                       MergeOptions options = MergeOption::CommitImmediately,
                        int renameSimilarity = 50);
     void createTagInternal(const QString &name, const QString &targetObjectId, const QString &message, bool force);
     void deleteBranchesInternal(const QList<QGitBranch> &branches, bool force);
@@ -180,9 +272,9 @@ public slots:
     void initSubmodule(const QString &name);
     void syncSubmodule(const QString &name);
     void addSubmodule(const QString &url, const QString &path, const QString &branch = QString(), bool force = false);
-    void removeSubmodule(const QString &name, bool removeWorkingDirectory = true, bool removeGitDir = false, bool force = false);
+    void removeSubmodule(const QString &name, SubmoduleRemoveOptions options = SubmoduleRemoveOption::RemoveWorkingDirectory);
     void setSubmodulePointer(const QString &name, const QString &targetRefOrCommit, const QString &branch = QString());
-    void createLocalBranch(const QString &name, const QString &commit_id = "", bool checkout = false, bool force = false);
+    void createLocalBranch(const QString &name, const QString &commit_id = QString(), BranchCreateOptions options = BranchCreateOption::None);
     void cherrypick(const QString &commitId);
     void revert(const QString &commitId);
     void reset(const QString &commitId, git_reset_t type);
@@ -193,7 +285,7 @@ public slots:
     void status();
     void listBranchesAndTags();
     void listStashes();
-    void stashSave(const QString &name, bool keepIndex = false, bool includeUntracked = false, bool includeIgnored = false);
+    void stashSave(const QString &name, StashOptions options = StashOption::None);
     void stashRemove(const QString &name);
     void stashApply(const QString &name);
     void stashPop(const QString &name);
@@ -206,12 +298,12 @@ public slots:
     void unstageFileLines(const QString &filename, const QVector<QGitDiffWidgetLine> &lines);
     void discardFiles(const QStringList &items);
     void discardFileLines(const QString &filename, const QVector<QGitDiffWidgetLine> &lines);
-    void commit(const QString &message, bool withPush, bool amend = false);
+    void commit(const QString &message, CommitOptions options = CommitOption::None);
     void clone(const QUrl &url);
-    void pull(const QString &remote, const QString &branch, bool rebase, bool recurseSubmodules = false);
-    void fetch(bool fetchFromAllRemotes, bool purgeDeletedBranches, bool fetchAllTags, bool recurseSubmodules = false);
-    void fetchRemote(const QString &remote, bool purgeDeletedBranches = false, bool fetchAllTags = false, bool recurseSubmodules = false);
-    void push(const QString &remote, const QStringList &branches, bool tags, bool force);
+    void pull(const QString &remote, const QString &branch, PullOptions options = PullOption::None);
+    void fetch(FetchOptions options = FetchOption::None);
+    void fetchRemote(const QString &remote, FetchOptions options = FetchOption::None);
+    void push(const QString &remote, const QStringList &branches, PushOptions options = PushOption::None);
     void listCommits(const QString &branchRef, int offset, int length);
     void searchCommits(const QString &text, const QString &type);
     void abortSearch();
@@ -221,18 +313,15 @@ public slots:
     void deleteTag(const QString &name);
     void setUpstream(const QString &branchName, const QString &upstreamBranchName);
     void merge(const QString &branchName,
-               bool commitImmediately = true,
-               bool includeMessages = false,
-               bool createCommitEvenIfFastForward = false,
-               bool detectRenames = false,
+               MergeOptions options = MergeOption::CommitImmediately,
                int renameSimilarity = 50);
     void rebase(const QString &upstream, const QString &branch = "", const QString &onto = "");
     void interactiveRebase(const QString &baseCommitId, const QList<QGitRebaseTodoItem> &todoList);
     void createTag(const QString &name, const QString &targetObjectId, const QString &message, bool force);
-    void clean(bool includeIgnored, bool removeDirectories);
+    void clean(CleanOptions options = CleanOption::None);
     void applyPatch(const QString &patchPath);
     void applyPatches(const QStringList &patchPaths);
-    void exportPatches(const QStringList &commitIds, const QString &outputDir, const QString &customFilePath = QString(), const QString &subjectPrefix = QString("PATCH"), bool numbered = true, bool detectRenames = true);
+    void exportPatches(const QStringList &commitIds, const QString &outputDir, const QString &customFilePath = QString(), const QString &subjectPrefix = QString("PATCH"), ExportPatchOptions options = ExportPatchOptions(ExportPatchOption::Numbered) | ExportPatchOption::DetectRenames);
     void exportArchive(const QString &refOrCommit, const QString &outputFilePath, const QString &prefix = QString(), const QString &format = QStringLiteral("zip"));
     void continueOperation();
     void abortOperation();
@@ -256,7 +345,7 @@ signals:
     void removeSubmoduleReply(const QGitError &error);
     void setSubmodulePointerReply(const QGitError &error);
     void statusReply(const QMap<git_status_t, int> &items, const QGitError &error);
-    void listBranchesAndTagsReply(const QList<QGitBranch> &branches, const QList<QGitTag> &tags, const QList<QGitSubmodule> &submodules, const QList<QGitWorktree> &worktrees, bool hasRemotes, bool hasCommitsToPush, const QGitError &error);
+    void listBranchesAndTagsReply(const QList<QGitBranch> &branches, const QList<QGitTag> &tags, const QList<QGitSubmodule> &submodules, const QList<QGitWorktree> &worktrees, RepoStatusFlags statusFlags, const QGitError &error);
     void stashSaveReply(const QGitError &error);
     void stashRemoveReply(const QGitError &error);
     void stashApplyReply(const QGitError &error);
@@ -309,7 +398,7 @@ signals:
     void repositoryStateReply(int state, const QString &headCommitId, const QString &headCommitMessage);
 
 private:
-    QString commitInternal(const QString &message, bool withPush, bool amend);
+    QString commitInternal(const QString &message, CommitOptions options = CommitOption::None);
     void rebaseInternal(const QString &upstream, const QString &branch = "", const QString &onto = "");
 
     mutable QMutex m_mutex;
@@ -318,3 +407,15 @@ private:
     QString m_lastPushError;
     std::atomic<QObject*> m_credentialHandler{nullptr};
 };
+
+Q_DECLARE_OPERATORS_FOR_FLAGS(QGit::CleanOptions)
+Q_DECLARE_OPERATORS_FOR_FLAGS(QGit::BranchCreateOptions)
+Q_DECLARE_OPERATORS_FOR_FLAGS(QGit::CommitOptions)
+Q_DECLARE_OPERATORS_FOR_FLAGS(QGit::StashOptions)
+Q_DECLARE_OPERATORS_FOR_FLAGS(QGit::PushOptions)
+Q_DECLARE_OPERATORS_FOR_FLAGS(QGit::PullOptions)
+Q_DECLARE_OPERATORS_FOR_FLAGS(QGit::FetchOptions)
+Q_DECLARE_OPERATORS_FOR_FLAGS(QGit::MergeOptions)
+Q_DECLARE_OPERATORS_FOR_FLAGS(QGit::SubmoduleRemoveOptions)
+Q_DECLARE_OPERATORS_FOR_FLAGS(QGit::ExportPatchOptions)
+Q_DECLARE_OPERATORS_FOR_FLAGS(QGit::RepoStatusFlags)

@@ -20,6 +20,12 @@ public:
         TreeView = 2
     };
 
+    enum class FileCategory : uint8_t {
+        Unstaged,
+        Staged,
+        Pending
+    };
+
     void setViewLayoutMode(ViewLayoutMode mode);
     ViewLayoutMode viewLayoutMode() const { return m_layoutMode; }
 
@@ -28,8 +34,7 @@ public:
 
     void populateFiles(
         const QList<std::pair<QString, git_status_t>> &files,
-        bool isStagedCategory,
-        bool isPendingCategory);
+        FileCategory category);
 
     void updateFolderCheckStates(QTreeWidgetItem *item);
 

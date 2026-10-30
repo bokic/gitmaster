@@ -350,9 +350,9 @@ void QGitRepository::refreshData()
     emit updateRemoteActionsRequested();
 }
 
-void QGitRepository::stash(const QString &name, bool keepIndex, bool includeUntracked, bool includeIgnored)
+void QGitRepository::stash(const QString &name, QGit::StashOptions options)
 {
-    emit localStash(name, keepIndex, includeUntracked, includeIgnored);
+    emit localStash(name, options);
 }
 
 void QGitRepository::branchDialog()
@@ -367,7 +367,9 @@ void QGitRepository::branchDialog()
             auto commitId = dlg.newBranchCommitId();
             auto checkout = dlg.newBranchCheckout();
             emit statusMessage(tr("Creating branch %1...").arg(branchName));
-            emit repositoryCreateLocalBranch(branchName, commitId, checkout, false);
+            QGit::BranchCreateOptions options = QGit::BranchCreateOption::None;
+            if (checkout) options |= QGit::BranchCreateOption::Checkout;
+            emit repositoryCreateLocalBranch(branchName, commitId, options);
         }
         else if (dlg.operation() == QGitBranchDialog::DeleteBranchesOperation)
         {
@@ -414,15 +416,20 @@ void QGitRepository::fetch()
         bool recurseSubmodules = dlg.recurseSubmodules();
         QString remote = dlg.remote();
 
+        QGit::FetchOptions options = QGit::FetchOption::None;
+        if (purgeDeletedBranches) options |= QGit::FetchOption::PurgeDeletedBranches;
+        if (fetchAllTags) options |= QGit::FetchOption::FetchAllTags;
+        if (recurseSubmodules) options |= QGit::FetchOption::RecurseSubmodules;
+
         if (fetchFromAllRemotes || remote.isEmpty())
         {
             emit statusMessage(tr("Fetching all remotes..."));
-            emit repositoryFetch(true, purgeDeletedBranches, fetchAllTags, recurseSubmodules);
+            emit repositoryFetch(options | QGit::FetchOption::FetchFromAllRemotes);
         }
         else
         {
             emit statusMessage(tr("Fetching from %1...").arg(remote));
-            emit repositoryFetchRemote(remote, purgeDeletedBranches, fetchAllTags, recurseSubmodules);
+            emit repositoryFetchRemote(remote, options);
         }
     }
 }
@@ -443,7 +450,10 @@ void QGitRepository::pull()
         bool recurseSubmodules = dlg.recurseSubmodules();
 
         emit statusMessage(tr("Pulling..."));
-        emit repositoryPull(remoteName, branchName, rebase, recurseSubmodules);
+        QGit::PullOptions options = QGit::PullOption::None;
+        if (rebase) options |= QGit::PullOption::Rebase;
+        if (recurseSubmodules) options |= QGit::PullOption::RecurseSubmodules;
+        emit repositoryPull(remoteName, branchName, options);
     }
 }
 
@@ -455,15 +465,16 @@ void QGitRepository::push()
     {
         QString remote = dlg.remote();
         QStringList branches = dlg.branches();
-        bool tags = dlg.tags();
-        bool force = dlg.force();
+        QGit::PushOptions options = QGit::PushOption::None;
+        if (dlg.tags()) options |= QGit::PushOption::Tags;
+        if (dlg.force()) options |= QGit::PushOption::Force;
 
         m_lastRemote = remote;
         m_lastBranches = branches;
-        m_lastTags = tags;
+        m_lastPushOptions = options;
 
         emit statusMessage(tr("Pushing..."));
-        emit repositoryPush(remote, branches, tags, force);
+        emit repositoryPush(remote, branches, options);
     }
 }
 
@@ -480,12 +491,12 @@ void QGitRepository::merge()
                 emit repositoryRebase(branchName);
             } else {
                 emit statusMessage(tr("Merging branch %1...").arg(branchName));
-                emit repositoryMerge(branchName,
-                                     dlg.commitImmediately(),
-                                     dlg.includeMessages(),
-                                     dlg.createCommitEvenIfFastForward(),
-                                     dlg.detectRenames(),
-                                     dlg.renameSimilarity());
+                QGit::MergeOptions options = QGit::MergeOption::None;
+                if (dlg.commitImmediately()) options |= QGit::MergeOption::CommitImmediately;
+                if (dlg.includeMessages()) options |= QGit::MergeOption::IncludeMessages;
+                if (dlg.createCommitEvenIfFastForward()) options |= QGit::MergeOption::CreateCommitEvenIfFastForward;
+                if (dlg.detectRenames()) options |= QGit::MergeOption::DetectRenames;
+                emit repositoryMerge(branchName, options, dlg.renameSimilarity());
             }
         }
     }
@@ -677,7 +688,11 @@ void QGitRepository::removeSubmoduleDialog(const QString &subName)
     QGitRemoveSubmoduleDialog dlg(QDir(m_path), targetSub, this);
     if (dlg.exec() == QDialog::Accepted) {
         emit statusMessage(tr("Removing submodule %1...").arg(targetSub.name));
-        emit repositoryRemoveSubmodule(targetSub.name, dlg.removeWorkingDirectory(), dlg.removeGitDir(), dlg.force());
+        QGit::SubmoduleRemoveOptions options = QGit::SubmoduleRemoveOption::None;
+        if (dlg.removeWorkingDirectory()) options |= QGit::SubmoduleRemoveOption::RemoveWorkingDirectory;
+        if (dlg.removeGitDir()) options |= QGit::SubmoduleRemoveOption::RemoveGitDir;
+        if (dlg.force()) options |= QGit::SubmoduleRemoveOption::Force;
+        emit repositoryRemoveSubmodule(targetSub.name, options);
     }
 }
 
@@ -1132,7 +1147,7 @@ void QGitRepository::repositoryPushReply(const QGitError &error)
             if (res == QMessageBox::Yes)
             {
                 emit statusMessage(tr("Force Pushing..."));
-                emit repositoryPush(m_lastRemote, m_lastBranches, m_lastTags, true);
+                emit repositoryPush(m_lastRemote, m_lastBranches, m_lastPushOptions | QGit::PushOption::Force);
                 return;
             }
         }
@@ -1149,15 +1164,15 @@ void QGitRepository::repositoryPushReply(const QGitError &error)
     refreshData();
 }
 
-void QGitRepository::repositoryBranchesAndTagsReply(const QList<QGitBranch> &branches, const QList<QGitTag> &tags, const QList<QGitSubmodule> &submodules, const QList<QGitWorktree> &worktrees, bool hasRemotes, bool hasCommitsToPush, const QGitError &error)
+void QGitRepository::repositoryBranchesAndTagsReply(const QList<QGitBranch> &branches, const QList<QGitTag> &tags, const QList<QGitSubmodule> &submodules, const QList<QGitWorktree> &worktrees, QGit::RepoStatusFlags statusFlags, const QGitError &error)
 {
     if (error.errorCode())
     {
         emit statusMessage(tr("Error loading branches/tags: %1").arg(error.errorString()));
     }
 
-    m_hasRemotes = hasRemotes;
-    m_hasCommitsToPush = hasCommitsToPush;
+    m_hasRemotes = statusFlags.testFlag(QGit::RepoStatusFlag::HasRemotes);
+    m_hasCommitsToPush = statusFlags.testFlag(QGit::RepoStatusFlag::HasCommitsToPush);
     m_submodules = submodules;
 
     emit updateRemoteActionsRequested();
@@ -1266,7 +1281,7 @@ void QGitRepository::updateStatusViews()
 
     if (noStaging)
     {
-        ui->treeWidget_pending->populateFiles(m_changedFiles, false, true);
+        ui->treeWidget_pending->populateFiles(m_changedFiles, QGitFileStatusTreeWidget::FileCategory::Pending);
 
         if (layoutMode == QGitFileStatusTreeWidget::TreeView)
         {
@@ -1294,8 +1309,8 @@ void QGitRepository::updateStatusViews()
     }
     else
     {
-        ui->treeWidget_staged->populateFiles(m_changedFiles, true, false);
-        ui->treeWidget_unstaged->populateFiles(m_changedFiles, false, false);
+        ui->treeWidget_staged->populateFiles(m_changedFiles, QGitFileStatusTreeWidget::FileCategory::Staged);
+        ui->treeWidget_unstaged->populateFiles(m_changedFiles, QGitFileStatusTreeWidget::FileCategory::Unstaged);
     }
 
     ui->commit_diff->refresh();
@@ -1759,7 +1774,10 @@ void QGitRepository::on_branchesTreeView_customContextMenuRequested(const QPoint
             QGitCleanDialog dlg(this);
             if (dlg.exec() == QDialog::Accepted) {
                 emit statusMessage(tr("Cleaning working directory..."));
-                emit repositoryClean(dlg.removeIgnored(), dlg.removeDirectories());
+                QGit::CleanOptions options = QGit::CleanOption::None;
+                if (dlg.removeIgnored()) options |= QGit::CleanOption::IncludeIgnored;
+                if (dlg.removeDirectories()) options |= QGit::CleanOption::RemoveDirectories;
+                emit repositoryClean(options);
             }
         }
         else if (selectedAction == showReflogAction)
@@ -1788,7 +1806,7 @@ void QGitRepository::on_branchesTreeView_customContextMenuRequested(const QPoint
         if (selectedAction == fetchAction)
         {
             emit statusMessage(tr("Fetching all remotes..."));
-            emit repositoryFetch(true, false, false);
+            emit repositoryFetch(QGit::FetchOption::FetchFromAllRemotes);
         }
         else if (selectedAction == manageAction)
         {
@@ -2043,7 +2061,7 @@ void QGitRepository::on_branchesTreeView_customContextMenuRequested(const QPoint
         if (selectedAction == fetchAction)
         {
             emit statusMessage(tr("Fetching from %1...").arg(fullName));
-            emit repositoryFetchRemote(fullName, false, false);
+            emit repositoryFetchRemote(fullName, QGit::FetchOption::None);
         }
         else if (selectedAction == manageAction)
         {
@@ -2070,17 +2088,17 @@ void QGitRepository::on_branchesTreeView_customContextMenuRequested(const QPoint
         if (selectedAction == pullMergeAction)
         {
             emit statusMessage(tr("Pulling (merge) from %1/%2...").arg(remoteName, branchName));
-            emit repositoryPull(remoteName, branchName, false);
+            emit repositoryPull(remoteName, branchName, QGit::PullOption::None);
         }
         else if (selectedAction == pullRebaseAction)
         {
             emit statusMessage(tr("Pulling (rebase) from %1/%2...").arg(remoteName, branchName));
-            emit repositoryPull(remoteName, branchName, true);
+            emit repositoryPull(remoteName, branchName, QGit::PullOption::Rebase);
         }
         else if (selectedAction == fetchAction)
         {
             emit statusMessage(tr("Fetching from %1...").arg(remoteName));
-            emit repositoryFetchRemote(remoteName, false, false);
+            emit repositoryFetchRemote(remoteName, QGit::FetchOption::None);
         }
         else if (selectedAction == checkoutAction)
         {
@@ -2094,7 +2112,7 @@ void QGitRepository::on_branchesTreeView_customContextMenuRequested(const QPoint
                                                   localName, &ok);
             if (ok && !name.isEmpty()) {
                 emit statusMessage(tr("Checking out %1 as %2...").arg(fullName, name));
-                emit repositoryCreateLocalBranch(name, fullName, true, false);
+                emit repositoryCreateLocalBranch(name, fullName, QGit::BranchCreateOption::Checkout);
             }
         }
         else if (selectedAction == exportArchiveAction)
@@ -2386,7 +2404,11 @@ void QGitRepository::on_pushButton_commit_clicked()
     bool withPush = ui->checkBox_pushChangesImmidietely->isChecked();
     bool amend = ui->checkBox_amendCommit->isChecked();
 
-    emit repositoryCommit(ui->plainTextEdit_commitMessage->toPlainText(), withPush, amend);
+    QGit::CommitOptions options = QGit::CommitOption::None;
+    if (withPush) options |= QGit::CommitOption::WithPush;
+    if (amend) options |= QGit::CommitOption::Amend;
+
+    emit repositoryCommit(ui->plainTextEdit_commitMessage->toPlainText(), options);
 }
 
 void QGitRepository::on_pushButton_commitCancel_clicked()
@@ -2782,7 +2804,10 @@ void QGitRepository::on_treeWidget_unstaged_customContextMenuRequested(const QPo
           QGitCleanDialog dlg(this);
           if (dlg.exec() == QDialog::Accepted) {
               emit statusMessage(tr("Cleaning working directory..."));
-              emit repositoryClean(dlg.removeIgnored(), dlg.removeDirectories());
+              QGit::CleanOptions options = QGit::CleanOption::None;
+              if (dlg.removeIgnored()) options |= QGit::CleanOption::IncludeIgnored;
+              if (dlg.removeDirectories()) options |= QGit::CleanOption::RemoveDirectories;
+              emit repositoryClean(options);
           }
       }
 }
@@ -2876,7 +2901,10 @@ void QGitRepository::on_treeWidget_pending_customContextMenuRequested(const QPoi
           QGitCleanDialog dlg(this);
           if (dlg.exec() == QDialog::Accepted) {
               emit statusMessage(tr("Cleaning working directory..."));
-              emit repositoryClean(dlg.removeIgnored(), dlg.removeDirectories());
+              QGit::CleanOptions options = QGit::CleanOption::None;
+              if (dlg.removeIgnored()) options |= QGit::CleanOption::IncludeIgnored;
+              if (dlg.removeDirectories()) options |= QGit::CleanOption::RemoveDirectories;
+              emit repositoryClean(options);
           }
       }
 }
@@ -3028,7 +3056,7 @@ void QGitRepository::on_logHistory_commits_customContextMenuRequested(const QPoi
             if (ok && !newMessage.trimmed().isEmpty()) {
                 m_rewordingCommit = true;
                 emit statusMessage(tr("Rewording commit message..."));
-                emit repositoryCommit(newMessage, false, true);
+                emit repositoryCommit(newMessage, QGit::CommitOption::Amend);
             }
         } else if (res == interactiveRebaseAction) {
             QString baseHash;
@@ -3222,7 +3250,10 @@ void QGitRepository::exportPatchDialog(const QString &commitHash)
         if (commitIds.isEmpty()) return;
 
         emit statusMessage(tr("Exporting patches..."));
-        emit repositoryExportPatches(commitIds, outputDir, QString(), subjectPrefix, numbered, detectRenames);
+        QGit::ExportPatchOptions options = QGit::ExportPatchOption::None;
+        if (numbered) options |= QGit::ExportPatchOption::Numbered;
+        if (detectRenames) options |= QGit::ExportPatchOption::DetectRenames;
+        emit repositoryExportPatches(commitIds, outputDir, QString(), subjectPrefix, options);
     }
 }
 

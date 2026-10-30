@@ -29,7 +29,7 @@ public:
     explicit QGitRepository(const QString &path, QWidget *parent);
     ~QGitRepository();
     void refreshData();
-    void stash(const QString &name, bool keepIndex = false, bool includeUntracked = false, bool includeIgnored = false);
+    void stash(const QString &name, QGit::StashOptions options = QGit::StashOption::None);
     void branchDialog();
     void worktreeDialog();
     void gitFlowDialog();
@@ -60,17 +60,17 @@ public:
     bool hasStashableChanges() const { return m_hasStashableChanges; }
 
 signals:
-    void localStash(const QString &name, bool keepIndex, bool includeUntracked, bool includeIgnored);
-    void repositoryPush(const QString &remote, const QStringList &branches, bool tags, bool force);
-    void repositoryPull(const QString &remote, const QString &branch, bool rebase, bool recurseSubmodules = false);
-    void repositoryFetch(bool fetchFromAllRemotes, bool purgeDeletedBranches, bool fetchAllTags, bool recurseSubmodules = false);
-    void repositoryFetchRemote(const QString &remote, bool purgeDeletedBranches, bool fetchAllTags, bool recurseSubmodules = false);
+    void localStash(const QString &name, QGit::StashOptions options);
+    void repositoryPush(const QString &remote, const QStringList &branches, QGit::PushOptions options);
+    void repositoryPull(const QString &remote, const QString &branch, QGit::PullOptions options = QGit::PullOption::None);
+    void repositoryFetch(QGit::FetchOptions options = QGit::FetchOption::None);
+    void repositoryFetchRemote(const QString &remote, QGit::FetchOptions options = QGit::FetchOption::None);
     void repositoryBranches();
     void repositoryStashes();
     void repositoryChangedFiles(int show, int sort, bool reversed);
     void repositoryStageFiles(const QStringList &items);
     void repositoryUnstageFiles(const QStringList &items);
-    void repositoryCommit(const QString &message, bool withPush, bool amend);
+    void repositoryCommit(const QString &message, QGit::CommitOptions options);
     void repositoryGetCommits(const QString &branchRef, int offset, int length);
     void repositorySearchCommits(const QString &text, const QString &type);
     void repositoryAbortSearch();
@@ -81,10 +81,7 @@ signals:
     void repositoryDiscardFileLines(const QString &filename, const QVector<QGitDiffWidgetLine> &lines);
     void deleteBranches(const QList<QGitBranch> &branches, bool force);
     void repositoryMerge(const QString &branchName,
-                         bool commitImmediately = true,
-                         bool includeMessages = false,
-                         bool createCommitEvenIfFastForward = false,
-                         bool detectRenames = false,
+                         QGit::MergeOptions options = QGit::MergeOption::CommitImmediately,
                          int renameSimilarity = 50);
     void repositoryRebase(const QString &upstream, const QString &branch = "", const QString &onto = "");
     void repositoryInteractiveRebase(const QString &baseCommitId, const QList<QGitRebaseTodoItem> &todoList);
@@ -96,16 +93,16 @@ signals:
     void repositoryInitSubmodule(const QString &name);
     void repositorySyncSubmodule(const QString &name);
     void repositoryAddSubmodule(const QString &url, const QString &path, const QString &branch, bool force);
-    void repositoryRemoveSubmodule(const QString &name, bool removeWorkingDirectory, bool removeGitDir, bool force);
+    void repositoryRemoveSubmodule(const QString &name, QGit::SubmoduleRemoveOptions options);
     void repositorySetSubmodulePointer(const QString &name, const QString &targetRefOrCommit, const QString &branch);
-    void repositoryClean(bool includeIgnored, bool removeDirectories);
+    void repositoryClean(QGit::CleanOptions options = QGit::CleanOption::None);
     void repositoryApplyPatch(const QString &patchPath);
     void repositoryApplyPatches(const QStringList &patchPaths);
-    void repositoryExportPatches(const QStringList &commitIds, const QString &outputDir, const QString &customFilePath, const QString &subjectPrefix, bool numbered, bool detectRenames);
+    void repositoryExportPatches(const QStringList &commitIds, const QString &outputDir, const QString &customFilePath, const QString &subjectPrefix, QGit::ExportPatchOptions options = QGit::ExportPatchOption::Numbered | QGit::ExportPatchOption::DetectRenames);
     void repositoryExportArchive(const QString &refOrCommit, const QString &outputFilePath, const QString &prefix, const QString &format);
     void repositorySetNote(const QString &commitHash, const QString &note);
     void repositoryRemoveNote(const QString &commitHash);
-    void repositoryCreateLocalBranch(const QString &name, const QString &commit_id, bool checkout, bool force);
+    void repositoryCreateLocalBranch(const QString &name, const QString &commit_id, QGit::BranchCreateOptions options = QGit::BranchCreateOption::None);
     void repositoryCherrypick(const QString &commitId);
     void repositoryRevert(const QString &commitId);
     void repositoryReset(const QString &commitId, git_reset_t type);
@@ -162,7 +159,7 @@ private slots:
     void repositoryAddWorktreeReply(const QGitError &error);
     void repositoryRemoveWorktreeReply(const QGitError &error);
     void repositoryLockWorktreeReply(const QGitError &error);
-    void repositoryBranchesAndTagsReply(const QList<QGitBranch> &branches, const QList<QGitTag> &tags, const QList<QGitSubmodule> &submodules, const QList<QGitWorktree> &worktrees, bool hasRemotes, bool hasCommitsToPush, const QGitError &error);
+    void repositoryBranchesAndTagsReply(const QList<QGitBranch> &branches, const QList<QGitTag> &tags, const QList<QGitSubmodule> &submodules, const QList<QGitWorktree> &worktrees, QGit::RepoStatusFlags statusFlags, const QGitError &error);
     void repositoryStashesReply(const QStringList &stashes, const QGitError &error);
     void repositoryChangedFilesReply(const QList<std::pair<QString, git_status_t>> &files, const QGitError &error);
     void repositoryStageFilesReply(const QGitError &error);
@@ -272,7 +269,7 @@ private:
     int m_logCommitsOffset = 0;
     QString m_lastRemote;
     QStringList m_lastBranches;
-    bool m_lastTags = false;
+    QGit::PushOptions m_lastPushOptions = QGit::PushOption::None;
     QGit *m_git = nullptr;
     bool m_refreshing = false;
     bool m_hasRemotes = false;
