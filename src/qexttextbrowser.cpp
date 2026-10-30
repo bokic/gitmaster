@@ -6,8 +6,12 @@
 #include <QNetworkReply>
 #include <QApplication>
 #include <QByteArray>
+#include <QDebug>
 #include <QDir>
 #include <QFile>
+#ifndef QT_NO_SSL
+#include <QSslError>
+#endif
 
 QExtTextBrowser::QExtTextBrowser(QWidget* parent)
     : QTextBrowser(parent)
@@ -21,6 +25,9 @@ QExtTextBrowser::QExtTextBrowser(QWidget* parent)
     }
 
     connect(&m_nam, &QNetworkAccessManager::finished, this, &QExtTextBrowser::imgDownloaded);
+#ifndef QT_NO_SSL
+    connect(&m_nam, &QNetworkAccessManager::sslErrors, this, &QExtTextBrowser::sslErrorsOccurred);
+#endif
 }
 
 QVariant QExtTextBrowser::loadResource(int type, const QUrl &name)
@@ -66,6 +73,7 @@ QVariant QExtTextBrowser::loadResource(int type, const QUrl &name)
 void QExtTextBrowser::imgDownloaded(QNetworkReply *reply)
 {
     if (!reply) return;
+    reply->deleteLater();
 
     QUrl url = reply->request().url();
     m_inFlightUrls.remove(url);
@@ -92,6 +100,17 @@ void QExtTextBrowser::imgDownloaded(QNetworkReply *reply)
             }
         }
     }
-
-    reply->deleteLater();
+    else
+    {
+        qWarning() << "QExtTextBrowser: Failed to download image:" << reply->errorString() << "for url:" << url;
+    }
 }
+
+#ifndef QT_NO_SSL
+void QExtTextBrowser::sslErrorsOccurred(QNetworkReply *reply, const QList<QSslError> &errors)
+{
+    for (const auto &err : errors) {
+        qWarning() << "QExtTextBrowser SSL error:" << err.errorString() << "for url:" << (reply ? reply->url().toString() : QString());
+    }
+}
+#endif

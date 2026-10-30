@@ -1,6 +1,9 @@
 #pragma once
 
 #include <QNetworkAccessManager>
+#ifndef QT_NO_SSL
+#include <QSslError>
+#endif
 #include <QTextBrowser>
 #include <QVariant>
 #include <QString>
@@ -20,6 +23,9 @@ public:
 
 private slots:
     void imgDownloaded(QNetworkReply *reply);
+#ifndef QT_NO_SSL
+    void sslErrorsOccurred(QNetworkReply *reply, const QList<QSslError> &errors);
+#endif
 
 private:    
     QNetworkAccessManager m_nam;

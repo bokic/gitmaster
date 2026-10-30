@@ -33,6 +33,9 @@
 #include <QTreeWidgetItem>
 #include <QNetworkRequest>
 #include <QNetworkReply>
+#ifndef QT_NO_SSL
+#include <QSslError>
+#endif
 #include <QMessageBox>
 #include <QFileDialog>
 #include <QInputDialog>
@@ -128,6 +131,9 @@ QGitRepository::QGitRepository(const QString &path, QWidget *parent)
         QString urlStr = QString("https://www.gravatar.com/avatar/%1?s=24").arg(QString::fromLatin1(hash));
         auto url = QUrl(urlStr);
         connect(&m_networkManager, &QNetworkAccessManager::finished, this, &QGitRepository::gravatarImageDownloadFinished);
+#ifndef QT_NO_SSL
+        connect(&m_networkManager, &QNetworkAccessManager::sslErrors, this, &QGitRepository::sslErrorsOccurred);
+#endif
 
         m_networkManager.get(QNetworkRequest(url));
 
@@ -1009,17 +1015,29 @@ bool QGitRepository::event(QEvent *event)
 void QGitRepository::gravatarImageDownloadFinished(QNetworkReply *reply)
 {
     if (reply) {
-        QByteArray data = reply->readAll();
+        if (reply->error() == QNetworkReply::NoError) {
+            QByteArray data = reply->readAll();
 
-        QPixmap pixmap;
-
-        pixmap.loadFromData(data);
-
-        ui->label_signatureGravatarImage->setPixmap(pixmap);
+            QPixmap pixmap;
+            if (pixmap.loadFromData(data)) {
+                ui->label_signatureGravatarImage->setPixmap(pixmap);
+            }
+        } else {
+            qWarning() << "QGitRepository: Failed to download gravatar image:" << reply->errorString();
+        }
 
         reply->deleteLater();
     }
 }
+
+#ifndef QT_NO_SSL
+void QGitRepository::sslErrorsOccurred(QNetworkReply *reply, const QList<QSslError> &errors)
+{
+    for (const auto &err : errors) {
+        qWarning() << "QGitRepository SSL error:" << err.errorString() << "for url:" << (reply ? reply->url().toString() : QString());
+    }
+}
+#endif
 
 void QGitRepository::localStashSaveReply(const QGitError &error)
 {

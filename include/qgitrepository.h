@@ -1,6 +1,9 @@
 #pragma once
 
 #include <QNetworkAccessManager>
+#ifndef QT_NO_SSL
+#include <QSslError>
+#endif
 #include <QListWidgetItem>
 #include <QTreeWidgetItem>
 #include <QThread>
@@ -130,6 +133,9 @@ protected:
 
 private slots:
     void gravatarImageDownloadFinished(QNetworkReply *reply);
+#ifndef QT_NO_SSL
+    void sslErrorsOccurred(QNetworkReply *reply, const QList<QSslError> &errors);
+#endif
     void localStashSaveReply(const QGitError &error);
     void localStashRemoveReply(const QGitError &error);
     void repositoryFetchReply(const QGitError &error);
