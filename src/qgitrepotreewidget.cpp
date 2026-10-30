@@ -96,7 +96,7 @@ void QGitRepoTreeWidget::repositoryStatusReply(QMap<git_status_t,int> items, QGi
                 }
             }
 
-            QString branchName = QGit::getBranchNameFromPath(m_currentRefreshingPath);
+            QString branchName = QGit::branchNameFromPath(m_currentRefreshingPath);
 
             bool changed = false;
             if (targetItem->data(0, QGitRepoTreeItemDelegate::QItemModifiedFiles) != modifiedCount) {

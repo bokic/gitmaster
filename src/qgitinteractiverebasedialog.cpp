@@ -64,7 +64,7 @@ void QGitInteractiveRebaseDialog::loadCommits()
         ui->label_base->setText(tr("Rebasing all commits from root"));
     }
 
-    QList<QGitCommit> commits = m_git->getCommitsForRebase(m_baseCommitId);
+    QList<QGitCommit> commits = m_git->commitsForRebase(m_baseCommitId);
     m_items.clear();
     for (const auto &c : commits) {
         QGitRebaseTodoItem item;

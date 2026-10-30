@@ -95,7 +95,7 @@ void QGitExportArchiveDialog::populateRefs()
     }
 }
 
-QString QGitExportArchiveDialog::getEffectiveRefName() const
+QString QGitExportArchiveDialog::effectiveRefName() const
 {
     if (ui->radioButton_currentHead->isChecked()) {
         return QStringLiteral("HEAD");
@@ -119,7 +119,7 @@ void QGitExportArchiveDialog::updateDefaultFileName()
         repoName = m_git->path().dirName();
     }
 
-    QString ref = getEffectiveRefName();
+    QString ref = effectiveRefName();
     if (ref.contains('/')) {
         ref = ref.section('/', -1);
     }
@@ -260,7 +260,7 @@ QString QGitExportArchiveDialog::outputFilePath() const
 
 QString QGitExportArchiveDialog::targetRefOrCommit() const
 {
-    return getEffectiveRefName();
+    return effectiveRefName();
 }
 
 QString QGitExportArchiveDialog::prefix() const

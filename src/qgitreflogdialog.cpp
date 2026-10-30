@@ -33,7 +33,7 @@ void QGitReflogDialog::loadReflog()
     ui->tableWidget->setRowCount(0);
     ui->tableWidget->setSortingEnabled(false);
 
-    QList<QGitReflogEntry> entries = m_repository->git()->getReflog(m_refName);
+    QList<QGitReflogEntry> entries = m_repository->git()->reflog(m_refName);
     ui->tableWidget->setRowCount(entries.size());
 
     for (int row = 0; row < entries.size(); ++row) {

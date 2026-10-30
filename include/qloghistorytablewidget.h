@@ -12,7 +12,7 @@
 
 
 struct QGitRef {
-    enum Type {
+    enum Type : uint8_t {
         LocalBranch,
         RemoteBranch,
         Tag,

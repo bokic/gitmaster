@@ -7,8 +7,8 @@ class QComboBoxGitStatusFiles : public QComboBoxGitBase
 {
     Q_OBJECT
 public:
-    enum QComboBoxGitStatusFilesShowFiles {QShowPendingFiles, QShowConflictFiles, QShowUntracked, QShowIgnored, QShowClean, QShowModified, QShowAll};
-    enum QComboBoxGitStatusFilesOrderFiles {QUnsortedFiles, QFilePathSortFiles, QReversedFilePathSortFiles, QFileNameSortFiles, QReversedFileNameSortFiles, QFileStatusSortFiles, QCheckedUncheckedSortFiles};
+    enum QComboBoxGitStatusFilesShowFiles : uint8_t {QShowPendingFiles, QShowConflictFiles, QShowUntracked, QShowIgnored, QShowClean, QShowModified, QShowAll};
+    enum QComboBoxGitStatusFilesOrderFiles : uint8_t {QUnsortedFiles, QFilePathSortFiles, QReversedFilePathSortFiles, QFileNameSortFiles, QReversedFileNameSortFiles, QFileStatusSortFiles, QCheckedUncheckedSortFiles};
 
     explicit QComboBoxGitStatusFiles(QWidget *parent = nullptr);
     ~QComboBoxGitStatusFiles() override = default;

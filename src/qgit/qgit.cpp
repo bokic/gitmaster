@@ -1084,7 +1084,7 @@ QString QGit::commitSummary(const QString &commitId) const
     return QString();
 }
 
-QStringList QGit::getCommitParents(const QString &commitId) const
+QStringList QGit::commitParents(const QString &commitId) const
 {
     QStringList result;
     if (commitId.isEmpty()) return result;
@@ -1107,7 +1107,7 @@ QStringList QGit::getCommitParents(const QString &commitId) const
     return result;
 }
 
-QList<QGitCommit> QGit::getCommitsForRebase(const QString &baseCommitId, const QString &target) const
+QList<QGitCommit> QGit::commitsForRebase(const QString &baseCommitId, const QString &target) const
 {
     QList<QGitCommit> commits;
     try
@@ -1226,7 +1226,7 @@ static QGitCommit commitFromGitCommit(git_commit *commit, const git_oid &oid, gi
     return QGitCommit(commit_id, commit_parents, commit_time, commit_author, commit_commiter, commit_message);
 }
 
-QList<QGitCommit> QGit::getCommitList(const QStringList &commitIds) const
+QList<QGitCommit> QGit::commitList(const QStringList &commitIds) const
 {
     QList<QGitCommit> commits;
     try {
@@ -1247,7 +1247,7 @@ QList<QGitCommit> QGit::getCommitList(const QStringList &commitIds) const
     return commits;
 }
 
-QList<QGitCommit> QGit::getCommitsFromCommitToHead(const QString &commitHash) const
+QList<QGitCommit> QGit::commitsFromCommitToHead(const QString &commitHash) const
 {
     QList<QGitCommit> commits;
     try {
@@ -1292,7 +1292,7 @@ QList<QGitCommit> QGit::getCommitsFromCommitToHead(const QString &commitHash) co
     return commits;
 }
 
-QList<QGitCommit> QGit::getLastNCommits(int count) const
+QList<QGitCommit> QGit::lastNCommits(int count) const
 {
     QList<QGitCommit> commits;
     if (count <= 0) return commits;
@@ -1324,7 +1324,7 @@ QList<QGitCommit> QGit::getLastNCommits(int count) const
     return commits;
 }
 
-QList<QGitCommit> QGit::getCommitsFromRevSpec(const QString &spec) const
+QList<QGitCommit> QGit::commitsFromRevSpec(const QString &spec) const
 {
     QList<QGitCommit> commits;
     if (spec.trimmed().isEmpty()) return commits;
@@ -1535,7 +1535,7 @@ bool QGit::hasCommitId(const QString &commitId) const
     return true;
 }
 
-QString QGit::getBranchNameFromPath(const QString &path)
+QString QGit::branchNameFromPath(const QString &path)
 {
     QString ret;
 
@@ -7311,7 +7311,7 @@ void QGit::searchCommits(const QString &text, const QString &type)
     emit searchFinished();
 }
 
-QString QGit::getNote(const QString &commitHash) const
+QString QGit::note(const QString &commitHash) const
 {
     QString noteText;
     try {
@@ -7331,9 +7331,9 @@ QString QGit::getNote(const QString &commitHash) const
                 noteText = QString::fromUtf8(msg);
         }
     } catch (const std::exception &ex) {
-        qWarning("QGit::getNote: %s", ex.what());
+        qWarning("QGit::note: %s", ex.what());
     } catch (...) {
-        qWarning("QGit::getNote: Unknown exception while reading note.");
+        qWarning("QGit::note: Unknown exception while reading note.");
     }
     return noteText;
 }
@@ -7350,7 +7350,7 @@ struct GitReflog {
     git_reflog *value = nullptr;
 };
 
-QList<QGitReflogEntry> QGit::getReflog(const QString &refName) const
+QList<QGitReflogEntry> QGit::reflog(const QString &refName) const
 {
     QList<QGitReflogEntry> entries;
     try {

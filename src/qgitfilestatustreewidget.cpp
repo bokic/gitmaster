@@ -33,7 +33,7 @@ void QGitFileStatusTreeWidget::setViewLayoutMode(ViewLayoutMode mode)
     }
 }
 
-QIcon QGitFileStatusTreeWidget::getFileIcon(git_status_t status, bool isStaged)
+QIcon QGitFileStatusTreeWidget::fileIcon(git_status_t status, bool isStaged)
 {
     static QIcon iconNew(":/small/added");
     static QIcon iconClean(":/small/clean");
@@ -62,7 +62,7 @@ QIcon QGitFileStatusTreeWidget::getFileIcon(git_status_t status, bool isStaged)
     }
 }
 
-QString QGitFileStatusTreeWidget::getStatusText(git_status_t status)
+QString QGitFileStatusTreeWidget::statusText(git_status_t status)
 {
     if (status & GIT_STATUS_CONFLICTED) return tr("Conflicted");
     if (status & (GIT_STATUS_INDEX_NEW | GIT_STATUS_WT_NEW)) return tr("Added");
@@ -98,19 +98,19 @@ void QGitFileStatusTreeWidget::populateFiles(
             state = Qt::PartiallyChecked;
             if (hasStaged && !hasUnstaged) state = Qt::Checked;
             else if (!hasStaged && hasUnstaged) state = Qt::Unchecked;
-            icon = getFileIcon(status, hasStaged);
+            icon = fileIcon(status, hasStaged);
         }
         else if (category == FileCategory::Staged)
         {
             if (!hasStaged) continue;
             state = Qt::Checked;
-            icon = getFileIcon(status, true);
+            icon = fileIcon(status, true);
         }
         else
         {
             if (!hasUnstaged) continue;
             state = Qt::Unchecked;
-            icon = getFileIcon(status, false);
+            icon = fileIcon(status, false);
         }
 
         if (m_layoutMode == FlatSingle)
@@ -135,7 +135,7 @@ void QGitFileStatusTreeWidget::populateFiles(
             item->setText(0, info.fileName());
             item->setIcon(0, icon);
             item->setText(1, info.path() == "." ? "" : info.path());
-            item->setText(2, getStatusText(status));
+            item->setText(2, statusText(status));
         }
         else if (m_layoutMode == TreeView)
         {

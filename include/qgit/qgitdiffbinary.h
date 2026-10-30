@@ -7,7 +7,7 @@
 class QGitDiffBinary
 {
 public:
-    enum QGitDiffBinaryItem {OldFile, NewFile};
+    enum QGitDiffBinaryItem : uint8_t {OldFile, NewFile};
 
     QGitDiffBinary() = default;
     QGitDiffBinary(const git_diff_binary *binary);

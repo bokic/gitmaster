@@ -42,7 +42,7 @@ private slots:
 private:
     void populateRefs();
     void updateDefaultFileName();
-    QString getEffectiveRefName() const;
+    QString effectiveRefName() const;
 
     Ui::QGitExportArchiveDialog *ui = nullptr;
     QGit *m_git = nullptr;

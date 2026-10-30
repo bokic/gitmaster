@@ -88,7 +88,7 @@ class QGit : public QObject
 {
     Q_OBJECT
 public:
-    enum QGitFileStatus {
+    enum QGitFileStatus : int {
         QGIT_STATUS_NONE       = 0,
         QGIT_STATUS_NEW        = (1U << 0),
         QGIT_STATUS_MODIFIED   = (1U << 1),
@@ -99,7 +99,7 @@ public:
         QGIT_STATUS_CONFLICTED = (1U << 6),
         QGIT_STATUS_ALL        = -1,
     };
-    enum QGitFileSort {
+    enum QGitFileSort : uint8_t {
         QGIT_SORT_UNSORTED,
         QGIT_SORT_FILENAME,
         QGIT_SORT_FILEPATH,
@@ -214,8 +214,8 @@ public:
     QString headCommitId() const;
     QString headCommitMessage() const;
     bool isAncestor(const QString &ancestor, const QString &descendant) const;
-    QString getNote(const QString &commitHash) const;
-    QList<QGitReflogEntry> getReflog(const QString &refName = QStringLiteral("HEAD")) const;
+    QString note(const QString &commitHash) const;
+    QList<QGitReflogEntry> reflog(const QString &refName = QStringLiteral("HEAD")) const;
     QList<QGitBlameHunk> blameFile(const QString &filePath, const QString &commitId = QString()) const;
     QByteArray fileContent(const QString &filePath, const QString &commitId = QString()) const;
     QList<QGitBranch> branches(git_branch_t type) const;
@@ -236,12 +236,12 @@ public:
     void setRemoteUrl(const QString &name, const QString &url, bool isPushUrl = false);
     QList<QGitWorktree> worktrees() const;
     QString commitSummary(const QString &commitId) const;
-    QStringList getCommitParents(const QString &commitId) const;
-    QList<QGitCommit> getCommitsForRebase(const QString &baseCommitId, const QString &target = QString()) const;
-    QList<QGitCommit> getCommitList(const QStringList &commitIds) const;
-    QList<QGitCommit> getCommitsFromCommitToHead(const QString &commitHash) const;
-    QList<QGitCommit> getLastNCommits(int count) const;
-    QList<QGitCommit> getCommitsFromRevSpec(const QString &spec) const;
+    QStringList commitParents(const QString &commitId) const;
+    QList<QGitCommit> commitsForRebase(const QString &baseCommitId, const QString &target = QString()) const;
+    QList<QGitCommit> commitList(const QStringList &commitIds) const;
+    QList<QGitCommit> commitsFromCommitToHead(const QString &commitHash) const;
+    QList<QGitCommit> lastNCommits(int count) const;
+    QList<QGitCommit> commitsFromRevSpec(const QString &spec) const;
     git_repository_state_t repositoryState() const;
     QString repositoryStateDescription() const;
     static QString repositoryStateDescription(git_repository_state_t state);
@@ -250,7 +250,7 @@ public:
     void setCredentialHandler(QObject *handler) { m_credentialHandler.store(handler, std::memory_order_release); }
     QObject *credentialHandler() const { return m_credentialHandler.load(std::memory_order_acquire); }
 
-    static QString getBranchNameFromPath(const QString &path);
+    static QString branchNameFromPath(const QString &path);
     static int createLocalRepository(const QDir &path);
     static bool isGitRepository(const QDir &path);
     static bool gitRepositoryDefaultSignature(const QDir &path, QString &name, QString &email);

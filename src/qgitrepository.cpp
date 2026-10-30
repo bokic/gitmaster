@@ -533,14 +533,14 @@ void QGitRepository::interactiveRebase(const QString &baseCommitId)
 {
     QString targetBase = baseCommitId;
     if (targetBase.isEmpty()) {
-        auto commits = m_git->getCommitsForRebase(QString());
+        auto commits = m_git->commitsForRebase(QString());
         if (commits.size() > 10) {
-            auto parents = m_git->getCommitParents(commits.at(commits.size() - 10).id());
+            auto parents = m_git->commitParents(commits.at(commits.size() - 10).id());
             if (!parents.isEmpty()) {
                 targetBase = parents.first();
             }
         } else if (!commits.isEmpty()) {
-            auto parents = m_git->getCommitParents(commits.first().id());
+            auto parents = m_git->commitParents(commits.first().id());
             if (!parents.isEmpty()) {
                 targetBase = parents.first();
             }
@@ -1177,7 +1177,7 @@ void QGitRepository::repositoryBranchesAndTagsReply(const QList<QGitBranch> &bra
 
     emit updateRemoteActionsRequested();
 
-    auto current_branch = QGit::getBranchNameFromPath(m_path);
+    auto current_branch = QGit::branchNameFromPath(m_path);
 
     ui->branchesTreeView->populateBranchesAndTags(branches, tags, submodules, worktrees, current_branch);
 
@@ -3060,7 +3060,7 @@ void QGitRepository::on_logHistory_commits_customContextMenuRequested(const QPoi
             }
         } else if (res == interactiveRebaseAction) {
             QString baseHash;
-            auto parents = m_git->getCommitParents(selectedHash);
+            auto parents = m_git->commitParents(selectedHash);
             if (!parents.isEmpty()) {
                 baseHash = parents.first();
             }
@@ -3122,7 +3122,7 @@ void QGitRepository::on_logHistory_commits_customContextMenuRequested(const QPoi
                 emit repositoryCreateTag(dlg.tagName(), selectedHash, dlg.tagMessage(), dlg.forceCreate());
             }
         } else if (res == editNoteAction) {
-            QString currentNote = m_git->getNote(selectedHash);
+            QString currentNote = m_git->note(selectedHash);
             bool ok;
             QString noteText = QInputDialog::getMultiLineText(
                 this,

@@ -18,7 +18,7 @@ class QGitBranchDialog : public QDialog
     Q_OBJECT
 
 public:
-    enum Operation {NewBranchOperation, DeleteBranchesOperation, UnknownOperation};
+    enum Operation : uint8_t {NewBranchOperation, DeleteBranchesOperation, UnknownOperation};
 
     explicit QGitBranchDialog(QGitRepository *parent = nullptr);
     ~QGitBranchDialog();

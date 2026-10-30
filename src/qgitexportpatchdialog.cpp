@@ -136,19 +136,19 @@ void QGitExportPatchDialog::updateCommitList()
 
     if (ui->radioButton_selected->isChecked()) {
         if (!m_selectedHash.isEmpty()) {
-            commits = m_git->getCommitList(QStringList() << m_selectedHash);
+            commits = m_git->commitList(QStringList() << m_selectedHash);
         }
     } else if (ui->radioButton_rangeToHead->isChecked()) {
         if (!m_selectedHash.isEmpty()) {
-            commits = m_git->getCommitsFromCommitToHead(m_selectedHash);
+            commits = m_git->commitsFromCommitToHead(m_selectedHash);
         }
     } else if (ui->radioButton_lastN->isChecked()) {
         int n = ui->spinBox_lastN->value();
-        commits = m_git->getLastNCommits(n);
+        commits = m_git->lastNCommits(n);
     } else if (ui->radioButton_custom->isChecked()) {
         QString spec = ui->lineEdit_custom->text().trimmed();
         if (!spec.isEmpty()) {
-            commits = m_git->getCommitsFromRevSpec(spec);
+            commits = m_git->commitsFromRevSpec(spec);
         }
     }
 
