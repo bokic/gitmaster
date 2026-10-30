@@ -3484,7 +3484,10 @@ static void convertTimeToDos(time_t t, uint16_t &dosDate, uint16_t &dosTime)
         return;
     }
     dosDate = ((year - 1980) << 9) | ((tm_val.tm_mon + 1) << 5) | tm_val.tm_mday;
-    dosTime = (tm_val.tm_hour << 11) | (tm_val.tm_min << 5) | (tm_val.tm_sec >> 1);
+    const int hour = tm_val.tm_hour;
+    const int min = tm_val.tm_min;
+    const int sec = tm_val.tm_sec;
+    dosTime = (hour << 11) | (min << 5) | (sec >> 1);
 }
 
 static bool deflateBufferHelper(const uint8_t *inData, size_t inSize, std::vector<uint8_t> &outData, bool rawDeflate)
