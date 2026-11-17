@@ -97,9 +97,13 @@ void QGitRepoTreeWidget::repositoryStatusReply(QMap<git_status_t,int> items, QGi
                 {
                     deletedCount += value;
                 }
-                if (key & (GIT_STATUS_WT_NEW | GIT_STATUS_INDEX_NEW))
+                if (key & GIT_STATUS_INDEX_NEW)
                 {
                     newCount += value;
+                }
+                if (key & GIT_STATUS_WT_NEW)
+                {
+                    unversionedCount += value;
                 }
             }
 
