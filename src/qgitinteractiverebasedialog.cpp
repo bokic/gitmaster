@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: LGPL-3.0-or-later
 #include "qgitinteractiverebasedialog.h"
 #include "ui_qgitinteractiverebasedialog.h"
 #include <QComboBox>

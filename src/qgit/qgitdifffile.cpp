@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: LGPL-3.0-or-later
 #include <qgitdifffile.h>
 #include <qgitdifffileitem.h>
 #include <qgitdiffhunk.h>

@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: LGPL-3.0-or-later
 #include "qgitremotesdialog.h"
 #include "ui_qgitremotesdialog.h"
 #include "qgit.h"

@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: LGPL-3.0-or-later
 #include "qgitsubmodulepointerdialog.h"
 #include "ui_qgitsubmodulepointerdialog.h"
 #include <QPushButton>

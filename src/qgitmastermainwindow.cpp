@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: LGPL-3.0-or-later
 #include "qgitmastermainwindow.h"
 #include "ui_qgitmastermainwindow.h"
 #include "qgitrepotreeitemdelegate.h"

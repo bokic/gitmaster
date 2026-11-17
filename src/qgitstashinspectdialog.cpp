@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: LGPL-3.0-or-later
 #include "qgitstashinspectdialog.h"
 #include "ui_qgitstashinspectdialog.h"
 #include "qloghistoryitemdelegate.h"

@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: LGPL-3.0-or-later
 #include "qgitstashdialog.h"
 #include "ui_qgitstashdialog.h"
 

@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: LGPL-3.0-or-later
 #include "qgitconflictresolverdialog.h"
 #include "ui_qgitconflictresolverdialog.h"
 #include <QScrollBar>

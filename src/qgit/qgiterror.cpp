@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: LGPL-3.0-or-later
 #include <qgiterror.h>
 #include <git2.h>
 #include <QObject>

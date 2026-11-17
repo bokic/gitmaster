@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: LGPL-3.0-or-later
 #include "qloghistoryitemdelegate.h"
 #include "qloghistorytablewidget.h"
 

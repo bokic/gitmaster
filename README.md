@@ -1,9 +1,9 @@
 # GitMaster 🖥️
 
-[![Language: C++](https://shields.io)](https://wikipedia.org)
-[![Framework: Qt6](https://shields.io)](https://qt.io)
-[![Engine: libgit2](https://shields.io)](https://libgit2.org)
-[![License: LGPL v3](https://shields.io)](https://gnu.org)
+[![Language: C++20](https://img.shields.io/badge/Language-C%2B%2B20-00599C.svg)](https://en.cppreference.com/w/cpp/20)
+[![Framework: Qt6](https://img.shields.io/badge/Framework-Qt6-41CD52.svg)](https://qt.io)
+[![Engine: libgit2](https://img.shields.io/badge/Engine-libgit2-F05032.svg)](https://libgit2.org)
+[![License: LGPL v3](https://img.shields.io/badge/License-LGPL%20v3-blue.svg)](https://www.gnu.org/licenses/lgpl-3.0)
 
 A lightning-fast, native **Desktop Git GUI client** designed for developers who value performance and minimalism. 
 
@@ -40,7 +40,7 @@ To build GitMaster, ensure you have a modern C++ compiler (supporting C++20), **
 
 1. **Clone the repository:**
    ```bash
-   git clone https://github.com
+   git clone https://github.com/bokic/gitmaster.git
    cd gitmaster
    ```
 
@@ -80,4 +80,4 @@ Contributions make the open-source community an amazing place to learn, inspire,
 
 This project is licensed under the **GNU Lesser General Public License v3.0 (LGPL-3.0)** - see the [LICENSE](LICENSE) file for details.
 
-Developed with ❤️ by [Boris Barbulovski (bokic)](https://github.com).
+Developed with ❤️ by [Boris Barbulovski (bokic)](https://github.com/bokic).

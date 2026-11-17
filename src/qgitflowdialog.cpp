@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: LGPL-3.0-or-later
 #include "qgitflowdialog.h"
 #include "ui_qgitflowdialog.h"
 #include "qgitrepository.h"

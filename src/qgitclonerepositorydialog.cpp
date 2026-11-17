@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: LGPL-3.0-or-later
 #include "qgitclonerepositorydialog.h"
 #include "ui_qgitclonerepositorydialog.h"
 #include <QShowEvent>

@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: LGPL-3.0-or-later
 #include "qgitpushdialog.h"
 #include "ui_qgitpushdialog.h"
 
