@@ -50,6 +50,20 @@ QGitError &QGitError::operator=(QGitError &&other) noexcept
     return *this;
 }
 
+const char *QGitError::what() const noexcept
+{
+    if (m_whatCache.isEmpty()) {
+        if (!m_errorString.isEmpty()) {
+            m_whatCache = m_errorString.toUtf8();
+        } else if (!m_functionName.isEmpty()) {
+            m_whatCache = m_functionName.toUtf8();
+        } else {
+            return "Unknown QGitError";
+        }
+    }
+    return m_whatCache.constData();
+}
+
 QString QGitError::functionName() const
 {
     return m_functionName;

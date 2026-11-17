@@ -1,9 +1,11 @@
 #pragma once
 
+#include <QByteArray>
 #include <QString>
+#include <exception>
 
 
-class QGitError
+class QGitError : public std::exception
 {
 public:
     QGitError();
@@ -11,11 +13,12 @@ public:
     QGitError(const QString &functionName, int errorCode, const QString &customMessage);
     QGitError(const QGitError &other) = default;
     QGitError(QGitError &&other) noexcept;
-    ~QGitError() = default;
+    ~QGitError() override = default;
 
     QGitError &operator=(QGitError &&other) noexcept;
     QGitError &operator=(const QGitError &other) = default;
 
+    const char *what() const noexcept override;
     QString functionName() const;
     QString errorString() const;
     int errorCode() const;
@@ -26,5 +29,6 @@ public:
 private:
     QString m_functionName;
     QString m_errorString;
+    mutable QByteArray m_whatCache;
     int m_errorCode = 0;
 };
