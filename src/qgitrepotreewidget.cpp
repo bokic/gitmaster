@@ -33,7 +33,14 @@ QGitRepoTreeWidget::~QGitRepoTreeWidget()
 
     m_thread.requestInterruption();
     m_thread.quit();
-    m_thread.wait();
+    if (!m_thread.wait(5000)) {
+        qWarning() << "QGitRepoTreeWidget worker thread did not stop within 5000ms; terminating.";
+        m_thread.terminate();
+        if (!m_thread.wait(1000)) {
+            qWarning() << "QGitRepoTreeWidget worker thread failed to terminate; detaching m_git.";
+            m_git = nullptr;
+        }
+    }
 
     delete m_git; m_git = nullptr;
 }

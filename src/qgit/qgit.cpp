@@ -695,6 +695,9 @@ static git_fetch_options makeFetchOptions(QGit *payload = nullptr)
     git_fetch_options opts = GIT_FETCH_OPTIONS_INIT;
     opts.callbacks.credentials = gitCredentialCallback;
     opts.callbacks.payload = payload;
+    opts.callbacks.transfer_progress = [](const git_transfer_progress *, void *) -> int {
+        return QThread::currentThread()->isInterruptionRequested() ? -1 : 0;
+    };
     return opts;
 }
 
@@ -709,6 +712,9 @@ static git_push_options makePushOptions(QGit *payload = nullptr)
     opts.callbacks.push_transfer_progress = [](unsigned int current, unsigned int total, size_t bytes, void *payload) -> int
     {
         try {
+            if (QThread::currentThread()->isInterruptionRequested()) {
+                return -1;
+            }
             if (payload) {
                 QGit *_this = static_cast<QGit *>(payload);
                 emit _this->pushProgress(current, total, bytes);
