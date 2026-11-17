@@ -2945,6 +2945,9 @@ static void fetchRepoSubmodulesRecursive(git_repository *repo, QGit::FetchOption
                 for (size_t i = 0; i < remotes.value.count; ++i) {
                     GitRemote remote;
                     if (git_remote_lookup(remote, subRepo, remotes.value.strings[i]) == 0) {
+                        if (c->context) {
+                            c->context->resetCredentialAttemptState();
+                        }
                         git_remote_fetch(remote, nullptr, &fetch_opts, "fetch submodule");
                     }
                 }
@@ -6916,6 +6919,7 @@ void QGit::fetch(FetchOptions options)
                 throw QGitError("git_remote_lookup", res);
             }
 
+            resetCredentialAttemptState();
             res = git_remote_fetch(remote, nullptr, &fetch_opts, "fetch");
             if (res)
             {
