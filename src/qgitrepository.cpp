@@ -198,7 +198,9 @@ QGitRepository::QGitRepository(const QString &path, QWidget *parent)
     connect(m_git, &QGit::listCommitsReply, this, &QGitRepository::repositoryGetCommitsReply);
 
     connect(this, &QGitRepository::repositorySearchCommits, m_git, &QGit::searchCommits);
-    connect(this, &QGitRepository::repositoryAbortSearch, m_git, &QGit::abortSearch);
+    // DirectConnection is safe because abortSearch() only writes to an atomic flag (m_abortSearch),
+    // allowing cancellation while searchCommits() is blocking the worker thread's event loop.
+    connect(this, &QGitRepository::repositoryAbortSearch, m_git, &QGit::abortSearch, Qt::DirectConnection);
     connect(m_git, &QGit::commitFound, this, &QGitRepository::onCommitFound);
     connect(m_git, &QGit::searchFinished, this, &QGitRepository::onSearchFinished);
 
