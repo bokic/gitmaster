@@ -1508,7 +1508,7 @@ void QGitRepository::repositoryGetCommitDiffReply(const QString &commitId, const
             html += (parentsHtml.size() > 1 ? tr("<b>Parents:</b> ") : tr("<b>Parent:</b> ")) + parentsHtml.join(", ") + QStringLiteral("<br />");
             html += tr("<b>Date:</b> ") + m_commitDiff.time().toString() + QStringLiteral("<br />");
             if (!m_commitDiff.description().isEmpty()) {
-                html += tr("<b>Describe:</b> ") + m_commitDiff.description() + QStringLiteral("<br />");
+                html += tr("<b>Describe:</b> ") + m_commitDiff.description().toHtmlEscaped() + QStringLiteral("<br />");
             }
             html += tr("<b>Labels:</b> ") + labelsHtml.join(", ") + QStringLiteral("<br />");
             html += QStringLiteral("<br />");
@@ -1609,7 +1609,7 @@ void QGitRepository::repositoryGetCommitDiffReply(const QString &commitId, const
             html += (parentsHtml.size() > 1 ? tr("<b>Parents:</b> ") : tr("<b>Parent:</b> ")) + parentsHtml.join(", ") + QStringLiteral("<br />");
             html += tr("<b>Date:</b> ") + m_commitDiff.time().toString() + QStringLiteral("<br />");
             if (!m_commitDiff.description().isEmpty()) {
-                html += tr("<b>Describe:</b> ") + m_commitDiff.description() + QStringLiteral("<br />");
+                html += tr("<b>Describe:</b> ") + m_commitDiff.description().toHtmlEscaped() + QStringLiteral("<br />");
             }
             html += tr("<b>Labels:</b> ") + labelsHtml.join(", ") + QStringLiteral("<br />");
             html += QStringLiteral("<br />");
