@@ -725,7 +725,7 @@ void QGitMasterMainWindow::on_actionTerminal_triggered()
                 }
             }
         }
-#elif defined(Q_OS_MAC)
+#elif defined(Q_OS_MACOS)
         // On macOS, launch Terminal.app targeting the repository directory via the system 'open' tool
         launched = QProcess::startDetached("open", QStringList() << "-a" << "Terminal" << absolutePath);
         if (!launched) {
