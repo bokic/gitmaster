@@ -535,7 +535,12 @@ static int gitCredentialCallback(
         if (!out) return -1;
         if (QThread::currentThread()->isInterruptionRequested()) return -1;
 
-        if (allowed_types & GIT_CREDENTIAL_DEFAULT) {
+        auto *_this = static_cast<QGit *>(payload);
+        QGit::CredentialAttemptState localFallbackState;
+        QGit::CredentialAttemptState &state = _this ? _this->credentialAttemptState() : localFallbackState;
+
+        if ((allowed_types & GIT_CREDENTIAL_DEFAULT) && !state.triedDefault) {
+            state.triedDefault = true;
             if (git_credential_default_new(out) == 0) {
                 return 0;
             }
@@ -544,41 +549,28 @@ static int gitCredentialCallback(
         if (allowed_types & GIT_CREDENTIAL_SSH_KEY) {
             const char *username = (username_from_url && *username_from_url) ? username_from_url : "git";
 
-            int agent_res = git_credential_ssh_key_from_agent(out, username);
-            if (agent_res == 0) {
-                return 0;
-            }
-
-            QString sshDir = QDir::homePath() + "/.ssh";
-            QDir dir(sshDir);
-            
-            QStringList preferredKeys = {"id_ed25519", "id_ecdsa", "id_rsa", "id_dsa"};
-            QFileInfo privkeyFileInfo;
-            QFileInfo pubkeyFileInfo;
-            bool found = false;
-
-            for (const QString &keyName : preferredKeys) {
-                QFileInfo privKey(dir, keyName);
-                QFileInfo pubKey(dir, keyName + ".pub");
-                if (privKey.exists()) {
-                    privkeyFileInfo = privKey;
-                    if (pubKey.exists()) {
-                        pubkeyFileInfo = pubKey;
-                    }
-                    found = true;
-                    break;
+            if (!state.triedSshAgent) {
+                state.triedSshAgent = true;
+                int agent_res = git_credential_ssh_key_from_agent(out, username);
+                if (agent_res == 0) {
+                    return 0;
                 }
             }
 
-            if (!found) {
-                auto keys = dir.entryInfoList(QDir::Files);
-                for (const auto &fileInfo : keys) {
-                    if (fileInfo.fileName().endsWith(".pub")) {
-                        continue;
-                    }
-                    if (fileInfo.fileName().startsWith("id_")) {
-                        privkeyFileInfo = fileInfo;
-                        QFileInfo pubKey(dir, fileInfo.fileName() + ".pub");
+            if (state.sshKeyAttempts < 2) {
+                QString sshDir = QDir::homePath() + "/.ssh";
+                QDir dir(sshDir);
+                
+                QStringList preferredKeys = {"id_ed25519", "id_ecdsa", "id_rsa", "id_dsa"};
+                QFileInfo privkeyFileInfo;
+                QFileInfo pubkeyFileInfo;
+                bool found = false;
+
+                for (const QString &keyName : preferredKeys) {
+                    QFileInfo privKey(dir, keyName);
+                    QFileInfo pubKey(dir, keyName + ".pub");
+                    if (privKey.exists()) {
+                        privkeyFileInfo = privKey;
                         if (pubKey.exists()) {
                             pubkeyFileInfo = pubKey;
                         }
@@ -586,54 +578,75 @@ static int gitCredentialCallback(
                         break;
                     }
                 }
-            }
 
-            if (found) {
-                if (QThread::currentThread()->isInterruptionRequested()) {
-                    return -1;
-                }
-                QString pass;
-                auto _this = static_cast<QGit *>(payload);
-                if (_this) {
-                    QObject *handler = _this->credentialHandler();
-                    if (handler && !QThread::currentThread()->isInterruptionRequested()) {
-                        const auto connType = (QThread::currentThread() == handler->thread())
-                                                  ? Qt::DirectConnection
-                                                  : Qt::BlockingQueuedConnection;
-                        QMetaObject::invokeMethod(handler, "getPassword",
-                                                  connType, Q_ARG(QString&, pass));
-                    } else if (!handler) {
-                        emit _this->requestPassword(pass);
+                if (!found) {
+                    auto keys = dir.entryInfoList(QDir::Files);
+                    for (const auto &fileInfo : keys) {
+                        if (fileInfo.fileName().endsWith(".pub")) {
+                            continue;
+                        }
+                        if (fileInfo.fileName().startsWith("id_")) {
+                            privkeyFileInfo = fileInfo;
+                            QFileInfo pubKey(dir, fileInfo.fileName() + ".pub");
+                            if (pubKey.exists()) {
+                                pubkeyFileInfo = pubKey;
+                            }
+                            found = true;
+                            break;
+                        }
                     }
                 }
-                if (QThread::currentThread()->isInterruptionRequested()) {
-                    return -1;
-                }
 
-                auto privkeyPathname = privkeyFileInfo.absoluteFilePath().toUtf8();
-                QByteArray pubkeyPathname;
-                const char *pubkeyPtr = nullptr;
-                if (pubkeyFileInfo.exists()) {
-                    pubkeyPathname = pubkeyFileInfo.absoluteFilePath().toUtf8();
-                    pubkeyPtr = pubkeyPathname.constData();
-                }
+                if (found) {
+                    if (QThread::currentThread()->isInterruptionRequested()) {
+                        return -1;
+                    }
+                    QString pass;
+                    if (_this) {
+                        QObject *handler = _this->credentialHandler();
+                        if (handler && !QThread::currentThread()->isInterruptionRequested()) {
+                            const auto connType = (QThread::currentThread() == handler->thread())
+                                                      ? Qt::DirectConnection
+                                                      : Qt::BlockingQueuedConnection;
+                            QMetaObject::invokeMethod(handler, "getPassword",
+                                                      connType, Q_ARG(QString&, pass));
+                        } else if (!handler) {
+                            emit _this->requestPassword(pass);
+                        }
+                    }
+                    if (QThread::currentThread()->isInterruptionRequested()) {
+                        return -1;
+                    }
 
-                const QByteArray passUtf8 = pass.toUtf8();
-                const char *passphrase = passUtf8.isEmpty() ? nullptr : passUtf8.constData();
-                int res = git_credential_ssh_key_new(out, username, pubkeyPtr, privkeyPathname.constData(), passphrase);
-                if (res == 0) {
-                    return 0;
+                    // Avoid re-prompting on failure if no passphrase was provided (unencrypted key or cancelled).
+                    state.sshKeyAttempts = pass.isEmpty() ? 2 : (state.sshKeyAttempts + 1);
+
+                    auto privkeyPathname = privkeyFileInfo.absoluteFilePath().toUtf8();
+                    QByteArray pubkeyPathname;
+                    const char *pubkeyPtr = nullptr;
+                    if (pubkeyFileInfo.exists()) {
+                        pubkeyPathname = pubkeyFileInfo.absoluteFilePath().toUtf8();
+                        pubkeyPtr = pubkeyPathname.constData();
+                    }
+
+                    const QByteArray passUtf8 = pass.toUtf8();
+                    const char *passphrase = passUtf8.isEmpty() ? nullptr : passUtf8.constData();
+                    int res = git_credential_ssh_key_new(out, username, pubkeyPtr, privkeyPathname.constData(), passphrase);
+                    if (res == 0) {
+                        return 0;
+                    }
+                } else {
+                    state.sshKeyAttempts = 2;
                 }
             }
         }
 
-        if (allowed_types & GIT_CREDENTIAL_USERPASS_PLAINTEXT) {
+        if ((allowed_types & GIT_CREDENTIAL_USERPASS_PLAINTEXT) && state.userpassAttempts < 2) {
             if (QThread::currentThread()->isInterruptionRequested()) {
                 return -1;
             }
             QString username = (username_from_url && *username_from_url) ? QString::fromUtf8(username_from_url) : QString();
             QString password;
-            auto _this = static_cast<QGit *>(payload);
             if (_this) {
                 QString urlStr = url ? QString::fromUtf8(url) : QString();
                 QString usernameFromUrlStr = username;
@@ -656,6 +669,9 @@ static int gitCredentialCallback(
                 return -1;
             }
 
+            // Avoid re-prompting on failure if user cancelled or left password empty.
+            state.userpassAttempts = password.isEmpty() ? 2 : (state.userpassAttempts + 1);
+
             if (!username.isEmpty() || !password.isEmpty()) {
                 int res = git_credential_userpass_plaintext_new(out, username.toUtf8().constData(), password.toUtf8().constData());
                 if (res == 0) {
@@ -673,6 +689,9 @@ static int gitCredentialCallback(
 
 static git_fetch_options makeFetchOptions(QGit *payload = nullptr)
 {
+    if (payload) {
+        payload->resetCredentialAttemptState();
+    }
     git_fetch_options opts = GIT_FETCH_OPTIONS_INIT;
     opts.callbacks.credentials = gitCredentialCallback;
     opts.callbacks.payload = payload;
@@ -681,6 +700,9 @@ static git_fetch_options makeFetchOptions(QGit *payload = nullptr)
 
 static git_push_options makePushOptions(QGit *payload = nullptr)
 {
+    if (payload) {
+        payload->resetCredentialAttemptState();
+    }
     git_push_options opts = GIT_PUSH_OPTIONS_INIT;
     opts.callbacks.credentials = gitCredentialCallback;
     opts.callbacks.payload = payload;
@@ -2378,6 +2400,7 @@ void QGit::addSubmodule(const QString &url, const QString &path, const QString &
             git_submodule_set_branch(repo, git_submodule_name(sm), branch.trimmed().toUtf8().constData());
         }
 
+        resetCredentialAttemptState();
         git_submodule_update_options opts = GIT_SUBMODULE_UPDATE_OPTIONS_INIT;
         opts.checkout_opts.checkout_strategy = GIT_CHECKOUT_SAFE;
         opts.fetch_opts.callbacks.credentials = gitCredentialCallback;
@@ -2954,6 +2977,9 @@ static void updateRepoSubmodulesRecursive(git_repository *repo, SubmoduleUpdateO
         Q_UNUSED(name);
         SubmoduleUpdateContext *c = static_cast<SubmoduleUpdateContext*>(payload);
 
+        if (c->context) {
+            c->context->resetCredentialAttemptState();
+        }
         git_submodule_update_options opts = GIT_SUBMODULE_UPDATE_OPTIONS_INIT;
         opts.checkout_opts.checkout_strategy = GIT_CHECKOUT_SAFE;
         opts.fetch_opts.callbacks.credentials = gitCredentialCallback;
@@ -2985,6 +3011,7 @@ void QGit::updateSubmodule(const QString &name, bool recursive)
         res = git_submodule_lookup(sm, repo, name.toUtf8().constData());
         if (res) throw QGitError("git_submodule_lookup", res);
 
+        resetCredentialAttemptState();
         git_submodule_update_options opts = GIT_SUBMODULE_UPDATE_OPTIONS_INIT;
         opts.checkout_opts.checkout_strategy = GIT_CHECKOUT_SAFE;
         opts.fetch_opts.callbacks.credentials = gitCredentialCallback;
@@ -5860,6 +5887,7 @@ void QGit::clone(const QUrl &url)
             throw QGitError("git_clone_init_options", res);
         }
 
+        resetCredentialAttemptState();
         opts.fetch_opts.callbacks.payload = this;
         opts.fetch_opts.callbacks.credentials = gitCredentialCallback;
 

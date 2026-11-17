@@ -250,6 +250,22 @@ public:
     void setCredentialHandler(QObject *handler) { m_credentialHandler.store(handler, std::memory_order_release); }
     QObject *credentialHandler() const { return m_credentialHandler.load(std::memory_order_acquire); }
 
+    struct CredentialAttemptState {
+        bool triedDefault = false;
+        bool triedSshAgent = false;
+        int sshKeyAttempts = 0;
+        int userpassAttempts = 0;
+
+        void reset() {
+            triedDefault = false;
+            triedSshAgent = false;
+            sshKeyAttempts = 0;
+            userpassAttempts = 0;
+        }
+    };
+    CredentialAttemptState &credentialAttemptState() { return m_credentialAttemptState; }
+    void resetCredentialAttemptState() { m_credentialAttemptState.reset(); }
+
     static QString branchNameFromPath(const QString &path);
     static int createLocalRepository(const QDir &path);
     static bool isGitRepository(const QDir &path);
@@ -406,6 +422,7 @@ private:
     std::atomic<bool> m_abortSearch{false};
     QString m_lastPushError;
     std::atomic<QObject*> m_credentialHandler{nullptr};
+    CredentialAttemptState m_credentialAttemptState;
 };
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(QGit::CleanOptions)
