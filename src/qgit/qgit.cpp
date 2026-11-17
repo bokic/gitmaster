@@ -2558,11 +2558,46 @@ void QGit::removeSubmodule(const QString &name, SubmoduleRemoveOptions options)
         }
 
         // 4. Remove working directory files
+        auto resolveContainedDir = [](const QDir &rootDir, const QString &relPath, QString &outCanonicalPath) -> bool {
+            const QString cleaned = QDir::cleanPath(QDir::fromNativeSeparators(relPath));
+            if (cleaned.isEmpty() || cleaned == QLatin1String(".") || cleaned == QLatin1String("..")
+                || QDir::isAbsolutePath(cleaned) || cleaned.startsWith(QLatin1String("../"))
+                || cleaned.startsWith(QLatin1Char('/'))) {
+                return false;
+            }
+
+            const QString canonicalRoot = QFileInfo(rootDir.absolutePath()).canonicalFilePath();
+            if (canonicalRoot.isEmpty()) {
+                return false;
+            }
+
+            const QString candidate = rootDir.filePath(cleaned);
+            const QFileInfo candidateInfo(candidate);
+            if (!candidateInfo.exists()) {
+                outCanonicalPath.clear();
+                return true;
+            }
+            if (candidateInfo.isSymLink()) {
+                return false;
+            }
+
+            const QString canonicalTarget = candidateInfo.canonicalFilePath();
+            const QString rootPrefix = canonicalRoot.endsWith(QLatin1Char('/')) ? canonicalRoot : (canonicalRoot + QLatin1Char('/'));
+            if (canonicalTarget.isEmpty() || !canonicalTarget.startsWith(rootPrefix)) {
+                return false;
+            }
+
+            outCanonicalPath = canonicalTarget;
+            return true;
+        };
+
         if (removeWorkingDirectory && !subPath.isEmpty()) {
-            QString workingDirPath = path().filePath(subPath);
-            QDir workingDir(workingDirPath);
-            if (workingDir.exists()) {
-                workingDir.removeRecursively();
+            QString workingDirPath;
+            if (!resolveContainedDir(path(), subPath, workingDirPath)) {
+                throw QGitError("removeSubmodule", -1, tr("Refusing to remove submodule working directory outside repository: %1").arg(subPath));
+            }
+            if (!workingDirPath.isEmpty()) {
+                QDir(workingDirPath).removeRecursively();
             }
         }
 
@@ -2570,15 +2605,23 @@ void QGit::removeSubmodule(const QString &name, SubmoduleRemoveOptions options)
         if (removeGitDir) {
             const char *gitDirPathRaw = git_repository_path(repo);
             if (gitDirPathRaw) {
-                QDir gitDir(QString::fromUtf8(gitDirPathRaw));
-                QString modulePath = gitDir.filePath(QStringLiteral("modules/%1").arg(subName));
-                if (QDir(modulePath).exists()) {
-                    QDir(modulePath).removeRecursively();
-                }
-                if (subName != subPath) {
-                    QString modulePath2 = gitDir.filePath(QStringLiteral("modules/%1").arg(subPath));
-                    if (QDir(modulePath2).exists()) {
-                        QDir(modulePath2).removeRecursively();
+                QDir modulesDir(QDir(QString::fromUtf8(gitDirPathRaw)).filePath(QStringLiteral("modules")));
+                if (modulesDir.exists()) {
+                    QString modulePath;
+                    if (!resolveContainedDir(modulesDir, subName, modulePath)) {
+                        throw QGitError("removeSubmodule", -1, tr("Refusing to remove submodule git dir outside .git/modules: %1").arg(subName));
+                    }
+                    if (!modulePath.isEmpty()) {
+                        QDir(modulePath).removeRecursively();
+                    }
+                    if (subName != subPath && !subPath.isEmpty()) {
+                        QString modulePath2;
+                        if (!resolveContainedDir(modulesDir, subPath, modulePath2)) {
+                            throw QGitError("removeSubmodule", -1, tr("Refusing to remove submodule git dir outside .git/modules: %1").arg(subPath));
+                        }
+                        if (!modulePath2.isEmpty()) {
+                            QDir(modulePath2).removeRecursively();
+                        }
                     }
                 }
             }
