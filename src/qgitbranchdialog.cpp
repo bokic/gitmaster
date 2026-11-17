@@ -267,8 +267,8 @@ void QGitBranchDialog::on_deleteBranches_tableWidget_itemChanged(QTableWidgetIte
     int rows = ui->deleteBranches_tableWidget->rowCount();
     for(int row = 0; row < rows; row++)
     {
-        const auto *item = ui->deleteBranches_tableWidget->item(row, 0);
-        if ((item)&&(item->checkState() == Qt::Checked))
+        const auto *rowItem = ui->deleteBranches_tableWidget->item(row, 0);
+        if ((rowItem) && (rowItem->checkState() == Qt::Checked))
         {
             enable = true;
             break;

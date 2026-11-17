@@ -806,7 +806,6 @@ void QGitDiffWidget::paintEvent(QPaintEvent *event)
     const auto &files = m_private->files;
     const int lineNumWidth = m_private->lineNumWidth;
     const bool isSideBySide = (m_diffViewMode == DiffViewMode::SideBySide);
-    const int sidePanelWidth = m_private->sidePanelWidth;
 
     for(const auto &file: files)
     {
@@ -846,7 +845,6 @@ void QGitDiffWidget::paintEvent(QPaintEvent *event)
                         // ---------------------------------------------------
                         // Side-by-side rendering
                         // ---------------------------------------------------
-                        int sRowIdx = 0;
                         for(const auto &sRow : hunk.sideRows)
                         {
                             if (!event->region().intersected(sRow.rect).isEmpty())
@@ -995,7 +993,6 @@ void QGitDiffWidget::paintEvent(QPaintEvent *event)
                                     }
                                 }
                             }
-                            sRowIdx++;
                         }
                     }
                     else

@@ -215,15 +215,6 @@ static void resolveMailmap(git_mailmap *mailmap, QString &name, QString &email)
     }
 }
 
-static void resolveMailmap(git_repository *repo, QString &name, QString &email)
-{
-    GitMailmap mailmap;
-    if (git_mailmap_from_repository(mailmap, repo) == 0)
-    {
-        resolveMailmap(mailmap, name, email);
-    }
-}
-
 static int resolveToCommitOid(git_oid &oid, git_repository *repo, const QString &spec)
 {
     GitObject obj;
