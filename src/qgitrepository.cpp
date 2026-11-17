@@ -1962,23 +1962,23 @@ void QGitRepository::on_branchesTreeView_customContextMenuRequested(const QPoint
         menu.addSeparator();
         QAction *dropAction = menu.addAction(tr("Drop Stash"));
 
+        QString stashRef = item->data(0, Qt::UserRole).toString();
+        QString stashName = item->data(0, Qt::UserRole + 1).toString();
         QAction *selectedAction = menu.exec(ui->branchesTreeView->viewport()->mapToGlobal(pos));
         if (selectedAction == inspectAction)
         {
-            QString stashRef = item->data(0, Qt::UserRole).toString();
-            QString stashName = item->data(0, Qt::UserRole + 1).toString();
             QGitStashInspectDialog dlg(m_git, stashRef, stashName, this);
             dlg.exec();
         }
         else if (selectedAction == applyAction)
         {
             emit statusMessage(tr("Applying stash %1...").arg(fullName));
-            emit repositoryStashApply(fullName);
+            emit repositoryStashApply(stashRef);
         }
         else if (selectedAction == popAction)
         {
             emit statusMessage(tr("Popping stash %1...").arg(fullName));
-            emit repositoryStashPop(fullName);
+            emit repositoryStashPop(stashRef);
         }
         else if (selectedAction == dropAction)
         {
@@ -1988,7 +1988,7 @@ void QGitRepository::on_branchesTreeView_customContextMenuRequested(const QPoint
             if (res == QMessageBox::Yes)
             {
                 emit statusMessage(tr("Dropping stash %1...").arg(fullName));
-                emit repositoryStashRemove(fullName);
+                emit repositoryStashRemove(stashRef);
             }
         }
     }
@@ -3457,12 +3457,13 @@ void QGitRepository::keyPressEvent(QKeyEvent *event)
                 emit deleteBranches(toDelete, false);
             }
         } else if (type == "Stash") {
+            const QString stashRef = item->data(0, Qt::UserRole).toString();
             auto res = QMessageBox::question(this, tr("Drop Stash"), 
                                              tr("Are you sure you want to drop stash '%1'?").arg(fullName),
                                              QMessageBox::Yes | QMessageBox::No);
             if (res == QMessageBox::Yes) {
                 emit statusMessage(tr("Dropping stash %1...").arg(fullName));
-                emit repositoryStashRemove(fullName);
+                emit repositoryStashRemove(stashRef);
             }
         } else if (type == "Tag") {
             auto res = QMessageBox::question(this, tr("Delete Tag"), 
