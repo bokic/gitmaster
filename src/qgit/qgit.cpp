@@ -3365,12 +3365,18 @@ void QGit::clean(CleanOptions options)
         }
 
         if (removeDirectories) {
+            const QString repoRoot = QFileInfo(path().absolutePath()).canonicalFilePath();
+            const QString rootPrefix = repoRoot.endsWith(QLatin1Char('/')) ? repoRoot : (repoRoot + QLatin1Char('/'));
             std::function<void(const QString&)> pruneEmptyDirs = [&](const QString &dirPath) {
                 QDir dir(dirPath);
-                QStringList subDirs = dir.entryList(QDir::Dirs | QDir::NoDotAndDotDot | QDir::Hidden);
-                for (const QString &sub : subDirs) {
-                    if (sub == ".git") continue;
-                    pruneEmptyDirs(dir.absoluteFilePath(sub));
+                const QFileInfoList subDirs = dir.entryInfoList(QDir::Dirs | QDir::NoDotAndDotDot | QDir::Hidden | QDir::NoSymLinks);
+                for (const QFileInfo &subInfo : subDirs) {
+                    if (subInfo.fileName() == QLatin1String(".git") || subInfo.isSymLink()) continue;
+                    const QString subPath = subInfo.absoluteFilePath();
+                    // Do not descend into nested git repositories
+                    if (QFileInfo::exists(subPath + QLatin1String("/.git"))) continue;
+                    if (!repoRoot.isEmpty() && !subInfo.canonicalFilePath().startsWith(rootPrefix)) continue;
+                    pruneEmptyDirs(subPath);
                 }
                 if (dirPath != path().absolutePath()) {
                     if (dir.entryList(QDir::AllEntries | QDir::NoDotAndDotDot | QDir::Hidden).isEmpty()) {
