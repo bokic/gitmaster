@@ -35,12 +35,13 @@ void QGitExportArchiveDialog::populateRefs()
 {
     if (!m_git) return;
 
-    m_branches = m_git->branches(GIT_BRANCH_ALL);
+    QGit::invokeSync(m_git, [&]() {
+        m_branches = m_git->branches(GIT_BRANCH_ALL);
+        m_tags = m_git->tags();
+    });
     for (const auto &b : m_branches) {
         ui->comboBox_branch->addItem(b.name());
     }
-
-    m_tags = m_git->tags();
     for (const auto &t : m_tags) {
         ui->comboBox_tag->addItem(t.name());
     }
@@ -115,8 +116,10 @@ void QGitExportArchiveDialog::updateDefaultFileName()
     if (m_userModifiedOutputFile) return;
 
     QString repoName = QStringLiteral("repository");
+    QDir repoPath;
     if (m_git) {
-        repoName = m_git->path().dirName();
+        repoPath = QGit::invokeSync(m_git, [&]() { return m_git->path(); });
+        repoName = repoPath.dirName();
     }
 
     QString ref = effectiveRefName();
@@ -146,7 +149,7 @@ void QGitExportArchiveDialog::updateDefaultFileName()
     QString defaultName = QString("%1-%2%3").arg(repoName, cleanRef, ext);
     QString baseDir = QDir::homePath();
     if (m_git) {
-        QDir parentDir = m_git->path();
+        QDir parentDir = repoPath;
         if (parentDir.cdUp()) {
             baseDir = parentDir.absolutePath();
         }

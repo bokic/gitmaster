@@ -20,7 +20,11 @@
 #include <QMutex>
 #include <QMutexLocker>
 #include <QFlags>
+#include <QMetaObject>
+#include <QThread>
 #include <atomic>
+#include <exception>
+#include <type_traits>
 #include <utility>
 
 
@@ -412,6 +416,42 @@ signals:
     void removeWorktreeReply(const QGitError &error);
     void lockWorktreeReply(const QGitError &error);
     void repositoryStateReply(int state, const QString &headCommitId, const QString &headCommitMessage);
+
+public:
+    template <typename Fn>
+    static auto invokeSync(QGit *git, Fn &&fn)
+    {
+        if (!git || !git->thread() || !git->thread()->isRunning() || git->thread() == QThread::currentThread()) {
+            return fn();
+        }
+        using Ret = std::invoke_result_t<Fn>;
+        std::exception_ptr eptr;
+        if constexpr (std::is_void_v<Ret>) {
+            QMetaObject::invokeMethod(git, [&]() {
+                try {
+                    fn();
+                } catch (...) {
+                    eptr = std::current_exception();
+                }
+            }, Qt::BlockingQueuedConnection);
+            if (eptr) {
+                std::rethrow_exception(eptr);
+            }
+        } else {
+            Ret result{};
+            QMetaObject::invokeMethod(git, [&]() {
+                try {
+                    result = fn();
+                } catch (...) {
+                    eptr = std::current_exception();
+                }
+            }, Qt::BlockingQueuedConnection);
+            if (eptr) {
+                std::rethrow_exception(eptr);
+            }
+            return result;
+        }
+    }
 
 private:
     QString commitInternal(const QString &message, CommitOptions options = CommitOption::None);

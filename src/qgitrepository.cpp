@@ -543,18 +543,20 @@ void QGitRepository::interactiveRebase(const QString &baseCommitId)
 {
     QString targetBase = baseCommitId;
     if (targetBase.isEmpty()) {
-        auto commits = m_git->commitsForRebase(QString());
-        if (commits.size() > 10) {
-            auto parents = m_git->commitParents(commits.at(commits.size() - 10).id());
-            if (!parents.isEmpty()) {
-                targetBase = parents.first();
+        QGit::invokeSync(m_git, [&]() {
+            auto commits = m_git->commitsForRebase(QString());
+            if (commits.size() > 10) {
+                auto parents = m_git->commitParents(commits.at(commits.size() - 10).id());
+                if (!parents.isEmpty()) {
+                    targetBase = parents.first();
+                }
+            } else if (!commits.isEmpty()) {
+                auto parents = m_git->commitParents(commits.first().id());
+                if (!parents.isEmpty()) {
+                    targetBase = parents.first();
+                }
             }
-        } else if (!commits.isEmpty()) {
-            auto parents = m_git->commitParents(commits.first().id());
-            if (!parents.isEmpty()) {
-                targetBase = parents.first();
-            }
-        }
+        });
     }
 
     QGitInteractiveRebaseDialog dlg(m_git, targetBase, this);
@@ -614,7 +616,7 @@ void QGitRepository::submodulePointerDialog(const QString &subName)
 
     if (!found) {
         // Look up dynamically if not found in cache
-        QList<QGitSubmodule> subs = m_git->submodules();
+        const QList<QGitSubmodule> subs = QGit::invokeSync(m_git, [&]() { return m_git->submodules(); });
         for (const auto &s : subs) {
             if (subName.isEmpty() || s.name == subName) {
                 targetSub = s;
@@ -680,7 +682,7 @@ void QGitRepository::removeSubmoduleDialog(const QString &subName)
 
     if (!found) {
         // Look up dynamically if not found in cache
-        QList<QGitSubmodule> subs = m_git->submodules();
+        const QList<QGitSubmodule> subs = QGit::invokeSync(m_git, [&]() { return m_git->submodules(); });
         for (const auto &s : subs) {
             if (subName.isEmpty() || s.name == subName || s.path == subName) {
                 targetSub = s;
@@ -839,7 +841,7 @@ void QGitRepository::skipRebase()
 
 void QGitRepository::resolveActiveConflicts()
 {
-    auto conflicted = m_git->conflictedFiles();
+    auto conflicted = QGit::invokeSync(m_git, [&]() { return m_git->conflictedFiles(); });
     if (!conflicted.isEmpty()) {
         QGitConflictResolverDialog dlg(m_git, conflicted.first(), this);
         if (dlg.exec() == QDialog::Accepted) {
@@ -1922,7 +1924,7 @@ void QGitRepository::on_branchesTreeView_customContextMenuRequested(const QPoint
         QAction *selectedAction = menu.exec(ui->branchesTreeView->viewport()->mapToGlobal(pos));
         if (selectedAction == openAction)
         {
-            QString fullSubPath = m_git->path().absoluteFilePath(subPath);
+            QString fullSubPath = QDir(m_path).absoluteFilePath(subPath);
             emit openRepositoryRequested(fullSubPath);
         }
         else if (selectedAction == changeRefAction)
@@ -2433,7 +2435,7 @@ void QGitRepository::on_checkBox_amendCommit_clicked(bool checked)
         m_draftCommitMessage = ui->plainTextEdit_commitMessage->toPlainText();
         if (m_headCommitMessage.isEmpty() && m_git)
         {
-            m_headCommitMessage = m_git->headCommitMessage();
+            m_headCommitMessage = QGit::invokeSync(m_git, [&]() { return m_git->headCommitMessage(); });
         }
         QString headMessage = m_headCommitMessage;
         ui->plainTextEdit_commitMessage->setPlainText(headMessage);
@@ -2962,12 +2964,12 @@ void QGitRepository::on_logHistory_commits_customContextMenuRequested(const QPoi
 
     QString headHash = m_headCommitId;
 
-    bool canRebase = true;
-    if (selectedHash.compare(headHash, Qt::CaseInsensitive) == 0) {
-        canRebase = false;
-    } else if (!headHash.isEmpty() && m_git->isAncestor(selectedHash, headHash)) {
-        canRebase = false;
-    }
+    const bool isHead = (selectedHash.compare(headHash, Qt::CaseInsensitive) == 0);
+    const bool isAncestor = !headHash.isEmpty() && QGit::invokeSync(m_git, [&]() {
+        return m_git->isAncestor(selectedHash, headHash);
+    });
+
+    bool canRebase = !isHead && !isAncestor;
 
     QList<QGitRef> refs = ui->logHistory_commits->getReferences(selectedHash);
     QString shortHash = selectedHash.left(7);
@@ -2991,9 +2993,6 @@ void QGitRepository::on_logHistory_commits_customContextMenuRequested(const QPoi
     QAction *revertAction = nullptr;
 
     // "Reword commit message…" is only offered for HEAD
-    bool isHead = (selectedHash.compare(headHash, Qt::CaseInsensitive) == 0);
-    bool isAncestor = !headHash.isEmpty() && m_git->isAncestor(selectedHash, headHash);
-
     if (isHead) {
         rewordAction = menu.addAction(tr("Reword commit message..."));
         menu.addSeparator();
@@ -3008,12 +3007,7 @@ void QGitRepository::on_logHistory_commits_customContextMenuRequested(const QPoi
         interactiveRebaseOntoAction = menu.addAction(tr("Interactive Rebase current branch onto '%1'...").arg(targetName));
     }
 
-    bool canCherrypick = true;
-    if (selectedHash.compare(headHash, Qt::CaseInsensitive) == 0) {
-        canCherrypick = false;
-    } else if (!headHash.isEmpty() && m_git->isAncestor(selectedHash, headHash)) {
-        canCherrypick = false;
-    }
+    bool canCherrypick = !isHead && !isAncestor;
 
     if (canCherrypick) {
         cherrypickAction = menu.addAction(tr("Cherry-pick commit '%1'").arg(shortHash));
@@ -3040,7 +3034,7 @@ void QGitRepository::on_logHistory_commits_customContextMenuRequested(const QPoi
     QAction *res = menu.exec(ui->logHistory_commits->viewport()->mapToGlobal(pos));
     if (res) {
         if (res == rewordAction) {
-            QString currentMessage = m_git->headCommitMessage();
+            QString currentMessage = QGit::invokeSync(m_git, [&]() { return m_git->headCommitMessage(); });
             // Warn the user if the commit has already been pushed
             if (!m_hasCommitsToPush) {
                 auto warn = QMessageBox::warning(
@@ -3070,7 +3064,7 @@ void QGitRepository::on_logHistory_commits_customContextMenuRequested(const QPoi
             }
         } else if (res == interactiveRebaseAction) {
             QString baseHash;
-            auto parents = m_git->commitParents(selectedHash);
+            auto parents = QGit::invokeSync(m_git, [&]() { return m_git->commitParents(selectedHash); });
             if (!parents.isEmpty()) {
                 baseHash = parents.first();
             }
@@ -3132,7 +3126,7 @@ void QGitRepository::on_logHistory_commits_customContextMenuRequested(const QPoi
                 emit repositoryCreateTag(dlg.tagName(), selectedHash, dlg.tagMessage(), dlg.forceCreate());
             }
         } else if (res == editNoteAction) {
-            QString currentNote = m_git->note(selectedHash);
+            QString currentNote = QGit::invokeSync(m_git, [&]() { return m_git->note(selectedHash); });
             bool ok;
             QString noteText = QInputDialog::getMultiLineText(
                 this,
@@ -3325,7 +3319,7 @@ void QGitRepository::applyPatchesPrompt(const QStringList &patchFiles)
     if (sortedFiles.size() == 1) {
         message = tr("Apply patch '%1' to repository '%2' (working directory)?")
             .arg(QFileInfo(sortedFiles.first()).fileName())
-            .arg(m_git ? m_git->path().dirName() : QString());
+            .arg(QDir(m_path).dirName());
     } else {
         QString fileList;
         for (int i = 0; i < std::min(static_cast<int>(sortedFiles.size()), 10); ++i) {
@@ -3336,7 +3330,7 @@ void QGitRepository::applyPatchesPrompt(const QStringList &patchFiles)
         }
         message = tr("Apply the following %1 patch files in sequence to repository '%2'?\n\n%3")
             .arg(sortedFiles.size())
-            .arg(m_git ? m_git->path().dirName() : QString())
+            .arg(QDir(m_path).dirName())
             .arg(fileList);
     }
 

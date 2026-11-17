@@ -52,9 +52,14 @@ void QGitInteractiveRebaseDialog::loadCommits()
 {
     if (!m_git) return;
 
-    m_branchName = m_git->currentBranch();
+    QString baseSummary;
+    QList<QGitCommit> commits;
+    QGit::invokeSync(m_git, [&]() {
+        m_branchName = m_git->currentBranch();
+        baseSummary = m_git->commitSummary(m_baseCommitId);
+        commits = m_git->commitsForRebase(m_baseCommitId);
+    });
     QString baseShort = m_baseCommitId.left(8);
-    QString baseSummary = m_git->commitSummary(m_baseCommitId);
 
     ui->label_title->setText(tr("Interactive Rebase on branch <b>%1</b>").arg(m_branchName));
     if (!m_baseCommitId.isEmpty()) {
@@ -63,8 +68,6 @@ void QGitInteractiveRebaseDialog::loadCommits()
     } else {
         ui->label_base->setText(tr("Rebasing all commits from root"));
     }
-
-    QList<QGitCommit> commits = m_git->commitsForRebase(m_baseCommitId);
     m_items.clear();
     for (const auto &c : commits) {
         QGitRebaseTodoItem item;

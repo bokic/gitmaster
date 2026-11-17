@@ -10,7 +10,9 @@ QGitSettingsDialog::QGitSettingsDialog(QGit *git, QWidget *parent)
 {
     ui->setupUi(this);
 
-    bool isRepo = QGit::isGitRepository(m_git->path());
+    bool isRepo = QGit::invokeSync(m_git, [&]() {
+        return QGit::isGitRepository(m_git->path());
+    });
     if (!isRepo) {
         ui->radioButton_local->setEnabled(false);
         ui->radioButton_global->setChecked(true);
@@ -30,7 +32,7 @@ QGitSettingsDialog::QGitSettingsDialog(QGit *git, QWidget *parent)
     loadSettings();
     bool global = ui->radioButton_global->isChecked();
     try {
-        m_allConfigs = m_git->configEntries(global);
+        m_allConfigs = QGit::invokeSync(m_git, [&]() { return m_git->configEntries(global); });
     } catch (const QGitError &) {
         // Safe fallback if open fails
     }
@@ -46,9 +48,14 @@ void QGitSettingsDialog::loadSettings()
 {
     bool global = ui->radioButton_global->isChecked();
     try {
-        ui->lineEdit_userName->setText(m_git->configString("user.name", global));
-        ui->lineEdit_userEmail->setText(m_git->configString("user.email", global));
-        QString autocrlf = m_git->configString("core.autocrlf", global);
+        QString userName, userEmail, autocrlf;
+        QGit::invokeSync(m_git, [&]() {
+            userName = m_git->configString("user.name", global);
+            userEmail = m_git->configString("user.email", global);
+            autocrlf = m_git->configString("core.autocrlf", global);
+        });
+        ui->lineEdit_userName->setText(userName);
+        ui->lineEdit_userEmail->setText(userEmail);
         if (autocrlf.isEmpty()) autocrlf = "false";
         int index = ui->comboBox_autoCrlf->findText(autocrlf);
         if (index >= 0) ui->comboBox_autoCrlf->setCurrentIndex(index);
@@ -97,8 +104,10 @@ void QGitSettingsDialog::on_pushButton_add_clicked()
 
     bool globalWrite = ui->radioButton_global->isChecked();
     try {
-        m_git->setConfigString(key.trimmed(), val, globalWrite);
-        m_allConfigs = m_git->configEntries(globalWrite);
+        m_allConfigs = QGit::invokeSync(m_git, [&]() {
+            m_git->setConfigString(key.trimmed(), val, globalWrite);
+            return m_git->configEntries(globalWrite);
+        });
         populateTable();
     } catch (const QGitError &error) {
         QMessageBox::critical(this, tr("Error"), error.errorString());
@@ -121,8 +130,10 @@ void QGitSettingsDialog::on_pushButton_edit_clicked()
 
     bool globalWrite = ui->radioButton_global->isChecked();
     try {
-        m_git->setConfigString(key, val, globalWrite);
-        m_allConfigs = m_git->configEntries(globalWrite);
+        m_allConfigs = QGit::invokeSync(m_git, [&]() {
+            m_git->setConfigString(key, val, globalWrite);
+            return m_git->configEntries(globalWrite);
+        });
         populateTable();
     } catch (const QGitError &error) {
         QMessageBox::critical(this, tr("Error"), error.errorString());
@@ -145,8 +156,10 @@ void QGitSettingsDialog::on_pushButton_delete_clicked()
 
     bool globalWrite = ui->radioButton_global->isChecked();
     try {
-        m_git->deleteConfigEntry(key, globalWrite);
-        m_allConfigs = m_git->configEntries(globalWrite);
+        m_allConfigs = QGit::invokeSync(m_git, [&]() {
+            m_git->deleteConfigEntry(key, globalWrite);
+            return m_git->configEntries(globalWrite);
+        });
         populateTable();
     } catch (const QGitError &error) {
         QMessageBox::critical(this, tr("Error"), error.errorString());
@@ -164,7 +177,7 @@ void QGitSettingsDialog::on_radioButton_local_toggled(bool checked)
     if (!checked) return;
     loadSettings();
     try {
-        m_allConfigs = m_git->configEntries(false);
+        m_allConfigs = QGit::invokeSync(m_git, [&]() { return m_git->configEntries(false); });
     } catch (const QGitError &) {
         m_allConfigs.clear();
     }
@@ -176,7 +189,7 @@ void QGitSettingsDialog::on_radioButton_global_toggled(bool checked)
     if (!checked) return;
     loadSettings();
     try {
-        m_allConfigs = m_git->configEntries(true);
+        m_allConfigs = QGit::invokeSync(m_git, [&]() { return m_git->configEntries(true); });
     } catch (const QGitError &) {
         m_allConfigs.clear();
     }
@@ -192,9 +205,11 @@ void QGitSettingsDialog::accept()
     bool globalWrite = ui->radioButton_global->isChecked();
 
     try {
-        m_git->setConfigString("user.name", name, globalWrite);
-        m_git->setConfigString("user.email", email, globalWrite);
-        m_git->setConfigString("core.autocrlf", autocrlf, globalWrite);
+        QGit::invokeSync(m_git, [&]() {
+            m_git->setConfigString("user.name", name, globalWrite);
+            m_git->setConfigString("user.email", email, globalWrite);
+            m_git->setConfigString("core.autocrlf", autocrlf, globalWrite);
+        });
         QDialog::accept();
     } catch (const QGitError &error) {
         QMessageBox::critical(this, tr("Save Error"), error.errorString());

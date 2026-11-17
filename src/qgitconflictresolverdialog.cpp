@@ -72,13 +72,18 @@ void QGitConflictResolverDialog::loadConflictFiles()
 {
     try {
         QString ancestorText, oursText, theirsText;
-        if (m_git->conflictContents(m_filePath, ancestorText, oursText, theirsText)) {
+        QString fullPath;
+        bool hasContents = false;
+        QGit::invokeSync(m_git, [&]() {
+            hasContents = m_git->conflictContents(m_filePath, ancestorText, oursText, theirsText);
+            fullPath = m_git->path().absoluteFilePath(m_filePath);
+        });
+        if (hasContents) {
             ui->plainTextEdit_ours->setPlainText(oursText);
             ui->plainTextEdit_theirs->setPlainText(theirsText);
         }
 
         // Load the conflicted working directory file
-        QString fullPath = m_git->path().absoluteFilePath(m_filePath);
         QFile file(fullPath);
         if (file.open(QIODevice::ReadOnly | QIODevice::Text)) {
             ui->plainTextEdit_merged->setPlainText(QString::fromUtf8(file.readAll()));
@@ -230,7 +235,7 @@ void QGitConflictResolverDialog::on_pushButton_resolve_clicked()
     }
 
     try {
-        m_git->resolveConflict(m_filePath, content);
+        QGit::invokeSync(m_git, [&]() { m_git->resolveConflict(m_filePath, content); });
         accept();
     } catch (const QGitError &error) {
         QMessageBox::critical(this, tr("Resolve Error"), error.errorString());

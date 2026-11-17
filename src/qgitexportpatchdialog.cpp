@@ -25,7 +25,7 @@ QGitExportPatchDialog::QGitExportPatchDialog(QGit *git, const QString &selectedC
 
     // Initial output directory
     if (m_git) {
-        ui->lineEdit_outputDir->setText(m_git->path().absolutePath());
+        ui->lineEdit_outputDir->setText(QGit::invokeSync(m_git, [&]() { return m_git->path().absolutePath(); }));
     } else {
         ui->lineEdit_outputDir->setText(QDir::homePath());
     }
@@ -120,7 +120,7 @@ void QGitExportPatchDialog::on_pushButton_browse_clicked()
 {
     QString initialDir = ui->lineEdit_outputDir->text().trimmed();
     if (initialDir.isEmpty() && m_git) {
-        initialDir = m_git->path().absolutePath();
+        initialDir = QGit::invokeSync(m_git, [&]() { return m_git->path().absolutePath(); });
     }
     QString dir = QFileDialog::getExistingDirectory(this, tr("Select Output Directory"), initialDir);
     if (!dir.isEmpty()) {
@@ -134,23 +134,25 @@ void QGitExportPatchDialog::updateCommitList()
 
     QList<QGitCommit> commits;
 
-    if (ui->radioButton_selected->isChecked()) {
-        if (!m_selectedHash.isEmpty()) {
-            commits = m_git->commitList(QStringList() << m_selectedHash);
+    QGit::invokeSync(m_git, [&]() {
+        if (ui->radioButton_selected->isChecked()) {
+            if (!m_selectedHash.isEmpty()) {
+                commits = m_git->commitList(QStringList() << m_selectedHash);
+            }
+        } else if (ui->radioButton_rangeToHead->isChecked()) {
+            if (!m_selectedHash.isEmpty()) {
+                commits = m_git->commitsFromCommitToHead(m_selectedHash);
+            }
+        } else if (ui->radioButton_lastN->isChecked()) {
+            int n = ui->spinBox_lastN->value();
+            commits = m_git->lastNCommits(n);
+        } else if (ui->radioButton_custom->isChecked()) {
+            QString spec = ui->lineEdit_custom->text().trimmed();
+            if (!spec.isEmpty()) {
+                commits = m_git->commitsFromRevSpec(spec);
+            }
         }
-    } else if (ui->radioButton_rangeToHead->isChecked()) {
-        if (!m_selectedHash.isEmpty()) {
-            commits = m_git->commitsFromCommitToHead(m_selectedHash);
-        }
-    } else if (ui->radioButton_lastN->isChecked()) {
-        int n = ui->spinBox_lastN->value();
-        commits = m_git->lastNCommits(n);
-    } else if (ui->radioButton_custom->isChecked()) {
-        QString spec = ui->lineEdit_custom->text().trimmed();
-        if (!spec.isEmpty()) {
-            commits = m_git->commitsFromRevSpec(spec);
-        }
-    }
+    });
 
     populateTable(commits);
 }

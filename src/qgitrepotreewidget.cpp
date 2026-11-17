@@ -165,7 +165,7 @@ void QGitRepoTreeWidget::refreshItem()
 
     QDir dir(m_currentRefreshingPath);
 
-    m_git->setPath(dir);
+    QGit::invokeSync(m_git, [&]() { m_git->setPath(dir); });
 
     emit repositoryStatus();
 }
