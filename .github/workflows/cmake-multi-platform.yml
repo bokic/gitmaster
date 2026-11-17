@@ -77,6 +77,7 @@ jobs:
         -DCMAKE_CXX_COMPILER=${{ matrix.cpp_compiler }}
         -DCMAKE_C_COMPILER=${{ matrix.c_compiler }}
         -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
+        -DGITMASTER_WARNINGS_AS_ERRORS=ON
         -S ${{ github.workspace }}
         -G "Ninja"
 
@@ -87,6 +88,7 @@ jobs:
         -DCMAKE_CXX_COMPILER=${{ matrix.cpp_compiler }}
         -DCMAKE_C_COMPILER=${{ matrix.c_compiler }}
         -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
+        -DGITMASTER_WARNINGS_AS_ERRORS=ON
         -DCMAKE_PREFIX_PATH="$(brew --prefix qt@6)"
         -S ${{ github.workspace }}
         -G "Ninja"
@@ -96,7 +98,7 @@ jobs:
       shell: cmd
       run: |
         call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" x64 || call "C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Auxiliary\Build\vcvarsall.bat" x64
-        cmake -B ${{ steps.strings.outputs.build-output-dir }} -S ${{ github.workspace }} -A x64 -DZLIB_ROOT="${{ github.workspace }}"
+        cmake -B ${{ steps.strings.outputs.build-output-dir }} -S ${{ github.workspace }} -A x64 -DZLIB_ROOT="${{ github.workspace }}" -DGITMASTER_WARNINGS_AS_ERRORS=ON
 
     - name: Build
       if: runner.os != 'Windows'
@@ -108,3 +110,12 @@ jobs:
       run: |
         call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" x64 || call "C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Auxiliary\Build\vcvarsall.bat" x64
         cmake --build ${{ steps.strings.outputs.build-output-dir }} --config ${{ matrix.build_type }}
+
+    - name: Run tests
+      if: runner.os != 'Windows'
+      run: ctest --test-dir ${{ steps.strings.outputs.build-output-dir }} --output-on-failure
+
+    - name: Run tests (Windows)
+      if: runner.os == 'Windows'
+      shell: cmd
+      run: ctest --test-dir ${{ steps.strings.outputs.build-output-dir }} -C ${{ matrix.build_type }} --output-on-failure

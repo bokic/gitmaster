@@ -1490,10 +1490,10 @@ QList<QGitBranch> QGit::branches(git_branch_t type) const
 
     forever
     {
-        git_branch_t type;
+        git_branch_t branchType;
 
         GitReference ref;
-        if (git_branch_next(ref, &type, it) != 0)
+        if (git_branch_next(ref, &branchType, it) != 0)
         {
             break;
         }
@@ -1511,7 +1511,7 @@ QList<QGitBranch> QGit::branches(git_branch_t type) const
             git_time_t commit_time = 0;
             peelToCommitDetails(ref, oidStr, commit_time);
 
-            QGitBranch branch = QGitBranch(name, oidStr, commit_time, type);
+            QGitBranch branch = QGitBranch(name, oidStr, commit_time, branchType);
             ret.append(branch);
         }
     }

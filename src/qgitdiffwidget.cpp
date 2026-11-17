@@ -636,9 +636,9 @@ void QGitDiffWidget::responseGitDiff(const QString &first, const QString &second
                 }
 
                 line.displayText.reserve(line.chars.size());
-                for (const auto &c : line.chars)
+                for (const auto &chInfo : line.chars)
                 {
-                    line.displayText += (c.ch == u'\t') ? QChar(u'→') : c.ch;
+                    line.displayText += (chInfo.ch == u'\t') ? QChar(u'→') : chInfo.ch;
                 }
 
                 line.rect.setTop(y + file_h + hunk_h);

@@ -236,6 +236,20 @@ if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
     target_compile_options(gitmaster PRIVATE -Wno-documentation-deprecated-sync)
 endif()
 
+option(GITMASTER_WARNINGS_AS_ERRORS "Treat compiler warnings as errors" OFF)
+
+if (MSVC)
+    target_compile_options(gitmaster PRIVATE /W4)
+    if (GITMASTER_WARNINGS_AS_ERRORS)
+        target_compile_options(gitmaster PRIVATE /WX)
+    endif()
+else()
+    target_compile_options(gitmaster PRIVATE -Wall -Wextra -Wshadow -Wno-missing-field-initializers)
+    if (GITMASTER_WARNINGS_AS_ERRORS)
+        target_compile_options(gitmaster PRIVATE -Werror)
+    endif()
+endif()
+
 
 if (WIN32)
     target_include_directories(gitmaster PRIVATE include)
@@ -313,6 +327,60 @@ if (CMAKE_BUILD_TYPE STREQUAL "Release")
 endif()
 
 qt_finalize_executable(gitmaster)
+
+enable_testing()
+
+set(QGIT_CORE_SOURCES
+    src/qgit/qgit.cpp
+    src/qgit/qgitbranch.cpp
+    src/qgit/qgitcommit.cpp
+    src/qgit/qgitcommitdiffparent.cpp
+    src/qgit/qgitdiffbinary.cpp
+    src/qgit/qgitdiffbinaryfile.cpp
+    src/qgit/qgitdifffile.cpp
+    src/qgit/qgitdifffileitem.cpp
+    src/qgit/qgitdiffhunk.cpp
+    src/qgit/qgitdiffline.cpp
+    src/qgit/qgiterror.cpp
+    src/qgit/qgitsignature.cpp
+    src/qgit/qgittag.cpp
+    src/qgit/qgitworktree.cpp
+    include/qgit/qgit.h
+)
+
+add_executable(qgit_tests
+    tests/qgit_tests.cpp
+    ${QGIT_CORE_SOURCES}
+)
+target_include_directories(qgit_tests PRIVATE include include/qgit)
+target_link_libraries(qgit_tests PRIVATE Qt6::Core ZLIB::ZLIB)
+if (APPLE)
+    if (LIBGIT2_LIB)
+        target_link_libraries(qgit_tests PRIVATE ${LIBGIT2_LIB})
+    else()
+        target_link_libraries(qgit_tests PRIVATE git2)
+    endif()
+    if (LIBGIT2_INCLUDE_DIR)
+        target_include_directories(qgit_tests PRIVATE ${LIBGIT2_INCLUDE_DIR})
+    endif()
+else()
+    target_link_libraries(qgit_tests PRIVATE git2)
+endif()
+if (WIN32)
+    target_link_directories(qgit_tests PRIVATE bin lib)
+endif()
+if (MSVC)
+    target_compile_options(qgit_tests PRIVATE /W4)
+    if (GITMASTER_WARNINGS_AS_ERRORS)
+        target_compile_options(qgit_tests PRIVATE /WX)
+    endif()
+else()
+    target_compile_options(qgit_tests PRIVATE -Wall -Wextra -Wshadow -Wno-missing-field-initializers)
+    if (GITMASTER_WARNINGS_AS_ERRORS)
+        target_compile_options(qgit_tests PRIVATE -Werror)
+    endif()
+endif()
+add_test(NAME qgit_tests COMMAND qgit_tests)
 
 if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
     set(CMAKE_INSTALL_PREFIX "/usr" CACHE PATH "Default install prefix" FORCE)
