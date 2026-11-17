@@ -2377,7 +2377,6 @@ void QGit::syncSubmodule(const QString &name)
 
 void QGit::addSubmodule(const QString &url, const QString &path, const QString &branch, bool force)
 {
-    Q_UNUSED(force)
     QGitError error;
     try {
         GitRepository repo;
@@ -2391,7 +2390,7 @@ void QGit::addSubmodule(const QString &url, const QString &path, const QString &
         cleanPath = QDir::cleanPath(cleanPath);
 
         GitSubmodule sm;
-        res = git_submodule_add_setup(sm, repo, url.trimmed().toUtf8().constData(), cleanPath.toUtf8().constData(), 1);
+        res = git_submodule_add_setup(sm, repo, url.trimmed().toUtf8().constData(), cleanPath.toUtf8().constData(), force ? 1 : 0);
         if (res != 0) {
             throw QGitError("git_submodule_add_setup", res);
         }
