@@ -1099,7 +1099,11 @@ QString QGit::commitSummary(const QString &commitId) const
                 if (summary) return QString::fromUtf8(summary);
             }
         }
-    } catch (...) {}
+    } catch (const std::exception &ex) {
+        qWarning("QGit::commitSummary: %s", ex.what());
+    } catch (...) {
+        qWarning("QGit::commitSummary: unknown error");
+    }
     return QString();
 }
 
@@ -1122,7 +1126,11 @@ QStringList QGit::commitParents(const QString &commitId) const
                 }
             }
         }
-    } catch (...) {}
+    } catch (const std::exception &ex) {
+        qWarning("QGit::commitParents: %s", ex.what());
+    } catch (...) {
+        qWarning("QGit::commitParents: unknown error");
+    }
     return result;
 }
 
@@ -1262,7 +1270,11 @@ QList<QGitCommit> QGit::commitList(const QStringList &commitIds) const
                 }
             }
         }
-    } catch (...) {}
+    } catch (const std::exception &ex) {
+        qWarning("QGit::commitList: %s", ex.what());
+    } catch (...) {
+        qWarning("QGit::commitList: unknown error");
+    }
     return commits;
 }
 
@@ -1307,7 +1319,11 @@ QList<QGitCommit> QGit::commitsFromCommitToHead(const QString &commitHash) const
                 commits.append(commitFromGitCommit(commit, oid, mailmap));
             }
         }
-    } catch (...) {}
+    } catch (const std::exception &ex) {
+        qWarning("QGit::commitsFromCommitToHead: %s", ex.what());
+    } catch (...) {
+        qWarning("QGit::commitsFromCommitToHead: unknown error");
+    }
     return commits;
 }
 
@@ -1339,7 +1355,11 @@ QList<QGitCommit> QGit::lastNCommits(int count) const
             }
         }
         std::reverse(commits.begin(), commits.end());
-    } catch (...) {}
+    } catch (const std::exception &ex) {
+        qWarning("QGit::lastNCommits: %s", ex.what());
+    } catch (...) {
+        qWarning("QGit::lastNCommits: unknown error");
+    }
     return commits;
 }
 
@@ -1382,7 +1402,11 @@ QList<QGitCommit> QGit::commitsFromRevSpec(const QString &spec) const
                 commits.append(commitFromGitCommit(commit, oid, mailmap));
             }
         }
-    } catch (...) {}
+    } catch (const std::exception &ex) {
+        qWarning("QGit::commitsFromRevSpec: %s", ex.what());
+    } catch (...) {
+        qWarning("QGit::commitsFromRevSpec: unknown error");
+    }
     return commits;
 }
 

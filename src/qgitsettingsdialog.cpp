@@ -33,8 +33,8 @@ QGitSettingsDialog::QGitSettingsDialog(QGit *git, QWidget *parent)
     bool global = ui->radioButton_global->isChecked();
     try {
         m_allConfigs = QGit::invokeSync(m_git, [&]() { return m_git->configEntries(global); });
-    } catch (const QGitError &) {
-        // Safe fallback if open fails
+    } catch (const QGitError &error) {
+        qWarning("QGitSettingsDialog: failed to load config entries: %s", qPrintable(error.errorString()));
     }
     populateTable();
 }
@@ -60,7 +60,7 @@ void QGitSettingsDialog::loadSettings()
         int index = ui->comboBox_autoCrlf->findText(autocrlf);
         if (index >= 0) ui->comboBox_autoCrlf->setCurrentIndex(index);
     } catch (const QGitError &error) {
-        // Ignore load errors for fallback
+        qWarning("QGitSettingsDialog::loadSettings: %s", qPrintable(error.errorString()));
     }
 }
 
