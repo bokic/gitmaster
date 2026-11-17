@@ -69,16 +69,17 @@ if [ -z "$MACDEPLOYQT_PATH" ] || [ ! -f "$MACDEPLOYQT_PATH" ]; then
 fi
 echo "Using macdeployqt: $MACDEPLOYQT_PATH"
 
+APP_BUNDLE="bin/gitmaster.app"
+
 # 3. Compile the application in Release mode
 echo "Configuring and building GitMaster (Release mode)..."
-rm -rf build
+rm -rf build "$APP_BUNDLE"
 cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
 cmake --build build --config Release
 
 # Copy compile_commands.json to root (useful for IDEs)
 cp build/compile_commands.json .
 
-APP_BUNDLE="bin/gitmaster.app"
 if [ ! -d "$APP_BUNDLE" ]; then
     echo "Error: App bundle not found at $APP_BUNDLE after build."
     exit 1
@@ -87,7 +88,7 @@ echo "Successfully built: $APP_BUNDLE"
 
 # 4. Deploy Qt and external library dependencies into the app bundle
 echo "Running macdeployqt to bundle dependencies (Qt, libgit2, etc.)..."
-"$MACDEPLOYQT_PATH" "$APP_BUNDLE" -verbose=1
+"$MACDEPLOYQT_PATH" "$APP_BUNDLE" -verbose=1 -always-overwrite
 
 # 4.5 Update version info in Info.plist to use the complete git describe version
 GIT_DESCRIBE=$(git describe --tags --dirty 2>/dev/null || echo "latest")
