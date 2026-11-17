@@ -62,7 +62,10 @@ QVariant QExtTextBrowser::loadResource(int type, const QUrl &name)
             if (!m_inFlightUrls.contains(name))
             {
                 m_inFlightUrls.insert(name);
-                m_nam.get(QNetworkRequest(name));
+                QNetworkRequest req(name);
+                req.setMaximumRedirectsAllowed(3);
+                req.setTransferTimeout(10000);
+                m_nam.get(req);
             }
         }
     }
@@ -80,20 +83,48 @@ void QExtTextBrowser::imgDownloaded(QNetworkReply *reply)
 
     if (reply->error() == QNetworkReply::NoError)
     {
-        QByteArray ba = reply->readAll();
+        constexpr qint64 kMaxImageDownloadBytes = 2 * 1024 * 1024; // 2 MB
+        constexpr qint64 kMaxDiskCacheBytes = 50 * 1024 * 1024;    // 50 MB
+
+        const QVariant lenHeader = reply->header(QNetworkRequest::ContentLengthHeader);
+        if (lenHeader.isValid() && lenHeader.toLongLong() > kMaxImageDownloadBytes) {
+            qWarning() << "QExtTextBrowser: Image exceeds max download size:" << url;
+            return;
+        }
+
+        QByteArray ba = reply->read(kMaxImageDownloadBytes + 1);
+        if (ba.size() > kMaxImageDownloadBytes) {
+            qWarning() << "QExtTextBrowser: Image download truncated at max size:" << url;
+            return;
+        }
 
         if (!ba.isEmpty())
         {
-            QByteArray urlHash = QCryptographicHash::hash(url.url().toUtf8(), QCryptographicHash::Sha1).toHex();
-            QString filename = m_imgPath + "/" + urlHash;
-
-            QFile file(filename);
-            if (file.open(QIODevice::WriteOnly | QIODevice::Truncate) == true)
-                file.write(ba);
-
             QPixmap mPixmap;
             mPixmap.loadFromData(ba);
             if (!mPixmap.isNull()) {
+                QByteArray urlHash = QCryptographicHash::hash(url.url().toUtf8(), QCryptographicHash::Sha1).toHex();
+                QString filename = m_imgPath + "/" + urlHash;
+
+                QFile file(filename);
+                if (file.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
+                    file.write(ba);
+                    file.close();
+                }
+
+                // Enforce bounded disk cache by evicting oldest entries first
+                QDir cacheDir(m_imgPath);
+                const QFileInfoList entries = cacheDir.entryInfoList(QDir::Files, QDir::Time | QDir::Reversed);
+                qint64 totalSize = 0;
+                for (const QFileInfo &fi : entries) {
+                    totalSize += fi.size();
+                }
+                for (const QFileInfo &fi : entries) {
+                    if (totalSize <= kMaxDiskCacheBytes) break;
+                    totalSize -= fi.size();
+                    QFile::remove(fi.absoluteFilePath());
+                }
+
                 document()->addResource(QTextDocument::ImageResource, url, mPixmap);
                 document()->markContentsDirty(0, document()->characterCount());
                 viewport()->update();
