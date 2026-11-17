@@ -2257,12 +2257,15 @@ void QGit::resolveConflict(const QString &path, const QString &resolvedContent)
     // 1. Write the resolved content to working directory file
     QString fullPath = this->path().absoluteFilePath(path);
     QFile file(fullPath);
-    if (!file.open(QIODevice::WriteOnly | QIODevice::Text))
+    if (!file.open(QIODevice::WriteOnly | QIODevice::Truncate))
     {
         throw QGitError(tr("Could not open file to write resolved content: %1").arg(fullPath));
     }
-    QTextStream out(&file);
-    out << resolvedContent;
+    const QByteArray utf8Bytes = resolvedContent.toUtf8();
+    if (file.write(utf8Bytes) != utf8Bytes.size() || !file.flush())
+    {
+        throw QGitError(tr("Failed to write resolved content to %1: %2").arg(fullPath, file.errorString()));
+    }
     file.close();
 
     // 2. Clear conflict stages and stage resolved file in the Git index
