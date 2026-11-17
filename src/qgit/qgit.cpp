@@ -7650,7 +7650,12 @@ QByteArray QGit::fileContent(const QString &filePath, const QString &commitId) c
                     if (res == 0 && blob.value) {
                         const char *data = static_cast<const char *>(git_blob_rawcontent(blob));
                         git_object_size_t size = git_blob_rawsize(blob);
-                        result = QByteArray(data, static_cast<int>(size));
+                        if (size > static_cast<git_object_size_t>(std::numeric_limits<int>::max())) {
+                            throw QGitError("fileContent", -1, tr("Blob exceeds 2 GB size limit"));
+                        }
+                        if (data && size > 0) {
+                            result = QByteArray(data, static_cast<qsizetype>(size));
+                        }
                         return result;
                     }
                 }
