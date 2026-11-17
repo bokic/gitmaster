@@ -3613,16 +3613,23 @@ static bool deflateBufferHelper(const uint8_t *inData, size_t inSize, std::vecto
 
 static void fillTarHeaderHelper(UstarTarHeader &hdr, const std::string &path, size_t size, uint32_t mode, time_t mtime, char typeflag, const std::string &linkname = std::string())
 {
+    if (size > 077777777777ULL) {
+        throw QGitError("exportArchive", -1, QObject::tr("TAR entry size exceeds ustar 8 GB limit: %1").arg(QString::fromStdString(path)));
+    }
+    if (linkname.size() > sizeof(hdr.linkname)) {
+        throw QGitError("exportArchive", -1, QObject::tr("TAR symlink target exceeds 100 bytes: %1").arg(QString::fromStdString(linkname)));
+    }
+
     memset(&hdr, 0, sizeof(hdr));
     if (path.size() > sizeof(hdr.name)) {
         bool splitFound = false;
-        size_t minSplit = (path.size() > sizeof(hdr.name)) ? (path.size() - sizeof(hdr.name)) : 0;
+        size_t minSplit = path.size() - sizeof(hdr.name);
         size_t maxSplit = std::min(sizeof(hdr.prefix), path.size() - 1);
         for (size_t pos = maxSplit; pos >= minSplit; --pos) {
             if (path[pos] == '/') {
                 std::string prefix = path.substr(0, pos);
                 std::string name = path.substr(pos + 1);
-                if (prefix.size() <= sizeof(hdr.prefix) && name.size() <= sizeof(hdr.name)) {
+                if (!prefix.empty() && !name.empty() && prefix.size() <= sizeof(hdr.prefix) && name.size() <= sizeof(hdr.name)) {
                     memcpy(hdr.prefix, prefix.c_str(), prefix.size());
                     memcpy(hdr.name, name.c_str(), name.size());
                     splitFound = true;
@@ -3632,7 +3639,7 @@ static void fillTarHeaderHelper(UstarTarHeader &hdr, const std::string &path, si
             if (pos == 0) break;
         }
         if (!splitFound) {
-            memcpy(hdr.name, path.c_str(), std::min(path.size(), sizeof(hdr.name)));
+            throw QGitError("exportArchive", -1, QObject::tr("TAR path exceeds ustar limits (max 155-byte prefix + 100-byte name): %1").arg(QString::fromStdString(path)));
         }
     } else {
         memcpy(hdr.name, path.c_str(), path.size());
@@ -3645,7 +3652,7 @@ static void fillTarHeaderHelper(UstarTarHeader &hdr, const std::string &path, si
     snprintf(hdr.mtime, sizeof(hdr.mtime), "%011lo", (unsigned long)mtime);
     hdr.typeflag = typeflag;
     if (!linkname.empty()) {
-        memcpy(hdr.linkname, linkname.c_str(), std::min(linkname.size(), (size_t)100));
+        memcpy(hdr.linkname, linkname.c_str(), linkname.size());
     }
     memcpy(hdr.magic, "ustar ", 6);
     memcpy(hdr.version, " ", 2);
@@ -3772,86 +3779,139 @@ void QGit::exportArchive(const QString &refOrCommit, const QString &outputFilePa
             }
         }
 
+        auto writeAllChecked = [](QFile &file, const char *data, qint64 len) {
+            qint64 written = 0;
+            while (written < len) {
+                const qint64 n = file.write(data + written, len - written);
+                if (n <= 0) {
+                    throw QGitError("exportArchive", -1, QObject::tr("Failed to write archive file: %1").arg(file.errorString()));
+                }
+                written += n;
+            }
+        };
+
         if (actualFormat == QStringLiteral("zip")) {
+            if (entries.size() > 0xFFFFu) {
+                throw QGitError("exportArchive", -1, tr("Too many entries for ZIP32 archive (%1 > 65535)").arg(entries.size()));
+            }
+
             QFile zipFile(outputFilePath);
             if (!zipFile.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
                 throw QGitError(tr("Could not open output file for writing: %1").arg(outputFilePath));
             }
 
-            std::vector<ZipCentralDirHeader> cdHeaders;
-            std::vector<std::string> cdFilenames;
+            try {
+                std::vector<ZipCentralDirHeader> cdHeaders;
+                std::vector<std::string> cdFilenames;
+                cdHeaders.reserve(entries.size());
+                cdFilenames.reserve(entries.size());
 
-            uint16_t dosDate, dosTime;
-            convertTimeToDos(commitTime, dosDate, dosTime);
+                uint16_t dosDate, dosTime;
+                convertTimeToDos(commitTime, dosDate, dosTime);
 
-            for (const auto &ae : entries) {
-                std::string entryPath = (normPrefix + QString::fromUtf8(ae.relativePath.c_str())).toUtf8().toStdString();
-                uint32_t crc = crc32(0L, Z_NULL, 0);
-                if (!ae.data.empty()) {
-                    crc = crc32(crc, ae.data.data(), ae.data.size());
+                constexpr qint64 kZip32Max = 0xFFFFFFFFLL;
+
+                for (const auto &ae : entries) {
+                    std::string entryPath = (normPrefix + QString::fromUtf8(ae.relativePath.c_str())).toUtf8().toStdString();
+                    if (entryPath.size() > 0xFFFFu) {
+                        throw QGitError("exportArchive", -1, tr("ZIP entry path exceeds 65535 bytes: %1").arg(QString::fromStdString(entryPath)));
+                    }
+                    if (ae.data.size() > static_cast<size_t>(kZip32Max)) {
+                        throw QGitError("exportArchive", -1, tr("ZIP entry exceeds 4 GB ZIP32 limit: %1").arg(QString::fromStdString(entryPath)));
+                    }
+
+                    uint32_t crc = crc32(0L, Z_NULL, 0);
+                    if (!ae.data.empty()) {
+                        crc = crc32(crc, ae.data.data(), ae.data.size());
+                    }
+
+                    std::vector<uint8_t> deflated;
+                    bool deflatedOk = deflateBufferHelper(ae.data.data(), ae.data.size(), deflated, true);
+
+                    uint16_t method = 8;
+                    size_t rawCompSize = deflated.size();
+                    const uint8_t *writePtr = deflated.data();
+                    if (!deflatedOk || deflated.size() >= ae.data.size()) {
+                        method = 0;
+                        rawCompSize = ae.data.size();
+                        writePtr = ae.data.data();
+                    }
+                    if (rawCompSize > static_cast<size_t>(kZip32Max)) {
+                        throw QGitError("exportArchive", -1, tr("Compressed ZIP entry exceeds 4 GB ZIP32 limit: %1").arg(QString::fromStdString(entryPath)));
+                    }
+                    const uint32_t compSize = static_cast<uint32_t>(rawCompSize);
+
+                    const qint64 pos = zipFile.pos();
+                    if (pos < 0 || pos > kZip32Max) {
+                        throw QGitError("exportArchive", -1, tr("Archive exceeds 4 GB ZIP32 limit"));
+                    }
+                    const uint32_t localHeaderOffset = static_cast<uint32_t>(pos);
+
+                    ZipLocalFileHeader lfh;
+                    lfh.compression_method = method;
+                    lfh.last_mod_date = dosDate;
+                    lfh.last_mod_time = dosTime;
+                    lfh.crc32 = crc;
+                    lfh.compressed_size = compSize;
+                    lfh.uncompressed_size = static_cast<uint32_t>(ae.data.size());
+                    lfh.filename_length = static_cast<uint16_t>(entryPath.size());
+                    lfh.extra_field_length = 0;
+
+                    writeAllChecked(zipFile, reinterpret_cast<const char*>(&lfh), sizeof(lfh));
+                    writeAllChecked(zipFile, entryPath.data(), static_cast<qint64>(entryPath.size()));
+                    if (compSize > 0 && writePtr) {
+                        writeAllChecked(zipFile, reinterpret_cast<const char*>(writePtr), compSize);
+                    }
+
+                    ZipCentralDirHeader cdh;
+                    cdh.compression_method = method;
+                    cdh.last_mod_date = dosDate;
+                    cdh.last_mod_time = dosTime;
+                    cdh.crc32 = crc;
+                    cdh.compressed_size = compSize;
+                    cdh.uncompressed_size = static_cast<uint32_t>(ae.data.size());
+                    cdh.filename_length = static_cast<uint16_t>(entryPath.size());
+                    cdh.external_file_attributes = (static_cast<uint32_t>(ae.filemode & 0177777)) << 16;
+                    cdh.relative_offset_local_header = localHeaderOffset;
+
+                    cdHeaders.push_back(cdh);
+                    cdFilenames.push_back(entryPath);
                 }
 
-                std::vector<uint8_t> deflated;
-                bool deflatedOk = deflateBufferHelper(ae.data.data(), ae.data.size(), deflated, true);
+                const qint64 cdOffset64 = zipFile.pos();
+                if (cdOffset64 < 0 || cdOffset64 > kZip32Max) {
+                    throw QGitError("exportArchive", -1, tr("Archive central directory offset exceeds 4 GB ZIP32 limit"));
+                }
+                const uint32_t cdOffset = static_cast<uint32_t>(cdOffset64);
 
-                uint16_t method = 8;
-                uint32_t compSize = deflated.size();
-                const uint8_t *writePtr = deflated.data();
-                if (!deflatedOk || deflated.size() >= ae.data.size()) {
-                    method = 0;
-                    compSize = ae.data.size();
-                    writePtr = ae.data.data();
+                for (size_t i = 0; i < cdHeaders.size(); ++i) {
+                    writeAllChecked(zipFile, reinterpret_cast<const char*>(&cdHeaders[i]), sizeof(ZipCentralDirHeader));
+                    writeAllChecked(zipFile, cdFilenames[i].data(), static_cast<qint64>(cdFilenames[i].size()));
                 }
 
-                uint32_t localHeaderOffset = static_cast<uint32_t>(zipFile.pos());
-
-                ZipLocalFileHeader lfh;
-                lfh.compression_method = method;
-                lfh.last_mod_date = dosDate;
-                lfh.last_mod_time = dosTime;
-                lfh.crc32 = crc;
-                lfh.compressed_size = compSize;
-                lfh.uncompressed_size = static_cast<uint32_t>(ae.data.size());
-                lfh.filename_length = static_cast<uint16_t>(entryPath.size());
-                lfh.extra_field_length = 0;
-
-                zipFile.write(reinterpret_cast<const char*>(&lfh), sizeof(lfh));
-                zipFile.write(entryPath.data(), entryPath.size());
-                if (compSize > 0 && writePtr) {
-                    zipFile.write(reinterpret_cast<const char*>(writePtr), compSize);
+                const qint64 cdEnd64 = zipFile.pos();
+                if (cdEnd64 < cdOffset64 || (cdEnd64 - cdOffset64) > kZip32Max) {
+                    throw QGitError("exportArchive", -1, tr("Archive central directory size exceeds 4 GB ZIP32 limit"));
                 }
+                const uint32_t cdSize = static_cast<uint32_t>(cdEnd64 - cdOffset64);
 
-                ZipCentralDirHeader cdh;
-                cdh.compression_method = method;
-                cdh.last_mod_date = dosDate;
-                cdh.last_mod_time = dosTime;
-                cdh.crc32 = crc;
-                cdh.compressed_size = compSize;
-                cdh.uncompressed_size = static_cast<uint32_t>(ae.data.size());
-                cdh.filename_length = static_cast<uint16_t>(entryPath.size());
-                cdh.external_file_attributes = (static_cast<uint32_t>(ae.filemode & 07777)) << 16;
-                cdh.relative_offset_local_header = localHeaderOffset;
+                ZipEndOfCentralDir eocd;
+                eocd.num_entries_disk = static_cast<uint16_t>(cdHeaders.size());
+                eocd.num_entries_total = static_cast<uint16_t>(cdHeaders.size());
+                eocd.size_central_dir = cdSize;
+                eocd.offset_central_dir = cdOffset;
 
-                cdHeaders.push_back(cdh);
-                cdFilenames.push_back(entryPath);
+                writeAllChecked(zipFile, reinterpret_cast<const char*>(&eocd), sizeof(eocd));
+                if (!zipFile.flush()) {
+                    throw QGitError("exportArchive", -1, tr("Failed to flush archive file: %1").arg(zipFile.errorString()));
+                }
+                zipFile.close();
+                createdFile = outputFilePath;
+            } catch (...) {
+                zipFile.close();
+                QFile::remove(outputFilePath);
+                throw;
             }
-
-            uint32_t cdOffset = static_cast<uint32_t>(zipFile.pos());
-            for (size_t i = 0; i < cdHeaders.size(); ++i) {
-                zipFile.write(reinterpret_cast<const char*>(&cdHeaders[i]), sizeof(ZipCentralDirHeader));
-                zipFile.write(cdFilenames[i].data(), cdFilenames[i].size());
-            }
-            uint32_t cdSize = static_cast<uint32_t>(zipFile.pos()) - cdOffset;
-
-            ZipEndOfCentralDir eocd;
-            eocd.num_entries_disk = static_cast<uint16_t>(cdHeaders.size());
-            eocd.num_entries_total = static_cast<uint16_t>(cdHeaders.size());
-            eocd.size_central_dir = cdSize;
-            eocd.offset_central_dir = cdOffset;
-
-            zipFile.write(reinterpret_cast<const char*>(&eocd), sizeof(eocd));
-            zipFile.close();
-            createdFile = outputFilePath;
         } else {
             // TAR based formats (.tar, .tar.gz)
             std::vector<uint8_t> uncompressedTar;
@@ -3880,27 +3940,31 @@ void QGit::exportArchive(const QString &refOrCommit, const QString &outputFilePa
             // Add two 512-byte zero end blocks
             uncompressedTar.insert(uncompressedTar.end(), 1024, 0);
 
+            const std::vector<uint8_t> *outBytes = &uncompressedTar;
+            std::vector<uint8_t> gzData;
             if (actualFormat == QStringLiteral("tar.gz")) {
-                std::vector<uint8_t> gzData;
                 if (!deflateBufferHelper(uncompressedTar.data(), uncompressedTar.size(), gzData, false)) {
                     throw QGitError(tr("Failed to compress tarball with gzip"));
                 }
-                QFile gzFile(outputFilePath);
-                if (!gzFile.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
-                    throw QGitError(tr("Could not open file for writing: %1").arg(outputFilePath));
-                }
-                gzFile.write(reinterpret_cast<const char*>(gzData.data()), gzData.size());
-                gzFile.close();
-            } else {
-                // Pure .tar
-                QFile tarFile(outputFilePath);
-                if (!tarFile.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
-                    throw QGitError(tr("Could not open file for writing: %1").arg(outputFilePath));
-                }
-                tarFile.write(reinterpret_cast<const char*>(uncompressedTar.data()), uncompressedTar.size());
-                tarFile.close();
+                outBytes = &gzData;
             }
-            createdFile = outputFilePath;
+
+            QFile tarOutFile(outputFilePath);
+            if (!tarOutFile.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
+                throw QGitError(tr("Could not open file for writing: %1").arg(outputFilePath));
+            }
+            try {
+                writeAllChecked(tarOutFile, reinterpret_cast<const char*>(outBytes->data()), static_cast<qint64>(outBytes->size()));
+                if (!tarOutFile.flush()) {
+                    throw QGitError("exportArchive", -1, tr("Failed to flush archive file: %1").arg(tarOutFile.errorString()));
+                }
+                tarOutFile.close();
+                createdFile = outputFilePath;
+            } catch (...) {
+                tarOutFile.close();
+                QFile::remove(outputFilePath);
+                throw;
+            }
         }
 
     } catch (const QGitError &ex) {
