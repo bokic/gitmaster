@@ -2040,7 +2040,16 @@ QString QGit::configString(const QString &key, bool global) const
         res = git_repository_open(repo, path().absolutePath().toUtf8().constData());
         if (res == 0)
         {
-            res = git_repository_config(cfg, repo);
+            GitConfig cascade_cfg;
+            res = git_repository_config(cascade_cfg, repo);
+            if (res == 0)
+            {
+                res = git_config_open_level(cfg, cascade_cfg, GIT_CONFIG_LEVEL_LOCAL);
+                if (res == GIT_ENOTFOUND)
+                {
+                    return QString();
+                }
+            }
         }
         else
         {
@@ -2165,7 +2174,12 @@ QMap<QString, QString> QGit::configEntries(bool global) const
         res = git_repository_open(repo, path().absolutePath().toUtf8().constData());
         if (res == 0)
         {
-            res = git_repository_config(cfg, repo);
+            GitConfig cascade_cfg;
+            res = git_repository_config(cascade_cfg, repo);
+            if (res == 0)
+            {
+                res = git_config_open_level(cfg, cascade_cfg, GIT_CONFIG_LEVEL_LOCAL);
+            }
         }
         else
         {

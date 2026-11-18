@@ -57,6 +57,11 @@
           <widget class="QComboBox" name="comboBox_autoCrlf">
            <item>
             <property name="text">
+             <string/>
+            </property>
+           </item>
+           <item>
+            <property name="text">
              <string>true</string>
             </property>
            </item>

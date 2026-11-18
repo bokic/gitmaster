@@ -11,12 +11,37 @@ QGitSettingsDialog::QGitSettingsDialog(QGit *git, QWidget *parent)
 {
     ui->setupUi(this);
 
-    bool isRepo = QGit::invokeSync(m_git, [&]() {
-        return QGit::isGitRepository(m_git->path());
+    bool isRepo = false;
+    bool hasLocal = false;
+    bool hasGlobal = false;
+    QGit::invokeSync(m_git, [&]() {
+        isRepo = QGit::isGitRepository(m_git->path());
+        auto hasAnyGeneralSetting = [&](bool global) {
+            try {
+                return !m_git->configString("user.name", global).isEmpty()
+                    || !m_git->configString("user.email", global).isEmpty()
+                    || !m_git->configString("core.autocrlf", global).isEmpty();
+            } catch (const QGitError &) {
+                return false;
+            }
+        };
+        if (isRepo) {
+            hasLocal = hasAnyGeneralSetting(false);
+        }
+        hasGlobal = hasAnyGeneralSetting(true);
     });
-    if (!isRepo) {
-        ui->radioButton_local->setEnabled(false);
-        ui->radioButton_global->setChecked(true);
+
+    {
+        const QSignalBlocker blockLocal(ui->radioButton_local);
+        const QSignalBlocker blockGlobal(ui->radioButton_global);
+        if (!isRepo) {
+            ui->radioButton_local->setEnabled(false);
+            ui->radioButton_global->setChecked(true);
+        } else if (hasLocal && !hasGlobal) {
+            ui->radioButton_local->setChecked(true);
+        } else {
+            ui->radioButton_global->setChecked(true);
+        }
     }
 
     // Setup Advanced Table properties
@@ -57,9 +82,8 @@ void QGitSettingsDialog::loadSettings()
         });
         ui->lineEdit_userName->setText(userName);
         ui->lineEdit_userEmail->setText(userEmail);
-        if (autocrlf.isEmpty()) autocrlf = "false";
         int index = ui->comboBox_autoCrlf->findText(autocrlf);
-        if (index >= 0) ui->comboBox_autoCrlf->setCurrentIndex(index);
+        ui->comboBox_autoCrlf->setCurrentIndex(index >= 0 ? index : 0);
     } catch (const QGitError &error) {
         qWarning("QGitSettingsDialog::loadSettings: %s", qPrintable(error.errorString()));
     }
@@ -110,6 +134,7 @@ void QGitSettingsDialog::on_pushButton_add_clicked()
             return m_git->configEntries(globalWrite);
         });
         populateTable();
+        loadSettings();
     } catch (const QGitError &error) {
         QMessageBox::critical(this, tr("Error"), error.errorString());
     }
@@ -136,6 +161,7 @@ void QGitSettingsDialog::on_pushButton_edit_clicked()
             return m_git->configEntries(globalWrite);
         });
         populateTable();
+        loadSettings();
     } catch (const QGitError &error) {
         QMessageBox::critical(this, tr("Error"), error.errorString());
     }
@@ -162,6 +188,7 @@ void QGitSettingsDialog::on_pushButton_delete_clicked()
             return m_git->configEntries(globalWrite);
         });
         populateTable();
+        loadSettings();
     } catch (const QGitError &error) {
         QMessageBox::critical(this, tr("Error"), error.errorString());
     }
@@ -207,9 +234,16 @@ void QGitSettingsDialog::accept()
 
     try {
         QGit::invokeSync(m_git, [&]() {
-            m_git->setConfigString("user.name", name, globalWrite);
-            m_git->setConfigString("user.email", email, globalWrite);
-            m_git->setConfigString("core.autocrlf", autocrlf, globalWrite);
+            auto applyConfig = [&](const QString &key, const QString &value) {
+                if (value.isEmpty()) {
+                    m_git->deleteConfigEntry(key, globalWrite);
+                } else {
+                    m_git->setConfigString(key, value, globalWrite);
+                }
+            };
+            applyConfig("user.name", name);
+            applyConfig("user.email", email);
+            applyConfig("core.autocrlf", autocrlf);
         });
         QDialog::accept();
     } catch (const QGitError &error) {
