@@ -7,5 +7,9 @@
 /.vscode
 /.cache
 /bin
+/lib
+/include/git2*
+/include/zconf.h
+/include/zlib.h
 compile_commands.json
 /AppImage
