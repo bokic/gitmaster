@@ -76,6 +76,7 @@ endif()
 add_compile_definitions(NOMINMAX)
 
 find_package(Qt6 COMPONENTS Gui Widgets Network Svg REQUIRED)
+find_package(Qt6 COMPONENTS LinguistTools QUIET)
 find_package(ZLIB REQUIRED)
 
 set(PROJECT_HEADERS
@@ -324,6 +325,13 @@ if (CMAKE_BUILD_TYPE STREQUAL "Release")
     set_target_properties(gitmaster PROPERTIES
         INTERPROCEDURAL_OPTIMIZATION TRUE
     )
+endif()
+
+if (Qt6LinguistTools_FOUND)
+    set(TS_FILES
+        translations/gitmaster_en.ts
+    )
+    qt_add_translations(gitmaster TS_FILES ${TS_FILES})
 endif()
 
 qt_finalize_executable(gitmaster)

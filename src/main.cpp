@@ -4,6 +4,8 @@
 #include <QProcessEnvironment>
 //#include <QStyleFactory>
 #include <QApplication>
+#include <QLocale>
+#include <QTranslator>
 
 #include <cstdlib>
 
@@ -19,6 +21,11 @@ int main(int argc, char *argv[])
     git_libgit2_init();
 
     QApplication a(argc, argv);
+
+    QTranslator translator;
+    if (translator.load(QLocale(), QStringLiteral("gitmaster"), QStringLiteral("_"), QStringLiteral(":/i18n"))) {
+        QApplication::installTranslator(&translator);
+    }
 
 /*    auto sty = QStyleFactory::keys();
 #ifdef Q_OS_UNIX
