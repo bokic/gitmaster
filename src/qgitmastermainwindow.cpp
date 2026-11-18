@@ -4,6 +4,7 @@
 #include "qgitrepotreeitemdelegate.h"
 #include "qgitclonerepositorydialog.h"
 #include "qnewrepositorydialog.h"
+#include "qrepositorysettingsdialog.h"
 #include "qgitrepository.h"
 #include "qgitsettingsdialog.h"
 #include "qgitstashdialog.h"
@@ -778,5 +779,38 @@ void QGitMasterMainWindow::on_actionSettings_triggered()
 
 void QGitMasterMainWindow::on_toolButton_RepositorySettings_clicked()
 {
-    on_actionSettings_triggered();
+    QTreeWidgetItem *item = ui->treeWidget->currentItem();
+    if (!item) {
+        return;
+    }
+
+    const QString oldName = item->data(0, Qt::DisplayRole).toString();
+    const QString oldPath = item->data(0, QGitRepoTreeItemDelegate::QItemPath).toString();
+
+    QRepositorySettingsDialog dlg(oldName, oldPath, this);
+    if (dlg.exec() == QDialog::Accepted) {
+        const QString newName = dlg.repositoryName();
+        const QString newPath = dlg.repositoryPath();
+
+        item->setData(0, Qt::DisplayRole, newName);
+        item->setData(0, QGitRepoTreeItemDelegate::QItemPath, newPath);
+
+        const QDir oldDir(oldPath);
+        const QDir newDir(newPath);
+        for (int index = 0; index < ui->tabWidget->count(); ++index) {
+            auto repoWidget = dynamic_cast<QGitRepository *>(ui->tabWidget->widget(index));
+            if (repoWidget && repoWidget->git() &&
+                QDir(repoWidget->git()->path().absolutePath()) == QDir(oldDir.absolutePath())) {
+                if (QDir(newDir.absolutePath()) == QDir(oldDir.absolutePath())) {
+                    ui->tabWidget->setTabText(index, newName);
+                } else {
+                    delete ui->tabWidget->widget(index);
+                }
+                break;
+            }
+        }
+
+        writeSettings();
+        ui->treeWidget->refreshItems();
+    }
 }

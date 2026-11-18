@@ -86,6 +86,7 @@ set(PROJECT_HEADERS
     include/qgitmastermainwindow.h
     include/qgitrepository.h
     include/qnewrepositorydialog.h
+    include/qrepositorysettingsdialog.h
     include/qgitclonerepositorydialog.h
     include/qgitpushdialog.h
     include/qgitpulldialog.h
@@ -148,6 +149,7 @@ set(PROJECT_SOURCES
     src/qgitmastermainwindow.cpp       src/qgitmastermainwindow.ui
     src/qgitrepository.cpp             src/qgitrepository.ui
     src/qnewrepositorydialog.cpp       src/qnewrepositorydialog.ui
+    src/qrepositorysettingsdialog.cpp  src/qrepositorysettingsdialog.ui
     src/qgitclonerepositorydialog.cpp  src/qgitclonerepositorydialog.ui
     src/qgitpushdialog.cpp             src/qgitpushdialog.ui
     src/qgitpulldialog.cpp             src/qgitpulldialog.ui
