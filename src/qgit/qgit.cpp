@@ -701,14 +701,14 @@ static git_push_options makePushOptions(QGit *payload = nullptr)
     git_push_options opts = GIT_PUSH_OPTIONS_INIT;
     opts.callbacks.credentials = gitCredentialCallback;
     opts.callbacks.payload = payload;
-    opts.callbacks.push_transfer_progress = [](unsigned int current, unsigned int total, size_t bytes, void *payload) -> int
+    opts.callbacks.push_transfer_progress = [](unsigned int current, unsigned int total, size_t bytes, void *cbPayload) -> int
     {
         try {
             if (QThread::currentThread()->isInterruptionRequested()) {
                 return -1;
             }
-            if (payload) {
-                QGit *_this = static_cast<QGit *>(payload);
+            if (cbPayload) {
+                QGit *_this = static_cast<QGit *>(cbPayload);
                 emit _this->pushProgress(current, total, bytes);
             }
             return 0;
@@ -716,12 +716,12 @@ static git_push_options makePushOptions(QGit *payload = nullptr)
             return -1;
         }
     };
-    opts.callbacks.push_update_reference = [](const char *refname, const char *status, void *payload) -> int
+    opts.callbacks.push_update_reference = [](const char *refname, const char *status, void *cbPayload) -> int
     {
         try {
             if (status) {
-                if (payload) {
-                    QGit *_this = static_cast<QGit *>(payload);
+                if (cbPayload) {
+                    QGit *_this = static_cast<QGit *>(cbPayload);
                     _this->setLastPushError(QObject::tr("Push rejected for %1: %2").arg(refname ? QString::fromUtf8(refname) : QObject::tr("ref"), QString::fromUtf8(status)));
                 }
                 git_error_set_str(GIT_ERROR_NET, status);
@@ -3460,8 +3460,8 @@ void QGit::exportPatches(const QStringList &commitIds, const QString &outputDir,
             }
         }
 
-        int totalCommits = commitIds.size();
-        for (int i = 0; i < totalCommits; ++i) {
+        qsizetype totalCommits = commitIds.size();
+        for (qsizetype i = 0; i < totalCommits; ++i) {
             const QString &commitId = commitIds.at(i);
             git_oid oid;
             res = resolveToCommitOid(oid, repo, commitId);
@@ -3610,11 +3610,11 @@ static void convertTimeToDos(time_t t, uint16_t &dosDate, uint16_t &dosTime)
         dosTime = 0;
         return;
     }
-    dosDate = ((year - 1980) << 9) | ((tm_val.tm_mon + 1) << 5) | tm_val.tm_mday;
+    dosDate = static_cast<uint16_t>(((year - 1980) << 9) | ((tm_val.tm_mon + 1) << 5) | tm_val.tm_mday);
     const int hour = tm_val.tm_hour;
     const int min = tm_val.tm_min;
     const int sec = tm_val.tm_sec;
-    dosTime = (hour << 11) | (min << 5) | (sec >> 1);
+    dosTime = static_cast<uint16_t>((hour << 11) | (min << 5) | (sec >> 1));
 }
 
 static bool deflateBufferHelper(const uint8_t *inData, size_t inSize, std::vector<uint8_t> &outData, bool rawDeflate)
@@ -3626,11 +3626,11 @@ static bool deflateBufferHelper(const uint8_t *inData, size_t inSize, std::vecto
         return false;
     }
 
-    outData.resize(deflateBound(&strm, inSize) + 64);
+    outData.resize(deflateBound(&strm, static_cast<uLong>(inSize)) + 64);
     strm.next_in = const_cast<uint8_t*>(inData);
-    strm.avail_in = inSize;
+    strm.avail_in = static_cast<uInt>(inSize);
     strm.next_out = outData.data();
-    strm.avail_out = outData.size();
+    strm.avail_out = static_cast<uInt>(outData.size());
 
     int ret = deflate(&strm, Z_FINISH);
     if (ret != Z_STREAM_END) {
@@ -3851,9 +3851,9 @@ void QGit::exportArchive(const QString &refOrCommit, const QString &outputFilePa
                         throw QGitError("exportArchive", -1, tr("ZIP entry exceeds 4 GB ZIP32 limit: %1").arg(QString::fromStdString(entryPath)));
                     }
 
-                    uint32_t crc = crc32(0L, Z_NULL, 0);
+                    uint32_t crc = static_cast<uint32_t>(crc32(0L, Z_NULL, 0));
                     if (!ae.data.empty()) {
-                        crc = crc32(crc, ae.data.data(), ae.data.size());
+                        crc = static_cast<uint32_t>(crc32(crc, ae.data.data(), static_cast<uInt>(ae.data.size())));
                     }
 
                     std::vector<uint8_t> deflated;
@@ -5736,7 +5736,7 @@ QString QGit::commitInternal(const QString &message, CommitOptions options)
             throw QGitError("git_diff_tree_to_index(staged)", res);
         }
 
-        int _count = git_diff_num_deltas(diff);
+        size_t _count = git_diff_num_deltas(diff);
         if (_count == 0 && !amend)
         {
             throw QGitError(tr("Nothing staged."));

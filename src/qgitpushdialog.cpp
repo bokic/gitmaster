@@ -26,7 +26,7 @@ QGitPushDialog::QGitPushDialog(QGitRepository *parent)
     auto currentBranch = git->currentBranch();
 
     const auto localBranches = git->branches(GIT_BRANCH_LOCAL);
-    ui->branches_tableWidget->setRowCount(localBranches.size());
+    ui->branches_tableWidget->setRowCount(static_cast<int>(localBranches.size()));
     for(int row = 0; row < localBranches.size(); ++row)
     {
         const auto &localBranch = localBranches.at(row);

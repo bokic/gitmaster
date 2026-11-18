@@ -229,8 +229,8 @@ static void drawLineContent(
     wsColor.setAlphaF(0.45f);   // muted — visible but clearly secondary
 
     int cx = x;
-    int n  = chars.size();
-    int i  = 0;
+    qsizetype n  = chars.size();
+    qsizetype i  = 0;
 
     while (i < n)
     {
@@ -238,7 +238,7 @@ static void drawLineContent(
         bool inRange = byteIsInInlineRange(chars[i].byteOffset, line.inlineRanges);
 
         // Collect a run of characters sharing the same (isWs, inRange) pair
-        int start = i;
+        qsizetype start = i;
         while (i < n
                && (chars[i].ch == u' ' || chars[i].ch == u'\t') == isWs
                && byteIsInInlineRange(chars[i].byteOffset, line.inlineRanges) == inRange)
@@ -250,7 +250,7 @@ static void drawLineContent(
         bool substitute = isWs && (showWhitespaceChars || inRange);
         QString display;
         display.reserve(i - start);
-        for (int k = start; k < i; ++k)
+        for (qsizetype k = start; k < i; ++k)
         {
             if (substitute)
                 display += (chars[k].ch == u'\t') ? QChar(u'→') : QChar(u'·');
@@ -329,8 +329,8 @@ static QVector<QGitDiffInlineRange> computeChangedRanges(const QByteArray &a, co
     QVector<QByteArray> ta = splitTokens(a, wordLevel);
     QVector<QByteArray> tb = splitTokens(b, wordLevel);
 
-    int m = ta.size();
-    int n = tb.size();
+    int m = static_cast<int>(ta.size());
+    int n = static_cast<int>(tb.size());
 
     // Limit to prevent O(m*n) blowup on huge lines
     if (m > 200 || n > 200)
@@ -338,7 +338,7 @@ static QVector<QGitDiffInlineRange> computeChangedRanges(const QByteArray &a, co
         // Highlight entire line as changed
         QGitDiffInlineRange r;
         r.start = 0;
-        r.length = b.size();
+        r.length = static_cast<int>(b.size());
         return {r};
     }
 
@@ -364,7 +364,7 @@ static QVector<QGitDiffInlineRange> computeChangedRanges(const QByteArray &a, co
     int bytePos = 0;
     for (int k = 0; k < n; ++k)
     {
-        int tokenLen = tb[k].size();
+        int tokenLen = static_cast<int>(tb[k].size());
         if (!matched[k])
         {
             // Merge with previous range if adjacent
@@ -628,7 +628,7 @@ void QGitDiffWidget::responseGitDiff(const QString &first, const QString &second
                 }
 
                 line.hasTrailingNewline = false;
-                line.newlineByteOffset = line.content.size();
+                line.newlineByteOffset = static_cast<int>(line.content.size());
                 while (!line.chars.isEmpty() && (line.chars.back().ch == u'\n' || line.chars.back().ch == u'\r'))
                 {
                     line.hasTrailingNewline = true;
@@ -660,7 +660,7 @@ void QGitDiffWidget::responseGitDiff(const QString &first, const QString &second
             if (m_inlineDiffMode != InlineDiffMode::Off)
             {
                 bool wordLevel = (m_inlineDiffMode == InlineDiffMode::WordLevel);
-                int nLines = hunk.lines.size();
+                int nLines = static_cast<int>(hunk.lines.size());
                 int li = 0;
                 while (li < nLines)
                 {
@@ -728,7 +728,7 @@ void QGitDiffWidget::responseGitDiff(const QString &first, const QString &second
             // ---------------------------------------------------------------
             if (isSideBySide)
             {
-                int nLines = hunk.lines.size();
+                int nLines = static_cast<int>(hunk.lines.size());
                 int li = 0;
                 int sideRowY = y + file_h;
 

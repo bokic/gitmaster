@@ -96,7 +96,7 @@ void QGitBranchDialog::on_deleteBranch_pushButton_clicked()
 
     auto branches = m_git.branches(GIT_BRANCH_ALL);
 
-    ui->deleteBranches_tableWidget->setRowCount(branches.size());
+    ui->deleteBranches_tableWidget->setRowCount(static_cast<int>(branches.size()));
 
     auto currentBranch = m_git.currentBranch();
 

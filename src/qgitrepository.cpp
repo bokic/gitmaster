@@ -1044,10 +1044,10 @@ void QGitRepository::gravatarImageDownloadFinished(QNetworkReply *reply)
 {
     if (reply) {
         if (reply->error() == QNetworkReply::NoError) {
-            QByteArray data = reply->readAll();
+            QByteArray imageData = reply->readAll();
 
             QPixmap pixmap;
-            if (pixmap.loadFromData(data)) {
+            if (pixmap.loadFromData(imageData)) {
                 ui->label_signatureGravatarImage->setPixmap(pixmap);
             }
         } else {
@@ -1436,7 +1436,7 @@ void QGitRepository::repositoryGetCommitsReply(const QList<QGitCommit> &commits,
         ui->logHistory_commits->addCommit(commit);
     }
 
-    m_logCommitsOffset += commits.size();
+    m_logCommitsOffset += static_cast<int>(commits.size());
 
     if (commits.size() < COMMIT_COUNT_TO_LOAD)
     {
@@ -1544,7 +1544,7 @@ void QGitRepository::repositoryGetCommitDiffReply(const QString &commitId, const
             }
 
             QList<QGitDiffFile> files = uniqueFiles.values();
-            ui->search_files->setRowCount(files.size());
+            ui->search_files->setRowCount(static_cast<int>(files.size()));
 
             for(int c = 0; c < files.size(); c++)
             {
@@ -1645,7 +1645,7 @@ void QGitRepository::repositoryGetCommitDiffReply(const QString &commitId, const
             }
 
             QList<QGitDiffFile> files = uniqueFiles.values();
-            ui->logHistory_files->setRowCount(files.size());
+            ui->logHistory_files->setRowCount(static_cast<int>(files.size()));
 
             for(int c = 0; c < files.size(); c++)
             {
@@ -3213,7 +3213,7 @@ void QGitRepository::repositoryApplyPatchesReply(const QStringList &appliedFiles
         refreshData();
     } else {
         QMessageBox::information(this, tr("Apply Patch Successful"),
-            tr("Successfully applied %n patch file(s) to working directory.", "", appliedFiles.size()));
+            tr("Successfully applied %n patch file(s) to working directory.", "", static_cast<int>(appliedFiles.size())));
         refreshData();
     }
 }
@@ -3527,8 +3527,8 @@ void QGitRepository::on_comboBox_logBranchFilter_currentTextChanged(const QStrin
     int index = ui->comboBox_logBranchFilter->currentIndex();
     if (index < 0) return;
 
-    QVariant data = ui->comboBox_logBranchFilter->itemData(index);
-    if (!data.isValid()) {
+    QVariant filterData = ui->comboBox_logBranchFilter->itemData(index);
+    if (!filterData.isValid()) {
         // It's a separator! Revert to HEAD (index 1)
         ui->comboBox_logBranchFilter->blockSignals(true);
         ui->comboBox_logBranchFilter->setCurrentIndex(1);
@@ -3537,7 +3537,7 @@ void QGitRepository::on_comboBox_logBranchFilter_currentTextChanged(const QStrin
         return;
     }
 
-    m_currentLogBranchFilter = data.toString();
+    m_currentLogBranchFilter = filterData.toString();
     m_logCommitsOffset = 0;
     m_allCommitsLoaded = false;
     ui->logHistory_commits->clearCommits();

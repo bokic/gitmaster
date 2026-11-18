@@ -193,7 +193,7 @@ void QGitExportPatchDialog::populateTable(const QList<QGitCommit> &commits)
         ui->label_commitSummary->setText(tr("No commits selected or found for export."));
         ui->buttonBox->button(QDialogButtonBox::Ok)->setEnabled(false);
     } else {
-        ui->label_commitSummary->setText(tr("Total: %n commit(s) ready to be exported as .patch file(s).", "", commits.size()));
+        ui->label_commitSummary->setText(tr("Total: %n commit(s) ready to be exported as .patch file(s).", "", static_cast<int>(commits.size())));
         ui->buttonBox->button(QDialogButtonBox::Ok)->setEnabled(true);
     }
 }

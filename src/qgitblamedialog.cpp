@@ -274,7 +274,7 @@ void QGitBlameDialog::showBlameForFile(const QString &relPath)
     monoFont.setPointSize(9);
 
     ui->blameTable->setUpdatesEnabled(false);
-    ui->blameTable->setRowCount(lines.size());
+    ui->blameTable->setRowCount(static_cast<int>(lines.size()));
 
     for (int row = 0; row < lines.size(); row++) {
         int lineNo = row + 1;

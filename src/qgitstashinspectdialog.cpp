@@ -172,7 +172,7 @@ void QGitStashInspectDialog::onCommitDiffReply(const QString &commit_id, const Q
     }
 
     QList<QGitDiffFile> files = uniqueFiles.values();
-    ui->tableWidget_files->setRowCount(files.size());
+    ui->tableWidget_files->setRowCount(static_cast<int>(files.size()));
 
     for (int c = 0; c < files.size(); ++c)
     {

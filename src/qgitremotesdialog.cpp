@@ -28,7 +28,7 @@ QGitRemotesDialog::~QGitRemotesDialog()
 void QGitRemotesDialog::loadRemotes()
 {
     QList<QGitRemote> remotes = m_repository->git()->remotes();
-    ui->tableWidget->setRowCount(remotes.size());
+    ui->tableWidget->setRowCount(static_cast<int>(remotes.size()));
 
     for (int row = 0; row < remotes.size(); ++row) {
         const auto &remote = remotes.at(row);

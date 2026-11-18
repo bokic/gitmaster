@@ -98,10 +98,10 @@ void QGitConflictResolverDialog::loadConflictFiles()
 namespace {
 int findMarker(const QString &text, const QString &marker, int from = 0)
 {
-    int pos = from;
+    qsizetype pos = from;
     while ((pos = text.indexOf(marker, pos)) != -1) {
         if (pos == 0 || text[pos - 1] == '\n') {
-            return pos;
+            return static_cast<int>(pos);
         }
         pos += marker.size();
     }
@@ -177,18 +177,18 @@ void QGitConflictResolverDialog::resolveConflictBlock(int index, bool useOurs)
     int endTheirs = findMarker(text, ">>>>>>>", endOurs);
     if (endTheirs == -1) return;
 
-    int endLine = text.indexOf("\n", endTheirs);
+    qsizetype endLine = text.indexOf("\n", endTheirs);
     if (endLine == -1) endLine = text.size();
     else endLine += 1; // Include the newline
 
     QString replacement;
     if (useOurs) {
-        int startOurs = text.indexOf("\n", pos);
+        qsizetype startOurs = text.indexOf("\n", pos);
         if (startOurs != -1 && startOurs < endOurs) {
             replacement = text.mid(startOurs + 1, endOurs - startOurs - 1);
         }
     } else {
-        int startTheirs = text.indexOf("\n", endOurs);
+        qsizetype startTheirs = text.indexOf("\n", endOurs);
         if (startTheirs != -1 && startTheirs < endTheirs) {
             replacement = text.mid(startTheirs + 1, endTheirs - startTheirs - 1);
         }
@@ -196,7 +196,7 @@ void QGitConflictResolverDialog::resolveConflictBlock(int index, bool useOurs)
 
     QTextCursor cursor(ui->plainTextEdit_merged->document());
     cursor.setPosition(pos);
-    cursor.setPosition(endLine, QTextCursor::KeepAnchor);
+    cursor.setPosition(static_cast<int>(endLine), QTextCursor::KeepAnchor);
     cursor.insertText(replacement);
 
     refreshConflictList();

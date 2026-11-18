@@ -90,7 +90,7 @@ void QLogHistoryTableWidget::addCommit(const QGitCommit &commit)
     {
         // Start a new lane
         m_hashIndex.append(commitId);
-        commitLane = m_hashIndex.size() - 1;
+        commitLane = static_cast<int>(m_hashIndex.size()) - 1;
     }
 
     // Determine parents and build connections
@@ -183,15 +183,15 @@ void QLogHistoryTableWidget::addCommit(const QGitCommit &commit)
     m_hashIndex = nextHashIndex;
 
     // Pack into data for column 0 QTableWidgetItem
-    QList<QVariant> data;
-    data.append(commitLane);
+    QList<QVariant> graphData;
+    graphData.append(commitLane);
 
     QList<QVariant> passingLanesVar;
     for (int lane : passingLines)
     {
         passingLanesVar.append(lane);
     }
-    data.append(QVariant(passingLanesVar));
+    graphData.append(QVariant(passingLanesVar));
 
     QList<QVariant> parentConnsVar;
     for (const auto &conn : parentConnections)
@@ -202,14 +202,14 @@ void QLogHistoryTableWidget::addCommit(const QGitCommit &commit)
             parentConnsVar.append(conn.at(1).toInt());
         }
     }
-    data.append(QVariant(parentConnsVar));
+    graphData.append(QVariant(parentConnsVar));
  
     QList<QVariant> activeLanesVar;
     for (int lane : activeLanesAtTop)
     {
         activeLanesVar.append(lane);
     }
-    data.append(QVariant(activeLanesVar));
+    graphData.append(QVariant(activeLanesVar));
  
     QList<QVariant> childConnsVar;
     for (const auto &conn : childConnections)
@@ -220,14 +220,14 @@ void QLogHistoryTableWidget::addCommit(const QGitCommit &commit)
             childConnsVar.append(conn.at(1).toInt());
         }
     }
-    data.append(QVariant(childConnsVar));
+    graphData.append(QVariant(childConnsVar));
 
     insertRow(row);
 
     QTableWidgetItem *item = nullptr;
 
     item = new QTableWidgetItem();
-    item->setData(Qt::UserRole, data);
+    item->setData(Qt::UserRole, graphData);
     setItem(row, 0, item);
 
     item = new QTableWidgetItem(commit.message().section('\n', 0, 0));

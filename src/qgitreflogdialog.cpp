@@ -35,7 +35,7 @@ void QGitReflogDialog::loadReflog()
     ui->tableWidget->setSortingEnabled(false);
 
     QList<QGitReflogEntry> entries = m_repository->git()->reflog(m_refName);
-    ui->tableWidget->setRowCount(entries.size());
+    ui->tableWidget->setRowCount(static_cast<int>(entries.size()));
 
     for (int row = 0; row < entries.size(); ++row) {
         const auto &entry = entries.at(row);

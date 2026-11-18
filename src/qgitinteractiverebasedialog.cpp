@@ -95,7 +95,7 @@ void QGitInteractiveRebaseDialog::populateTable()
 {
     m_updatingUi = true;
     ui->tableWidget->setRowCount(0);
-    ui->tableWidget->setRowCount(m_items.size());
+    ui->tableWidget->setRowCount(static_cast<int>(m_items.size()));
 
     for (int row = 0; row < m_items.size(); ++row) {
         const auto &item = m_items.at(row);
@@ -330,7 +330,7 @@ void QGitInteractiveRebaseDialog::moveSelectedRows(int direction)
         }
     } else if (direction > 0) { // Move down
         if (rows.last() == m_items.size() - 1) return;
-        for (int i = rows.size() - 1; i >= 0; --i) {
+        for (qsizetype i = rows.size() - 1; i >= 0; --i) {
             int r = rows.at(i);
             m_items.swapItemsAt(r, r + 1);
         }

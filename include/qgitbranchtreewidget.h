@@ -20,7 +20,7 @@ public:
         QLineEdit *lineEdit = qobject_cast<QLineEdit *>(editor);
         if (lineEdit) {
             QString text = lineEdit->text();
-            int suffixIndex = text.indexOf(QStringLiteral(" [↑"));
+            qsizetype suffixIndex = text.indexOf(QStringLiteral(" [↑"));
             if (suffixIndex == -1) {
                 suffixIndex = text.indexOf(QStringLiteral(" [↓"));
             }
