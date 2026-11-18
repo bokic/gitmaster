@@ -126,8 +126,12 @@ ln -s /Applications "$DMG_DIR/Applications"
 # Remove any existing DMG of the same name
 rm -f "$DMG_NAME"
 
-# Build the DMG
-hdiutil create -volname "Git Master" -srcfolder "$DMG_DIR" -ov -format UDZO "$DMG_NAME"
+# Build the DMG (prefer diskutil image on newer macOS to avoid hdiutil deprecation warning)
+if diskutil image create from --help &>/dev/null; then
+    diskutil image create from --volumeName "Git Master" --format UDZO "$DMG_DIR" "$DMG_NAME"
+else
+    hdiutil create -volname "Git Master" -srcfolder "$DMG_DIR" -ov -format UDZO "$DMG_NAME"
+fi
 
 # Clean up DMG staging directory
 rm -rf "$DMG_DIR"
