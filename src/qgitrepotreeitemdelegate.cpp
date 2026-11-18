@@ -71,9 +71,9 @@ void QGitRepoTreeItemDelegate::paint(QPainter *painter, const QStyleOptionViewIt
 
 #ifdef Q_OS_UNIX
         static const QString homePath = QDir::homePath();
-        if (!homePath.isEmpty() && text.startsWith(homePath))
+        if (!homePath.isEmpty() && (text == homePath || text.startsWith(homePath + QLatin1Char('/'))))
         {
-            text = QStringLiteral("~/") + text.sliced(homePath.length());
+            text = QStringLiteral("~") + text.sliced(homePath.length());
         }
 #endif
         painter->setFont(normalFont);
