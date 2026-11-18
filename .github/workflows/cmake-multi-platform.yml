@@ -113,9 +113,11 @@ jobs:
 
     - name: Run tests
       if: runner.os != 'Windows'
-      run: ctest --test-dir ${{ steps.strings.outputs.build-output-dir }} --output-on-failure
+      run: ctest --test-dir ${{ steps.strings.outputs.build-output-dir }} --output-on-failure --timeout 60
 
     - name: Run tests (Windows)
       if: runner.os == 'Windows'
       shell: cmd
-      run: ctest --test-dir ${{ steps.strings.outputs.build-output-dir }} -C ${{ matrix.build_type }} --output-on-failure
+      run: |
+        set "PATH=${{ github.workspace }}\bin;%QT_ROOT_DIR%\bin;%PATH%"
+        ctest --test-dir ${{ steps.strings.outputs.build-output-dir }} -C ${{ matrix.build_type }} --output-on-failure --timeout 60

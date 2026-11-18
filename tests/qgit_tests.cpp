@@ -265,11 +265,17 @@ int main(int argc, char *argv[])
     QCoreApplication app(argc, argv);
     git_libgit2_init();
 
-    testQGitErrorStdException();
-    testRemoveSubmodulePathTraversal();
-    testStashAddressingByIndex();
-    testArchiveExportZipAndTar();
-    testCleanSkipsSymlinksAndNestedRepos();
+    auto runTest = [](const char *name, void (*fn)()) {
+        std::cout << "[RUN ] " << name << std::endl;
+        fn();
+        std::cout << "[DONE] " << name << std::endl;
+    };
+
+    runTest("testQGitErrorStdException", testQGitErrorStdException);
+    runTest("testRemoveSubmodulePathTraversal", testRemoveSubmodulePathTraversal);
+    runTest("testStashAddressingByIndex", testStashAddressingByIndex);
+    runTest("testArchiveExportZipAndTar", testArchiveExportZipAndTar);
+    runTest("testCleanSkipsSymlinksAndNestedRepos", testCleanSkipsSymlinksAndNestedRepos);
 
     git_libgit2_shutdown();
     return g_failures == 0 ? 0 : 1;
