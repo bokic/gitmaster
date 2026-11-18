@@ -47,7 +47,18 @@ void QGitRepoTreeItemDelegate::paint(QPainter *painter, const QStyleOptionViewIt
 
     if(!m_branchLogoImage.isNull())
     {
-        painter->drawImage(x, y + 5, m_branchLogoImage);
+        if (background.lightness() < 128) {
+            QImage tinted(m_branchLogoImage.size(), QImage::Format_ARGB32_Premultiplied);
+            tinted.fill(Qt::transparent);
+            QPainter imgPainter(&tinted);
+            imgPainter.drawImage(0, 0, m_branchLogoImage);
+            imgPainter.setCompositionMode(QPainter::CompositionMode_SourceIn);
+            imgPainter.fillRect(tinted.rect(), text_color);
+            imgPainter.end();
+            painter->drawImage(x, y + 5, tinted);
+        } else {
+            painter->drawImage(x, y + 5, m_branchLogoImage);
+        }
 
         x += m_branchLogoImage.width() + 2;
     }
