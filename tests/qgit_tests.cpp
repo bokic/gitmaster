@@ -44,6 +44,7 @@ void initRepoWithCommit(const QString &repoPath)
     CHECK(git_repository_config(&cfg, repo) == 0);
     CHECK(git_config_set_string(cfg, "user.name", "Test User") == 0);
     CHECK(git_config_set_string(cfg, "user.email", "test@example.com") == 0);
+    CHECK(git_config_set_bool(cfg, "core.autocrlf", 0) == 0);
     git_config_free(cfg);
 
     writeFile(repoPath + "/README.md", "hello\n");
