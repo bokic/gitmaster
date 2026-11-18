@@ -426,10 +426,13 @@ struct SafeGitStrArray {
         }
 
         for (int i = 0; i < list.size(); ++i) {
-            arr.value.strings[i] = strdup(list.at(i).toUtf8().constData());
+            const QByteArray utf8 = list.at(i).toUtf8();
+            const size_t len = static_cast<size_t>(utf8.size()) + 1;
+            arr.value.strings[i] = static_cast<char *>(malloc(len));
             if (!arr.value.strings[i]) {
-                throw QGitError("strdup", -1, QObject::tr("Memory allocation failed"));
+                throw QGitError("malloc", -1, QObject::tr("Memory allocation failed"));
             }
+            memcpy(arr.value.strings[i], utf8.constData(), len);
         }
         return arr;
     }
@@ -445,10 +448,12 @@ struct SafeGitStrArray {
         if (!arr.value.strings) {
             throw QGitError("malloc", -1, QObject::tr("Memory allocation failed"));
         }
-        arr.value.strings[0] = strdup(bytes.constData());
+        const size_t len = static_cast<size_t>(bytes.size()) + 1;
+        arr.value.strings[0] = static_cast<char *>(malloc(len));
         if (!arr.value.strings[0]) {
-            throw QGitError("strdup", -1, QObject::tr("Memory allocation failed"));
+            throw QGitError("malloc", -1, QObject::tr("Memory allocation failed"));
         }
+        memcpy(arr.value.strings[0], bytes.constData(), len);
         return arr;
     }
 
@@ -6166,7 +6171,7 @@ void QGit::rebaseInternal(const QString &upstream, const QString &branch, const 
         git_rebase_operation *op = nullptr;
         bool has_conflict = false;
 
-        while ((res = git_rebase_next(&op, rebase)) == 0)
+        for (res = git_rebase_next(&op, rebase); res == 0; res = git_rebase_next(&op, rebase))
         {
             git_oid commit_id;
             res = git_rebase_commit(&commit_id, rebase, nullptr, committer, nullptr, nullptr);
@@ -6497,7 +6502,7 @@ void QGit::continueOperation()
             git_rebase_operation *op = nullptr;
             bool has_conflict = false;
 
-            while ((res = git_rebase_next(&op, rebase)) == 0)
+            for (res = git_rebase_next(&op, rebase); res == 0; res = git_rebase_next(&op, rebase))
             {
                 res = git_rebase_commit(&commit_id, rebase, nullptr, committer, nullptr, nullptr);
                 if (res == GIT_EUNMERGED)

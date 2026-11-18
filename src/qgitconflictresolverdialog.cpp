@@ -99,7 +99,7 @@ namespace {
 int findMarker(const QString &text, const QString &marker, int from = 0)
 {
     qsizetype pos = from;
-    while ((pos = text.indexOf(marker, pos)) != -1) {
+    for (pos = text.indexOf(marker, pos); pos != -1; pos = text.indexOf(marker, pos)) {
         if (pos == 0 || text[pos - 1] == '\n') {
             return static_cast<int>(pos);
         }
@@ -118,7 +118,7 @@ void QGitConflictResolverDialog::refreshConflictList()
 
     int pos = 0;
     int count = 0;
-    while ((pos = findMarker(text, "<<<<<<<", pos)) != -1) {
+    for (pos = findMarker(text, "<<<<<<<", pos); pos != -1; pos = findMarker(text, "<<<<<<<", pos)) {
         count++;
         // Calculate line number
         int line = 1;
