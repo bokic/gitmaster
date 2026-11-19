@@ -1,6 +1,44 @@
 // SPDX-License-Identifier: LGPL-3.0-or-later
 #include "qgitbranchtreewidget.h"
+#include <QPainter>
+#include <QPixmap>
 #include <algorithm>
+
+namespace {
+
+QIcon makeSubmoduleBadgeIcon(const QIcon &base, const QColor &badgeColor)
+{
+    constexpr int iconSize = 16;
+    QPixmap pix = base.pixmap(iconSize, iconSize);
+    if (pix.isNull())
+        return base;
+
+    QPainter painter(&pix);
+    painter.setRenderHint(QPainter::Antialiasing, true);
+    painter.setPen(QPen(Qt::white, 1.0));
+    painter.setBrush(badgeColor);
+    painter.drawEllipse(QRectF(9.5, 9.5, 6.0, 6.0));
+    return QIcon(pix);
+}
+
+QIcon makeSubmoduleDimmedIcon(const QIcon &base)
+{
+    constexpr int iconSize = 16;
+    QPixmap src = base.pixmap(iconSize, iconSize);
+    if (src.isNull())
+        return base;
+
+    QPixmap dst(src.size());
+    dst.setDevicePixelRatio(src.devicePixelRatio());
+    dst.fill(Qt::transparent);
+
+    QPainter painter(&dst);
+    painter.setOpacity(0.45);
+    painter.drawPixmap(0, 0, src);
+    return QIcon(dst);
+}
+
+} // namespace
 
 QGitBranchTreeWidget::QGitBranchTreeWidget(QWidget *parent)
     : QTreeWidget(parent)
@@ -12,6 +50,9 @@ QGitBranchTreeWidget::QGitBranchTreeWidget(QWidget *parent)
     , m_iconStash(":/small/stash")
     , m_iconRemoteBranch(":/small/remote_branch")
     , m_iconSubmodule(":/small/submodule")
+    , m_iconSubmoduleCommitChanged(makeSubmoduleBadgeIcon(m_iconSubmodule, QColor(0x21, 0x96, 0xF3)))
+    , m_iconSubmoduleDirty(makeSubmoduleBadgeIcon(m_iconSubmodule, QColor(0xF5, 0x7C, 0x00)))
+    , m_iconSubmoduleUninitialized(makeSubmoduleDimmedIcon(m_iconSubmodule))
     , m_iconWorktree(":/small/worktree")
 {
     setItemDelegate(new QGitBranchTreeItemDelegate(this));
@@ -189,21 +230,46 @@ void QGitBranchTreeWidget::populateBranchesAndTags(
     QTreeWidgetItem *itemSubmodules = new QTreeWidgetItem(QStringList() << tr("Submodules"));
     itemSubmodules->setData(0, Qt::UserRole + 2, QStringLiteral("SubmodulesHeader"));
     for (const auto &sub : submodules) {
-        QString label = sub.name;
+        constexpr unsigned int commitChangedMask =
+            GIT_SUBMODULE_STATUS_WD_MODIFIED | GIT_SUBMODULE_STATUS_INDEX_MODIFIED |
+            GIT_SUBMODULE_STATUS_INDEX_ADDED | GIT_SUBMODULE_STATUS_INDEX_DELETED |
+            GIT_SUBMODULE_STATUS_WD_ADDED | GIT_SUBMODULE_STATUS_WD_DELETED;
+        constexpr unsigned int dirtyWorktreeMask =
+            GIT_SUBMODULE_STATUS_WD_INDEX_MODIFIED | GIT_SUBMODULE_STATUS_WD_WD_MODIFIED |
+            GIT_SUBMODULE_STATUS_WD_UNTRACKED;
+
+        const bool uninitialized = (sub.status & GIT_SUBMODULE_STATUS_WD_UNINITIALIZED) != 0;
+        const bool commitChanged = (sub.status & commitChangedMask) != 0;
+        const bool dirtyWorktree = (sub.status & dirtyWorktreeMask) != 0;
+
         QString statusText;
-        if (sub.status & GIT_SUBMODULE_STATUS_WD_UNINITIALIZED) {
+        QString toolTip = sub.path;
+        const QIcon *icon = &m_iconSubmodule;
+
+        if (uninitialized) {
             statusText = tr(" [Uninitialized]");
-        } else if (sub.status & (GIT_SUBMODULE_STATUS_WD_ADDED | GIT_SUBMODULE_STATUS_WD_DELETED | 
-                                 GIT_SUBMODULE_STATUS_WD_MODIFIED | GIT_SUBMODULE_STATUS_WD_INDEX_MODIFIED | 
-                                 GIT_SUBMODULE_STATUS_WD_WD_MODIFIED)) {
+            toolTip = tr("%1\nSubmodule is not initialized").arg(sub.path);
+            icon = &m_iconSubmoduleUninitialized;
+        } else if (commitChanged && dirtyWorktree) {
+            statusText = tr(" [Modified, Dirty]");
+            toolTip = tr("%1\nSubmodule commit differs from superproject and has uncommitted changes").arg(sub.path);
+            icon = &m_iconSubmoduleDirty;
+        } else if (commitChanged) {
+            statusText = tr(" [Modified]");
+            toolTip = tr("%1\nSubmodule commit differs from superproject").arg(sub.path);
+            icon = &m_iconSubmoduleCommitChanged;
+        } else if (dirtyWorktree) {
             statusText = tr(" [Dirty]");
+            toolTip = tr("%1\nSubmodule has uncommitted changes in its working directory").arg(sub.path);
+            icon = &m_iconSubmoduleDirty;
         }
 
-        QTreeWidgetItem *child = new QTreeWidgetItem(QStringList() << (label + statusText));
+        QTreeWidgetItem *child = new QTreeWidgetItem(QStringList() << (sub.name + statusText));
         child->setData(0, Qt::UserRole, sub.name);
         child->setData(0, Qt::UserRole + 1, sub.path);
         child->setData(0, Qt::UserRole + 2, QStringLiteral("Submodule"));
-        child->setIcon(0, m_iconSubmodule);
+        child->setIcon(0, *icon);
+        child->setToolTip(0, toolTip);
         itemSubmodules->addChild(child);
     }
 

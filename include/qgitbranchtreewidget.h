@@ -57,5 +57,8 @@ private:
     QIcon m_iconStash;
     QIcon m_iconRemoteBranch;
     QIcon m_iconSubmodule;
+    QIcon m_iconSubmoduleCommitChanged;
+    QIcon m_iconSubmoduleDirty;
+    QIcon m_iconSubmoduleUninitialized;
     QIcon m_iconWorktree;
 };
