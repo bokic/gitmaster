@@ -2349,7 +2349,7 @@ static int submoduleForeachCallback(git_submodule *sm, const char *name, void *p
 
         git_repository *repo = git_submodule_owner(sm);
         unsigned int status = 0;
-        if (git_submodule_status(&status, repo, name, GIT_SUBMODULE_IGNORE_UNSPECIFIED) == 0) {
+        if (git_submodule_status(&status, repo, name, GIT_SUBMODULE_IGNORE_NONE) == 0) {
             sub.status = status;
         }
 
