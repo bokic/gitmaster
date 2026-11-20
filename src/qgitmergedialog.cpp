@@ -2,6 +2,20 @@
 #include "qgitmergedialog.h"
 #include "ui_qgitmergedialog.h"
 #include <QDateTime>
+#include <algorithm>
+
+namespace {
+
+QString shortBranchName(const QString &name)
+{
+    if (name.startsWith(QStringLiteral("refs/heads/")))
+        return name.mid(11);
+    if (name.startsWith(QStringLiteral("refs/remotes/")))
+        return name.mid(13);
+    return name;
+}
+
+} // namespace
 
 QGitMergeDialog::QGitMergeDialog(QDir repoPath, QWidget *parent)
     : QDialog(parent)
@@ -28,6 +42,7 @@ QGitMergeDialog::QGitMergeDialog(QDir repoPath, QWidget *parent)
     ui->tableWidget->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
     ui->tableWidget->setSelectionBehavior(QAbstractItemView::SelectRows);
     ui->tableWidget->setSelectionMode(QAbstractItemView::SingleSelection);
+    ui->tableWidget->setEditTriggers(QAbstractItemView::NoEditTriggers);
 
     // Populate data
     populateBranches();
@@ -38,6 +53,12 @@ QGitMergeDialog::QGitMergeDialog(QDir repoPath, QWidget *parent)
     connect(ui->pushButton, &QPushButton::clicked, this, &QGitMergeDialog::accept);
     connect(ui->pushButton_2, &QPushButton::clicked, this, &QGitMergeDialog::reject);
     connect(ui->tableWidget, &QTableWidget::itemSelectionChanged, this, &QGitMergeDialog::updateButtonsState);
+    connect(ui->tableWidget, &QTableWidget::cellDoubleClicked, this, [this](int row, int) {
+        if (row >= 0) {
+            ui->tableWidget->selectRow(row);
+            accept();
+        }
+    });
     connect(ui->comboBox_3, QOverload<int>::of(&QComboBox::currentIndexChanged), this, &QGitMergeDialog::updateButtonsState);
 }
 
@@ -51,7 +72,11 @@ QString QGitMergeDialog::selectedBranch() const
     if (ui->stackedWidget->currentIndex() == 0) {
         int currentRow = ui->tableWidget->currentRow();
         if (currentRow >= 0) {
-            return ui->tableWidget->item(currentRow, 0)->text();
+            const QTableWidgetItem *item = ui->tableWidget->item(currentRow, 0);
+            if (item) {
+                const QString fullRef = item->data(Qt::UserRole).toString();
+                return fullRef.isEmpty() ? item->text() : fullRef;
+            }
         }
     } else {
         return ui->comboBox_3->currentData().toString();
@@ -93,13 +118,22 @@ void QGitMergeDialog::setRebaseMode(bool rebaseOnly)
 {
     if (rebaseOnly) {
         setWindowTitle(tr("Rebase"));
-        ui->groupBox->setVisible(false); // Hide merge options groupbox
+        ui->groupBox->setVisible(false);
         ui->mergedFromLog_toolButton->setText(tr("Rebase from Log"));
         ui->mergeFetched_toolButton->setText(tr("Rebase Fetched"));
         ui->label_3->setText(tr("Rebase from Log"));
         ui->label_4->setText(tr("Rebase from fetched remote branch:"));
-        // Force the checkbox to be checked so rebaseInsteadOfMerge() returns true
+        ui->label_5->setText(tr("Rebasing current branch: <b>%1</b>").arg(m_currentBranch.toHtmlEscaped()));
         ui->checkBox_5->setChecked(true);
+    } else {
+        setWindowTitle(tr("Pick a commit to merge into your current branch"));
+        ui->groupBox->setVisible(true);
+        ui->mergedFromLog_toolButton->setText(tr("Merge From Log"));
+        ui->mergeFetched_toolButton->setText(tr("Merge Fetched"));
+        ui->label_3->setText(tr("Merge From Log"));
+        ui->label_4->setText(tr("Merge from fetched remote branch:"));
+        ui->label_5->setText(tr("Merging into current branch: <b>%1</b>").arg(m_currentBranch.toHtmlEscaped()));
+        ui->checkBox_5->setChecked(false);
     }
 }
 
@@ -131,6 +165,12 @@ void QGitMergeDialog::on_comboBox_2_currentIndexChanged(int index)
     populateLogTable();
 }
 
+void QGitMergeDialog::on_comboBox_currentIndexChanged(int index)
+{
+    Q_UNUSED(index)
+    populateLogTable();
+}
+
 void QGitMergeDialog::on_checkBox_toggled(bool checked)
 {
     Q_UNUSED(checked)
@@ -157,14 +197,14 @@ void QGitMergeDialog::updateButtonsState()
 void QGitMergeDialog::populateBranches()
 {
     m_allBranches = m_git.branches(GIT_BRANCH_ALL);
+    m_currentBranch = shortBranchName(m_git.currentBranch());
     ui->comboBox_3->clear();
 
-    QString current = m_git.currentBranch();
-    ui->label_5->setText(tr("Merging into current branch: <b>%1</b>").arg(current));
+    ui->label_5->setText(tr("Merging into current branch: <b>%1</b>").arg(m_currentBranch.toHtmlEscaped()));
 
-    for (const auto &branch : m_allBranches) {
-        if (branch.name() != current) {
-            ui->comboBox_3->addItem(branch.name(), branch.name());
+    for (const auto &branch : std::as_const(m_allBranches)) {
+        if (branch.type() == GIT_BRANCH_REMOTE) {
+            ui->comboBox_3->addItem(shortBranchName(branch.name()), branch.name());
         }
     }
 }
@@ -172,25 +212,44 @@ void QGitMergeDialog::populateBranches()
 void QGitMergeDialog::populateLogTable()
 {
     ui->tableWidget->setRowCount(0);
-    QString current = m_git.currentBranch();
-    bool showRemote = ui->checkBox->isChecked();
-    QString filterText = ui->lineEdit->text().trimmed();
-    int filterTypeIndex = ui->comboBox_2->currentIndex(); // 0: All Branches, 1: Current Branch (which we hide anyway or show differently)
+    const bool showRemote = ui->checkBox->isChecked();
+    const QString filterText = ui->lineEdit->text().trimmed();
+    const int filterTypeIndex = ui->comboBox_2->currentIndex(); // 0: All Branches, 1: Local Branches
+    const int sortOrderIndex = ui->comboBox->currentIndex();    // 0: Date Order, 1: Name Order
 
-    int row = 0;
-    for (const auto &branch : m_allBranches) {
-        if (branch.name() == current) continue;
+    QList<QGitBranch> filtered;
+    for (const auto &branch : std::as_const(m_allBranches)) {
+        if (branch.type() == GIT_BRANCH_LOCAL && shortBranchName(branch.name()) == m_currentBranch)
+            continue;
 
-        if (branch.type() == GIT_BRANCH_REMOTE && !showRemote) continue;
+        if (branch.type() == GIT_BRANCH_REMOTE && !showRemote)
+            continue;
 
-        // "Current Branch" filter makes no sense for picking a merge source, so we just show other branches.
-        if (filterTypeIndex == 1 && branch.type() != GIT_BRANCH_LOCAL) continue;
+        if (filterTypeIndex == 1 && branch.type() != GIT_BRANCH_LOCAL)
+            continue;
 
-        if (!filterText.isEmpty() && !branch.name().contains(filterText, Qt::CaseInsensitive)) continue;
+        if (!filterText.isEmpty() && !branch.name().contains(filterText, Qt::CaseInsensitive))
+            continue;
 
-        ui->tableWidget->insertRow(row);
+        filtered.append(branch);
+    }
 
-        auto nameItem = new QTableWidgetItem(branch.name());
+    if (sortOrderIndex == 0) {
+        std::sort(filtered.begin(), filtered.end(), [](const QGitBranch &a, const QGitBranch &b) {
+            return a.time() > b.time();
+        });
+    } else {
+        std::sort(filtered.begin(), filtered.end(), [](const QGitBranch &a, const QGitBranch &b) {
+            return a.name().compare(b.name(), Qt::CaseInsensitive) < 0;
+        });
+    }
+
+    ui->tableWidget->setRowCount(static_cast<int>(filtered.size()));
+    for (int row = 0; row < filtered.size(); ++row) {
+        const auto &branch = filtered.at(row);
+
+        auto nameItem = new QTableWidgetItem(shortBranchName(branch.name()));
+        nameItem->setData(Qt::UserRole, branch.name());
         nameItem->setFlags(Qt::ItemIsEnabled | Qt::ItemIsSelectable);
         ui->tableWidget->setItem(row, 0, nameItem);
 
@@ -208,8 +267,6 @@ void QGitMergeDialog::populateLogTable()
         auto timeItem = new QTableWidgetItem(dateTime.toString());
         timeItem->setFlags(Qt::ItemIsEnabled | Qt::ItemIsSelectable);
         ui->tableWidget->setItem(row, 3, timeItem);
-
-        row++;
     }
     updateButtonsState();
 }

@@ -33,6 +33,7 @@ private slots:
     void on_mergeFetched_toolButton_clicked();
     void on_checkBox_6_toggled(bool checked);
     void on_comboBox_2_currentIndexChanged(int index);
+    void on_comboBox_currentIndexChanged(int index);
     void on_checkBox_toggled(bool checked);
     void on_lineEdit_textChanged(const QString &text);
     void updateButtonsState();
@@ -44,5 +45,6 @@ private:
     Ui::QGitMergeDialog *ui = nullptr;
     QDir m_repoPath;
     QGit m_git;
+    QString m_currentBranch;
     QList<QGitBranch> m_allBranches;
 };

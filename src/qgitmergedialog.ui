@@ -95,7 +95,7 @@
            </item>
            <item>
             <property name="text">
-             <string>Current Branch</string>
+             <string>Local Branches</string>
             </property>
            </item>
           </widget>
@@ -116,7 +116,7 @@
            </item>
            <item>
             <property name="text">
-             <string>Ancesor Order</string>
+             <string>Name Order</string>
             </property>
            </item>
           </widget>
