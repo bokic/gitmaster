@@ -1,6 +1,7 @@
 #pragma once
 
 #include <QDialog>
+#include <QSet>
 #include "qgit.h"
 
 namespace Ui {
@@ -33,4 +34,6 @@ private:
 
     Ui::QGitWorktreeDialog *ui = nullptr;
     QGit m_git;
+    QSet<QString> m_existingWorktreeNames;
+    QSet<QString> m_existingBranchNames;
 };
