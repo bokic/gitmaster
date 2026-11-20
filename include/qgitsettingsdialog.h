@@ -17,6 +17,8 @@ public:
     explicit QGitSettingsDialog(QGit *git, QWidget *parent = nullptr);
     ~QGitSettingsDialog() override;
 
+    bool configModified() const { return m_configModified; }
+
 private slots:
     void on_pushButton_add_clicked();
     void on_pushButton_edit_clicked();
@@ -27,10 +29,11 @@ private slots:
     void accept() override;
 
 private:
-    void loadSettings();
+    void reloadScope(bool global);
     void populateTable();
 
     Ui::QGitSettingsDialog *ui = nullptr;
     QGit *m_git = nullptr;
     QMap<QString, QString> m_allConfigs;
+    bool m_configModified = false;
 };

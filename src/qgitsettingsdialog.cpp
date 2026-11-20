@@ -14,22 +14,24 @@ QGitSettingsDialog::QGitSettingsDialog(QGit *git, QWidget *parent)
     bool isRepo = false;
     bool hasLocal = false;
     bool hasGlobal = false;
-    QGit::invokeSync(m_git, [&]() {
-        isRepo = QGit::isGitRepository(m_git->path());
-        auto hasAnyGeneralSetting = [&](bool global) {
-            try {
-                return !m_git->configString("user.name", global).isEmpty()
-                    || !m_git->configString("user.email", global).isEmpty()
-                    || !m_git->configString("core.autocrlf", global).isEmpty();
-            } catch (const QGitError &) {
-                return false;
+    if (m_git) {
+        QGit::invokeSync(m_git, [&]() {
+            isRepo = QGit::isGitRepository(m_git->path());
+            auto hasAnyGeneralSetting = [&](bool global) {
+                try {
+                    return !m_git->configString("user.name", global).isEmpty()
+                        || !m_git->configString("user.email", global).isEmpty()
+                        || !m_git->configString("core.autocrlf", global).isEmpty();
+                } catch (const QGitError &) {
+                    return false;
+                }
+            };
+            if (isRepo) {
+                hasLocal = hasAnyGeneralSetting(false);
             }
-        };
-        if (isRepo) {
-            hasLocal = hasAnyGeneralSetting(false);
-        }
-        hasGlobal = hasAnyGeneralSetting(true);
-    });
+            hasGlobal = hasAnyGeneralSetting(true);
+        });
+    }
 
     {
         const QSignalBlocker blockLocal(ui->radioButton_local);
@@ -54,15 +56,12 @@ QGitSettingsDialog::QGitSettingsDialog(QGit *git, QWidget *parent)
     ui->tableWidget->setSelectionMode(QAbstractItemView::SingleSelection);
     ui->tableWidget->setEditTriggers(QAbstractItemView::NoEditTriggers);
 
+    connect(ui->tableWidget, &QTableWidget::cellDoubleClicked, this, [this](int, int) {
+        on_pushButton_edit_clicked();
+    });
+
     // Load configurations
-    loadSettings();
-    bool global = ui->radioButton_global->isChecked();
-    try {
-        m_allConfigs = QGit::invokeSync(m_git, [&]() { return m_git->configEntries(global); });
-    } catch (const QGitError &error) {
-        qWarning("QGitSettingsDialog: failed to load config entries: %s", qPrintable(error.errorString()));
-    }
-    populateTable();
+    reloadScope(ui->radioButton_global->isChecked());
 }
 
 QGitSettingsDialog::~QGitSettingsDialog()
@@ -70,23 +69,31 @@ QGitSettingsDialog::~QGitSettingsDialog()
     delete ui;
 }
 
-void QGitSettingsDialog::loadSettings()
+void QGitSettingsDialog::reloadScope(bool global)
 {
-    bool global = ui->radioButton_global->isChecked();
+    if (!m_git) {
+        m_allConfigs.clear();
+        populateTable();
+        return;
+    }
+
     try {
         QString userName, userEmail, autocrlf;
         QGit::invokeSync(m_git, [&]() {
             userName = m_git->configString("user.name", global);
             userEmail = m_git->configString("user.email", global);
             autocrlf = m_git->configString("core.autocrlf", global);
+            m_allConfigs = m_git->configEntries(global);
         });
         ui->lineEdit_userName->setText(userName);
         ui->lineEdit_userEmail->setText(userEmail);
         int index = ui->comboBox_autoCrlf->findText(autocrlf);
         ui->comboBox_autoCrlf->setCurrentIndex(index >= 0 ? index : 0);
     } catch (const QGitError &error) {
-        qWarning("QGitSettingsDialog::loadSettings: %s", qPrintable(error.errorString()));
+        m_allConfigs.clear();
+        qWarning("QGitSettingsDialog::reloadScope: %s", qPrintable(error.errorString()));
     }
+    populateTable();
 }
 
 void QGitSettingsDialog::populateTable()
@@ -120,6 +127,8 @@ void QGitSettingsDialog::populateTable()
 
 void QGitSettingsDialog::on_pushButton_add_clicked()
 {
+    if (!m_git) return;
+
     bool ok;
     QString key = QInputDialog::getText(this, tr("Add Configuration"), tr("Key (e.g., core.autocrlf):"), QLineEdit::Normal, "", &ok);
     if (!ok || key.trimmed().isEmpty()) return;
@@ -129,12 +138,11 @@ void QGitSettingsDialog::on_pushButton_add_clicked()
 
     bool globalWrite = ui->radioButton_global->isChecked();
     try {
-        m_allConfigs = QGit::invokeSync(m_git, [&]() {
+        QGit::invokeSync(m_git, [&]() {
             m_git->setConfigString(key.trimmed(), val, globalWrite);
-            return m_git->configEntries(globalWrite);
         });
-        populateTable();
-        loadSettings();
+        m_configModified = true;
+        reloadScope(globalWrite);
     } catch (const QGitError &error) {
         QMessageBox::critical(this, tr("Error"), error.errorString());
     }
@@ -142,13 +150,17 @@ void QGitSettingsDialog::on_pushButton_add_clicked()
 
 void QGitSettingsDialog::on_pushButton_edit_clicked()
 {
+    if (!m_git) return;
+
     int row = ui->tableWidget->currentRow();
-    if (row < 0) {
+    const QTableWidgetItem *keyItem = (row >= 0) ? ui->tableWidget->item(row, 0) : nullptr;
+    const QTableWidgetItem *valItem = (row >= 0) ? ui->tableWidget->item(row, 1) : nullptr;
+    if (!keyItem || !valItem) {
         QMessageBox::warning(this, tr("Edit Configuration"), tr("Please select a configuration key to edit."));
         return;
     }
-    QString key = ui->tableWidget->item(row, 0)->text();
-    QString currentVal = ui->tableWidget->item(row, 1)->text();
+    QString key = keyItem->text();
+    QString currentVal = valItem->text();
 
     bool ok;
     QString val = QInputDialog::getText(this, tr("Edit Configuration"), tr("Value for '%1':").arg(key), QLineEdit::Normal, currentVal, &ok);
@@ -156,12 +168,11 @@ void QGitSettingsDialog::on_pushButton_edit_clicked()
 
     bool globalWrite = ui->radioButton_global->isChecked();
     try {
-        m_allConfigs = QGit::invokeSync(m_git, [&]() {
+        QGit::invokeSync(m_git, [&]() {
             m_git->setConfigString(key, val, globalWrite);
-            return m_git->configEntries(globalWrite);
         });
-        populateTable();
-        loadSettings();
+        m_configModified = true;
+        reloadScope(globalWrite);
     } catch (const QGitError &error) {
         QMessageBox::critical(this, tr("Error"), error.errorString());
     }
@@ -169,12 +180,15 @@ void QGitSettingsDialog::on_pushButton_edit_clicked()
 
 void QGitSettingsDialog::on_pushButton_delete_clicked()
 {
+    if (!m_git) return;
+
     int row = ui->tableWidget->currentRow();
-    if (row < 0) {
+    const QTableWidgetItem *keyItem = (row >= 0) ? ui->tableWidget->item(row, 0) : nullptr;
+    if (!keyItem) {
         QMessageBox::warning(this, tr("Delete Configuration"), tr("Please select a configuration key to delete."));
         return;
     }
-    QString key = ui->tableWidget->item(row, 0)->text();
+    QString key = keyItem->text();
 
     auto confirm = QMessageBox::question(this, tr("Delete Configuration"),
                                          tr("Are you sure you want to delete the configuration key '%1'?").arg(key),
@@ -183,12 +197,11 @@ void QGitSettingsDialog::on_pushButton_delete_clicked()
 
     bool globalWrite = ui->radioButton_global->isChecked();
     try {
-        m_allConfigs = QGit::invokeSync(m_git, [&]() {
+        QGit::invokeSync(m_git, [&]() {
             m_git->deleteConfigEntry(key, globalWrite);
-            return m_git->configEntries(globalWrite);
         });
-        populateTable();
-        loadSettings();
+        m_configModified = true;
+        reloadScope(globalWrite);
     } catch (const QGitError &error) {
         QMessageBox::critical(this, tr("Error"), error.errorString());
     }
@@ -203,29 +216,22 @@ void QGitSettingsDialog::on_lineEdit_search_textChanged(const QString &text)
 void QGitSettingsDialog::on_radioButton_local_toggled(bool checked)
 {
     if (!checked) return;
-    loadSettings();
-    try {
-        m_allConfigs = QGit::invokeSync(m_git, [&]() { return m_git->configEntries(false); });
-    } catch (const QGitError &) {
-        m_allConfigs.clear();
-    }
-    populateTable();
+    reloadScope(false);
 }
 
 void QGitSettingsDialog::on_radioButton_global_toggled(bool checked)
 {
     if (!checked) return;
-    loadSettings();
-    try {
-        m_allConfigs = QGit::invokeSync(m_git, [&]() { return m_git->configEntries(true); });
-    } catch (const QGitError &) {
-        m_allConfigs.clear();
-    }
-    populateTable();
+    reloadScope(true);
 }
 
 void QGitSettingsDialog::accept()
 {
+    if (!m_git) {
+        QDialog::accept();
+        return;
+    }
+
     QString name = ui->lineEdit_userName->text().trimmed();
     QString email = ui->lineEdit_userEmail->text().trimmed();
     QString autocrlf = ui->comboBox_autoCrlf->currentText();
@@ -245,6 +251,7 @@ void QGitSettingsDialog::accept()
             applyConfig("user.email", email);
             applyConfig("core.autocrlf", autocrlf);
         });
+        m_configModified = true;
         QDialog::accept();
     } catch (const QGitError &error) {
         QMessageBox::critical(this, tr("Save Error"), error.errorString());

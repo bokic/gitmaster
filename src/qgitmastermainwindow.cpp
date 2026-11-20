@@ -792,7 +792,7 @@ void QGitMasterMainWindow::on_actionSettings_triggered()
     auto widget = dynamic_cast<QGitRepository *>(ui->tabWidget->currentWidget());
     if (widget && widget->git()) {
         QGitSettingsDialog dlg(widget->git(), this);
-        if (dlg.exec() == QDialog::Accepted) {
+        if (dlg.exec() == QDialog::Accepted || dlg.configModified()) {
             widget->refreshData();
         }
     } else {
