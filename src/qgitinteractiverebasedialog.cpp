@@ -62,10 +62,11 @@ void QGitInteractiveRebaseDialog::loadCommits()
     });
     QString baseShort = m_baseCommitId.left(8);
 
-    ui->label_title->setText(tr("Interactive Rebase on branch <b>%1</b>").arg(m_branchName));
+    ui->label_title->setText(tr("Interactive Rebase on branch <b>%1</b>").arg(m_branchName.toHtmlEscaped()));
     if (!m_baseCommitId.isEmpty()) {
         ui->label_base->setText(tr("Rebasing on top of: <code>%1</code> %2")
-                                    .arg(baseShort, baseSummary.isEmpty() ? QString() : QStringLiteral("(%1)").arg(baseSummary)));
+                                    .arg(baseShort.toHtmlEscaped(),
+                                         baseSummary.isEmpty() ? QString() : QStringLiteral("(%1)").arg(baseSummary.toHtmlEscaped())));
     } else {
         ui->label_base->setText(tr("Rebasing all commits from root"));
     }
@@ -106,7 +107,8 @@ void QGitInteractiveRebaseDialog::populateTable()
         combo->addItem(tr("Squash (s)"), (int)QGitRebaseAction::Squash);
         combo->addItem(tr("Fixup (f)"), (int)QGitRebaseAction::Fixup);
         combo->addItem(tr("Drop (d)"), (int)QGitRebaseAction::Drop);
-        combo->setCurrentIndex((int)item.action);
+        const int actionIdx = combo->findData(static_cast<int>(item.action));
+        combo->setCurrentIndex(actionIdx >= 0 ? actionIdx : 0);
         combo->setProperty("row", row);
 
         connect(combo, QOverload<int>::of(&QComboBox::currentIndexChanged),
@@ -178,7 +180,7 @@ void QGitInteractiveRebaseDialog::onActionComboChanged(int index)
 
     int row = combo->property("row").toInt();
     if (row >= 0 && row < m_items.size()) {
-        m_items[row].action = static_cast<QGitRebaseAction>(index);
+        m_items[row].action = static_cast<QGitRebaseAction>(combo->itemData(index).toInt());
         updateRowAppearance(row);
         updateValidationStatus();
 
@@ -225,7 +227,10 @@ void QGitInteractiveRebaseDialog::loadMessageForRow(int row)
         const auto &item = m_items.at(row);
         ui->label_messageCommitInfo->setText(
             tr("Commit <b>%1</b> (%2) - %3: %4")
-                .arg(item.shortHash, item.author, actionToString(item.action), item.summary));
+                .arg(item.shortHash.toHtmlEscaped(),
+                     item.author.toHtmlEscaped(),
+                     actionToString(item.action).toHtmlEscaped(),
+                     item.summary.toHtmlEscaped()));
         ui->plainTextEdit_message->setPlainText(item.message);
         ui->plainTextEdit_message->setEnabled(true);
         ui->groupBox_message->setEnabled(true);
@@ -257,6 +262,15 @@ void QGitInteractiveRebaseDialog::on_plainTextEdit_message_textChanged()
     }
 
     saveCurrentMessage();
+
+    const auto &item = m_items.at(m_currentEditingRow);
+    ui->label_messageCommitInfo->setText(
+        tr("Commit <b>%1</b> (%2) - %3: %4")
+            .arg(item.shortHash.toHtmlEscaped(),
+                 item.author.toHtmlEscaped(),
+                 actionToString(item.action).toHtmlEscaped(),
+                 item.summary.toHtmlEscaped()));
+    updateValidationStatus();
 }
 
 void QGitInteractiveRebaseDialog::setActionForSelectedRows(QGitRebaseAction action)
@@ -316,6 +330,7 @@ void QGitInteractiveRebaseDialog::moveSelectedRows(int direction)
     if (selectedIndices.isEmpty()) return;
 
     saveCurrentMessage();
+    m_currentEditingRow = -1;
 
     QList<int> rows;
     for (const auto &idx : selectedIndices) {
@@ -338,12 +353,19 @@ void QGitInteractiveRebaseDialog::moveSelectedRows(int direction)
 
     populateTable();
 
-    // Re-select rows
+    // Re-select moved rows without triggering saveCurrentMessage on stale index
+    m_updatingUi = true;
     ui->tableWidget->clearSelection();
     for (int r : rows) {
         int newRow = r + direction;
-        ui->tableWidget->selectRow(newRow);
+        ui->tableWidget->selectionModel()->select(
+            ui->tableWidget->model()->index(newRow, 0),
+            QItemSelectionModel::Select | QItemSelectionModel::Rows);
     }
+    m_currentEditingRow = rows.first() + direction;
+    ui->tableWidget->setCurrentCell(m_currentEditingRow, 0, QItemSelectionModel::NoUpdate);
+    m_updatingUi = false;
+    loadMessageForRow(m_currentEditingRow);
 }
 
 void QGitInteractiveRebaseDialog::on_toolButton_moveUp_clicked()
@@ -366,11 +388,13 @@ void QGitInteractiveRebaseDialog::on_toolButton_reset_clicked()
     );
 
     if (confirm == QMessageBox::Yes) {
-        saveCurrentMessage();
+        m_currentEditingRow = -1;
         m_items = m_originalItems;
         populateTable();
         if (!m_items.isEmpty()) {
             ui->tableWidget->selectRow(0);
+        } else {
+            loadMessageForRow(-1);
         }
     }
 }
@@ -405,23 +429,46 @@ void QGitInteractiveRebaseDialog::on_tableWidget_customContextMenuRequested(cons
 
 void QGitInteractiveRebaseDialog::keyPressEvent(QKeyEvent *event)
 {
-    if (ui->tableWidget->hasFocus()) {
-        if (event->key() == Qt::Key_P && !(event->modifiers() & Qt::ControlModifier)) {
+    const Qt::KeyboardModifiers mods = event->modifiers();
+    if (mods == Qt::AltModifier) {
+        if (event->key() == Qt::Key_P) {
             on_toolButton_pick_clicked();
             return;
-        } else if (event->key() == Qt::Key_R && !(event->modifiers() & Qt::ControlModifier)) {
+        } else if (event->key() == Qt::Key_R) {
             on_toolButton_reword_clicked();
             return;
-        } else if (event->key() == Qt::Key_S && !(event->modifiers() & Qt::ControlModifier)) {
+        } else if (event->key() == Qt::Key_S) {
             on_toolButton_squash_clicked();
             return;
-        } else if (event->key() == Qt::Key_F && !(event->modifiers() & Qt::ControlModifier)) {
+        } else if (event->key() == Qt::Key_F) {
             on_toolButton_fixup_clicked();
             return;
-        } else if (event->key() == Qt::Key_D && !(event->modifiers() & Qt::ControlModifier)) {
+        } else if (event->key() == Qt::Key_D) {
             on_toolButton_drop_clicked();
             return;
-        } else if (event->key() == Qt::Key_Delete) {
+        } else if (event->key() == Qt::Key_Up) {
+            on_toolButton_moveUp_clicked();
+            return;
+        } else if (event->key() == Qt::Key_Down) {
+            on_toolButton_moveDown_clicked();
+            return;
+        }
+    }
+
+    if (ui->tableWidget->hasFocus() && !(mods & Qt::ControlModifier)) {
+        if (event->key() == Qt::Key_P) {
+            on_toolButton_pick_clicked();
+            return;
+        } else if (event->key() == Qt::Key_R) {
+            on_toolButton_reword_clicked();
+            return;
+        } else if (event->key() == Qt::Key_S) {
+            on_toolButton_squash_clicked();
+            return;
+        } else if (event->key() == Qt::Key_F) {
+            on_toolButton_fixup_clicked();
+            return;
+        } else if (event->key() == Qt::Key_D || event->key() == Qt::Key_Delete) {
             on_toolButton_drop_clicked();
             return;
         }
@@ -440,6 +487,11 @@ bool QGitInteractiveRebaseDialog::validateRebase(QString &errorMessage) const
     for (const auto &item : m_items) {
         if (item.action == QGitRebaseAction::Drop) {
             continue;
+        }
+        if ((item.action == QGitRebaseAction::Pick || item.action == QGitRebaseAction::Reword) &&
+            item.message.trimmed().isEmpty()) {
+            errorMessage = tr("Commit %1 has an empty commit message.").arg(item.shortHash);
+            return false;
         }
         if (!foundFirst) {
             foundFirst = true;

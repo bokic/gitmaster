@@ -54,7 +54,6 @@ private:
     bool validateRebase(QString &errorMessage) const;
     void updateValidationStatus();
     static QString actionToString(QGitRebaseAction action);
-    static QString actionToolTip(QGitRebaseAction action);
 
     Ui::QGitInteractiveRebaseDialog *ui = nullptr;
     QGit *m_git = nullptr;

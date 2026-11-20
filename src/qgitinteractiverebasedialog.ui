@@ -76,7 +76,7 @@
       <item>
        <widget class="QLabel" name="label_info">
         <property name="text">
-         <string>Select an action for each commit. Reorder commits using Move buttons or drag-and-drop. Edit commit messages in the text area below.</string>
+         <string>Select an action for each commit. Reorder commits using Move buttons or Alt+Up/Alt+Down. Edit commit messages in the text area below.</string>
         </property>
         <property name="wordWrap">
          <bool>true</bool>
