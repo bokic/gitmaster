@@ -385,6 +385,7 @@ void QGitRepository::refreshData()
 
 void QGitRepository::stash(const QString &name, QGit::StashOptions options)
 {
+    emit statusMessage(tr("Saving stash..."));
     emit localStash(name, options);
 }
 
@@ -1092,8 +1093,10 @@ void QGitRepository::sslErrorsOccurred(QNetworkReply *reply, const QList<QSslErr
 void QGitRepository::localStashSaveReply(const QGitError &error)
 {
     if (error.errorCode()) {
+        emit statusMessage(tr("Error saving stash: %1").arg(error.errorString()));
         QMessageBox::critical(this, tr("Error saving stash"), error.errorString());
     } else {
+        emit clearStatusMessage();
         refreshData();
     }
 }

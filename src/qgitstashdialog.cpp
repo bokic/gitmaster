@@ -7,6 +7,8 @@ QGitStashDialog::QGitStashDialog(QWidget *parent)
     , ui(new Ui::QGitStashDialog)
 {
     ui->setupUi(this);
+    ui->okButton->setDefault(true);
+    ui->lineEdit_message->setFocus();
 }
 
 QGitStashDialog::~QGitStashDialog()
@@ -16,7 +18,7 @@ QGitStashDialog::~QGitStashDialog()
 
 QString QGitStashDialog::message() const
 {
-    return ui->lineEdit_message->text();
+    return ui->lineEdit_message->text().trimmed();
 }
 
 bool QGitStashDialog::keepIndex() const

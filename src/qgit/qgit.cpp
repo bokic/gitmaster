@@ -4532,8 +4532,11 @@ void QGit::stashSave(const QString &name, StashOptions options)
         if (includeUntracked) flags |= GIT_STASH_INCLUDE_UNTRACKED;
         if (includeIgnored) flags |= GIT_STASH_INCLUDE_IGNORED;
 
+        const QByteArray messageUtf8 = name.trimmed().toUtf8();
+        const char *messagePtr = messageUtf8.isEmpty() ? nullptr : messageUtf8.constData();
+
         git_oid stashid;
-        res = git_stash_save(&stashid, repo, me, name.toUtf8().constData(), flags);
+        res = git_stash_save(&stashid, repo, me, messagePtr, flags);
         if (res)
         {
             throw QGitError("git_stash_save", res);
