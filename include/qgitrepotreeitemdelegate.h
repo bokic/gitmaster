@@ -8,7 +8,16 @@ class QGitRepoTreeItemDelegate : public QStyledItemDelegate
 {
     Q_OBJECT
 public:
-    enum QDelegateItems : int {QItemPath = Qt::UserRole + 1, QItemModifiedFiles, QItemDeletedFiles, QItemNewFiles, QItemUnversionedFiles, QItemBranchName};
+    enum QDelegateItems : int {
+        QItemPath = Qt::UserRole + 1,
+        QItemModifiedFiles,
+        QItemDeletedFiles,
+        QItemNewFiles,
+        QItemUnversionedFiles,
+        QItemBranchName,
+        QItemCommitsAhead,
+        QItemCommitsBehind
+    };
     explicit QGitRepoTreeItemDelegate(QObject *parent = nullptr);
 
     void paint(QPainter *painter, const QStyleOptionViewItem &option, const QModelIndex &index) const override;

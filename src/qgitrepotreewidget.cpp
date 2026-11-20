@@ -112,6 +112,7 @@ void QGitRepoTreeWidget::repositoryStatusReply(QMap<git_status_t,int> items, QGi
             }
 
             QString branchName = QGit::branchNameFromPath(m_currentRefreshingPath);
+            const auto [aheadCount, behindCount] = QGit::aheadBehindFromPath(m_currentRefreshingPath);
 
             const bool hadPreviousState = targetItem->data(0, QGitRepoTreeItemDelegate::QItemBranchName).isValid();
 
@@ -134,6 +135,14 @@ void QGitRepoTreeWidget::repositoryStatusReply(QMap<git_status_t,int> items, QGi
             }
             if (targetItem->data(0, QGitRepoTreeItemDelegate::QItemBranchName) != branchName) {
                 targetItem->setData(0, QGitRepoTreeItemDelegate::QItemBranchName, branchName);
+                changed = true;
+            }
+            if (targetItem->data(0, QGitRepoTreeItemDelegate::QItemCommitsAhead) != aheadCount) {
+                targetItem->setData(0, QGitRepoTreeItemDelegate::QItemCommitsAhead, aheadCount);
+                changed = true;
+            }
+            if (targetItem->data(0, QGitRepoTreeItemDelegate::QItemCommitsBehind) != behindCount) {
+                targetItem->setData(0, QGitRepoTreeItemDelegate::QItemCommitsBehind, behindCount);
                 changed = true;
             }
 

@@ -39,6 +39,8 @@ void QGitRepoTreeItemDelegate::paint(QPainter *painter, const QStyleOptionViewIt
     auto newFiles = index.data(QItemNewFiles);
     auto unversionedFiles = index.data(QItemUnversionedFiles);
     auto branchName = index.data(QItemBranchName);
+    const int aheadCount = index.data(QItemCommitsAhead).toInt();
+    const int behindCount = index.data(QItemCommitsBehind).toInt();
 
     int x = option.rect.left();
     int y = option.rect.top();
@@ -138,6 +140,17 @@ void QGitRepoTreeItemDelegate::paint(QPainter *painter, const QStyleOptionViewIt
         if ((modifiedFiles.toInt() == 0)&&(deletedFiles.toInt() == 0)&&(newFiles.toInt() == 0)) {
             painter->drawImage(x, y, m_fileStatusOkImage);
             x += m_fileStatusOkImage.width() + 4;
+        }
+
+        if (aheadCount > 0 || behindCount > 0) {
+            QStringList indicators;
+            if (aheadCount > 0)
+                indicators << QStringLiteral("↑%1").arg(aheadCount);
+            if (behindCount > 0)
+                indicators << QStringLiteral("↓%1").arg(behindCount);
+            const QString syncText = indicators.join(QStringLiteral(" "));
+            painter->drawText(x, y + fm.height() - fm.descent(), syncText);
+            x += fm.horizontalAdvance(syncText) + 4;
         }
     }
 

@@ -271,6 +271,7 @@ public:
     void resetCredentialAttemptState() { m_credentialAttemptState.reset(); }
 
     static QString branchNameFromPath(const QString &path);
+    static std::pair<int, int> aheadBehindFromPath(const QString &path);
     static int createLocalRepository(const QDir &path);
     static bool isGitRepository(const QDir &path);
     static bool gitRepositoryDefaultSignature(const QDir &path, QString &name, QString &email);

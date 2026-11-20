@@ -1612,6 +1612,39 @@ QString QGit::branchNameFromPath(const QString &path)
     return branch;
 }
 
+std::pair<int, int> QGit::aheadBehindFromPath(const QString &path)
+{
+    GitRepository repo;
+    if (git_repository_open(repo, path.toUtf8().constData()) != 0)
+        return {0, 0};
+
+    GitReference ref;
+    if (git_repository_head(ref, repo) != 0)
+        return {0, 0};
+
+    const git_oid *local_oid = git_reference_target(ref);
+    if (!local_oid)
+        return {0, 0};
+
+    GitReference upstream;
+    if (git_branch_upstream(upstream, ref) != 0)
+        return {0, 0};
+
+    const git_oid *upstream_oid = git_reference_target(upstream);
+    if (!upstream_oid)
+        return {0, 0};
+
+    size_t ahead = 0;
+    size_t behind = 0;
+    if (git_graph_ahead_behind(&ahead, &behind, repo, local_oid, upstream_oid) != 0)
+        return {0, 0};
+
+    return {
+        static_cast<int>(qMin<size_t>(ahead, INT_MAX)),
+        static_cast<int>(qMin<size_t>(behind, INT_MAX))
+    };
+}
+
 int QGit::createLocalRepository(const QDir &path)
 {
     GitRepository repo;
