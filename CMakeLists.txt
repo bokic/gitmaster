@@ -92,6 +92,7 @@ set(PROJECT_HEADERS
     include/qgitpulldialog.h
     include/qgitfetchdialog.h
     include/qgitbranchdialog.h
+    include/qgitcommitpickerdialog.h
     include/qgitsettingsdialog.h
     include/qgitconflictresolverdialog.h
     include/qgitcreatetagdialog.h
@@ -155,6 +156,7 @@ set(PROJECT_SOURCES
     src/qgitpulldialog.cpp             src/qgitpulldialog.ui
     src/qgitfetchdialog.cpp            src/qgitfetchdialog.ui
     src/qgitbranchdialog.cpp           src/qgitbranchdialog.ui
+    src/qgitcommitpickerdialog.cpp
     src/qgitmergedialog.cpp            src/qgitmergedialog.ui
     src/qgitsettingsdialog.cpp         src/qgitsettingsdialog.ui
     src/qgitconflictresolverdialog.cpp src/qgitconflictresolverdialog.ui

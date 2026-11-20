@@ -35,8 +35,11 @@ public:
 private slots:
     void on_newBranch_pushButton_clicked();
     void on_deleteBranch_pushButton_clicked();
+    void on_pushButton_clicked();
     void on_newBranch_lineEdit_textChanged(const QString &text);
     void on_newBranchCommitId_lineEdit_textChanged(const QString &text);
+    void on_workingCopy_radioButton_toggled(bool checked);
+    void on_specifiedCommit_radioButton_toggled(bool checked);
     void on_deleteBranches_tableWidget_itemChanged(QTableWidgetItem *item);
     void validateCommitId();
 
