@@ -58,6 +58,7 @@ public:
     bool hasRemotes() const { return m_hasRemotes; }
     bool hasCommitsToPush() const { return m_hasCommitsToPush; }
     bool hasStashableChanges() const { return m_hasStashableChanges; }
+    QString repositoryPath() const { return m_path; }
 
 signals:
     void localStash(const QString &name, QGit::StashOptions options);

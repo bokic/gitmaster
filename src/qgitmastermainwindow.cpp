@@ -722,54 +722,68 @@ void QGitMasterMainWindow::on_actionGit_Flow_triggered()
 void QGitMasterMainWindow::on_actionTerminal_triggered()
 {
     auto widget = dynamic_cast<QGitRepository *>(ui->tabWidget->currentWidget());
-    if (widget && widget->git()) {
-        QString absolutePath = widget->git()->path().absolutePath();
-        bool launched = false;
+    if (!widget)
+        return;
+
+    const QString absolutePath = QFileInfo(widget->repositoryPath()).absoluteFilePath();
+    if (absolutePath.isEmpty() || !QFileInfo::exists(absolutePath) || !QFileInfo(absolutePath).isDir()) {
+        QMessageBox::warning(this, tr("Terminal Error"),
+                             tr("Repository directory does not exist:\n%1").arg(absolutePath));
+        return;
+    }
+
+    bool launched = false;
 
 #if defined(Q_OS_WIN)
-        // On Windows, try Windows Terminal (wt) first, then PowerShell, and fallback to cmd
-        QStringList terminals = { "wt", "powershell", "cmd" };
-        for (const QString &term : terminals) {
-            QString path = QStandardPaths::findExecutable(term);
-            if (!path.isEmpty()) {
-                launched = QProcess::startDetached(path, QStringList(), absolutePath);
-                if (launched) {
-                    break;
-                }
-            }
+    const QStringList terminals = { QStringLiteral("wt"), QStringLiteral("powershell"), QStringLiteral("cmd") };
+    for (const QString &term : terminals) {
+        const QString exePath = QStandardPaths::findExecutable(term);
+        if (!exePath.isEmpty()) {
+            const QStringList args = (term == QStringLiteral("wt"))
+                ? QStringList{ QStringLiteral("-d"), absolutePath }
+                : QStringList();
+            launched = QProcess::startDetached(exePath, args, absolutePath);
+            if (launched)
+                break;
         }
+    }
 #elif defined(Q_OS_MACOS)
-        // On macOS, launch Terminal.app targeting the repository directory via the system 'open' tool
-        launched = QProcess::startDetached("open", QStringList() << "-a" << "Terminal" << absolutePath);
-        if (!launched) {
-            launched = QProcess::startDetached("open", QStringList() << absolutePath);
-        }
+    launched = QProcess::startDetached(QStringLiteral("open"), { QStringLiteral("-a"), QStringLiteral("Terminal"), absolutePath });
+    if (!launched) {
+        launched = QProcess::startDetached(QStringLiteral("open"), { QStringLiteral("-a"), QStringLiteral("iTerm"), absolutePath });
+    }
 #else
-        // On Linux/Unix, search for popular terminal emulators
-        QStringList terminals = {
-            "gnome-terminal",
-            "konsole",
-            "xfce4-terminal",
-            "mate-terminal",
-            "kitty",
-            "alacritty",
-            "xterm"
-        };
-        for (const QString &term : terminals) {
-            QString path = QStandardPaths::findExecutable(term);
-            if (!path.isEmpty()) {
-                launched = QProcess::startDetached(path, QStringList(), absolutePath);
-                if (launched) {
-                    break;
-                }
-            }
+    QStringList terminals;
+    const QString envTerminal = qEnvironmentVariable("TERMINAL").trimmed();
+    if (!envTerminal.isEmpty())
+        terminals << envTerminal;
+    terminals << QStringLiteral("x-terminal-emulator")
+              << QStringLiteral("ptyxis")
+              << QStringLiteral("gnome-terminal")
+              << QStringLiteral("konsole")
+              << QStringLiteral("xfce4-terminal")
+              << QStringLiteral("mate-terminal")
+              << QStringLiteral("tilix")
+              << QStringLiteral("kitty")
+              << QStringLiteral("alacritty")
+              << QStringLiteral("wezterm")
+              << QStringLiteral("foot")
+              << QStringLiteral("terminator")
+              << QStringLiteral("xterm");
+
+    for (const QString &term : terminals) {
+        const QString exePath = QFileInfo(term).isAbsolute() ? term : QStandardPaths::findExecutable(term);
+        if (!exePath.isEmpty() && QFileInfo::exists(exePath)) {
+            launched = QProcess::startDetached(exePath, QStringList(), absolutePath);
+            if (launched)
+                break;
         }
+    }
 #endif
 
-        if (!launched) {
-            QMessageBox::warning(this, tr("Terminal Error"),
-                                 tr("Could not find or launch a system terminal. Please make sure a terminal emulator is installed."));
-        }
+    if (!launched) {
+        QMessageBox::warning(this, tr("Terminal Error"),
+                             tr("Could not find or launch a system terminal. Please make sure a terminal emulator is installed."));
     }
 }
 
