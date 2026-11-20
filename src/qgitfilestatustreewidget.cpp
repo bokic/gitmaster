@@ -1,9 +1,147 @@
 // SPDX-License-Identifier: LGPL-3.0-or-later
 #include "qgitfilestatustreewidget.h"
 #include <QApplication>
-#include <QStyle>
 #include <QFileInfo>
 #include <QHeaderView>
+#include <QSet>
+#include <QSignalBlocker>
+#include <QStyle>
+
+namespace {
+
+constexpr int ItemKeyRole = Qt::UserRole + 10;
+
+struct DesiredFileItem
+{
+    QString key;
+    QString col0Text;
+    QString col1Text;
+    QString col2Text;
+    QIcon icon;
+    Qt::CheckState checkState = Qt::Unchecked;
+    QString filePath;
+    int status = 0;
+    bool isFolder = false;
+    QList<DesiredFileItem> children;
+};
+
+DesiredFileItem *findChildByKey(QList<DesiredFileItem> &list, const QString &key)
+{
+    for (auto &item : list) {
+        if (item.key == key)
+            return &item;
+    }
+    return nullptr;
+}
+
+void applyDesiredFileItem(QTreeWidgetItem *item, const DesiredFileItem &desired, int columnCount)
+{
+    if (item->data(0, ItemKeyRole).toString() != desired.key)
+        item->setData(0, ItemKeyRole, desired.key);
+
+    const Qt::ItemFlags flags = item->flags();
+    if (!flags.testFlag(Qt::ItemIsUserCheckable))
+        item->setFlags(flags | Qt::ItemIsUserCheckable);
+
+    if (item->text(0) != desired.col0Text)
+        item->setText(0, desired.col0Text);
+
+    item->setIcon(0, desired.icon);
+
+    if (!desired.isFolder && item->checkState(0) != desired.checkState)
+        item->setCheckState(0, desired.checkState);
+
+    if (desired.isFolder) {
+        if (!item->data(0, Qt::UserRole).isNull())
+            item->setData(0, Qt::UserRole, QVariant());
+        if (!item->data(0, Qt::UserRole + 1).isNull())
+            item->setData(0, Qt::UserRole + 1, QVariant());
+    } else {
+        if (item->data(0, Qt::UserRole).toString() != desired.filePath)
+            item->setData(0, Qt::UserRole, desired.filePath);
+        if (item->data(0, Qt::UserRole + 1).toInt() != desired.status)
+            item->setData(0, Qt::UserRole + 1, desired.status);
+    }
+
+    if (columnCount >= 3) {
+        if (item->text(1) != desired.col1Text)
+            item->setText(1, desired.col1Text);
+        if (item->text(2) != desired.col2Text)
+            item->setText(2, desired.col2Text);
+    }
+}
+
+void collectExpandedState(QTreeWidgetItem *item, QSet<QTreeWidgetItem *> &expanded)
+{
+    if (item->isExpanded())
+        expanded.insert(item);
+    for (int i = 0; i < item->childCount(); ++i)
+        collectExpandedState(item->child(i), expanded);
+}
+
+void restoreExpandedState(QTreeWidgetItem *item, const QSet<QTreeWidgetItem *> &expanded)
+{
+    item->setExpanded(expanded.contains(item));
+    for (int i = 0; i < item->childCount(); ++i)
+        restoreExpandedState(item->child(i), expanded);
+}
+
+void syncFileTreeItems(QTreeWidgetItem *parentItem,
+                       const QList<DesiredFileItem> &desiredChildren,
+                       int columnCount)
+{
+    QSet<QString> desiredKeys;
+    desiredKeys.reserve(desiredChildren.size());
+    for (const auto &desired : desiredChildren)
+        desiredKeys.insert(desired.key);
+
+    for (int i = parentItem->childCount() - 1; i >= 0; --i) {
+        QTreeWidgetItem *child = parentItem->child(i);
+        if (!desiredKeys.contains(child->data(0, ItemKeyRole).toString()))
+            delete parentItem->takeChild(i);
+    }
+
+    QHash<QString, QTreeWidgetItem *> existingByKey;
+    existingByKey.reserve(parentItem->childCount());
+    for (int i = 0; i < parentItem->childCount(); ++i) {
+        QTreeWidgetItem *child = parentItem->child(i);
+        existingByKey.insert(child->data(0, ItemKeyRole).toString(), child);
+    }
+
+    for (int i = 0; i < desiredChildren.size(); ++i) {
+        const DesiredFileItem &desired = desiredChildren.at(i);
+        QTreeWidgetItem *child = existingByKey.value(desired.key, nullptr);
+
+        if (child) {
+            const int currentIndex = parentItem->indexOfChild(child);
+            if (currentIndex != i) {
+                QSet<QTreeWidgetItem *> expanded;
+                collectExpandedState(child, expanded);
+                QTreeWidget *tree = parentItem->treeWidget();
+                QTreeWidgetItem *prevCurrent = tree ? tree->currentItem() : nullptr;
+
+                parentItem->takeChild(currentIndex);
+                parentItem->insertChild(i, child);
+
+                restoreExpandedState(child, expanded);
+                if (prevCurrent && tree)
+                    tree->setCurrentItem(prevCurrent, 0, QItemSelectionModel::NoUpdate);
+            }
+
+            applyDesiredFileItem(child, desired, columnCount);
+            syncFileTreeItems(child, desired.children, columnCount);
+        } else {
+            child = new QTreeWidgetItem();
+            applyDesiredFileItem(child, desired, columnCount);
+            parentItem->insertChild(i, child);
+            syncFileTreeItems(child, desired.children, columnCount);
+            if (desired.isFolder)
+                child->setExpanded(true);
+        }
+    }
+}
+
+} // namespace
 
 QGitFileStatusTreeWidget::QGitFileStatusTreeWidget(QWidget *parent)
     : QTreeWidget(parent)
@@ -14,6 +152,9 @@ QGitFileStatusTreeWidget::QGitFileStatusTreeWidget(QWidget *parent)
 
 void QGitFileStatusTreeWidget::setViewLayoutMode(ViewLayoutMode mode)
 {
+    if (m_layoutMode != mode)
+        clear();
+
     m_layoutMode = mode;
 
     if (m_layoutMode == FlatMulti)
@@ -79,9 +220,10 @@ void QGitFileStatusTreeWidget::populateFiles(
     const QList<std::pair<QString, git_status_t>> &files,
     FileCategory category)
 {
-    blockSignals(true);
-    clear();
+    const QSignalBlocker blocker(this);
     setEnabled(true);
+
+    QList<DesiredFileItem> desiredRoot;
 
     for (const auto &filePair : files)
     {
@@ -116,78 +258,72 @@ void QGitFileStatusTreeWidget::populateFiles(
 
         if (m_layoutMode == FlatSingle)
         {
-            QTreeWidgetItem *item = new QTreeWidgetItem(this);
-            item->setFlags(item->flags() | Qt::ItemIsUserCheckable);
-            item->setCheckState(0, state);
-            item->setData(0, Qt::UserRole, file);
-            item->setData(0, Qt::UserRole + 1, (int)status);
-            item->setText(0, file);
-            item->setIcon(0, icon);
+            DesiredFileItem item;
+            item.key = QStringLiteral("F:") + file;
+            item.col0Text = file;
+            item.icon = icon;
+            item.checkState = state;
+            item.filePath = file;
+            item.status = static_cast<int>(status);
+            desiredRoot.append(item);
         }
         else if (m_layoutMode == FlatMulti)
         {
-            QTreeWidgetItem *item = new QTreeWidgetItem(this);
-            item->setFlags(item->flags() | Qt::ItemIsUserCheckable);
-            item->setCheckState(0, state);
-            item->setData(0, Qt::UserRole, file);
-            item->setData(0, Qt::UserRole + 1, (int)status);
-
             QFileInfo info(file);
-            item->setText(0, info.fileName());
-            item->setIcon(0, icon);
-            item->setText(1, info.path() == "." ? "" : info.path());
-            item->setText(2, statusText(status));
+            DesiredFileItem item;
+            item.key = QStringLiteral("F:") + file;
+            item.col0Text = info.fileName();
+            item.col1Text = info.path() == QStringLiteral(".") ? QString() : info.path();
+            item.col2Text = statusText(status);
+            item.icon = icon;
+            item.checkState = state;
+            item.filePath = file;
+            item.status = static_cast<int>(status);
+            desiredRoot.append(item);
         }
         else if (m_layoutMode == TreeView)
         {
             QStringList parts = file.split('/');
-            QTreeWidgetItem *parent = nullptr;
+            QList<DesiredFileItem> *currentList = &desiredRoot;
             for (int i = 0; i < parts.size() - 1; ++i)
             {
-                QString dirName = parts.at(i);
-                QTreeWidgetItem *found = nullptr;
-                int childCount = parent ? parent->childCount() : topLevelItemCount();
-                for (int j = 0; j < childCount; ++j)
-                {
-                    QTreeWidgetItem *child = parent ? parent->child(j) : topLevelItem(j);
-                    if (child->text(0) == dirName && child->data(0, Qt::UserRole).toString().isEmpty())
-                    {
-                        found = child;
-                        break;
-                    }
-                }
+                const QString &dirName = parts.at(i);
+                const QString dirKey = QStringLiteral("D:") + dirName;
+                DesiredFileItem *found = findChildByKey(*currentList, dirKey);
                 if (!found)
                 {
-                    parent = parent ? new QTreeWidgetItem(parent) : new QTreeWidgetItem(this);
-                    parent->setText(0, dirName);
-                    parent->setIcon(0, QApplication::style()->standardIcon(QStyle::SP_DirIcon));
-                    parent->setFlags(parent->flags() | Qt::ItemIsUserCheckable);
-                    parent->setCheckState(0, Qt::Unchecked);
+                    DesiredFileItem folder;
+                    folder.key = dirKey;
+                    folder.col0Text = dirName;
+                    folder.icon = QApplication::style()->standardIcon(QStyle::SP_DirIcon);
+                    folder.isFolder = true;
+                    currentList->append(folder);
+                    currentList = &currentList->last().children;
                 }
                 else
                 {
-                    parent = found;
+                    currentList = &found->children;
                 }
             }
 
-            QTreeWidgetItem *item = parent ? new QTreeWidgetItem(parent) : new QTreeWidgetItem(this);
-            item->setFlags(item->flags() | Qt::ItemIsUserCheckable);
-            item->setCheckState(0, state);
-            item->setData(0, Qt::UserRole, file);
-            item->setData(0, Qt::UserRole + 1, (int)status);
-            item->setText(0, parts.last());
-            item->setIcon(0, icon);
+            DesiredFileItem item;
+            item.key = QStringLiteral("F:") + parts.last();
+            item.col0Text = parts.last();
+            item.icon = icon;
+            item.checkState = state;
+            item.filePath = file;
+            item.status = static_cast<int>(status);
+            currentList->append(item);
         }
     }
+
+    syncFileTreeItems(invisibleRootItem(), desiredRoot, columnCount());
 
     if (m_layoutMode == TreeView) {
         for (int i = 0; i < topLevelItemCount(); ++i) {
             updateFolderCheckStates(topLevelItem(i));
         }
-        expandAll();
     }
-
-    blockSignals(false);
 }
 
 void QGitFileStatusTreeWidget::updateFolderCheckStates(QTreeWidgetItem *item)
