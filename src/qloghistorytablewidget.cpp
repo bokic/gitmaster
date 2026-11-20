@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: LGPL-3.0-or-later
 #include "qloghistorytablewidget.h"
+#include <QSignalBlocker>
 
 
 QLogHistoryTableWidget::QLogHistoryTableWidget(QWidget *parent)
@@ -11,51 +12,19 @@ void QLogHistoryTableWidget::clearCommits()
 {
     clearContents();
     setRowCount(0);
+    m_commits.clear();
     m_hashIndex.clear();
 }
 
-void QLogHistoryTableWidget::addCommit(const QGitCommit &commit)
+QList<QVariant> QLogHistoryTableWidget::computeGraphData(const QGitCommit &commit, QStringList &hashIndex) const
 {
-    if (columnCount() == 4)
-    {
-        int row = rowCount();
-        insertRow(row);
-
-        QTableWidgetItem *item = nullptr;
-
-        item = new QTableWidgetItem(commit.message().section('\n', 0, 0));
-        item->setData(Qt::UserRole, commit.message());
-        item->setData(Qt::UserRole + 1, commit.id());
-        setItem(row, 0, item);
-
-        item = new QTableWidgetItem(commit.time().toString());
-        setItem(row, 1, item);
-
-        item = new QTableWidgetItem(QString("%1 <%2>").arg(commit.author().name(), commit.author().email()));
-        item->setData(Qt::UserRole, commit.author().name());
-        item->setData(Qt::UserRole + 1, commit.author().email());
-        setItem(row, 2, item);
-
-        item = new QTableWidgetItem(commit.id().left(7));
-        item->setData(Qt::UserRole, commit.id());
-        setItem(row, 3, item);
-        return;
-    }
-
-    QString commitId = commit.id().toLower();
-    int row = rowCount();    
-
-    // Reset lane tracking if the table is cleared/empty
-    if (row == 0)
-    {
-        m_hashIndex.clear();
-    }
+    const QString commitId = commit.id().toLower();
 
     // Keep track of active lanes at the top of this row (BEFORE we process/modify for the current commit)
     QList<int> activeLanesAtTop;
-    for (int i = 0; i < m_hashIndex.size(); ++i)
+    for (int i = 0; i < hashIndex.size(); ++i)
     {
-        if (!m_hashIndex[i].isEmpty())
+        if (!hashIndex[i].isEmpty())
         {
             activeLanesAtTop.append(i);
         }
@@ -63,9 +32,9 @@ void QLogHistoryTableWidget::addCommit(const QGitCommit &commit)
 
     // Find all lanes that currently track this commitId case-insensitively
     QList<int> mergingLanes;
-    for (int i = 0; i < m_hashIndex.size(); ++i)
+    for (int i = 0; i < hashIndex.size(); ++i)
     {
-        if (m_hashIndex[i].toLower() == commitId)
+        if (hashIndex[i].toLower() == commitId)
         {
             mergingLanes.append(i);
         }
@@ -89,13 +58,13 @@ void QLogHistoryTableWidget::addCommit(const QGitCommit &commit)
     else
     {
         // Start a new lane
-        m_hashIndex.append(commitId);
-        commitLane = static_cast<int>(m_hashIndex.size()) - 1;
+        hashIndex.append(commitId);
+        commitLane = static_cast<int>(hashIndex.size()) - 1;
     }
 
     // Determine parents and build connections
     QList<QVariantList> parentConnections;
-    QStringList nextHashIndex = m_hashIndex;
+    QStringList nextHashIndex = hashIndex;
 
     // Clear all merging lanes from nextHashIndex so they don't continue down
     for (int lane : mergingLanes)
@@ -179,8 +148,8 @@ void QLogHistoryTableWidget::addCommit(const QGitCommit &commit)
         }
     }
 
-    // Update m_hashIndex for the next row
-    m_hashIndex = nextHashIndex;
+    // Update hashIndex for the next row
+    hashIndex = nextHashIndex;
 
     // Pack into data for column 0 QTableWidgetItem
     QList<QVariant> graphData;
@@ -203,14 +172,14 @@ void QLogHistoryTableWidget::addCommit(const QGitCommit &commit)
         }
     }
     graphData.append(QVariant(parentConnsVar));
- 
+
     QList<QVariant> activeLanesVar;
     for (int lane : activeLanesAtTop)
     {
         activeLanesVar.append(lane);
     }
     graphData.append(QVariant(activeLanesVar));
- 
+
     QList<QVariant> childConnsVar;
     for (const auto &conn : childConnections)
     {
@@ -222,12 +191,14 @@ void QLogHistoryTableWidget::addCommit(const QGitCommit &commit)
     }
     graphData.append(QVariant(childConnsVar));
 
-    insertRow(row);
+    return graphData;
+}
 
+void QLogHistoryTableWidget::populateCommitRow(int row, const QGitCommit &commit)
+{
     QTableWidgetItem *item = nullptr;
 
     item = new QTableWidgetItem();
-    item->setData(Qt::UserRole, graphData);
     setItem(row, 0, item);
 
     item = new QTableWidgetItem(commit.message().section('\n', 0, 0));
@@ -246,6 +217,177 @@ void QLogHistoryTableWidget::addCommit(const QGitCommit &commit)
     item = new QTableWidgetItem(commit.id().left(7));
     item->setData(Qt::UserRole, commit.id());
     setItem(row, 4, item);
+}
+
+void QLogHistoryTableWidget::recalculateGraph()
+{
+    if (columnCount() == 4)
+        return;
+
+    QStringList hashIndex;
+    for (int row = 0; row < m_commits.size(); ++row)
+    {
+        const QList<QVariant> graphData = computeGraphData(m_commits.at(row), hashIndex);
+        QTableWidgetItem *graphItem = item(row, 0);
+        if (!graphItem) {
+            graphItem = new QTableWidgetItem();
+            setItem(row, 0, graphItem);
+        }
+        graphItem->setData(Qt::UserRole, graphData);
+    }
+
+    m_hashIndex = hashIndex;
+    viewport()->update();
+}
+
+void QLogHistoryTableWidget::syncCommits(const QList<QGitCommit> &commits)
+{
+    if (columnCount() == 4)
+        return;
+
+    if (m_commits.isEmpty()) {
+        for (const auto &commit : commits) {
+            addCommit(commit);
+        }
+        return;
+    }
+
+    QHash<QString, int> oldIndexById;
+    oldIndexById.reserve(m_commits.size());
+    for (int i = 0; i < m_commits.size(); ++i) {
+        oldIndexById.insert(m_commits.at(i).id().toLower(), i);
+    }
+
+    int anchorNew = -1;
+    int anchorOld = -1;
+    for (int i = static_cast<int>(commits.size()) - 1; i >= 0; --i) {
+        const QString id = commits.at(i).id().toLower();
+        if (oldIndexById.contains(id)) {
+            anchorNew = i;
+            anchorOld = oldIndexById.value(id);
+            break;
+        }
+    }
+
+    int oldPrefixCount = static_cast<int>(m_commits.size());
+    if (anchorNew == static_cast<int>(commits.size()) - 1 && anchorOld >= 0) {
+        oldPrefixCount = anchorOld + 1;
+    }
+
+    QString selectedHash;
+    const int prevRow = currentRow();
+    if (prevRow >= 0 && prevRow < m_commits.size()) {
+        selectedHash = m_commits.at(prevRow).id();
+    }
+
+    const QSignalBlocker blocker(this);
+
+    QSet<QString> newIds;
+    newIds.reserve(commits.size());
+    for (const auto &commit : commits) {
+        newIds.insert(commit.id().toLower());
+    }
+
+    for (int r = oldPrefixCount - 1; r >= 0; --r) {
+        if (!newIds.contains(m_commits.at(r).id().toLower())) {
+            removeRow(r);
+            m_commits.removeAt(r);
+            --oldPrefixCount;
+        }
+    }
+
+    for (int i = 0; i < commits.size(); ++i) {
+        const QGitCommit &commit = commits.at(i);
+        const QString id = commit.id().toLower();
+
+        int matchIdx = -1;
+        for (int r = i; r < oldPrefixCount; ++r) {
+            if (m_commits.at(r).id().toLower() == id) {
+                matchIdx = r;
+                break;
+            }
+        }
+
+        if (matchIdx >= 0) {
+            if (matchIdx != i) {
+                QList<QTableWidgetItem *> rowItems;
+                rowItems.reserve(columnCount());
+                for (int c = 0; c < columnCount(); ++c) {
+                    rowItems.append(takeItem(matchIdx, c));
+                }
+                removeRow(matchIdx);
+                insertRow(i);
+                for (int c = 0; c < columnCount(); ++c) {
+                    setItem(i, c, rowItems.at(c));
+                }
+                m_commits.move(matchIdx, i);
+            }
+            m_commits[i] = commit;
+        } else {
+            insertRow(i);
+            populateCommitRow(i, commit);
+            m_commits.insert(i, commit);
+            ++oldPrefixCount;
+        }
+    }
+
+    recalculateGraph();
+
+    if (!selectedHash.isEmpty()) {
+        for (int r = 0; r < m_commits.size(); ++r) {
+            if (m_commits.at(r).id().compare(selectedHash, Qt::CaseInsensitive) == 0) {
+                setCurrentCell(r, 0, QItemSelectionModel::ClearAndSelect | QItemSelectionModel::Rows);
+                break;
+            }
+        }
+    }
+}
+
+void QLogHistoryTableWidget::addCommit(const QGitCommit &commit)
+{
+    if (columnCount() == 4)
+    {
+        int row = rowCount();
+        insertRow(row);
+
+        QTableWidgetItem *item = nullptr;
+
+        item = new QTableWidgetItem(commit.message().section('\n', 0, 0));
+        item->setData(Qt::UserRole, commit.message());
+        item->setData(Qt::UserRole + 1, commit.id());
+        setItem(row, 0, item);
+
+        item = new QTableWidgetItem(commit.time().toString());
+        setItem(row, 1, item);
+
+        item = new QTableWidgetItem(QString("%1 <%2>").arg(commit.author().name(), commit.author().email()));
+        item->setData(Qt::UserRole, commit.author().name());
+        item->setData(Qt::UserRole + 1, commit.author().email());
+        setItem(row, 2, item);
+
+        item = new QTableWidgetItem(commit.id().left(7));
+        item->setData(Qt::UserRole, commit.id());
+        setItem(row, 3, item);
+        return;
+    }
+
+    int row = rowCount();
+
+    // Reset lane tracking if the table is cleared/empty
+    if (row == 0)
+    {
+        m_hashIndex.clear();
+        m_commits.clear();
+    }
+
+    const QList<QVariant> graphData = computeGraphData(commit, m_hashIndex);
+
+    insertRow(row);
+    populateCommitRow(row, commit);
+    if (QTableWidgetItem *graphItem = item(row, 0)) {
+        graphItem->setData(Qt::UserRole, graphData);
+    }
+    m_commits.append(commit);
 }
 
 bool QLogHistoryTableWidget::selectCommit(const QString &hash)

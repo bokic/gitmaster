@@ -233,6 +233,7 @@ protected:
 
 private:
     void fetchCommits();
+    void refreshCommits();
     void activateCommitOperation(bool activate);
     void fetchRepositoryChangedFiles();
     Ui::QGitRepository *ui = nullptr;
@@ -267,6 +268,8 @@ private:
     bool m_rewordingCommit = false;
     QString m_currentLogBranchFilter;
     int m_logCommitsOffset = 0;
+    bool m_refreshingLogCommits = false;
+    bool m_logCommitsDirty = false;
     QString m_lastRemote;
     QStringList m_lastBranches;
     QGit::PushOptions m_lastPushOptions = QGit::PushOption::None;

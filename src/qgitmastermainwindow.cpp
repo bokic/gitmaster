@@ -51,6 +51,17 @@ QGitMasterMainWindow::QGitMasterMainWindow(QWidget *parent)
 
     ui->treeWidget->setItemDelegate(treeDelegate);
     connect(ui->treeWidget, &QGitRepoTreeWidget::repositoriesDropped, this, &QGitMasterMainWindow::addRepositories);
+    connect(ui->treeWidget, &QGitRepoTreeWidget::repositoryChanged, this, [this](const QString &path) {
+        const QDir targetDir(path);
+        for (int index = 0; index < ui->tabWidget->count(); ++index) {
+            auto repoWidget = dynamic_cast<QGitRepository *>(ui->tabWidget->widget(index));
+            if (repoWidget && repoWidget->git() &&
+                QDir(repoWidget->git()->path().absolutePath()) == QDir(targetDir.absolutePath())) {
+                repoWidget->refreshData();
+                break;
+            }
+        }
+    });
 
     readSettings();
 
@@ -73,7 +84,7 @@ bool QGitMasterMainWindow::event(QEvent *event)
 {
     if (event->type() == QEvent::WindowActivate)
     {
-        ui->treeWidget->refreshItems();
+        ui->treeWidget->refreshItems(true);
         auto panel = dynamic_cast<QGitRepository *>(ui->tabWidget->currentWidget());
         updateActionsState(panel);
     }

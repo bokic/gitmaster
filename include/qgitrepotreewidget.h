@@ -12,10 +12,11 @@ public:
     explicit QGitRepoTreeWidget(QWidget *parent = nullptr);
     ~QGitRepoTreeWidget();
 
-    void refreshItems();
+    void refreshItems(bool notifyOnChange = false);
 
 signals:
     void repositoryStatus();
+    void repositoryChanged(const QString &path);
     void repositoriesDropped(const QStringList &paths);
 
 public slots:
@@ -32,6 +33,8 @@ private:
     int m_refreshIndex = 0;
     bool m_isRefreshing = false;
     bool m_refreshPending = false;
+    bool m_notifyOnChange = false;
+    bool m_pendingNotifyOnChange = false;
     QString m_currentRefreshingPath;
 
 private slots:

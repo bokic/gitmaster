@@ -352,6 +352,14 @@ void QGitRepository::refreshData()
     {
         fetchRepositoryChangedFiles();
     }
+    if (ui->repositoryDetail->currentIndex() != 1)
+    {
+        m_logCommitsDirty = true;
+    }
+    else if (ui->logHistory_commits->rowCount() > 0)
+    {
+        refreshCommits();
+    }
 
     emit repositoryBranches();
     emit repositoryStashes();
@@ -1391,13 +1399,10 @@ void QGitRepository::repositoryCommitReply(const QString &commit_id, const QGitE
     bool wasRewording = m_rewordingCommit;
     m_rewordingCommit = false;
 
-    // The history list is paged and cached in the table. Invalidate that cache
-    // whenever a commit was created so the next visit to Log / History starts
-    // from HEAD and includes the new commit.
+    // The history list is paged and cached in the table. Mark it dirty whenever
+    // a commit was created so Log / History incrementally diffs from HEAD.
     if (!commit_id.isEmpty()) {
-        m_logCommitsOffset = 0;
-        m_allCommitsLoaded = false;
-        ui->logHistory_commits->clearCommits();
+        m_logCommitsDirty = true;
     }
 
     ui->plainTextEdit_commitMessage->setEnabled(true);
@@ -1431,16 +1436,26 @@ void QGitRepository::repositoryGetCommitsReply(const QList<QGitCommit> &commits,
 {
     Q_UNUSED(error)
 
-    for(const auto &commit: commits)
-    {
-        ui->logHistory_commits->addCommit(commit);
-    }
+    if (m_refreshingLogCommits) {
+        m_refreshingLogCommits = false;
+        m_logCommitsDirty = false;
+        ui->logHistory_commits->syncCommits(commits);
+        m_logCommitsOffset = ui->logHistory_commits->rowCount();
+        if (commits.size() < COMMIT_COUNT_TO_LOAD) {
+            m_allCommitsLoaded = true;
+        }
+    } else {
+        for(const auto &commit: commits)
+        {
+            ui->logHistory_commits->addCommit(commit);
+        }
 
-    m_logCommitsOffset += static_cast<int>(commits.size());
+        m_logCommitsOffset += static_cast<int>(commits.size());
 
-    if (commits.size() < COMMIT_COUNT_TO_LOAD)
-    {
-        m_allCommitsLoaded = true;
+        if (commits.size() < COMMIT_COUNT_TO_LOAD)
+        {
+            m_allCommitsLoaded = true;
+        }
     }
 
     if (!m_searchingCommitHash.isEmpty())
@@ -2264,6 +2279,8 @@ void QGitRepository::on_repositoryDetail_currentChanged(int index)
 
         if (ui->logHistory_commits->rowCount() == 0) {
             fetchCommits();
+        } else if (m_logCommitsDirty) {
+            refreshCommits();
         }
         break;
     case 2:
@@ -2520,6 +2537,12 @@ void QGitRepository::fetchCommits()
         emit repositoryGetCommits(m_currentLogBranchFilter, m_logCommitsOffset, COMMIT_COUNT_TO_LOAD);
         emit statusMessage(tr("Fetching commits..."));
     }
+}
+
+void QGitRepository::refreshCommits()
+{
+    m_refreshingLogCommits = true;
+    emit repositoryGetCommits(m_currentLogBranchFilter, 0, COMMIT_COUNT_TO_LOAD);
 }
 
 void QGitRepository::activateCommitOperation(bool activate)
