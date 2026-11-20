@@ -361,6 +361,18 @@ void QGitRepository::refreshData()
         refreshCommits();
     }
 
+    if (m_hasActiveSearch && ui->lineEdit_search->text().size() >= 3)
+    {
+        if (ui->repositoryDetail->currentIndex() != 2)
+        {
+            m_searchCommitsDirty = true;
+        }
+        else if (!m_searchingCommits)
+        {
+            refreshSearchCommits();
+        }
+    }
+
     emit repositoryBranches();
     emit repositoryStashes();
 
@@ -2286,6 +2298,10 @@ void QGitRepository::on_repositoryDetail_currentChanged(int index)
     case 2:
         connect(ui->search_diff, &QGitDiffWidget::requestGitDiff, m_git, &QGit::commitDiffContent);
         connect(m_git, &QGit::commitDiffContentReply, ui->search_diff, &QGitDiffWidget::responseGitDiff);
+
+        if (m_searchCommitsDirty && m_hasActiveSearch && ui->lineEdit_search->text().size() >= 3 && !m_searchingCommits) {
+            refreshSearchCommits();
+        }
         break;
     default:
         Q_UNIMPLEMENTED();
@@ -3632,43 +3648,69 @@ void QGitRepository::fetchRepositoryChangedFiles()
     emit repositoryChangedFiles(show, sort, reversed);
 }
 
+QString QGitRepository::currentSearchType() const
+{
+    const int index = ui->comboBox_searchType->currentIndex();
+    if (index == 0)
+        return QStringLiteral("message");
+    if (index == 1)
+        return QStringLiteral("files");
+    if (index == 2)
+        return QStringLiteral("author");
+    return QString();
+}
+
+void QGitRepository::refreshSearchCommits()
+{
+    const QString text = ui->lineEdit_search->text();
+    if (text.size() < 3 || m_searchingCommits)
+        return;
+
+    m_searchingCommits = true;
+    m_refreshingSearch = true;
+    m_searchCommitsDirty = false;
+    m_pendingSearchCommits.clear();
+    emit repositorySearchCommits(text, currentSearchType());
+}
+
 void QGitRepository::on_lineEdit_search_returnPressed()
 {
     QString text = ui->lineEdit_search->text();
     if (text.size() >= 3)
     {
+        m_hasActiveSearch = true;
         m_searchingCommits = true;
+        m_refreshingSearch = false;
+        m_searchCommitsDirty = false;
+        m_pendingSearchCommits.clear();
         ui->lineEdit_search->setEnabled(false);
-        ui->search_commits->setRowCount(0);
-
-        QString type;
-        int index = ui->comboBox_searchType->currentIndex();
-        if (index == 0)
-        {
-            type = "message";
-        }
-        else if (index == 1)
-        {
-            type = "files";
-        }
-        else if (index == 2)
-        {
-            type = "author";
-        }
+        ui->search_commits->clearCommits();
 
         emit statusMessage(tr("Searching commits..."));
-        emit repositorySearchCommits(text, type);
+        emit repositorySearchCommits(text, currentSearchType());
     }
 }
 
 void QGitRepository::onCommitFound(const QGitCommit &commit)
 {
-    ui->search_commits->addCommit(commit);
+    if (m_refreshingSearch) {
+        m_pendingSearchCommits.append(commit);
+    } else {
+        ui->search_commits->addCommit(commit);
+    }
 }
 
 void QGitRepository::onSearchFinished()
 {
     m_searchingCommits = false;
+    if (m_refreshingSearch) {
+        m_refreshingSearch = false;
+        m_searchCommitsDirty = false;
+        ui->search_commits->syncCommits(m_pendingSearchCommits);
+        m_pendingSearchCommits.clear();
+        return;
+    }
+
     emit clearStatusMessage();
     ui->lineEdit_search->setEnabled(true);
     ui->lineEdit_search->setFocus();

@@ -198,6 +198,27 @@ void QLogHistoryTableWidget::populateCommitRow(int row, const QGitCommit &commit
 {
     QTableWidgetItem *item = nullptr;
 
+    if (columnCount() == 4)
+    {
+        item = new QTableWidgetItem(commit.message().section('\n', 0, 0));
+        item->setData(Qt::UserRole, commit.message());
+        item->setData(Qt::UserRole + 1, commit.id());
+        setItem(row, 0, item);
+
+        item = new QTableWidgetItem(commit.time().toString());
+        setItem(row, 1, item);
+
+        item = new QTableWidgetItem(QString("%1 <%2>").arg(commit.author().name(), commit.author().email()));
+        item->setData(Qt::UserRole, commit.author().name());
+        item->setData(Qt::UserRole + 1, commit.author().email());
+        setItem(row, 2, item);
+
+        item = new QTableWidgetItem(commit.id().left(7));
+        item->setData(Qt::UserRole, commit.id());
+        setItem(row, 3, item);
+        return;
+    }
+
     item = new QTableWidgetItem();
     setItem(row, 0, item);
 
@@ -242,9 +263,6 @@ void QLogHistoryTableWidget::recalculateGraph()
 
 void QLogHistoryTableWidget::syncCommits(const QList<QGitCommit> &commits)
 {
-    if (columnCount() == 4)
-        return;
-
     if (m_commits.isEmpty()) {
         for (const auto &commit : commits) {
             addCommit(commit);
@@ -252,26 +270,28 @@ void QLogHistoryTableWidget::syncCommits(const QList<QGitCommit> &commits)
         return;
     }
 
-    QHash<QString, int> oldIndexById;
-    oldIndexById.reserve(m_commits.size());
-    for (int i = 0; i < m_commits.size(); ++i) {
-        oldIndexById.insert(m_commits.at(i).id().toLower(), i);
-    }
-
-    int anchorNew = -1;
-    int anchorOld = -1;
-    for (int i = static_cast<int>(commits.size()) - 1; i >= 0; --i) {
-        const QString id = commits.at(i).id().toLower();
-        if (oldIndexById.contains(id)) {
-            anchorNew = i;
-            anchorOld = oldIndexById.value(id);
-            break;
-        }
-    }
-
     int oldPrefixCount = static_cast<int>(m_commits.size());
-    if (anchorNew == static_cast<int>(commits.size()) - 1 && anchorOld >= 0) {
-        oldPrefixCount = anchorOld + 1;
+    if (columnCount() != 4) {
+        QHash<QString, int> oldIndexById;
+        oldIndexById.reserve(m_commits.size());
+        for (int i = 0; i < m_commits.size(); ++i) {
+            oldIndexById.insert(m_commits.at(i).id().toLower(), i);
+        }
+
+        int anchorNew = -1;
+        int anchorOld = -1;
+        for (int i = static_cast<int>(commits.size()) - 1; i >= 0; --i) {
+            const QString id = commits.at(i).id().toLower();
+            if (oldIndexById.contains(id)) {
+                anchorNew = i;
+                anchorOld = oldIndexById.value(id);
+                break;
+            }
+        }
+
+        if (anchorNew == static_cast<int>(commits.size()) - 1 && anchorOld >= 0) {
+            oldPrefixCount = anchorOld + 1;
+        }
     }
 
     QString selectedHash;
@@ -345,33 +365,18 @@ void QLogHistoryTableWidget::syncCommits(const QList<QGitCommit> &commits)
 
 void QLogHistoryTableWidget::addCommit(const QGitCommit &commit)
 {
+    int row = rowCount();
+
     if (columnCount() == 4)
     {
-        int row = rowCount();
+        if (row == 0) {
+            m_commits.clear();
+        }
         insertRow(row);
-
-        QTableWidgetItem *item = nullptr;
-
-        item = new QTableWidgetItem(commit.message().section('\n', 0, 0));
-        item->setData(Qt::UserRole, commit.message());
-        item->setData(Qt::UserRole + 1, commit.id());
-        setItem(row, 0, item);
-
-        item = new QTableWidgetItem(commit.time().toString());
-        setItem(row, 1, item);
-
-        item = new QTableWidgetItem(QString("%1 <%2>").arg(commit.author().name(), commit.author().email()));
-        item->setData(Qt::UserRole, commit.author().name());
-        item->setData(Qt::UserRole + 1, commit.author().email());
-        setItem(row, 2, item);
-
-        item = new QTableWidgetItem(commit.id().left(7));
-        item->setData(Qt::UserRole, commit.id());
-        setItem(row, 3, item);
+        populateCommitRow(row, commit);
+        m_commits.append(commit);
         return;
     }
-
-    int row = rowCount();
 
     // Reset lane tracking if the table is cleared/empty
     if (row == 0)

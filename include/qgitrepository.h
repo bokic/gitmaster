@@ -234,6 +234,8 @@ protected:
 private:
     void fetchCommits();
     void refreshCommits();
+    void refreshSearchCommits();
+    QString currentSearchType() const;
     void activateCommitOperation(bool activate);
     void fetchRepositoryChangedFiles();
     Ui::QGitRepository *ui = nullptr;
@@ -265,6 +267,10 @@ private:
     QString m_draftCommitMessage;
     bool m_stageingFiles = true;
     bool m_searchingCommits = false;
+    bool m_hasActiveSearch = false;
+    bool m_refreshingSearch = false;
+    bool m_searchCommitsDirty = false;
+    QList<QGitCommit> m_pendingSearchCommits;
     bool m_rewordingCommit = false;
     QString m_currentLogBranchFilter;
     int m_logCommitsOffset = 0;
