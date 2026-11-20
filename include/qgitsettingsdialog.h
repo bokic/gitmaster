@@ -31,6 +31,8 @@ private slots:
 private:
     void reloadScope(bool global);
     void populateTable();
+    void updateAdvancedButtons();
+    bool showConfigEntryDialog(const QString &title, QString &key, QString &value, bool keyEditable);
 
     Ui::QGitSettingsDialog *ui = nullptr;
     QGit *m_git = nullptr;

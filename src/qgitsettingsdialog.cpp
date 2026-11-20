@@ -1,8 +1,12 @@
 // SPDX-License-Identifier: LGPL-3.0-or-later
 #include "qgitsettingsdialog.h"
 #include "ui_qgitsettingsdialog.h"
-#include <QInputDialog>
+#include <QDialogButtonBox>
+#include <QFormLayout>
+#include <QHeaderView>
+#include <QLineEdit>
 #include <QMessageBox>
+#include <QPushButton>
 
 QGitSettingsDialog::QGitSettingsDialog(QGit *git, QWidget *parent)
     : QDialog(parent)
@@ -52,6 +56,8 @@ QGitSettingsDialog::QGitSettingsDialog(QGit *git, QWidget *parent)
     headers << tr("Key") << tr("Value");
     ui->tableWidget->setHorizontalHeaderLabels(headers);
     ui->tableWidget->horizontalHeader()->setStretchLastSection(true);
+    ui->tableWidget->verticalHeader()->setVisible(false);
+    ui->tableWidget->setAlternatingRowColors(true);
     ui->tableWidget->setSelectionBehavior(QAbstractItemView::SelectRows);
     ui->tableWidget->setSelectionMode(QAbstractItemView::SingleSelection);
     ui->tableWidget->setEditTriggers(QAbstractItemView::NoEditTriggers);
@@ -59,9 +65,11 @@ QGitSettingsDialog::QGitSettingsDialog(QGit *git, QWidget *parent)
     connect(ui->tableWidget, &QTableWidget::cellDoubleClicked, this, [this](int, int) {
         on_pushButton_edit_clicked();
     });
+    connect(ui->tableWidget, &QTableWidget::itemSelectionChanged, this, &QGitSettingsDialog::updateAdvancedButtons);
 
     // Load configurations
     reloadScope(ui->radioButton_global->isChecked());
+    updateAdvancedButtons();
 }
 
 QGitSettingsDialog::~QGitSettingsDialog()
@@ -123,23 +131,72 @@ void QGitSettingsDialog::populateTable()
         ui->tableWidget->setItem(row, 1, valueItem);
         row++;
     }
+
+    ui->tableWidget->resizeColumnToContents(0);
+    if (ui->tableWidget->columnWidth(0) > 260)
+        ui->tableWidget->setColumnWidth(0, 260);
+    updateAdvancedButtons();
+}
+
+void QGitSettingsDialog::updateAdvancedButtons()
+{
+    const bool hasSelection = (ui->tableWidget->currentRow() >= 0);
+    ui->pushButton_edit->setEnabled(hasSelection);
+    ui->pushButton_delete->setEnabled(hasSelection);
+}
+
+bool QGitSettingsDialog::showConfigEntryDialog(const QString &title, QString &key, QString &value, bool keyEditable)
+{
+    QDialog dlg(this);
+    dlg.setWindowTitle(title);
+    dlg.setMinimumWidth(380);
+
+    auto *layout = new QFormLayout(&dlg);
+    auto *keyEdit = new QLineEdit(key, &dlg);
+    keyEdit->setPlaceholderText(tr("e.g., core.autocrlf"));
+    keyEdit->setReadOnly(!keyEditable);
+    auto *valEdit = new QLineEdit(value, &dlg);
+
+    layout->addRow(tr("Key:"), keyEdit);
+    layout->addRow(tr("Value:"), valEdit);
+
+    auto *buttons = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel, &dlg);
+    layout->addRow(buttons);
+
+    auto *okBtn = buttons->button(QDialogButtonBox::Ok);
+    okBtn->setEnabled(!keyEdit->text().trimmed().isEmpty());
+    connect(keyEdit, &QLineEdit::textChanged, &dlg, [&](const QString &t) {
+        okBtn->setEnabled(!t.trimmed().isEmpty());
+    });
+    connect(buttons, &QDialogButtonBox::accepted, &dlg, &QDialog::accept);
+    connect(buttons, &QDialogButtonBox::rejected, &dlg, &QDialog::reject);
+
+    if (keyEditable)
+        keyEdit->setFocus();
+    else
+        valEdit->setFocus();
+
+    if (dlg.exec() != QDialog::Accepted)
+        return false;
+
+    key = keyEdit->text().trimmed();
+    value = valEdit->text();
+    return true;
 }
 
 void QGitSettingsDialog::on_pushButton_add_clicked()
 {
     if (!m_git) return;
 
-    bool ok;
-    QString key = QInputDialog::getText(this, tr("Add Configuration"), tr("Key (e.g., core.autocrlf):"), QLineEdit::Normal, "", &ok);
-    if (!ok || key.trimmed().isEmpty()) return;
-
-    QString val = QInputDialog::getText(this, tr("Add Configuration"), tr("Value:"), QLineEdit::Normal, "", &ok);
-    if (!ok) return;
+    QString key;
+    QString val;
+    if (!showConfigEntryDialog(tr("Add Configuration"), key, val, true))
+        return;
 
     bool globalWrite = ui->radioButton_global->isChecked();
     try {
         QGit::invokeSync(m_git, [&]() {
-            m_git->setConfigString(key.trimmed(), val, globalWrite);
+            m_git->setConfigString(key, val, globalWrite);
         });
         m_configModified = true;
         reloadScope(globalWrite);
@@ -160,11 +217,10 @@ void QGitSettingsDialog::on_pushButton_edit_clicked()
         return;
     }
     QString key = keyItem->text();
-    QString currentVal = valItem->text();
+    QString val = valItem->text();
 
-    bool ok;
-    QString val = QInputDialog::getText(this, tr("Edit Configuration"), tr("Value for '%1':").arg(key), QLineEdit::Normal, currentVal, &ok);
-    if (!ok) return;
+    if (!showConfigEntryDialog(tr("Edit Configuration"), key, val, false))
+        return;
 
     bool globalWrite = ui->radioButton_global->isChecked();
     try {
