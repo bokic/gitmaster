@@ -30,9 +30,13 @@ private slots:
 
 private:
     void refreshBranches();
+    void refreshAll();
     bool hasBranch(const QString &name) const;
     QString detectMainBranch() const;
     bool ensureDevelopBranch();
+    void updateStartButtonState(class QLineEdit *edit, class QPushButton *button, const QString &prefix);
+    void startFlowBranch(const QString &prefix, class QLineEdit *nameEdit, bool useDevelopBase, const QString &kindLabel);
+    void finishReleaseOrHotfix(const QString &branchName, const QString &prefix, const QString &kindLabel);
 
     Ui::QGitFlowDialog *ui = nullptr;
     QGitRepository *m_repo = nullptr;

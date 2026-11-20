@@ -2,7 +2,35 @@
 #include "qgitflowdialog.h"
 #include "ui_qgitflowdialog.h"
 #include "qgitrepository.h"
+#include <QLineEdit>
 #include <QMessageBox>
+#include <QPushButton>
+#include <git2.h>
+
+namespace {
+
+QString normalizedFlowSuffix(const QString &rawName, const QString &prefix)
+{
+    QString name = rawName.trimmed();
+    if (name.startsWith(prefix))
+        name = name.mid(prefix.length());
+    return name;
+}
+
+bool isValidBranchRef(const QString &fullBranchName)
+{
+    int valid = 0;
+    const QByteArray fullRef = (QStringLiteral("refs/heads/") + fullBranchName).toUtf8();
+    return (git_reference_name_is_valid(&valid, fullRef.constData()) == 0) && (valid != 0);
+}
+
+const QString &errorInputStyle()
+{
+    static const QString style = QStringLiteral("background-color: rgba(220, 53, 69, 0.35);");
+    return style;
+}
+
+} // namespace
 
 QGitFlowDialog::QGitFlowDialog(QGitRepository *parent)
     : QDialog(parent)
@@ -10,7 +38,8 @@ QGitFlowDialog::QGitFlowDialog(QGitRepository *parent)
     , m_repo(parent)
 {
     ui->setupUi(this);
-    m_git.setPath(parent->git()->path());
+    if (parent && parent->git())
+        m_git.setPath(parent->git()->path());
 
     refreshBranches();
 
@@ -97,27 +126,130 @@ bool QGitFlowDialog::ensureDevelopBranch()
     return true;
 }
 
-void QGitFlowDialog::on_pushButton_startFeature_clicked()
+void QGitFlowDialog::refreshAll()
 {
-    QString name = ui->lineEdit_featureName->text().trimmed();
-    if (name.isEmpty()) return;
+    refreshBranches();
+    if (m_repo)
+        m_repo->refreshData();
+}
 
-    QString branchName = QStringLiteral("feature/") + name;
+void QGitFlowDialog::updateStartButtonState(QLineEdit *edit, QPushButton *button, const QString &prefix)
+{
+    const QString suffix = normalizedFlowSuffix(edit->text(), prefix);
+    if (suffix.isEmpty()) {
+        edit->setStyleSheet(QString());
+        edit->setToolTip(QString());
+        button->setEnabled(false);
+        return;
+    }
+
+    const QString fullBranch = prefix + suffix;
+    if (!isValidBranchRef(fullBranch)) {
+        edit->setStyleSheet(errorInputStyle());
+        edit->setToolTip(tr("Invalid git branch name."));
+        button->setEnabled(false);
+        return;
+    }
+
+    if (hasBranch(fullBranch)) {
+        edit->setStyleSheet(errorInputStyle());
+        edit->setToolTip(tr("Branch '%1' already exists.").arg(fullBranch));
+        button->setEnabled(false);
+        return;
+    }
+
+    edit->setStyleSheet(QString());
+    edit->setToolTip(QString());
+    button->setEnabled(true);
+}
+
+void QGitFlowDialog::startFlowBranch(const QString &prefix, QLineEdit *nameEdit, bool useDevelopBase, const QString &kindLabel)
+{
+    const QString suffix = normalizedFlowSuffix(nameEdit->text(), prefix);
+    if (suffix.isEmpty())
+        return;
+
+    const QString branchName = prefix + suffix;
+    if (!isValidBranchRef(branchName)) {
+        QMessageBox::warning(this, tr("Invalid Branch Name"), tr("'%1' is not a valid git branch name.").arg(branchName));
+        return;
+    }
     if (hasBranch(branchName)) {
         QMessageBox::warning(this, tr("Branch Exists"), tr("Branch '%1' already exists.").arg(branchName));
         return;
     }
 
     try {
-        if (!ensureDevelopBranch()) return;
-        m_git.createLocalBranchInternal(branchName, QStringLiteral("develop"), QGit::BranchCreateOption::Checkout);
-        ui->lineEdit_featureName->clear();
-        refreshBranches();
-        m_repo->refreshData();
-        QMessageBox::information(this, tr("Feature Started"), tr("Feature branch '%1' created and checked out.").arg(branchName));
+        QString baseBranch;
+        if (useDevelopBase) {
+            if (!ensureDevelopBranch())
+                return;
+            baseBranch = QStringLiteral("develop");
+        } else {
+            baseBranch = detectMainBranch();
+            if (baseBranch.isEmpty()) {
+                QMessageBox::warning(this, tr("Git Flow"),
+                                     tr("Cannot start %1 in an empty repository. Please make at least one commit first.").arg(kindLabel.toLower()));
+                return;
+            }
+        }
+
+        m_git.createLocalBranchInternal(branchName, baseBranch, QGit::BranchCreateOption::Checkout);
+        nameEdit->clear();
+        refreshAll();
+        QMessageBox::information(this, tr("%1 Started").arg(kindLabel),
+                                 tr("%1 branch '%2' created and checked out from '%3'.").arg(kindLabel, branchName, baseBranch));
     } catch (const QGitError &err) {
-        QMessageBox::critical(this, tr("Error"), tr("Failed to start feature:\n%1").arg(err.errorString()));
+        refreshAll();
+        QMessageBox::critical(this, tr("Error"), tr("Failed to start %1:\n%2").arg(kindLabel.toLower(), err.errorString()));
     }
+}
+
+void QGitFlowDialog::finishReleaseOrHotfix(const QString &branchName, const QString &prefix, const QString &kindLabel)
+{
+    if (branchName.isEmpty())
+        return;
+
+    const QString tagName = branchName.startsWith(prefix) ? branchName.mid(prefix.length()) : branchName;
+    const QString mainBranch = detectMainBranch();
+    if (mainBranch.isEmpty()) {
+        QMessageBox::warning(this, tr("Git Flow"), tr("Could not determine the main branch."));
+        return;
+    }
+
+    try {
+        if (!ensureDevelopBranch())
+            return;
+
+        // Merge into main
+        m_git.checkoutBranchInternal(mainBranch);
+        m_git.mergeInternal(branchName);
+
+        // Tag the release/hotfix without silently overwriting an existing tag
+        m_git.createTagInternal(tagName, mainBranch, QStringLiteral("%1 %2").arg(kindLabel, tagName), false);
+
+        // Merge into develop
+        m_git.checkoutBranchInternal(QStringLiteral("develop"));
+        m_git.mergeInternal(branchName);
+
+        // Delete branch
+        QList<QGitBranch> toDelete;
+        toDelete.append(QGitBranch(branchName, QString(), 0, GIT_BRANCH_LOCAL));
+        m_git.deleteBranchesInternal(toDelete, true);
+
+        refreshAll();
+        QMessageBox::information(this, tr("%1 Finished").arg(kindLabel),
+                                 tr("%1 branch '%2' merged into '%3' and 'develop', and tagged as '%4'.")
+                                     .arg(kindLabel, branchName, mainBranch, tagName));
+    } catch (const QGitError &err) {
+        refreshAll();
+        QMessageBox::critical(this, tr("Error"), tr("Failed to finish %1:\n%2").arg(kindLabel.toLower(), err.errorString()));
+    }
+}
+
+void QGitFlowDialog::on_pushButton_startFeature_clicked()
+{
+    startFlowBranch(QStringLiteral("feature/"), ui->lineEdit_featureName, true, tr("Feature"));
 }
 
 void QGitFlowDialog::on_pushButton_finishFeature_clicked()
@@ -135,139 +267,48 @@ void QGitFlowDialog::on_pushButton_finishFeature_clicked()
         toDelete.append(QGitBranch(branchName, "", 0, GIT_BRANCH_LOCAL));
         m_git.deleteBranchesInternal(toDelete, true);
 
-        refreshBranches();
-        m_repo->refreshData();
+        refreshAll();
         QMessageBox::information(this, tr("Feature Finished"), tr("Feature branch '%1' merged into develop and deleted.").arg(branchName));
     } catch (const QGitError &err) {
+        refreshAll();
         QMessageBox::critical(this, tr("Error"), tr("Failed to finish feature:\n%1").arg(err.errorString()));
     }
 }
 
 void QGitFlowDialog::on_pushButton_startRelease_clicked()
 {
-    QString name = ui->lineEdit_releaseName->text().trimmed();
-    if (name.isEmpty()) return;
-
-    QString branchName = QStringLiteral("release/") + name;
-    if (hasBranch(branchName)) {
-        QMessageBox::warning(this, tr("Branch Exists"), tr("Branch '%1' already exists.").arg(branchName));
-        return;
-    }
-
-    try {
-        if (!ensureDevelopBranch()) return;
-        m_git.createLocalBranchInternal(branchName, QStringLiteral("develop"), QGit::BranchCreateOption::Checkout);
-        ui->lineEdit_releaseName->clear();
-        refreshBranches();
-        m_repo->refreshData();
-        QMessageBox::information(this, tr("Release Started"), tr("Release branch '%1' created and checked out.").arg(branchName));
-    } catch (const QGitError &err) {
-        QMessageBox::critical(this, tr("Error"), tr("Failed to start release:\n%1").arg(err.errorString()));
-    }
+    startFlowBranch(QStringLiteral("release/"), ui->lineEdit_releaseName, true, tr("Release"));
 }
 
 void QGitFlowDialog::on_pushButton_finishRelease_clicked()
 {
-    QString branchName = ui->comboBox_releaseBranch->currentText();
-    if (branchName.isEmpty()) return;
-
-    QString releaseName = branchName.mid(8); // remove "release/"
-    QString mainBranch = detectMainBranch();
-
-    try {
-        // Merge into main
-        m_git.checkoutBranchInternal(mainBranch);
-        m_git.mergeInternal(branchName);
-
-        // Tag the release
-        m_git.createTagInternal(releaseName, mainBranch, QString("Release %1").arg(releaseName), true);
-
-        // Merge into develop
-        if (!ensureDevelopBranch()) return;
-        m_git.checkoutBranchInternal(QStringLiteral("develop"));
-        m_git.mergeInternal(branchName);
-
-        // Delete release branch
-        QList<QGitBranch> toDelete;
-        toDelete.append(QGitBranch(branchName, "", 0, GIT_BRANCH_LOCAL));
-        m_git.deleteBranchesInternal(toDelete, true);
-
-        refreshBranches();
-        m_repo->refreshData();
-        QMessageBox::information(this, tr("Release Finished"), tr("Release branch '%1' merged into '%2' and 'develop', and tagged as '%3'.").arg(branchName, mainBranch, releaseName));
-    } catch (const QGitError &err) {
-        QMessageBox::critical(this, tr("Error"), tr("Failed to finish release:\n%1").arg(err.errorString()));
-    }
+    finishReleaseOrHotfix(ui->comboBox_releaseBranch->currentText(), QStringLiteral("release/"), tr("Release"));
 }
 
 void QGitFlowDialog::on_pushButton_startHotfix_clicked()
 {
-    QString name = ui->lineEdit_hotfixName->text().trimmed();
-    if (name.isEmpty()) return;
-
-    QString branchName = QStringLiteral("hotfix/") + name;
-    if (hasBranch(branchName)) {
-        QMessageBox::warning(this, tr("Branch Exists"), tr("Branch '%1' already exists.").arg(branchName));
-        return;
-    }
-
-    try {
-        QString mainBranch = detectMainBranch();
-        m_git.createLocalBranchInternal(branchName, mainBranch, QGit::BranchCreateOption::Checkout);
-        ui->lineEdit_hotfixName->clear();
-        refreshBranches();
-        m_repo->refreshData();
-        QMessageBox::information(this, tr("Hotfix Started"), tr("Hotfix branch '%1' created and checked out from '%2'.").arg(branchName, mainBranch));
-    } catch (const QGitError &err) {
-        QMessageBox::critical(this, tr("Error"), tr("Failed to start hotfix:\n%1").arg(err.errorString()));
-    }
+    startFlowBranch(QStringLiteral("hotfix/"), ui->lineEdit_hotfixName, false, tr("Hotfix"));
 }
 
 void QGitFlowDialog::on_pushButton_finishHotfix_clicked()
 {
-    QString branchName = ui->comboBox_hotfixBranch->currentText();
-    if (branchName.isEmpty()) return;
-
-    QString hotfixName = branchName.mid(7); // remove "hotfix/"
-    QString mainBranch = detectMainBranch();
-
-    try {
-        // Merge into main
-        m_git.checkoutBranchInternal(mainBranch);
-        m_git.mergeInternal(branchName);
-
-        // Tag the hotfix
-        m_git.createTagInternal(hotfixName, mainBranch, QString("Hotfix %1").arg(hotfixName), true);
-
-        // Merge into develop
-        if (!ensureDevelopBranch()) return;
-        m_git.checkoutBranchInternal(QStringLiteral("develop"));
-        m_git.mergeInternal(branchName);
-
-        // Delete hotfix branch
-        QList<QGitBranch> toDelete;
-        toDelete.append(QGitBranch(branchName, "", 0, GIT_BRANCH_LOCAL));
-        m_git.deleteBranchesInternal(toDelete, true);
-
-        refreshBranches();
-        m_repo->refreshData();
-        QMessageBox::information(this, tr("Hotfix Finished"), tr("Hotfix branch '%1' merged into '%2' and 'develop', and tagged as '%3'.").arg(branchName, mainBranch, hotfixName));
-    } catch (const QGitError &err) {
-        QMessageBox::critical(this, tr("Error"), tr("Failed to finish hotfix:\n%1").arg(err.errorString()));
-    }
+    finishReleaseOrHotfix(ui->comboBox_hotfixBranch->currentText(), QStringLiteral("hotfix/"), tr("Hotfix"));
 }
 
 void QGitFlowDialog::on_lineEdit_featureName_textChanged(const QString &text)
 {
-    ui->pushButton_startFeature->setEnabled(!text.trimmed().isEmpty());
+    Q_UNUSED(text)
+    updateStartButtonState(ui->lineEdit_featureName, ui->pushButton_startFeature, QStringLiteral("feature/"));
 }
 
 void QGitFlowDialog::on_lineEdit_releaseName_textChanged(const QString &text)
 {
-    ui->pushButton_startRelease->setEnabled(!text.trimmed().isEmpty());
+    Q_UNUSED(text)
+    updateStartButtonState(ui->lineEdit_releaseName, ui->pushButton_startRelease, QStringLiteral("release/"));
 }
 
 void QGitFlowDialog::on_lineEdit_hotfixName_textChanged(const QString &text)
 {
-    ui->pushButton_startHotfix->setEnabled(!text.trimmed().isEmpty());
+    Q_UNUSED(text)
+    updateStartButtonState(ui->lineEdit_hotfixName, ui->pushButton_startHotfix, QStringLiteral("hotfix/"));
 }
