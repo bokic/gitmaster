@@ -373,7 +373,9 @@ void QGitRepository::refreshData()
         }
     }
 
+    beginRepoRefreshOp(tr("Refreshing branches and tags..."));
     emit repositoryBranches();
+    beginRepoRefreshOp(tr("Refreshing stashes..."));
     emit repositoryStashes();
 
     updateOperationBanner();
@@ -1199,10 +1201,7 @@ void QGitRepository::repositoryPushReply(const QGitError &error)
 
 void QGitRepository::repositoryBranchesAndTagsReply(const QList<QGitBranch> &branches, const QList<QGitTag> &tags, const QList<QGitSubmodule> &submodules, const QList<QGitWorktree> &worktrees, QGit::RepoStatusFlags statusFlags, const QGitError &error)
 {
-    if (error.errorCode())
-    {
-        emit statusMessage(tr("Error loading branches/tags: %1").arg(error.errorString()));
-    }
+    endRepoRefreshOp(error, tr("Error loading branches/tags"));
 
     m_hasRemotes = statusFlags.testFlag(QGit::RepoStatusFlag::HasRemotes);
     m_hasCommitsToPush = statusFlags.testFlag(QGit::RepoStatusFlag::HasCommitsToPush);
@@ -1258,13 +1257,13 @@ void QGitRepository::repositoryBranchesAndTagsReply(const QList<QGitBranch> &bra
 
 void QGitRepository::repositoryStashesReply(const QStringList &stashes, const QGitError &error)
 {
-    Q_UNUSED(error)
+    endRepoRefreshOp(error, tr("Error loading stashes"));
     ui->branchesTreeView->populateStashes(stashes);
 }
 
 void QGitRepository::repositoryChangedFilesReply(const QList<std::pair<QString, git_status_t>> &files, const QGitError &error)
 {
-    Q_UNUSED(error)
+    endRepoRefreshOp(error, tr("Error loading changed files"));
     m_changedFiles = files;
     updateStatusViews();
 
@@ -1446,8 +1445,6 @@ void QGitRepository::repositoryCommitReply(const QString &commit_id, const QGitE
 
 void QGitRepository::repositoryGetCommitsReply(const QList<QGitCommit> &commits, const QGitError &error)
 {
-    Q_UNUSED(error)
-
     if (m_refreshingLogCommits) {
         m_refreshingLogCommits = false;
         m_logCommitsDirty = false;
@@ -1470,6 +1467,8 @@ void QGitRepository::repositoryGetCommitsReply(const QList<QGitCommit> &commits,
         }
     }
 
+    endRepoRefreshOp(error, tr("Error loading commits"));
+
     if (!m_searchingCommitHash.isEmpty())
     {
         if (ui->logHistory_commits->selectCommit(m_searchingCommitHash)) {
@@ -1486,10 +1485,6 @@ void QGitRepository::repositoryGetCommitsReply(const QList<QGitCommit> &commits,
                 emit statusMessage(tr("Searching for commit %1...").arg(m_searchingCommitHash.left(10)));
             }
         }
-    }
-    else
-    {
-        emit clearStatusMessage();
     }
 }
 
@@ -2546,18 +2541,40 @@ void QGitRepository::on_plainTextEdit_commitMessage_focus()
     activateCommitOperation(true);
 }
 
+void QGitRepository::beginRepoRefreshOp(const QString &statusText)
+{
+    if (m_pendingRepoOps == 0)
+        m_repoOpError = false;
+    ++m_pendingRepoOps;
+    emit statusMessage(statusText);
+}
+
+void QGitRepository::endRepoRefreshOp(const QGitError &error, const QString &errorPrefix)
+{
+    if (m_pendingRepoOps > 0)
+        --m_pendingRepoOps;
+
+    if (error.errorCode() != 0) {
+        m_repoOpError = true;
+        emit statusMessage(QStringLiteral("%1: %2").arg(errorPrefix, error.errorString()));
+    } else if (m_pendingRepoOps == 0 && !m_repoOpError) {
+        emit clearStatusMessage();
+    }
+}
+
 void QGitRepository::fetchCommits()
 {
     if (!m_allCommitsLoaded)
     {
+        beginRepoRefreshOp(tr("Fetching commits..."));
         emit repositoryGetCommits(m_currentLogBranchFilter, m_logCommitsOffset, COMMIT_COUNT_TO_LOAD);
-        emit statusMessage(tr("Fetching commits..."));
     }
 }
 
 void QGitRepository::refreshCommits()
 {
     m_refreshingLogCommits = true;
+    beginRepoRefreshOp(tr("Refreshing commits..."));
     emit repositoryGetCommits(m_currentLogBranchFilter, 0, COMMIT_COUNT_TO_LOAD);
 }
 
@@ -3645,6 +3662,7 @@ void QGitRepository::fetchRepositoryChangedFiles()
 
     ui->treeWidget_staged->setEnabled(false);
     ui->treeWidget_unstaged->setEnabled(false);
+    beginRepoRefreshOp(tr("Refreshing changed files..."));
     emit repositoryChangedFiles(show, sort, reversed);
 }
 
@@ -3670,6 +3688,7 @@ void QGitRepository::refreshSearchCommits()
     m_refreshingSearch = true;
     m_searchCommitsDirty = false;
     m_pendingSearchCommits.clear();
+    beginRepoRefreshOp(tr("Refreshing search results..."));
     emit repositorySearchCommits(text, currentSearchType());
 }
 
@@ -3708,6 +3727,7 @@ void QGitRepository::onSearchFinished()
         m_searchCommitsDirty = false;
         ui->search_commits->syncCommits(m_pendingSearchCommits);
         m_pendingSearchCommits.clear();
+        endRepoRefreshOp(QGitError(), QString());
         return;
     }
 

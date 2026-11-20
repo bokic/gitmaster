@@ -236,6 +236,8 @@ private:
     void refreshCommits();
     void refreshSearchCommits();
     QString currentSearchType() const;
+    void beginRepoRefreshOp(const QString &statusText);
+    void endRepoRefreshOp(const QGitError &error, const QString &errorPrefix);
     void activateCommitOperation(bool activate);
     void fetchRepositoryChangedFiles();
     Ui::QGitRepository *ui = nullptr;
@@ -281,6 +283,8 @@ private:
     QGit::PushOptions m_lastPushOptions = QGit::PushOption::None;
     QGit *m_git = nullptr;
     bool m_refreshing = false;
+    int m_pendingRepoOps = 0;
+    bool m_repoOpError = false;
     bool m_hasRemotes = false;
     bool m_hasCommitsToPush = false;
     bool m_hasStashableChanges = false;
