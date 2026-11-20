@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>550</width>
-    <height>400</height>
+    <width>780</width>
+    <height>480</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -121,20 +121,13 @@
         </layout>
        </item>
        <item>
-        <widget class="QTableWidget" name="tableWidget">
-         <property name="columnCount">
-          <number>2</number>
+        <widget class="QScrollArea" name="scrollArea_advanced">
+         <property name="widgetResizable">
+          <bool>true</bool>
          </property>
-         <column>
-          <property name="text">
-           <string>Key</string>
-          </property>
-         </column>
-         <column>
-          <property name="text">
-           <string>Value</string>
-          </property>
-         </column>
+         <widget class="QWidget" name="scrollAreaWidgetContents_advanced">
+          <layout class="QGridLayout" name="gridLayout_advanced"/>
+         </widget>
         </widget>
        </item>
        <item>
@@ -142,21 +135,7 @@
          <item>
           <widget class="QPushButton" name="pushButton_add">
            <property name="text">
-            <string>Add...</string>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QPushButton" name="pushButton_edit">
-           <property name="text">
-            <string>Edit...</string>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QPushButton" name="pushButton_delete">
-           <property name="text">
-            <string>Delete</string>
+            <string>Add Custom...</string>
            </property>
           </widget>
          </item>

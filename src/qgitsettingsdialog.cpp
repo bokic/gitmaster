@@ -1,12 +1,104 @@
 // SPDX-License-Identifier: LGPL-3.0-or-later
 #include "qgitsettingsdialog.h"
 #include "ui_qgitsettingsdialog.h"
+#include <QComboBox>
 #include <QDialogButtonBox>
 #include <QFormLayout>
-#include <QHeaderView>
+#include <QLabel>
 #include <QLineEdit>
 #include <QMessageBox>
+#include <QPainter>
 #include <QPushButton>
+#include <QSet>
+
+namespace {
+
+class ElidedLabel : public QLabel
+{
+public:
+    explicit ElidedLabel(const QString &text, QWidget *parent = nullptr)
+        : QLabel(text, parent)
+    {
+        setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Preferred);
+        setToolTip(text);
+    }
+
+protected:
+    void paintEvent(QPaintEvent *event) override
+    {
+        Q_UNUSED(event)
+        QPainter painter(this);
+        painter.setPen(palette().color(QPalette::PlaceholderText));
+        const QString elided = fontMetrics().elidedText(text(), Qt::ElideRight, width());
+        painter.drawText(rect(), Qt::AlignLeft | Qt::AlignVCenter, elided);
+    }
+};
+
+struct ConfigSpec {
+    const char *key;
+    QStringList options;
+    bool editable;
+    const char *description;
+};
+
+const QList<ConfigSpec> &knownConfigSpecs()
+{
+    static const QList<ConfigSpec> specs = {
+        { "core.autocrlf",        { QStringLiteral("true"), QStringLiteral("false"), QStringLiteral("input") }, false,
+          "Convert CRLF/LF line endings automatically on checkout and commit." },
+        { "core.filemode",        { QStringLiteral("true"), QStringLiteral("false") }, false,
+          "Track executable file permission changes in the working tree." },
+        { "core.ignorecase",      { QStringLiteral("true"), QStringLiteral("false") }, false,
+          "Treat file and directory names as case-insensitive." },
+        { "core.symlinks",        { QStringLiteral("true"), QStringLiteral("false") }, false,
+          "Create real symbolic links instead of plain text files on checkout." },
+        { "core.longpaths",       { QStringLiteral("true"), QStringLiteral("false") }, false,
+          "Allow paths longer than 260 characters on Windows." },
+        { "core.editor",          { QStringLiteral("nano"), QStringLiteral("vim"), QStringLiteral("code --wait") }, true,
+          "Default text editor used for commit messages and interactive rebase." },
+        { "core.pager",           { QStringLiteral("less -FRX"), QStringLiteral("cat") }, true,
+          "Pager command used by Git CLI to display long output." },
+        { "init.defaultBranch",   { QStringLiteral("main"), QStringLiteral("master") }, true,
+          "Default branch name created when initializing a new repository." },
+        { "pull.rebase",          { QStringLiteral("false"), QStringLiteral("true"), QStringLiteral("merges"), QStringLiteral("interactive") }, false,
+          "Rebase local commits on top of upstream instead of creating a merge commit on pull." },
+        { "pull.ff",              { QStringLiteral("true"), QStringLiteral("false"), QStringLiteral("only") }, false,
+          "Control fast-forward behavior when pulling changes." },
+        { "push.default",         { QStringLiteral("simple"), QStringLiteral("current"), QStringLiteral("upstream"), QStringLiteral("matching"), QStringLiteral("nothing") }, false,
+          "Which branches to push when no refspec is given on the command line." },
+        { "push.autoSetupRemote", { QStringLiteral("true"), QStringLiteral("false") }, false,
+          "Automatically set upstream tracking branch on first push." },
+        { "push.followTags",      { QStringLiteral("true"), QStringLiteral("false") }, false,
+          "Push annotated tags pointing to commits being pushed." },
+        { "fetch.prune",          { QStringLiteral("true"), QStringLiteral("false") }, false,
+          "Remove stale remote-tracking branches automatically when fetching." },
+        { "fetch.pruneTags",      { QStringLiteral("true"), QStringLiteral("false") }, false,
+          "Remove local tags that no longer exist on the remote when fetching." },
+        { "merge.ff",             { QStringLiteral("true"), QStringLiteral("false"), QStringLiteral("only") }, false,
+          "Allow, disallow, or require fast-forward merges." },
+        { "merge.conflictStyle",  { QStringLiteral("merge"), QStringLiteral("diff3"), QStringLiteral("zdiff3") }, false,
+          "Format used for conflict markers (diff3/zdiff3 also show common ancestor)." },
+        { "rebase.autoStash",     { QStringLiteral("true"), QStringLiteral("false") }, false,
+          "Automatically stash and re-apply dirty working tree changes during rebase." },
+        { "rebase.autoSquash",    { QStringLiteral("true"), QStringLiteral("false") }, false,
+          "Automatically reorder and apply fixup!/squash! commits in interactive rebase." },
+        { "diff.algorithm",       { QStringLiteral("myers"), QStringLiteral("minimal"), QStringLiteral("patience"), QStringLiteral("histogram") }, false,
+          "Algorithm used to compute line-by-line file diffs." },
+        { "diff.renames",         { QStringLiteral("true"), QStringLiteral("false"), QStringLiteral("copies") }, false,
+          "Detect renamed or copied files when generating diffs." },
+        { "credential.helper",    { QStringLiteral("cache"), QStringLiteral("store"), QStringLiteral("manager"), QStringLiteral("osxkeychain"), QStringLiteral("libsecret") }, true,
+          "Helper used to cache or store remote authentication credentials." },
+        { "http.sslVerify",       { QStringLiteral("true"), QStringLiteral("false") }, false,
+          "Verify SSL/TLS certificates when communicating over HTTPS." },
+        { "rerere.enabled",       { QStringLiteral("true"), QStringLiteral("false") }, false,
+          "Remember resolved merge conflicts and reuse them automatically." },
+        { "submodule.recurse",    { QStringLiteral("true"), QStringLiteral("false") }, false,
+          "Automatically update submodules during checkout, pull, and other commands." },
+    };
+    return specs;
+}
+
+} // namespace
 
 QGitSettingsDialog::QGitSettingsDialog(QGit *git, QWidget *parent)
     : QDialog(parent)
@@ -50,26 +142,15 @@ QGitSettingsDialog::QGitSettingsDialog(QGit *git, QWidget *parent)
         }
     }
 
-    // Setup Advanced Table properties
-    ui->tableWidget->setColumnCount(2);
-    QStringList headers;
-    headers << tr("Key") << tr("Value");
-    ui->tableWidget->setHorizontalHeaderLabels(headers);
-    ui->tableWidget->horizontalHeader()->setStretchLastSection(true);
-    ui->tableWidget->verticalHeader()->setVisible(false);
-    ui->tableWidget->setAlternatingRowColors(true);
-    ui->tableWidget->setSelectionBehavior(QAbstractItemView::SelectRows);
-    ui->tableWidget->setSelectionMode(QAbstractItemView::SingleSelection);
-    ui->tableWidget->setEditTriggers(QAbstractItemView::NoEditTriggers);
-
-    connect(ui->tableWidget, &QTableWidget::cellDoubleClicked, this, [this](int, int) {
-        on_pushButton_edit_clicked();
-    });
-    connect(ui->tableWidget, &QTableWidget::itemSelectionChanged, this, &QGitSettingsDialog::updateAdvancedButtons);
+    ui->gridLayout_advanced->setAlignment(Qt::AlignTop);
+    ui->gridLayout_advanced->setColumnStretch(0, 0);
+    ui->gridLayout_advanced->setColumnStretch(1, 0);
+    ui->gridLayout_advanced->setColumnStretch(2, 1);
+    ui->gridLayout_advanced->setHorizontalSpacing(10);
+    ui->gridLayout_advanced->setVerticalSpacing(6);
 
     // Load configurations
     reloadScope(ui->radioButton_global->isChecked());
-    updateAdvancedButtons();
 }
 
 QGitSettingsDialog::~QGitSettingsDialog()
@@ -81,7 +162,7 @@ void QGitSettingsDialog::reloadScope(bool global)
 {
     if (!m_git) {
         m_allConfigs.clear();
-        populateTable();
+        populateAdvancedForm();
         return;
     }
 
@@ -101,61 +182,154 @@ void QGitSettingsDialog::reloadScope(bool global)
         m_allConfigs.clear();
         qWarning("QGitSettingsDialog::reloadScope: %s", qPrintable(error.errorString()));
     }
-    populateTable();
+    populateAdvancedForm();
 }
 
-void QGitSettingsDialog::populateTable()
+void QGitSettingsDialog::populateAdvancedForm()
 {
-    ui->tableWidget->clearContents();
-    ui->tableWidget->setRowCount(0);
+    m_populatingAdvanced = true;
 
-    QString filter = ui->lineEdit_search->text().trimmed();
-    int row = 0;
+    for (const auto &row : std::as_const(m_advancedRows)) {
+        ui->gridLayout_advanced->removeWidget(row.label);
+        ui->gridLayout_advanced->removeWidget(row.combo);
+        ui->gridLayout_advanced->removeWidget(row.description);
+        delete row.label;
+        delete row.combo;
+        delete row.description;
+    }
+    m_advancedRows.clear();
 
-    for (auto it = m_allConfigs.cbegin(); it != m_allConfigs.cend(); ++it) {
-        if (!filter.isEmpty() && 
-            !it.key().contains(filter, Qt::CaseInsensitive) && 
-            !it.value().contains(filter, Qt::CaseInsensitive)) {
-            continue;
+    QSet<QString> addedKeys;
+    int gridRow = 0;
+
+    auto addRow = [&](const QString &key, const QStringList &options, bool editable, const QString &descriptionText) {
+        auto *label = new QLabel(key, ui->scrollAreaWidgetContents_advanced);
+        auto *combo = new QComboBox(ui->scrollAreaWidgetContents_advanced);
+        combo->setEditable(editable);
+        combo->setMinimumWidth(140);
+
+        auto *descLabel = new ElidedLabel(descriptionText, ui->scrollAreaWidgetContents_advanced);
+
+        combo->addItem(tr("<None>"), QVariant(true));
+        for (const QString &opt : options) {
+            combo->addItem(opt, QVariant(false));
         }
 
-        ui->tableWidget->insertRow(row);
+        if (m_allConfigs.contains(key)) {
+            const QString currentVal = m_allConfigs.value(key);
+            int idx = combo->findText(currentVal);
+            if (idx < 1) {
+                combo->addItem(currentVal, QVariant(false));
+                idx = combo->count() - 1;
+            }
+            combo->setCurrentIndex(idx);
+        } else {
+            combo->setCurrentIndex(0);
+        }
 
-        QTableWidgetItem *keyItem = new QTableWidgetItem(it.key());
-        QTableWidgetItem *valueItem = new QTableWidgetItem(it.value());
+        connect(combo, QOverload<int>::of(&QComboBox::activated), this, [this, key, combo](int index) {
+            if (m_populatingAdvanced) return;
+            const bool isNone = combo->itemData(index, Qt::UserRole).toBool();
+            applyAdvancedEntry(key, isNone ? QString() : combo->itemText(index), isNone);
+        });
 
-        keyItem->setFlags(Qt::ItemIsEnabled | Qt::ItemIsSelectable);
-        valueItem->setFlags(Qt::ItemIsEnabled | Qt::ItemIsSelectable);
+        if (editable && combo->lineEdit()) {
+            connect(combo->lineEdit(), &QLineEdit::editingFinished, this, [this, key, combo]() {
+                if (m_populatingAdvanced) return;
+                const QString text = combo->currentText();
+                if (combo->currentIndex() == 0 && combo->itemData(0, Qt::UserRole).toBool() && text == combo->itemText(0)) {
+                    applyAdvancedEntry(key, QString(), true);
+                } else if (!text.isEmpty() && m_allConfigs.value(key) != text) {
+                    applyAdvancedEntry(key, text, false);
+                }
+            });
+        }
 
-        ui->tableWidget->setItem(row, 0, keyItem);
-        ui->tableWidget->setItem(row, 1, valueItem);
-        row++;
+        ui->gridLayout_advanced->addWidget(label, gridRow, 0);
+        ui->gridLayout_advanced->addWidget(combo, gridRow, 1);
+        ui->gridLayout_advanced->addWidget(descLabel, gridRow, 2);
+        ++gridRow;
+
+        m_advancedRows.append({ key, label, combo, descLabel });
+        addedKeys.insert(key);
+    };
+
+    for (const auto &spec : knownConfigSpecs()) {
+        addRow(QString::fromLatin1(spec.key), spec.options, spec.editable, tr(spec.description));
     }
 
-    ui->tableWidget->resizeColumnToContents(0);
-    if (ui->tableWidget->columnWidth(0) > 260)
-        ui->tableWidget->setColumnWidth(0, 260);
-    updateAdvancedButtons();
+    for (auto it = m_allConfigs.cbegin(); it != m_allConfigs.cend(); ++it) {
+        if (!addedKeys.contains(it.key())) {
+            addRow(it.key(), {}, true, tr("Custom repository/user configuration entry."));
+        }
+    }
+
+    m_populatingAdvanced = false;
+    filterAdvancedForm();
 }
 
-void QGitSettingsDialog::updateAdvancedButtons()
+void QGitSettingsDialog::filterAdvancedForm()
 {
-    const bool hasSelection = (ui->tableWidget->currentRow() >= 0);
-    ui->pushButton_edit->setEnabled(hasSelection);
-    ui->pushButton_delete->setEnabled(hasSelection);
+    const QString filter = ui->lineEdit_search->text().trimmed();
+    for (const auto &row : std::as_const(m_advancedRows)) {
+        const bool visible = filter.isEmpty()
+            || row.key.contains(filter, Qt::CaseInsensitive)
+            || row.combo->currentText().contains(filter, Qt::CaseInsensitive)
+            || row.description->text().contains(filter, Qt::CaseInsensitive);
+        row.label->setVisible(visible);
+        row.combo->setVisible(visible);
+        row.description->setVisible(visible);
+    }
 }
 
-bool QGitSettingsDialog::showConfigEntryDialog(const QString &title, QString &key, QString &value, bool keyEditable)
+void QGitSettingsDialog::applyAdvancedEntry(const QString &key, const QString &value, bool isNone)
 {
+    if (!m_git) return;
+
+    const bool globalWrite = ui->radioButton_global->isChecked();
+    try {
+        if (isNone) {
+            if (m_allConfigs.contains(key)) {
+                QGit::invokeSync(m_git, [&]() {
+                    m_git->deleteConfigEntry(key, globalWrite);
+                });
+                m_allConfigs.remove(key);
+                m_configModified = true;
+            }
+        } else {
+            QGit::invokeSync(m_git, [&]() {
+                m_git->setConfigString(key, value, globalWrite);
+            });
+            m_allConfigs.insert(key, value);
+            m_configModified = true;
+        }
+
+        if (key == QLatin1String("user.name")) {
+            ui->lineEdit_userName->setText(isNone ? QString() : value);
+        } else if (key == QLatin1String("user.email")) {
+            ui->lineEdit_userEmail->setText(isNone ? QString() : value);
+        } else if (key == QLatin1String("core.autocrlf")) {
+            int idx = isNone ? 0 : ui->comboBox_autoCrlf->findText(value);
+            ui->comboBox_autoCrlf->setCurrentIndex(idx >= 0 ? idx : 0);
+        }
+    } catch (const QGitError &error) {
+        QMessageBox::critical(this, tr("Error"), error.errorString());
+        reloadScope(globalWrite);
+    }
+}
+
+void QGitSettingsDialog::on_pushButton_add_clicked()
+{
+    if (!m_git) return;
+
     QDialog dlg(this);
-    dlg.setWindowTitle(title);
+    dlg.setWindowTitle(tr("Add Custom Configuration"));
     dlg.setMinimumWidth(380);
 
     auto *layout = new QFormLayout(&dlg);
-    auto *keyEdit = new QLineEdit(key, &dlg);
+    auto *keyEdit = new QLineEdit(&dlg);
     keyEdit->setPlaceholderText(tr("e.g., core.autocrlf"));
-    keyEdit->setReadOnly(!keyEditable);
-    auto *valEdit = new QLineEdit(value, &dlg);
+    auto *valEdit = new QLineEdit(&dlg);
 
     layout->addRow(tr("Key:"), keyEdit);
     layout->addRow(tr("Value:"), valEdit);
@@ -164,97 +338,23 @@ bool QGitSettingsDialog::showConfigEntryDialog(const QString &title, QString &ke
     layout->addRow(buttons);
 
     auto *okBtn = buttons->button(QDialogButtonBox::Ok);
-    okBtn->setEnabled(!keyEdit->text().trimmed().isEmpty());
+    okBtn->setEnabled(false);
     connect(keyEdit, &QLineEdit::textChanged, &dlg, [&](const QString &t) {
         okBtn->setEnabled(!t.trimmed().isEmpty());
     });
     connect(buttons, &QDialogButtonBox::accepted, &dlg, &QDialog::accept);
     connect(buttons, &QDialogButtonBox::rejected, &dlg, &QDialog::reject);
-
-    if (keyEditable)
-        keyEdit->setFocus();
-    else
-        valEdit->setFocus();
+    keyEdit->setFocus();
 
     if (dlg.exec() != QDialog::Accepted)
-        return false;
-
-    key = keyEdit->text().trimmed();
-    value = valEdit->text();
-    return true;
-}
-
-void QGitSettingsDialog::on_pushButton_add_clicked()
-{
-    if (!m_git) return;
-
-    QString key;
-    QString val;
-    if (!showConfigEntryDialog(tr("Add Configuration"), key, val, true))
         return;
 
-    bool globalWrite = ui->radioButton_global->isChecked();
+    const QString key = keyEdit->text().trimmed();
+    const QString val = valEdit->text();
+    const bool globalWrite = ui->radioButton_global->isChecked();
     try {
         QGit::invokeSync(m_git, [&]() {
             m_git->setConfigString(key, val, globalWrite);
-        });
-        m_configModified = true;
-        reloadScope(globalWrite);
-    } catch (const QGitError &error) {
-        QMessageBox::critical(this, tr("Error"), error.errorString());
-    }
-}
-
-void QGitSettingsDialog::on_pushButton_edit_clicked()
-{
-    if (!m_git) return;
-
-    int row = ui->tableWidget->currentRow();
-    const QTableWidgetItem *keyItem = (row >= 0) ? ui->tableWidget->item(row, 0) : nullptr;
-    const QTableWidgetItem *valItem = (row >= 0) ? ui->tableWidget->item(row, 1) : nullptr;
-    if (!keyItem || !valItem) {
-        QMessageBox::warning(this, tr("Edit Configuration"), tr("Please select a configuration key to edit."));
-        return;
-    }
-    QString key = keyItem->text();
-    QString val = valItem->text();
-
-    if (!showConfigEntryDialog(tr("Edit Configuration"), key, val, false))
-        return;
-
-    bool globalWrite = ui->radioButton_global->isChecked();
-    try {
-        QGit::invokeSync(m_git, [&]() {
-            m_git->setConfigString(key, val, globalWrite);
-        });
-        m_configModified = true;
-        reloadScope(globalWrite);
-    } catch (const QGitError &error) {
-        QMessageBox::critical(this, tr("Error"), error.errorString());
-    }
-}
-
-void QGitSettingsDialog::on_pushButton_delete_clicked()
-{
-    if (!m_git) return;
-
-    int row = ui->tableWidget->currentRow();
-    const QTableWidgetItem *keyItem = (row >= 0) ? ui->tableWidget->item(row, 0) : nullptr;
-    if (!keyItem) {
-        QMessageBox::warning(this, tr("Delete Configuration"), tr("Please select a configuration key to delete."));
-        return;
-    }
-    QString key = keyItem->text();
-
-    auto confirm = QMessageBox::question(this, tr("Delete Configuration"),
-                                         tr("Are you sure you want to delete the configuration key '%1'?").arg(key),
-                                         QMessageBox::Yes | QMessageBox::No);
-    if (confirm != QMessageBox::Yes) return;
-
-    bool globalWrite = ui->radioButton_global->isChecked();
-    try {
-        QGit::invokeSync(m_git, [&]() {
-            m_git->deleteConfigEntry(key, globalWrite);
         });
         m_configModified = true;
         reloadScope(globalWrite);
@@ -266,7 +366,7 @@ void QGitSettingsDialog::on_pushButton_delete_clicked()
 void QGitSettingsDialog::on_lineEdit_search_textChanged(const QString &text)
 {
     Q_UNUSED(text);
-    populateTable();
+    filterAdvancedForm();
 }
 
 void QGitSettingsDialog::on_radioButton_local_toggled(bool checked)
