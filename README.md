@@ -15,9 +15,10 @@ Unlike heavy, memory-hungry Electron-based Git clients, `GitMaster` is built fro
 
 - **⚡ Blazing Fast Performance:** Native C++ core delivers instant repository loading and smooth history scrolling.
 - **🌳 Visual Git Graph:** Interactive, beautifully rendered branch topologies to track commits, merges, and tags.
-- **📁 Multi-Repository Management:** Easily switch, track, and manage multiple local projects from a single workspace.
+- **📁 Multi-Repository Management:** Easily switch, track, and manage multiple local projects from a single workspace with live status and ahead/behind push/pull indicators.
 - **🔄 Seamless Remote Sync:** Effortless `Fetch`, `Pull`, and `Push` operations with GitHub, GitLab, Gitee, and custom remotes.
-- **🌿 Advanced Branching:** Visual shortcuts to checkout, create, rename, delete, and merge branches or manage stashes/shelves.
+- **🌿 Advanced Branching & History:** Visual shortcuts to checkout, create (with commit picker), rename, delete, merge, interactive rebase, Git Flow, worktrees, submodules, and stashes.
+- **🔍 Diff Viewer & Commit Search:** Unified and side-by-side diffs with inline character/word highlighting, plus fast commit search by message, files, or author.
 
 ---
 
@@ -29,7 +30,7 @@ To build GitMaster, ensure you have a modern C++ compiler (supporting C++20), **
 
 *   **Linux (Ubuntu/Debian):**
     ```bash
-    sudo apt-get install build-essential cmake qt6-base-dev libgit2-dev
+    sudo apt-get install build-essential cmake qt6-base-dev qt6-svg-dev libgit2-dev zlib1g-dev
     ```
 *   **macOS (Homebrew):**
     ```bash
@@ -48,7 +49,7 @@ To build GitMaster, ensure you have a modern C++ compiler (supporting C++20), **
    ```bash
    mkdir build && cd build
    cmake -DCMAKE_BUILD_TYPE=Release ..
-   make -j\$(nproc)
+   make -j$(nproc)
    ```
 
 3. **Install onto your system:**
@@ -59,8 +60,6 @@ To build GitMaster, ensure you have a modern C++ compiler (supporting C++20), **
 ---
 
 ## 📸 Screenshots
-
-*(Tip: Add your application screenshots inside a `screenshots/` directory in your repo and link them here to give users a visual preview!)*
 
 ![screenshot](https://raw.githubusercontent.com/bokic/gitmaster/master/docs/gitmaster-screenshot.png)
 
