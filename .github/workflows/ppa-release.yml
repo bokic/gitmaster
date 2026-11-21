@@ -109,13 +109,22 @@ jobs:
           ORIG_TAR="../gitmaster_${VERSION}.orig.tar.gz"
           git archive --format=tar.gz --prefix="gitmaster-${VERSION}/" HEAD -- ':!debian' > "$ORIG_TAR"
 
-          GPG_CMD="gpg --batch --pinentry-mode loopback"
+          SIGN_CMD="/tmp/gpg-sign.sh"
           if [ -n "$GPG_PASSPHRASE" ]; then
             PASS_FILE=$(mktemp)
             chmod 600 "$PASS_FILE"
             printf '%s' "$GPG_PASSPHRASE" > "$PASS_FILE"
-            GPG_CMD="$GPG_CMD --passphrase-file $PASS_FILE"
+            cat <<EOF > "$SIGN_CMD"
+#!/bin/sh
+exec gpg --batch --pinentry-mode loopback --passphrase-file "$PASS_FILE" "\$@"
+EOF
+          else
+            cat <<'EOF' > "$SIGN_CMD"
+#!/bin/sh
+exec gpg --batch --pinentry-mode loopback "$@"
+EOF
           fi
+          chmod +x "$SIGN_CMD"
 
           for series in $TARGET_SERIES; do
             echo "=== Packaging for Ubuntu $series ==="
@@ -127,6 +136,6 @@ jobs:
               --force-distribution \
               "Release GitMaster ${VERSION} for Ubuntu ${series}."
 
-            dpkg-buildpackage -S -sa -d -k"${GPG_KEY_ID}" -p"${GPG_CMD}"
+            dpkg-buildpackage -S -sa -d -k"${GPG_KEY_ID}" -p"${SIGN_CMD}"
             dput "${LAUNCHPAD_PPA}" "../gitmaster_${VERSION}-1~${series}1_source.changes"
           done
