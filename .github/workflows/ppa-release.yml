@@ -56,8 +56,17 @@ jobs:
         id: gpg
         env:
           GPG_PRIVATE_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
+          GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
         run: |
-          echo "$GPG_PRIVATE_KEY" | gpg --batch --import
+          if [ -n "$GPG_PASSPHRASE" ]; then
+            PASS_FILE=$(mktemp)
+            chmod 600 "$PASS_FILE"
+            printf '%s' "$GPG_PASSPHRASE" > "$PASS_FILE"
+            printf '%s\n' "$GPG_PRIVATE_KEY" | gpg --batch --pinentry-mode loopback --passphrase-file "$PASS_FILE" --import
+            rm -f "$PASS_FILE"
+          else
+            printf '%s\n' "$GPG_PRIVATE_KEY" | gpg --batch --import
+          fi
           KEY_ID=$(gpg --list-secret-keys --with-colons | awk -F: '/^sec:/ {print $5; exit}')
           if [ -z "$KEY_ID" ]; then
             echo "::error::Failed to extract GPG key ID from GPG_PRIVATE_KEY"
