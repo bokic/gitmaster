@@ -114,15 +114,9 @@ jobs:
             PASS_FILE=$(mktemp)
             chmod 600 "$PASS_FILE"
             printf '%s' "$GPG_PASSPHRASE" > "$PASS_FILE"
-            cat <<EOF > "$SIGN_CMD"
-#!/bin/sh
-exec gpg --batch --pinentry-mode loopback --passphrase-file "$PASS_FILE" "\$@"
-EOF
+            printf '%s\n' '#!/bin/sh' "exec gpg --batch --pinentry-mode loopback --passphrase-file \"$PASS_FILE\" \"\$@\"" > "$SIGN_CMD"
           else
-            cat <<'EOF' > "$SIGN_CMD"
-#!/bin/sh
-exec gpg --batch --pinentry-mode loopback "$@"
-EOF
+            printf '%s\n' '#!/bin/sh' 'exec gpg --batch --pinentry-mode loopback "$@"' > "$SIGN_CMD"
           fi
           chmod +x "$SIGN_CMD"
 
