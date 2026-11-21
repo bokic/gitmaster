@@ -22,6 +22,17 @@ Unlike heavy, memory-hungry Electron-based Git clients, `GitMaster` is built fro
 
 ---
 
+## 📦 Installation
+
+### Ubuntu (PPA, 24.04+)
+```bash
+sudo add-apt-repository ppa:bbarbulovski-gmail/gitmaster
+sudo apt update
+sudo apt install gitmaster
+```
+
+---
+
 ## 🛠️ Building from Source
 
 ### Prerequisites
