@@ -222,6 +222,10 @@ QGitRepository::QGitRepository(const QString &path, QWidget *parent)
 
 
     connect(ui->logHistory_commits->verticalScrollBar(), &QScrollBar::valueChanged, this, &QGitRepository::historyTableSliderMoved);
+    ui->logHistory_info->setOpenLinks(false);
+    connect(ui->logHistory_info, &QTextBrowser::anchorClicked, this, [this](const QUrl &url) {
+        navigateToCommit(url.toString());
+    });
     connect(ui->plainTextEdit_commitMessage, &QAdvPlainTextEdit::abort, ui->pushButton_commitCancel, &QPushButton::click);
     connect(ui->plainTextEdit_commitMessage, &QPlainTextEdit::textChanged, this, &QGitRepository::updateCommitButtonState);
 
