@@ -59,9 +59,14 @@ protected:
     void mousePressEvent(QMouseEvent *event) override;
     void mouseMoveEvent(QMouseEvent *event) override;
     void moveEvent(QMoveEvent *event) override;
+    void resizeEvent(QResizeEvent *event) override;
+    void leaveEvent(QEvent *event) override;
+    void changeEvent(QEvent *event) override;
 
 private:
+    void initFonts();
     void updatePosition();
+    void updateLayoutWidths();
 
 private:
     QGitDiffWidgetPrivate *m_private = nullptr;
@@ -70,6 +75,7 @@ private:
     QStringList m_requestedFiles;
     QMap<QString, git_status_t> m_fileStatuses;
     QFont m_font;
+    QFont m_uiFont;
     int m_fontHeight = 0;
     int m_fontAscent = 0;
     int m_hoverFile = -1;
