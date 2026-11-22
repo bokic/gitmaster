@@ -207,12 +207,16 @@ static void resolveMailmap(git_mailmap *mailmap, QString &name, QString &email)
 {
     if (!mailmap)
         return;
+    const QByteArray nameUtf8 = name.toUtf8();
+    const QByteArray emailUtf8 = email.toUtf8();
     const char *resolved_name = nullptr;
     const char *resolved_email = nullptr;
-    if (git_mailmap_resolve(&resolved_name, &resolved_email, mailmap, name.toUtf8().constData(), email.toUtf8().constData()) == 0)
+    if (git_mailmap_resolve(&resolved_name, &resolved_email, mailmap, nameUtf8.constData(), emailUtf8.constData()) == 0)
     {
-        if (resolved_name) name = QString::fromUtf8(resolved_name);
-        if (resolved_email) email = QString::fromUtf8(resolved_email);
+        if (resolved_name && resolved_name != nameUtf8.constData())
+            name = QString::fromUtf8(resolved_name);
+        if (resolved_email && resolved_email != emailUtf8.constData())
+            email = QString::fromUtf8(resolved_email);
     }
 }
 
