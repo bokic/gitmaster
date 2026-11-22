@@ -31,6 +31,12 @@ sudo apt update
 sudo apt install gitmaster
 ```
 
+### Other Linux Distributions (AppImage)
+Pre-built **AppImage** binaries for other Linux distributions are available on the [Releases](https://github.com/bokic/gitmaster/releases) page. Download the `.AppImage` file, make it executable (`chmod +x GitMaster-*.AppImage`), and run it.
+
+### Windows & macOS
+Pre-built installers and packages for **Windows** and **macOS** are available on the [Releases](https://github.com/bokic/gitmaster/releases) page.
+
 ---
 
 ## 🛠️ Building from Source
