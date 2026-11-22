@@ -1,81 +1,54 @@
-<?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<!-- Created with Inkscape (http://www.inkscape.org/) -->
+<svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+<defs>
+  <linearGradient id="gEmerald" x1="0%" y1="0%" x2="100%" y2="100%">
+    <stop offset="0%" stop-color="#6EE7B7"/>
+    <stop offset="45%" stop-color="#10B981"/>
+    <stop offset="100%" stop-color="#047857"/>
+  </linearGradient>
+  <linearGradient id="gBlue" x1="0%" y1="0%" x2="100%" y2="100%">
+    <stop offset="0%" stop-color="#60A5FA"/>
+    <stop offset="50%" stop-color="#2563EB"/>
+    <stop offset="100%" stop-color="#1D4ED8"/>
+  </linearGradient>
+  <linearGradient id="gCyan" x1="0%" y1="0%" x2="100%" y2="100%">
+    <stop offset="0%" stop-color="#38BDF8"/>
+    <stop offset="55%" stop-color="#0284C7"/>
+    <stop offset="100%" stop-color="#0369A1"/>
+  </linearGradient>
+  <linearGradient id="gViolet" x1="0%" y1="0%" x2="100%" y2="100%">
+    <stop offset="0%" stop-color="#C4B5FD"/>
+    <stop offset="45%" stop-color="#8B5CF6"/>
+    <stop offset="100%" stop-color="#5B21B6"/>
+  </linearGradient>
+  <linearGradient id="gAmber" x1="0%" y1="0%" x2="100%" y2="100%">
+    <stop offset="0%" stop-color="#FDE68A"/>
+    <stop offset="45%" stop-color="#F59E0B"/>
+    <stop offset="100%" stop-color="#B45309"/>
+  </linearGradient>
+  <linearGradient id="gRed" x1="0%" y1="0%" x2="100%" y2="100%">
+    <stop offset="0%" stop-color="#FCA5A5"/>
+    <stop offset="45%" stop-color="#EF4444"/>
+    <stop offset="100%" stop-color="#B91C1C"/>
+  </linearGradient>
+  <linearGradient id="gSlate" x1="0%" y1="0%" x2="100%" y2="100%">
+    <stop offset="0%" stop-color="#94A3B8"/>
+    <stop offset="50%" stop-color="#475569"/>
+    <stop offset="100%" stop-color="#334155"/>
+  </linearGradient>
+  <linearGradient id="gDarkSlate" x1="0%" y1="0%" x2="100%" y2="100%">
+    <stop offset="0%" stop-color="#475569"/>
+    <stop offset="50%" stop-color="#1E293B"/>
+    <stop offset="100%" stop-color="#0F172A"/>
+  </linearGradient>
+  <linearGradient id="gShine" x1="0%" y1="0%" x2="100%" y2="100%">
+    <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.35"/>
+    <stop offset="60%" stop-color="#FFFFFF" stop-opacity="0"/>
+  </linearGradient>
+</defs>
 
-<svg
-   width="32.0px"
-   height="32.0px"
-   viewBox="0 0 32.0 32.0"
-   version="1.1"
-   id="SVGRoot"
-   sodipodi:docname="branch.svg"
-   xml:space="preserve"
-   inkscape:version="1.2.2 (b0a8486541, 2022-12-01)"
-   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
-   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
-   xmlns="http://www.w3.org/2000/svg"
-   xmlns:svg="http://www.w3.org/2000/svg"><sodipodi:namedview
-     id="namedview25425"
-     pagecolor="#ffffff"
-     bordercolor="#000000"
-     borderopacity="0.25"
-     inkscape:showpageshadow="2"
-     inkscape:pageopacity="0.0"
-     inkscape:pagecheckerboard="0"
-     inkscape:deskcolor="#d1d1d1"
-     inkscape:document-units="px"
-     showgrid="true"
-     inkscape:zoom="8.0000004"
-     inkscape:cx="11.749999"
-     inkscape:cy="20.187499"
-     inkscape:window-width="1467"
-     inkscape:window-height="1014"
-     inkscape:window-x="445"
-     inkscape:window-y="0"
-     inkscape:window-maximized="0"
-     inkscape:current-layer="layer1"
-     showguides="false"><inkscape:grid
-       type="xygrid"
-       id="grid25431" /><sodipodi:guide
-       position="25.527659,5.5"
-       orientation="0,1"
-       id="guide418"
-       inkscape:locked="false"
-       inkscape:label=""
-       inkscape:color="rgb(0,134,229)" /></sodipodi:namedview><defs
-     id="defs25420"><inkscape:path-effect
-       effect="spiro"
-       id="path-effect12494"
-       is_visible="true"
-       lpeversion="1" /><inkscape:path-effect
-       effect="spiro"
-       id="path-effect12392"
-       is_visible="true"
-       lpeversion="1" /></defs><g
-     inkscape:label="Layer 1"
-     inkscape:groupmode="layer"
-     id="layer1"><path
-       style="fill:none;fill-opacity:1;stroke:#31465d;stroke-width:2;stroke-linejoin:bevel;stroke-dasharray:none;stroke-opacity:1"
-       d="m 21.007218,15.145001 c -1.253566,5.66786 -4.696796,7.373636 -10.984376,8.903698"
-       id="path12601"
-       sodipodi:nodetypes="cc" /><path
-       style="fill:none;fill-opacity:1;stroke:#31465d;stroke-width:2;stroke-linejoin:bevel;stroke-dasharray:none;stroke-opacity:1"
-       d="m 10.07489,7.858844 0,16.621675"
-       id="path12390"
-       inkscape:path-effect="#path-effect12392"
-       inkscape:original-d="m 10.07489,7.858844 0,16.621675"
-       sodipodi:nodetypes="cc" /><circle
-       style="fill:#6383a4;stroke:#31465d;stroke-width:0.999621;stroke-linejoin:bevel;stroke-dasharray:none;stroke-opacity:1;fill-opacity:1"
-       id="path341"
-       cx="10"
-       cy="8"
-       r="3.5001898" /><circle
-       style="fill:#6383a4;stroke:#31465d;stroke-width:0.999621;stroke-linejoin:bevel;stroke-dasharray:none;stroke-opacity:1;fill-opacity:1"
-       id="circle6292"
-       cx="10"
-       cy="24"
-       r="3.5001898" /><circle
-       style="fill:none;fill-opacity:1;stroke:#31465d;stroke-width:2;stroke-linejoin:bevel;stroke-dasharray:none;stroke-opacity:1"
-       id="circle7794"
-       cx="22.000105"
-       cy="12.000105"
-       r="3.0001047" /></g></svg>
+  <path d="M10 9V23M10 23C10 19.5 13.5 18 16.5 17C19.5 16 22 14.5 22 11" stroke="url(#gSlate)" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="10" cy="8" r="3.8" fill="url(#gEmerald)" stroke="#FFFFFF" stroke-width="1.2"/>
+  <circle cx="10" cy="24" r="3.8" fill="url(#gEmerald)" stroke="#FFFFFF" stroke-width="1.2"/>
+  <circle cx="22" cy="10" r="3.8" fill="url(#gBlue)" stroke="#FFFFFF" stroke-width="1.2"/>
+
+</svg>

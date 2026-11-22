@@ -1,88 +1,55 @@
-<?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<!-- Created with Inkscape (http://www.inkscape.org/) -->
+<svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+<defs>
+  <linearGradient id="gEmerald" x1="0%" y1="0%" x2="100%" y2="100%">
+    <stop offset="0%" stop-color="#6EE7B7"/>
+    <stop offset="45%" stop-color="#10B981"/>
+    <stop offset="100%" stop-color="#047857"/>
+  </linearGradient>
+  <linearGradient id="gBlue" x1="0%" y1="0%" x2="100%" y2="100%">
+    <stop offset="0%" stop-color="#60A5FA"/>
+    <stop offset="50%" stop-color="#2563EB"/>
+    <stop offset="100%" stop-color="#1D4ED8"/>
+  </linearGradient>
+  <linearGradient id="gCyan" x1="0%" y1="0%" x2="100%" y2="100%">
+    <stop offset="0%" stop-color="#38BDF8"/>
+    <stop offset="55%" stop-color="#0284C7"/>
+    <stop offset="100%" stop-color="#0369A1"/>
+  </linearGradient>
+  <linearGradient id="gViolet" x1="0%" y1="0%" x2="100%" y2="100%">
+    <stop offset="0%" stop-color="#C4B5FD"/>
+    <stop offset="45%" stop-color="#8B5CF6"/>
+    <stop offset="100%" stop-color="#5B21B6"/>
+  </linearGradient>
+  <linearGradient id="gAmber" x1="0%" y1="0%" x2="100%" y2="100%">
+    <stop offset="0%" stop-color="#FDE68A"/>
+    <stop offset="45%" stop-color="#F59E0B"/>
+    <stop offset="100%" stop-color="#B45309"/>
+  </linearGradient>
+  <linearGradient id="gRed" x1="0%" y1="0%" x2="100%" y2="100%">
+    <stop offset="0%" stop-color="#FCA5A5"/>
+    <stop offset="45%" stop-color="#EF4444"/>
+    <stop offset="100%" stop-color="#B91C1C"/>
+  </linearGradient>
+  <linearGradient id="gSlate" x1="0%" y1="0%" x2="100%" y2="100%">
+    <stop offset="0%" stop-color="#94A3B8"/>
+    <stop offset="50%" stop-color="#475569"/>
+    <stop offset="100%" stop-color="#334155"/>
+  </linearGradient>
+  <linearGradient id="gDarkSlate" x1="0%" y1="0%" x2="100%" y2="100%">
+    <stop offset="0%" stop-color="#475569"/>
+    <stop offset="50%" stop-color="#1E293B"/>
+    <stop offset="100%" stop-color="#0F172A"/>
+  </linearGradient>
+  <linearGradient id="gShine" x1="0%" y1="0%" x2="100%" y2="100%">
+    <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.35"/>
+    <stop offset="60%" stop-color="#FFFFFF" stop-opacity="0"/>
+  </linearGradient>
+</defs>
 
-<svg
-   xmlns:dc="http://purl.org/dc/elements/1.1/"
-   xmlns:cc="http://creativecommons.org/ns#"
-   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
-   xmlns:svg="http://www.w3.org/2000/svg"
-   xmlns="http://www.w3.org/2000/svg"
-   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
-   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
-   width="64px"
-   height="64px"
-   id="svg2985"
-   version="1.1"
-   inkscape:version="0.91 r13725"
-   sodipodi:docname="push.svg">
-  <defs
-     id="defs2987" />
-  <sodipodi:namedview
-     id="base"
-     pagecolor="#ffffff"
-     bordercolor="#666666"
-     borderopacity="1.0"
-     inkscape:pageopacity="0.0"
-     inkscape:pageshadow="2"
-     inkscape:zoom="11.313708"
-     inkscape:cx="13.289461"
-     inkscape:cy="66.518592"
-     inkscape:current-layer="layer1"
-     showgrid="true"
-     inkscape:document-units="px"
-     inkscape:grid-bbox="true"
-     showguides="true"
-     inkscape:guide-bbox="true"
-     inkscape:window-width="1855"
-     inkscape:window-height="1056"
-     inkscape:window-x="65"
-     inkscape:window-y="24"
-     inkscape:window-maximized="1"
-     inkscape:snap-global="false">
-    <sodipodi:guide
-       orientation="1,0"
-       position="5,0"
-       id="guide2999" />
-    <sodipodi:guide
-       orientation="1,0"
-       position="59,0"
-       id="guide3001" />
-    <sodipodi:guide
-       orientation="0,1"
-       position="0,59"
-       id="guide3003" />
-    <sodipodi:guide
-       orientation="0,1"
-       position="0,5"
-       id="guide3005" />
-  </sodipodi:namedview>
-  <metadata
-     id="metadata2990">
-    <rdf:RDF>
-      <cc:Work
-         rdf:about="">
-        <dc:format>image/svg+xml</dc:format>
-        <dc:type
-           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-        <dc:title></dc:title>
-      </cc:Work>
-    </rdf:RDF>
-  </metadata>
-  <g
-     id="layer1"
-     inkscape:label="Layer 1"
-     inkscape:groupmode="layer">
-    <circle
-       r="0"
-       cy="-32.294125"
-       cx="-33.6264"
-       id="ellipse3992"
-       style="fill:#ff0000;fill-rule:evenodd;stroke:#000000;stroke-width:1.24564338px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
-       transform="scale(-1,-1)" />
-    <path
-       style="fill:#6282a3;fill-opacity:1;stroke:#31465d;stroke-width:1;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
-       d="m 33.89106,58.545089 c 1.077277,0 1.945312,-0.866082 1.945312,-1.94336 l 0,-43.457031 15.023438,8.675781 c 0.932949,0.538639 2.117611,0.220059 2.65625,-0.71289 l 1.105468,-1.914063 c 0.538639,-0.932949 0.220059,-2.117611 -0.71289,-2.65625 L 35.519966,5.9200893 c -0.442326,-0.255377 -0.940567,-0.310885 -1.400391,-0.207032 -0.07593,-0.00894 -0.150108,-0.023437 -0.228515,-0.023437 l -2.208985,0 c -0.494594,0 -0.94075,0.188223 -1.283203,0.490234 -0.0695,0.030013 -0.139805,0.054937 -0.207031,0.09375 L 11.801216,16.890792 c -0.93295,0.538638 -1.249576,1.7233 -0.710938,2.65625 l 1.105469,1.914062 c 0.538639,0.93295 1.723301,1.251529 2.65625,0.712891 l 14.884766,-8.59375 0,43.021484 c 0,1.077278 0.868035,1.94336 1.945312,1.94336 l 2.208985,0 z"
-       id="rect4209"
-       inkscape:connector-curvature="0" />
-  </g>
+  <circle cx="16" cy="16" r="13" fill="url(#gEmerald)"/>
+  <ellipse cx="12.5" cy="11" rx="7.5" ry="6" fill="url(#gShine)"/>
+  <circle cx="16" cy="16" r="13" fill="none" stroke="#000000" stroke-opacity="0.12" stroke-width="1"/>
+  <path d="M16 20V9.5M11.5 13.5L16 9L20.5 13.5" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M10 21V22.5C10 23.3 10.7 24 11.5 24H20.5C21.3 24 22 23.3 22 22.5V21" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+
 </svg>

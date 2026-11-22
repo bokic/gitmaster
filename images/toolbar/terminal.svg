@@ -1,42 +1,55 @@
-<?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<!-- Created for GitMaster -->
-<svg
-   width="32.0px"
-   height="32.0px"
-   viewBox="0 0 32.0 32.0"
-   version="1.1"
-   id="SVGRoot"
-   xml:space="preserve"
-   xmlns="http://www.w3.org/2000/svg"
-   xmlns:svg="http://www.w3.org/2000/svg">
-  <g id="layer1">
-    <!-- Terminal window background/border -->
-    <rect
-       style="fill:#6383a4;fill-opacity:1;stroke:#31465d;stroke-width:1;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
-       x="4"
-       y="6"
-       width="24"
-       height="20"
-       rx="3"
-       ry="3" />
-    <rect
-       style="fill:#ffffff;fill-opacity:1;stroke:none"
-       x="6"
-       y="10"
-       width="20"
-       height="14"
-       rx="1"
-       ry="1" />
-    <!-- Prompt symbol > -->
-    <path
-       d="M 9 13 L 13 17 L 9 21"
-       style="fill:none;stroke:#31465d;stroke-width:2;stroke-linecap:round;stroke-linejoin:round" />
-    <!-- Cursor _ -->
-    <line
-       x1="15"
-       y1="21"
-       x2="20"
-       y2="21"
-       style="stroke:#31465d;stroke-width:2;stroke-linecap:round" />
-  </g>
+<svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+<defs>
+  <linearGradient id="gEmerald" x1="0%" y1="0%" x2="100%" y2="100%">
+    <stop offset="0%" stop-color="#6EE7B7"/>
+    <stop offset="45%" stop-color="#10B981"/>
+    <stop offset="100%" stop-color="#047857"/>
+  </linearGradient>
+  <linearGradient id="gBlue" x1="0%" y1="0%" x2="100%" y2="100%">
+    <stop offset="0%" stop-color="#60A5FA"/>
+    <stop offset="50%" stop-color="#2563EB"/>
+    <stop offset="100%" stop-color="#1D4ED8"/>
+  </linearGradient>
+  <linearGradient id="gCyan" x1="0%" y1="0%" x2="100%" y2="100%">
+    <stop offset="0%" stop-color="#38BDF8"/>
+    <stop offset="55%" stop-color="#0284C7"/>
+    <stop offset="100%" stop-color="#0369A1"/>
+  </linearGradient>
+  <linearGradient id="gViolet" x1="0%" y1="0%" x2="100%" y2="100%">
+    <stop offset="0%" stop-color="#C4B5FD"/>
+    <stop offset="45%" stop-color="#8B5CF6"/>
+    <stop offset="100%" stop-color="#5B21B6"/>
+  </linearGradient>
+  <linearGradient id="gAmber" x1="0%" y1="0%" x2="100%" y2="100%">
+    <stop offset="0%" stop-color="#FDE68A"/>
+    <stop offset="45%" stop-color="#F59E0B"/>
+    <stop offset="100%" stop-color="#B45309"/>
+  </linearGradient>
+  <linearGradient id="gRed" x1="0%" y1="0%" x2="100%" y2="100%">
+    <stop offset="0%" stop-color="#FCA5A5"/>
+    <stop offset="45%" stop-color="#EF4444"/>
+    <stop offset="100%" stop-color="#B91C1C"/>
+  </linearGradient>
+  <linearGradient id="gSlate" x1="0%" y1="0%" x2="100%" y2="100%">
+    <stop offset="0%" stop-color="#94A3B8"/>
+    <stop offset="50%" stop-color="#475569"/>
+    <stop offset="100%" stop-color="#334155"/>
+  </linearGradient>
+  <linearGradient id="gDarkSlate" x1="0%" y1="0%" x2="100%" y2="100%">
+    <stop offset="0%" stop-color="#475569"/>
+    <stop offset="50%" stop-color="#1E293B"/>
+    <stop offset="100%" stop-color="#0F172A"/>
+  </linearGradient>
+  <linearGradient id="gShine" x1="0%" y1="0%" x2="100%" y2="100%">
+    <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.35"/>
+    <stop offset="60%" stop-color="#FFFFFF" stop-opacity="0"/>
+  </linearGradient>
+</defs>
+
+  <rect x="3" y="5" width="26" height="22" rx="5" fill="url(#gDarkSlate)"/>
+  <ellipse cx="11" cy="9" rx="8" ry="4" fill="url(#gShine)"/>
+  <rect x="3" y="5" width="26" height="22" rx="5" fill="none" stroke="#94A3B8" stroke-opacity="0.35" stroke-width="1"/>
+  <path d="M8.5 12.5L13 16L8.5 19.5" stroke="#34D399" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M15.5 20H22.5" stroke="#6EE7B7" stroke-width="2.4" stroke-linecap="round"/>
+
 </svg>

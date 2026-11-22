@@ -1,19 +1,55 @@
-<?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<!-- Created for GitMaster -->
-<svg
-   width="32.0px"
-   height="32.0px"
-   viewBox="0 0 32.0 32.0"
-   version="1.1"
-   id="SVGRoot"
-   xml:space="preserve"
-   xmlns="http://www.w3.org/2000/svg"
-   xmlns:svg="http://www.w3.org/2000/svg">
-  <g id="layer1">
-    <!-- Stash box container -->
-    <path
-       style="fill:#6383a4;fill-opacity:1;stroke:#31465d;stroke-width:1;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
-       d="M 16.0 6.0 L 5.28 10.76 L 5.28 21.31 L 16.0 26.08 L 26.72 21.31 L 26.72 10.76 Z M 16.0 7.82 L 24.0 11.38 L 16.0 14.93 L 8.0 11.38 Z M 6.78 12.63 L 15.33 16.43 L 15.33 24.38 L 6.78 20.58 Z M 16.67 16.43 L 25.22 12.63 L 25.22 20.58 L 16.67 24.38 Z"
-       id="box_path" />
-  </g>
+<svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+<defs>
+  <linearGradient id="gEmerald" x1="0%" y1="0%" x2="100%" y2="100%">
+    <stop offset="0%" stop-color="#6EE7B7"/>
+    <stop offset="45%" stop-color="#10B981"/>
+    <stop offset="100%" stop-color="#047857"/>
+  </linearGradient>
+  <linearGradient id="gBlue" x1="0%" y1="0%" x2="100%" y2="100%">
+    <stop offset="0%" stop-color="#60A5FA"/>
+    <stop offset="50%" stop-color="#2563EB"/>
+    <stop offset="100%" stop-color="#1D4ED8"/>
+  </linearGradient>
+  <linearGradient id="gCyan" x1="0%" y1="0%" x2="100%" y2="100%">
+    <stop offset="0%" stop-color="#38BDF8"/>
+    <stop offset="55%" stop-color="#0284C7"/>
+    <stop offset="100%" stop-color="#0369A1"/>
+  </linearGradient>
+  <linearGradient id="gViolet" x1="0%" y1="0%" x2="100%" y2="100%">
+    <stop offset="0%" stop-color="#C4B5FD"/>
+    <stop offset="45%" stop-color="#8B5CF6"/>
+    <stop offset="100%" stop-color="#5B21B6"/>
+  </linearGradient>
+  <linearGradient id="gAmber" x1="0%" y1="0%" x2="100%" y2="100%">
+    <stop offset="0%" stop-color="#FDE68A"/>
+    <stop offset="45%" stop-color="#F59E0B"/>
+    <stop offset="100%" stop-color="#B45309"/>
+  </linearGradient>
+  <linearGradient id="gRed" x1="0%" y1="0%" x2="100%" y2="100%">
+    <stop offset="0%" stop-color="#FCA5A5"/>
+    <stop offset="45%" stop-color="#EF4444"/>
+    <stop offset="100%" stop-color="#B91C1C"/>
+  </linearGradient>
+  <linearGradient id="gSlate" x1="0%" y1="0%" x2="100%" y2="100%">
+    <stop offset="0%" stop-color="#94A3B8"/>
+    <stop offset="50%" stop-color="#475569"/>
+    <stop offset="100%" stop-color="#334155"/>
+  </linearGradient>
+  <linearGradient id="gDarkSlate" x1="0%" y1="0%" x2="100%" y2="100%">
+    <stop offset="0%" stop-color="#475569"/>
+    <stop offset="50%" stop-color="#1E293B"/>
+    <stop offset="100%" stop-color="#0F172A"/>
+  </linearGradient>
+  <linearGradient id="gShine" x1="0%" y1="0%" x2="100%" y2="100%">
+    <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.35"/>
+    <stop offset="60%" stop-color="#FFFFFF" stop-opacity="0"/>
+  </linearGradient>
+</defs>
+
+  <rect x="4" y="6" width="24" height="20" rx="5" fill="url(#gAmber)"/>
+  <ellipse cx="12" cy="10" rx="8" ry="4" fill="url(#gShine)"/>
+  <rect x="4" y="6" width="24" height="20" rx="5" fill="none" stroke="#000000" stroke-opacity="0.12" stroke-width="1"/>
+  <path d="M4 13H11.5L13 15.5H19L20.5 13H28" stroke="#FFFFFF" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M16 9V19M12.5 15.5L16 19L19.5 15.5" stroke="#FFFFFF" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+
 </svg>

@@ -1,57 +1,55 @@
-<?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<!-- Created with Inkscape (http://www.inkscape.org/) -->
+<svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+<defs>
+  <linearGradient id="gEmerald" x1="0%" y1="0%" x2="100%" y2="100%">
+    <stop offset="0%" stop-color="#6EE7B7"/>
+    <stop offset="45%" stop-color="#10B981"/>
+    <stop offset="100%" stop-color="#047857"/>
+  </linearGradient>
+  <linearGradient id="gBlue" x1="0%" y1="0%" x2="100%" y2="100%">
+    <stop offset="0%" stop-color="#60A5FA"/>
+    <stop offset="50%" stop-color="#2563EB"/>
+    <stop offset="100%" stop-color="#1D4ED8"/>
+  </linearGradient>
+  <linearGradient id="gCyan" x1="0%" y1="0%" x2="100%" y2="100%">
+    <stop offset="0%" stop-color="#38BDF8"/>
+    <stop offset="55%" stop-color="#0284C7"/>
+    <stop offset="100%" stop-color="#0369A1"/>
+  </linearGradient>
+  <linearGradient id="gViolet" x1="0%" y1="0%" x2="100%" y2="100%">
+    <stop offset="0%" stop-color="#C4B5FD"/>
+    <stop offset="45%" stop-color="#8B5CF6"/>
+    <stop offset="100%" stop-color="#5B21B6"/>
+  </linearGradient>
+  <linearGradient id="gAmber" x1="0%" y1="0%" x2="100%" y2="100%">
+    <stop offset="0%" stop-color="#FDE68A"/>
+    <stop offset="45%" stop-color="#F59E0B"/>
+    <stop offset="100%" stop-color="#B45309"/>
+  </linearGradient>
+  <linearGradient id="gRed" x1="0%" y1="0%" x2="100%" y2="100%">
+    <stop offset="0%" stop-color="#FCA5A5"/>
+    <stop offset="45%" stop-color="#EF4444"/>
+    <stop offset="100%" stop-color="#B91C1C"/>
+  </linearGradient>
+  <linearGradient id="gSlate" x1="0%" y1="0%" x2="100%" y2="100%">
+    <stop offset="0%" stop-color="#94A3B8"/>
+    <stop offset="50%" stop-color="#475569"/>
+    <stop offset="100%" stop-color="#334155"/>
+  </linearGradient>
+  <linearGradient id="gDarkSlate" x1="0%" y1="0%" x2="100%" y2="100%">
+    <stop offset="0%" stop-color="#475569"/>
+    <stop offset="50%" stop-color="#1E293B"/>
+    <stop offset="100%" stop-color="#0F172A"/>
+  </linearGradient>
+  <linearGradient id="gShine" x1="0%" y1="0%" x2="100%" y2="100%">
+    <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.35"/>
+    <stop offset="60%" stop-color="#FFFFFF" stop-opacity="0"/>
+  </linearGradient>
+</defs>
 
-<svg
-   width="32.0px"
-   height="32.0px"
-   viewBox="0 0 32.0 32.0"
-   version="1.1"
-   id="SVGRoot"
-   sodipodi:docname="push.svg"
-   xml:space="preserve"
-   inkscape:version="1.2.2 (b0a8486541, 2022-12-01)"
-   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
-   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
-   xmlns="http://www.w3.org/2000/svg"
-   xmlns:svg="http://www.w3.org/2000/svg"><sodipodi:namedview
-     id="namedview25425"
-     pagecolor="#ffffff"
-     bordercolor="#000000"
-     borderopacity="0.25"
-     inkscape:showpageshadow="2"
-     inkscape:pageopacity="0.0"
-     inkscape:pagecheckerboard="0"
-     inkscape:deskcolor="#d1d1d1"
-     inkscape:document-units="px"
-     showgrid="true"
-     inkscape:zoom="22.627417"
-     inkscape:cx="15.379572"
-     inkscape:cy="12.926796"
-     inkscape:window-width="1467"
-     inkscape:window-height="1014"
-     inkscape:window-x="445"
-     inkscape:window-y="0"
-     inkscape:window-maximized="0"
-     inkscape:current-layer="layer1"
-     showguides="true"><inkscape:grid
-       type="xygrid"
-       id="grid25431" /><sodipodi:guide
-       position="16.572815,28.022524"
-       orientation="0,-1"
-       id="guide713"
-       inkscape:locked="false" /></sodipodi:namedview><defs
-     id="defs25420"><inkscape:path-effect
-       effect="spiro"
-       id="path-effect12494"
-       is_visible="true"
-       lpeversion="1" /><inkscape:path-effect
-       effect="spiro"
-       id="path-effect12392"
-       is_visible="true"
-       lpeversion="1" /></defs><g
-     inkscape:label="Layer 1"
-     inkscape:groupmode="layer"
-     id="layer1"><path
-       id="rect297"
-       style="fill:#6383a4;stroke:#31465d;stroke-width:1;stroke-linecap:round;stroke-dasharray:none;stroke-linejoin:round"
-       d="M 15.501953 4.5 C 15.216638 4.4999999 14.931395 4.5821272 14.683594 4.7460938 C 14.682394 4.7468803 14.680887 4.7472569 14.679688 4.7480469 C 14.671588 4.7533669 14.66425 4.760127 14.65625 4.765625 C 14.62459 4.787609 14.59277 4.8092624 14.5625 4.8339844 C 14.5604 4.8357144 14.558841 4.8381038 14.556641 4.8398438 C 14.519831 4.8702387 14.483691 4.903028 14.449219 4.9375 C 14.447219 4.93946 14.445359 4.9413794 14.443359 4.9433594 L 14.083984 5.3007812 C 14.078984 5.3057312 14.075182 5.3114033 14.070312 5.3164062 L 8.0683594 11.318359 C 7.4853658 11.901353 7.4853653 12.838881 8.0683594 13.421875 L 8.4375 13.792969 C 9.0204934 14.375962 9.9599748 14.375962 10.542969 13.792969 L 13.5 10.835938 L 13.5 25.998047 C 13.5 26.830441 14.035257 27.5 14.701172 27.5 L 16.298828 27.5 C 16.964743 27.5 17.5 26.830441 17.5 25.998047 L 17.5 10.835938 L 20.453125 13.787109 C 21.0394 14.373386 21.984037 14.373386 22.570312 13.787109 L 22.927734 13.427734 C 23.514011 12.841459 23.51401 11.898775 22.927734 11.3125 L 16.941406 5.3261719 L 16.923828 5.3066406 L 16.558594 4.9433594 C 16.48531 4.8700749 16.407285 4.8049633 16.324219 4.75 C 16.075361 4.5840104 15.789022 4.4999997 15.501953 4.5 z " /></g></svg>
+  <circle cx="16" cy="16" r="13" fill="url(#gEmerald)"/>
+  <ellipse cx="12.5" cy="11" rx="7.5" ry="6" fill="url(#gShine)"/>
+  <circle cx="16" cy="16" r="13" fill="none" stroke="#000000" stroke-opacity="0.12" stroke-width="1"/>
+  <path d="M16 20V9.5M11.5 13.5L16 9L20.5 13.5" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M10 21V22.5C10 23.3 10.7 24 11.5 24H20.5C21.3 24 22 23.3 22 22.5V21" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+
+</svg>
