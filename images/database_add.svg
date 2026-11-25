@@ -46,11 +46,12 @@
   </linearGradient>
 </defs>
 
-  <ellipse cx="14" cy="8.5" rx="9.5" ry="3.5" fill="url(#gBlue)"/>
-  <path d="M4.5 8.5V15.5C4.5 17.4 8.75 19 14 19C19.25 19 23.5 17.4 23.5 15.5V8.5" fill="url(#gSlate)"/>
   <path d="M4.5 15.5V22.5C4.5 24.4 8.75 26 14 26C19.25 26 23.5 24.4 23.5 22.5V15.5" fill="url(#gDarkSlate)"/>
+  <path d="M4.5 8.5V15.5C4.5 17.4 8.75 19 14 19C19.25 19 23.5 17.4 23.5 15.5V8.5" fill="url(#gSlate)"/>
   <ellipse cx="14" cy="8.5" rx="9.5" ry="3.5" fill="url(#gBlue)" stroke="#FFFFFF" stroke-opacity="0.35" stroke-width="0.8"/>
-  <circle cx="23.5" cy="23.5" r="6.5" fill="url(#gEmerald)" stroke="#FFFFFF" stroke-width="1.4"/>
-  <path d="M23.5 20.5V26.5M20.5 23.5H26.5" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round"/>
+  <path d="M4.5 15.5C4.5 17.4 8.75 19 14 19C19.25 19 23.5 17.4 23.5 15.5" stroke="#FFFFFF" stroke-opacity="0.2" stroke-width="0.7"/>
+  <circle cx="23" cy="23" r="6.5" fill="url(#gEmerald)" stroke="#FFFFFF" stroke-width="1.4"/>
+  <ellipse cx="21.3" cy="20.5" rx="3.8" ry="2.8" fill="url(#gShine)"/>
+  <path d="M23 20V26M20 23H26" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round"/>
 
 </svg>

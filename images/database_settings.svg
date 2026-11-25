@@ -46,11 +46,11 @@
   </linearGradient>
 </defs>
 
-  <ellipse cx="14" cy="8.5" rx="9.5" ry="3.5" fill="url(#gBlue)"/>
-  <path d="M4.5 8.5V15.5C4.5 17.4 8.75 19 14 19C19.25 19 23.5 17.4 23.5 15.5V8.5" fill="url(#gSlate)"/>
   <path d="M4.5 15.5V22.5C4.5 24.4 8.75 26 14 26C19.25 26 23.5 24.4 23.5 22.5V15.5" fill="url(#gDarkSlate)"/>
+  <path d="M4.5 8.5V15.5C4.5 17.4 8.75 19 14 19C19.25 19 23.5 17.4 23.5 15.5V8.5" fill="url(#gSlate)"/>
   <ellipse cx="14" cy="8.5" rx="9.5" ry="3.5" fill="url(#gBlue)" stroke="#FFFFFF" stroke-opacity="0.35" stroke-width="0.8"/>
-  <circle cx="23.5" cy="23.5" r="6.5" fill="url(#gAmber)" stroke="#FFFFFF" stroke-width="1.4"/>
-  <circle cx="23.5" cy="23.5" r="2.4" fill="none" stroke="#FFFFFF" stroke-width="1.8"/>
+  <path d="M4.5 15.5C4.5 17.4 8.75 19 14 19C19.25 19 23.5 17.4 23.5 15.5" stroke="#FFFFFF" stroke-opacity="0.2" stroke-width="0.7"/>
+  <path d="M23.00 15.80L25.07 18.01L28.09 17.91L27.99 20.93L30.20 23.00L27.99 25.07L28.09 28.09L25.07 27.99L23.00 30.20L20.93 27.99L17.91 28.09L18.01 25.07L15.80 23.00L18.01 20.93L17.91 17.91L20.93 18.01Z" fill="url(#gAmber)" stroke="#FFFFFF" stroke-width="1.2" stroke-linejoin="round"/>
+  <circle cx="23" cy="23" r="2.2" fill="url(#gDarkSlate)" stroke="#FFFFFF" stroke-width="1.2"/>
 
 </svg>
