@@ -1186,17 +1186,19 @@ void QGitRepository::repositoryPushReply(const QGitError &error)
         QString errStr = error.errorString();
         emit statusMessage(errStr);
 
-        if (errStr.contains(QStringLiteral("rejected"), Qt::CaseInsensitive) || 
-            errStr.contains(QStringLiteral("non-fast-forward"), Qt::CaseInsensitive) ||
-            errStr.contains(QStringLiteral("fetch first"), Qt::CaseInsensitive))
+        if (!m_lastPushOptions.testFlag(QGit::PushOption::Force) &&
+            (errStr.contains(QStringLiteral("rejected"), Qt::CaseInsensitive) ||
+             errStr.contains(QStringLiteral("non-fast-forward"), Qt::CaseInsensitive) ||
+             errStr.contains(QStringLiteral("fetch first"), Qt::CaseInsensitive)))
         {
             auto res = QMessageBox::question(this, tr("Push Rejected"), 
                                              tr("Push was rejected by the remote (%1).\n\nDo you want to force push?").arg(errStr),
                                              QMessageBox::Yes | QMessageBox::No);
             if (res == QMessageBox::Yes)
             {
+                m_lastPushOptions |= QGit::PushOption::Force;
                 emit statusMessage(tr("Force Pushing..."));
-                emit repositoryPush(m_lastRemote, m_lastBranches, m_lastPushOptions | QGit::PushOption::Force);
+                emit repositoryPush(m_lastRemote, m_lastBranches, m_lastPushOptions);
                 return;
             }
         }
