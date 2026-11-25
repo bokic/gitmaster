@@ -156,6 +156,9 @@ fi
 
 # 4c. Generate the final AppImage package
 echo "=> Generating final AppImage package..."
+if [ -z "${LDAI_OUTPUT:-}" ]; then
+    export LDAI_OUTPUT="GitMaster_${LINUXDEPLOY_OUTPUT_VERSION}-$(uname -m).AppImage"
+fi
 "${TOOLS_DIR}/linuxdeploy-x86_64.AppImage" \
     --appdir "${APPDIR}" \
     --output appimage
