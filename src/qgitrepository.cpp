@@ -146,7 +146,14 @@ QGitRepository::QGitRepository(const QString &path, QWidget *parent)
     ui->logHistory_files->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
     ui->logHistory_files->setStyleSheet(QStringLiteral("QTableWidget { outline: 0; }"));
     ui->search_files->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
-    ui->logHistory_commits->horizontalHeader()->setSectionResizeMode(1, QHeaderView::Stretch);
+    ui->logHistory_commits->horizontalHeader()->setSectionResizeMode(QHeaderView::Interactive);
+    ui->logHistory_commits->horizontalHeader()->setStretchLastSection(false);
+    ui->logHistory_commits->setColumnWidth(0, 80);
+    ui->logHistory_commits->setColumnWidth(1, 450);
+    ui->logHistory_commits->setColumnWidth(2, 140);
+    ui->logHistory_commits->setColumnWidth(3, 150);
+    ui->logHistory_commits->setColumnWidth(4, 90);
+    ui->logHistory_commits->setAutoResizeColumn(1);
     ui->search_commits->horizontalHeader()->setSectionResizeMode(0, QHeaderView::Stretch);
 
     ui->logHistory_files->setContextMenuPolicy(Qt::CustomContextMenu);

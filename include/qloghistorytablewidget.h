@@ -39,6 +39,10 @@ public:
 
     void setHighlightedCommits(const QSet<QString> &shas);
     bool isCommitHighlighted(const QString &sha) const;
+    void setAutoResizeColumn(int column);
+
+protected:
+    void resizeEvent(QResizeEvent *event) override;
 
 private:
     QList<QVariant> computeGraphData(const QGitCommit &commit, QStringList &hashIndex) const;
@@ -48,5 +52,6 @@ private:
     QStringList m_hashIndex;
     QHash<QString, QList<QGitRef>> m_refMap;
     QSet<QString> m_highlightedCommits;
+    int m_autoResizeColumn = -1;
 };
 

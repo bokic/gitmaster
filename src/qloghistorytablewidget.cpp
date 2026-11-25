@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: LGPL-3.0-or-later
 #include "qloghistorytablewidget.h"
+#include <QResizeEvent>
 #include <QSignalBlocker>
 
 
@@ -486,5 +487,32 @@ void QLogHistoryTableWidget::setHighlightedCommits(const QSet<QString> &shas)
 bool QLogHistoryTableWidget::isCommitHighlighted(const QString &sha) const
 {
     return m_highlightedCommits.contains(sha.toLower());
+}
+
+void QLogHistoryTableWidget::setAutoResizeColumn(int column)
+{
+    m_autoResizeColumn = column;
+}
+
+void QLogHistoryTableWidget::resizeEvent(QResizeEvent *event)
+{
+    QTableWidget::resizeEvent(event);
+
+    if (m_autoResizeColumn >= 0 && m_autoResizeColumn < columnCount() && !isColumnHidden(m_autoResizeColumn))
+    {
+        int otherWidth = 0;
+        for (int c = 0; c < columnCount(); ++c)
+        {
+            if (c != m_autoResizeColumn && !isColumnHidden(c))
+            {
+                otherWidth += columnWidth(c);
+            }
+        }
+        const int targetWidth = qMax(100, viewport()->width() - otherWidth);
+        if (columnWidth(m_autoResizeColumn) != targetWidth)
+        {
+            setColumnWidth(m_autoResizeColumn, targetWidth);
+        }
+    }
 }
 
