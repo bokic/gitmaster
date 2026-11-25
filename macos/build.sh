@@ -109,7 +109,7 @@ codesign --force --deep --sign - "$APP_BUNDLE"
 codesign --verify --verbose "$APP_BUNDLE"
 
 # 6. Get version info for DMG filename
-DMG_NAME="bin/GitMaster_${GIT_DESCRIBE}_macOS.dmg"
+DMG_NAME="bin/GitMaster_${GIT_DESCRIBE}-$(uname -m).dmg"
 
 # 7. Package the app bundle into a DMG installer
 echo "Creating DMG installer..."
