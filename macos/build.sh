@@ -123,6 +123,17 @@ cp -R "$APP_BUNDLE" "$DMG_DIR/"
 # Create a symbolic link to Applications folder
 ln -s /Applications "$DMG_DIR/Applications"
 
+# Add the app icon as the DMG volume icon
+if [ -f "$ICNS_FILE" ]; then
+    cp "$ICNS_FILE" "$DMG_DIR/.VolumeIcon.icns"
+    if command -v SetFile &> /dev/null; then
+        SetFile -a C "$DMG_DIR"
+        SetFile -a V "$DMG_DIR/.VolumeIcon.icns"
+    else
+        echo "Warning: SetFile not found; DMG volume custom icon attribute will not be set."
+    fi
+fi
+
 # Remove any existing DMG of the same name
 rm -f "$DMG_NAME"
 
@@ -131,6 +142,25 @@ if diskutil image create from --help &>/dev/null; then
     diskutil image create from --volumeName "Git Master" --format UDZO "$DMG_DIR" "$DMG_NAME"
 else
     hdiutil create -volname "Git Master" -srcfolder "$DMG_DIR" -ov -format UDZO "$DMG_NAME"
+fi
+
+# Set the app icon on the DMG file itself
+if [ -f "$ICNS_FILE" ] && command -v osascript &> /dev/null; then
+    if ! osascript -l JavaScript - "$ICNS_FILE" "$DMG_NAME" <<'EOF'
+function run(argv) {
+    ObjC.import("AppKit");
+    var img = $.NSImage.alloc.initWithContentsOfFile(argv[0]);
+    if (!img || img.isNil()) {
+        throw new Error("Failed to load icon: " + argv[0]);
+    }
+    if (!$.NSWorkspace.sharedWorkspace.setIconForFileOptions(img, argv[1], 0)) {
+        throw new Error("Failed to set icon on: " + argv[1]);
+    }
+}
+EOF
+    then
+        echo "Warning: Could not set custom icon on DMG file $DMG_NAME."
+    fi
 fi
 
 # Clean up DMG staging directory
