@@ -9,6 +9,7 @@
 #include <QList>
 #include <QHash>
 #include <QSet>
+#include <QTimer>
 
 
 struct QGitRef {
@@ -47,11 +48,15 @@ protected:
 private:
     QList<QVariant> computeGraphData(const QGitCommit &commit, QStringList &hashIndex) const;
     void populateCommitRow(int row, const QGitCommit &commit);
+    void refreshRelativeTimes();
+    static QString formatRelativeTime(const QDateTime &dt, const QDateTime &now);
+    static QTableWidgetItem *createDateItem(const QDateTime &dt);
 
     QList<QGitCommit> m_commits;
     QStringList m_hashIndex;
     QHash<QString, QList<QGitRef>> m_refMap;
     QSet<QString> m_highlightedCommits;
+    QTimer m_relativeTimeTimer;
     int m_autoResizeColumn = -1;
 };
 

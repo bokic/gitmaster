@@ -7,6 +7,9 @@
 QLogHistoryTableWidget::QLogHistoryTableWidget(QWidget *parent)
     : QTableWidget(parent)
 {
+    m_relativeTimeTimer.setInterval(60 * 1000);
+    connect(&m_relativeTimeTimer, &QTimer::timeout, this, &QLogHistoryTableWidget::refreshRelativeTimes);
+    m_relativeTimeTimer.start();
 }
 
 void QLogHistoryTableWidget::clearCommits()
@@ -206,7 +209,7 @@ void QLogHistoryTableWidget::populateCommitRow(int row, const QGitCommit &commit
         item->setData(Qt::UserRole + 1, commit.id());
         setItem(row, 0, item);
 
-        item = new QTableWidgetItem(commit.time().toString());
+        item = createDateItem(commit.time());
         setItem(row, 1, item);
 
         item = new QTableWidgetItem(QString("%1 <%2>").arg(commit.author().name(), commit.author().email()));
@@ -228,7 +231,7 @@ void QLogHistoryTableWidget::populateCommitRow(int row, const QGitCommit &commit
     item->setData(Qt::UserRole + 1, commit.id());
     setItem(row, 1, item);
 
-    item = new QTableWidgetItem(commit.time().toString());
+    item = createDateItem(commit.time());
     setItem(row, 2, item);
 
     item = new QTableWidgetItem(QString("%1 <%2>").arg(commit.author().name(), commit.author().email()));
@@ -353,6 +356,7 @@ void QLogHistoryTableWidget::syncCommits(const QList<QGitCommit> &commits)
     }
 
     recalculateGraph();
+    refreshRelativeTimes();
 
     if (!selectedHash.isEmpty()) {
         for (int r = 0; r < m_commits.size(); ++r) {
@@ -513,6 +517,76 @@ void QLogHistoryTableWidget::resizeEvent(QResizeEvent *event)
         {
             setColumnWidth(m_autoResizeColumn, targetWidth);
         }
+    }
+}
+
+QString QLogHistoryTableWidget::formatRelativeTime(const QDateTime &dt, const QDateTime &now)
+{
+    if (!dt.isValid())
+        return QString();
+
+    const qint64 secs = dt.secsTo(now);
+    if (secs < 0)
+        return dt.toLocalTime().toString(QStringLiteral("MMM d, yyyy"));
+    if (secs < 60)
+        return tr("<1 minute ago");
+
+    const qint64 minutes = secs / 60;
+    if (minutes == 1)
+        return tr("1 minute ago");
+    if (minutes < 60)
+        return tr("%1 minutes ago").arg(minutes);
+
+    const qint64 hours = minutes / 60;
+    if (hours == 1)
+        return tr("1 hour ago");
+    if (hours < 24)
+        return tr("%1 hours ago").arg(hours);
+
+    const qint64 days = hours / 24;
+    if (days == 1)
+        return tr("yesterday");
+    if (days < 7)
+        return tr("%1 days ago").arg(days);
+
+    const qint64 weeks = days / 7;
+    if (days < 30)
+        return (weeks == 1) ? tr("1 week ago") : tr("%1 weeks ago").arg(weeks);
+
+    const QDateTime localDt = dt.toLocalTime();
+    if (localDt.date().year() == now.toLocalTime().date().year())
+        return localDt.toString(QStringLiteral("MMM d"));
+
+    return localDt.toString(QStringLiteral("MMM d, yyyy"));
+}
+
+QTableWidgetItem *QLogHistoryTableWidget::createDateItem(const QDateTime &dt)
+{
+    auto *item = new QTableWidgetItem(formatRelativeTime(dt, QDateTime::currentDateTime()));
+    item->setData(Qt::UserRole, dt);
+    if (dt.isValid())
+        item->setToolTip(dt.toLocalTime().toString(Qt::TextDate));
+    return item;
+}
+
+void QLogHistoryTableWidget::refreshRelativeTimes()
+{
+    const int dateCol = (columnCount() == 4) ? 1 : 2;
+    const QDateTime now = QDateTime::currentDateTime();
+
+    for (int row = 0; row < rowCount(); ++row)
+    {
+        QTableWidgetItem *dateItem = item(row, dateCol);
+        if (!dateItem)
+            continue;
+
+        const QDateTime dt = dateItem->data(Qt::UserRole).toDateTime();
+        if (!dt.isValid())
+            continue;
+
+        const QString text = formatRelativeTime(dt, now);
+        if (dateItem->text() != text)
+            dateItem->setText(text);
     }
 }
 
