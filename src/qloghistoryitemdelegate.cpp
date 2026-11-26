@@ -44,8 +44,10 @@ void QLogHistoryItemDelegate::paint(QPainter *painter, const QStyleOptionViewIte
             sha = sibling.data(Qt::UserRole + 1).toString();
         }
 
+        const bool isUncommittedRow = (sha == QLogHistoryTableWidget::UncommittedRowId);
+
         bool isCurrentCommit = false;
-        if (table && !sha.isEmpty())
+        if (table && !sha.isEmpty() && !isUncommittedRow)
         {
             auto refs = table->getReferences(sha);
             for (const auto &ref : refs)
@@ -126,6 +128,7 @@ void QLogHistoryItemDelegate::paint(QPainter *painter, const QStyleOptionViewIte
             }
 
             // 3. Draw parent connections
+            const Qt::PenStyle connPenStyle = isUncommittedRow ? Qt::DashLine : Qt::SolidLine;
             for (int i = 0; i < parentConnections.size() - 1; i += 2)
             {
                 int from = parentConnections.at(i).toInt();
@@ -136,13 +139,13 @@ void QLogHistoryItemDelegate::paint(QPainter *painter, const QStyleOptionViewIte
                 if (from == to)
                 {
                     // Straight vertical line to bottom
-                    painter->setPen(QPen(getLaneColor(from), 2, Qt::SolidLine, Qt::RoundCap));
+                    painter->setPen(QPen(getLaneColor(from), 2, connPenStyle, Qt::RoundCap));
                     painter->drawLine(QPoint(fromX, centerY), QPoint(fromX, bottomY));
                 }
                 else
                 {
                     // Straight diagonal split/merge line to bottom
-                    painter->setPen(QPen(getLaneColor(to), 2, Qt::SolidLine, Qt::RoundCap));
+                    painter->setPen(QPen(getLaneColor(to), 2, connPenStyle, Qt::RoundCap));
                     painter->drawLine(QPoint(fromX, centerY), QPoint(toX, bottomY));
                 }
             }
@@ -166,15 +169,24 @@ void QLogHistoryItemDelegate::paint(QPainter *painter, const QStyleOptionViewIte
 
             // 5. Draw the commit node circle
             QPoint circleCenter(commitX, centerY);
-            painter->setPen(QPen(Qt::black, 1));
-            painter->setBrush(QBrush(getLaneColor(commitLane)));
-            painter->drawEllipse(circleCenter, circleRadius, circleRadius);
-
-            // Premium visual design highlight: inner white circle for current checked-out commit
-            if (isCurrentCommit)
+            if (isUncommittedRow)
             {
-                painter->setBrush(QBrush(Qt::white));
-                painter->drawEllipse(circleCenter, circleRadius / 2, circleRadius / 2);
+                painter->setPen(QPen(getLaneColor(commitLane), 2));
+                painter->setBrush(QBrush(opt.palette.color(QPalette::Base)));
+                painter->drawEllipse(circleCenter, circleRadius, circleRadius);
+            }
+            else
+            {
+                painter->setPen(QPen(Qt::black, 1));
+                painter->setBrush(QBrush(getLaneColor(commitLane)));
+                painter->drawEllipse(circleCenter, circleRadius, circleRadius);
+
+                // Premium visual design highlight: inner white circle for current checked-out commit
+                if (isCurrentCommit)
+                {
+                    painter->setBrush(QBrush(Qt::white));
+                    painter->drawEllipse(circleCenter, circleRadius / 2, circleRadius / 2);
+                }
             }
 
             painter->restore();
@@ -188,8 +200,9 @@ void QLogHistoryItemDelegate::paint(QPainter *painter, const QStyleOptionViewIte
         }
 
         QString sha = index.data(Qt::UserRole + 1).toString();
+        const bool isUncommittedRow = (sha == QLogHistoryTableWidget::UncommittedRowId);
         QList<QGitRef> refs;
-        if (table && !sha.isEmpty())
+        if (table && !sha.isEmpty() && !isUncommittedRow)
         {
             refs = table->getReferences(sha);
         }
@@ -281,7 +294,7 @@ void QLogHistoryItemDelegate::paint(QPainter *painter, const QStyleOptionViewIte
                 break;
             }
         }
-        bool isBold = isCurrentCommit || (table && !sha.isEmpty() && table->isCommitHighlighted(sha));
+        bool isBold = isUncommittedRow || isCurrentCommit || (table && !sha.isEmpty() && table->isCommitHighlighted(sha));
 
         QRect textRect = option.rect;
         textRect.setLeft(startX + 2);
@@ -300,6 +313,10 @@ void QLogHistoryItemDelegate::paint(QPainter *painter, const QStyleOptionViewIte
         {
             textOpt.font.setBold(true);
         }
+        if (isUncommittedRow)
+        {
+            textOpt.font.setItalic(true);
+        }
 
         style->drawControl(QStyle::CE_ItemViewItem, &textOpt, painter, widget);
     }
@@ -317,8 +334,10 @@ void QLogHistoryItemDelegate::paint(QPainter *painter, const QStyleOptionViewIte
             sha = sibling.data(Qt::UserRole + 1).toString();
         }
 
+        const bool isUncommittedRow = (sha == QLogHistoryTableWidget::UncommittedRowId);
+
         bool isCurrentCommit = false;
-        if (table && !sha.isEmpty())
+        if (table && !sha.isEmpty() && !isUncommittedRow)
         {
             auto refs = table->getReferences(sha);
             for (const auto &ref : refs)

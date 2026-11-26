@@ -373,6 +373,7 @@ signals:
     void stashPopReply(const QGitError &error);
     void listStashesReply(const QStringList &stashes, const QGitError &error);
     void listChangedFilesReply(const QList<std::pair<QString, git_status_t>> &files, const QGitError &error);
+    void uncommittedFilesCountReply(int count);
     void commitDiffReply(const QString &commit_id, const QGitCommit &diff, const QGitError &error);
     void commitDiffContentReply(const QString &first, const QString &second, const QList<QGitDiffFile> &files, const QGitError &error);
     void stageFilesReply(const QGitError &error);

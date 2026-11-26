@@ -27,6 +27,8 @@ class QLogHistoryTableWidget : public QTableWidget
 {
     Q_OBJECT
 public:
+    static inline const QString UncommittedRowId = QStringLiteral("__UNCOMMITTED__");
+
     explicit QLogHistoryTableWidget(QWidget *parent = nullptr);
 
     void addCommit(const QGitCommit &commit);
@@ -34,6 +36,13 @@ public:
     void recalculateGraph();
     bool selectCommit(const QString &hash);
     void clearCommits();
+
+    void setUncommittedChanges(bool visible, int fileCount = 0);
+    void setHeadCommitId(const QString &headHash);
+    bool hasUncommittedChangesRow() const { return m_hasUncommittedRow; }
+    bool isUncommittedChangesRow(int row) const { return m_hasUncommittedRow && row == 0; }
+    int commitCount() const { return static_cast<int>(m_commits.size()); }
+    int commitRowOffset() const { return m_hasUncommittedRow ? 1 : 0; }
 
     void setReferences(const QList<QGitBranch> &branches, const QList<QGitTag> &tags, const QString &currentBranch);
     QList<QGitRef> getReferences(const QString &sha) const;
@@ -48,6 +57,7 @@ protected:
 private:
     QList<QVariant> computeGraphData(const QGitCommit &commit, QStringList &hashIndex) const;
     void populateCommitRow(int row, const QGitCommit &commit);
+    void populateUncommittedRow(int row);
     void refreshRelativeTimes();
     static QString formatRelativeTime(const QDateTime &dt, const QDateTime &now);
     static QTableWidgetItem *createDateItem(const QDateTime &dt);
@@ -57,6 +67,9 @@ private:
     QHash<QString, QList<QGitRef>> m_refMap;
     QSet<QString> m_highlightedCommits;
     QTimer m_relativeTimeTimer;
+    QString m_headCommitId;
+    int m_uncommittedFileCount = 0;
+    bool m_hasUncommittedRow = false;
     int m_autoResizeColumn = -1;
 };
 

@@ -281,7 +281,10 @@ void QGitDiffWidget::setGitDiff(const QString &first, const QString &second, con
     m_requestedFiles = files;
     m_fileStatuses = statuses;
 
-    emit requestGitDiff(first, second, files, m_linesOfContent, m_ignoreWhitespace);
+    if (!files.isEmpty())
+    {
+        emit requestGitDiff(first, second, files, m_linesOfContent, m_ignoreWhitespace);
+    }
 
     update();
 }
@@ -658,9 +661,10 @@ void QGitDiffWidget::responseGitDiff(const QString &first, const QString &second
 
     QFontMetrics fm(m_font);
 
-    Q_UNUSED(first)
-    Q_UNUSED(second)
     Q_UNUSED(error)
+
+    if (first != m_requestedFirst || second != m_requestedSecond)
+        return;
 
     m_private->clear();
 

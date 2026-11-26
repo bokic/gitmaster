@@ -21,6 +21,8 @@ namespace Ui {
 class QGitRepository;
 }
 
+class QComboBoxGitDiffOptions;
+
 class QGitRepository : public QWidget
 {
     Q_OBJECT
@@ -163,6 +165,7 @@ private slots:
     void repositoryBranchesAndTagsReply(const QList<QGitBranch> &branches, const QList<QGitTag> &tags, const QList<QGitSubmodule> &submodules, const QList<QGitWorktree> &worktrees, QGit::RepoStatusFlags statusFlags, const QGitError &error);
     void repositoryStashesReply(const QStringList &stashes, const QGitError &error);
     void repositoryChangedFilesReply(const QList<std::pair<QString, git_status_t>> &files, const QGitError &error);
+    void uncommittedFilesCountReply(int count);
     void repositoryStageFilesReply(const QGitError &error);
     void repositoryUnstageFilesReply(const QGitError &error);
     void repositoryDiscardFilesReply(const QGitError &error);
@@ -179,7 +182,6 @@ private slots:
     void deleteBranchesReply(const QGitError &error);
     void historyTableSliderMoved(int pos);
     void selectedLines(const QString &filename, const QVector<QGitDiffWidgetLine> &lines);
-    void on_repositoryDetail_currentChanged(int index);
     void on_logHistory_commits_currentCellChanged(int currentRow, int currentColumn, int previousRow, int previousColumn);
     void on_checkBox_StagedFiles_clicked();
     void on_checkBox_UnstagedFiles_clicked();
@@ -191,7 +193,6 @@ private slots:
     void on_plainTextEdit_commitMessage_focus();
     void on_logHistory_files_itemSelectionChanged();
     void on_logHistory_files_customContextMenuRequested(const QPoint &pos);
-    void on_search_files_customContextMenuRequested(const QPoint &pos);
     void on_treeWidget_staged_itemSelectionChanged();
     void on_treeWidget_unstaged_itemSelectionChanged();
     void on_treeWidget_unstaged_customContextMenuRequested(const QPoint &pos);
@@ -200,6 +201,7 @@ private slots:
     void on_treeWidget_pending_itemSelectionChanged();
     void on_treeWidget_pending_customContextMenuRequested(const QPoint &pos);
     void on_comboBox_gitViewOptions_activated(int index);
+    void on_branchesTreeView_itemClicked(QTreeWidgetItem *item, int column);
     void on_branchesTreeView_itemDoubleClicked(QTreeWidgetItem *item, int column);
     void on_branchesTreeView_customContextMenuRequested(const QPoint &pos);
     void stashApplyReply(const QGitError &error);
@@ -212,13 +214,13 @@ private slots:
     void deleteTagReply(const QGitError &error);
     void on_branchesTreeView_itemChanged(QTreeWidgetItem *item, int column);
     void on_comboBox_gitStatusFiles_itemClicked(int index);
-    void on_comboBox_logBranchFilter_currentTextChanged(const QString &text);
     void on_comboBox_gitDiffOptions_optionsChanged();
+    void on_comboBox_logDiffOptions_optionsChanged();
     void on_commit_diff_customContextMenuRequested(const QPoint &pos);
     void on_logHistory_commits_customContextMenuRequested(const QPoint &pos);
     void on_lineEdit_search_returnPressed();
-    void on_search_commits_currentCellChanged(int currentRow, int currentColumn, int previousRow, int previousColumn);
-    void on_search_files_itemSelectionChanged();
+    void on_comboBox_searchType_currentIndexChanged(int index);
+    void on_toolButton_closeSearch_clicked();
     void onCommitFound(const QGitCommit &commit);
     void onSearchFinished();
     void on_pushButton_resolveConflicts_clicked();
@@ -236,6 +238,14 @@ private:
     void fetchCommits();
     void refreshCommits();
     void refreshSearchCommits();
+    void toggleSearchBar();
+    void closeSearchBar();
+    void startCommitSearch();
+    void exitSearchMode();
+    void applyDiffOptions(QComboBoxGitDiffOptions *source);
+    void updateUncommittedChangesRow();
+    void updateBottomPanelForCurrentRow();
+    void updatePushCheckboxLabel();
     QString currentSearchType() const;
     void beginRepoRefreshOp(const QString &statusText);
     void endRepoRefreshOp(const QGitError &error, const QString &errorPrefix);
@@ -272,13 +282,16 @@ private:
     bool m_searchingCommits = false;
     bool m_hasActiveSearch = false;
     bool m_refreshingSearch = false;
-    bool m_searchCommitsDirty = false;
+    bool m_inSearchMode = false;
     QList<QGitCommit> m_pendingSearchCommits;
     bool m_rewordingCommit = false;
-    QString m_currentLogBranchFilter;
     int m_logCommitsOffset = 0;
     bool m_refreshingLogCommits = false;
     bool m_logCommitsDirty = false;
+    int m_uncommittedFilesCount = 0;
+    bool m_uncommittedStatusKnown = false;
+    bool m_initialSelectionDone = false;
+    bool m_forceFileStatusPanel = false;
     QString m_lastRemote;
     QStringList m_lastBranches;
     QGit::PushOptions m_lastPushOptions = QGit::PushOption::None;

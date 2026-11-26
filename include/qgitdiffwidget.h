@@ -85,7 +85,7 @@ private:
     bool m_readonly = false;
     int m_linesOfContent = 3;
     bool m_ignoreWhitespace = false;
-    InlineDiffMode m_inlineDiffMode = InlineDiffMode::Off;
+    InlineDiffMode m_inlineDiffMode = InlineDiffMode::CharacterLevel;
     DiffViewMode m_diffViewMode = DiffViewMode::Unified;
     bool m_showWhitespaceChars = false;
 };

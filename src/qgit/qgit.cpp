@@ -4723,6 +4723,7 @@ void QGit::listChangedFiles(int show, int sort, bool reversed)
 {
     QList<std::pair<QString, git_status_t>> items;
     QGitError error;
+    int uncommittedCount = 0;
 
     try
     {
@@ -4736,10 +4737,10 @@ void QGit::listChangedFiles(int show, int sort, bool reversed)
         git_status_options opts = {0, GIT_STATUS_SHOW_INDEX_AND_WORKDIR, 0, {}, nullptr, 0};
         opts.version = GIT_STATUS_OPTIONS_VERSION;
         opts.show = GIT_STATUS_SHOW_INDEX_AND_WORKDIR;
-        opts.flags = GIT_STATUS_OPT_RENAMES_HEAD_TO_INDEX | GIT_STATUS_OPT_RENAMES_INDEX_TO_WORKDIR | GIT_STATUS_OPT_RECURSE_UNTRACKED_DIRS;
-
-        if ((show == QGIT_STATUS_NONE)||(show & QGIT_STATUS_NEW))
-            opts.flags |= GIT_STATUS_OPT_INCLUDE_UNTRACKED;
+        opts.flags = GIT_STATUS_OPT_RENAMES_HEAD_TO_INDEX
+                   | GIT_STATUS_OPT_RENAMES_INDEX_TO_WORKDIR
+                   | GIT_STATUS_OPT_RECURSE_UNTRACKED_DIRS
+                   | GIT_STATUS_OPT_INCLUDE_UNTRACKED;
 
         if ((show == QGIT_STATUS_NONE)||(show & QGIT_STATUS_IGNORED))
             opts.flags |= GIT_STATUS_OPT_INCLUDE_IGNORED;
@@ -4758,6 +4759,11 @@ void QGit::listChangedFiles(int show, int sort, bool reversed)
         while(const git_status_entry *item = git_status_byindex(list, index))
         {
             git_status_t status = item->status;
+
+            if (status != GIT_STATUS_CURRENT && (status & ~GIT_STATUS_IGNORED) != 0)
+            {
+                ++uncommittedCount;
+            }
 
             if ((item->index_to_workdir == nullptr)&&(item->head_to_index == nullptr))
             {
@@ -4853,6 +4859,10 @@ void QGit::listChangedFiles(int show, int sort, bool reversed)
         error = ex;
     }
 
+    if (!error.hasError())
+    {
+        emit uncommittedFilesCountReply(uncommittedCount);
+    }
     emit listChangedFilesReply(items, error);
 }
 
@@ -7371,12 +7381,9 @@ void QGit::searchCommits(const QString &text, const QString &type)
             throw QGitError("git_revwalk_new", res);
         }
 
-        res = git_revwalk_push_head(walker);
-        if (res)
-        {
-            emit searchFinished();
-            return;
-        }
+        git_revwalk_push_glob(walker, "refs/heads/*");
+        git_revwalk_push_glob(walker, "refs/remotes/*");
+        git_revwalk_push_head(walker);
 
         git_revwalk_sorting(walker, GIT_SORT_TIME);
 

@@ -31,6 +31,10 @@ QGitStashInspectDialog::QGitStashInspectDialog(const QDir &repoPath, const QStri
 
     ui->diffWidget->setReadonly(true);
     ui->diffWidget->setIgnoreWhitespace(ui->comboBox_gitDiffOptions->ignoreWhitespace());
+    ui->diffWidget->setLinesOfContent(ui->comboBox_gitDiffOptions->linesOfContent());
+    ui->diffWidget->setInlineDiffMode(static_cast<QGitDiffWidget::InlineDiffMode>(static_cast<int>(ui->comboBox_gitDiffOptions->inlineDiffMode())));
+    ui->diffWidget->setDiffViewMode(static_cast<QGitDiffWidget::DiffViewMode>(static_cast<int>(ui->comboBox_gitDiffOptions->diffViewMode())));
+    ui->diffWidget->setShowWhitespaceChars(ui->comboBox_gitDiffOptions->showWhitespaceChars());
 
     ui->splitter_vertical->setStretchFactor(0, 1);
     ui->splitter_vertical->setStretchFactor(1, 2);

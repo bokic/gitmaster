@@ -14,10 +14,106 @@ QLogHistoryTableWidget::QLogHistoryTableWidget(QWidget *parent)
 
 void QLogHistoryTableWidget::clearCommits()
 {
+    const QSignalBlocker blocker(this);
     clearContents();
-    setRowCount(0);
     m_commits.clear();
     m_hashIndex.clear();
+
+    if (m_hasUncommittedRow)
+    {
+        setRowCount(1);
+        populateUncommittedRow(0);
+        recalculateGraph();
+    }
+    else
+    {
+        setRowCount(0);
+    }
+}
+
+void QLogHistoryTableWidget::setHeadCommitId(const QString &headHash)
+{
+    if (m_headCommitId == headHash)
+        return;
+
+    m_headCommitId = headHash;
+    if (m_hasUncommittedRow)
+    {
+        recalculateGraph();
+    }
+}
+
+void QLogHistoryTableWidget::setUncommittedChanges(bool visible, int fileCount)
+{
+    m_uncommittedFileCount = fileCount;
+
+    if (m_hasUncommittedRow == visible)
+    {
+        if (m_hasUncommittedRow)
+        {
+            const int descCol = (columnCount() == 4) ? 0 : 1;
+            if (QTableWidgetItem *descItem = item(0, descCol))
+            {
+                descItem->setToolTip(fileCount > 0 ? tr("%n uncommitted file(s)", "", fileCount) : QString());
+            }
+        }
+        return;
+    }
+
+    const QSignalBlocker blocker(this);
+    m_hasUncommittedRow = visible;
+
+    if (visible)
+    {
+        insertRow(0);
+        populateUncommittedRow(0);
+    }
+    else if (rowCount() > 0)
+    {
+        removeRow(0);
+    }
+
+    recalculateGraph();
+}
+
+void QLogHistoryTableWidget::populateUncommittedRow(int row)
+{
+    const QString label = tr("Uncommitted changes");
+    const QString tip = m_uncommittedFileCount > 0
+        ? tr("%n uncommitted file(s)", "", m_uncommittedFileCount)
+        : QString();
+
+    if (columnCount() == 4)
+    {
+        auto *descItem = new QTableWidgetItem(label);
+        descItem->setData(Qt::UserRole, label);
+        descItem->setData(Qt::UserRole + 1, UncommittedRowId);
+        descItem->setToolTip(tip);
+        setItem(row, 0, descItem);
+
+        setItem(row, 1, new QTableWidgetItem());
+        setItem(row, 2, new QTableWidgetItem());
+
+        auto *idItem = new QTableWidgetItem();
+        idItem->setData(Qt::UserRole, UncommittedRowId);
+        setItem(row, 3, idItem);
+        return;
+    }
+
+    setItem(row, 0, new QTableWidgetItem());
+
+    auto *descItem = new QTableWidgetItem(label);
+    descItem->setData(Qt::UserRole, label);
+    descItem->setData(Qt::UserRole + 1, UncommittedRowId);
+    descItem->setToolTip(tip);
+    setItem(row, 1, descItem);
+
+    setItem(row, 2, new QTableWidgetItem());
+    setItem(row, 3, new QTableWidgetItem());
+
+    auto *idItem = new QTableWidgetItem();
+    idItem->setData(Qt::UserRole, UncommittedRowId);
+    setItem(row, 4, idItem);
 }
 
 QList<QVariant> QLogHistoryTableWidget::computeGraphData(const QGitCommit &commit, QStringList &hashIndex) const
@@ -250,13 +346,55 @@ void QLogHistoryTableWidget::recalculateGraph()
         return;
 
     QStringList hashIndex;
-    for (int row = 0; row < m_commits.size(); ++row)
+    const int offset = commitRowOffset();
+
+    if (m_hasUncommittedRow)
     {
-        const QList<QVariant> graphData = computeGraphData(m_commits.at(row), hashIndex);
-        QTableWidgetItem *graphItem = item(row, 0);
+        bool headInList = false;
+        if (!m_headCommitId.isEmpty())
+        {
+            for (const auto &commit : m_commits)
+            {
+                if (commit.id().compare(m_headCommitId, Qt::CaseInsensitive) == 0)
+                {
+                    headInList = true;
+                    break;
+                }
+            }
+        }
+
+        QList<QVariant> uncommittedGraphData;
+        uncommittedGraphData.append(0);
+        uncommittedGraphData.append(QVariant(QList<QVariant>{}));
+        if (headInList)
+        {
+            uncommittedGraphData.append(QVariant(QList<QVariant>{0, 0}));
+            hashIndex.append(m_headCommitId.toLower());
+        }
+        else
+        {
+            uncommittedGraphData.append(QVariant(QList<QVariant>{}));
+        }
+        uncommittedGraphData.append(QVariant(QList<QVariant>{}));
+        uncommittedGraphData.append(QVariant(QList<QVariant>{}));
+
+        QTableWidgetItem *uncommittedGraphItem = item(0, 0);
+        if (!uncommittedGraphItem)
+        {
+            uncommittedGraphItem = new QTableWidgetItem();
+            setItem(0, 0, uncommittedGraphItem);
+        }
+        uncommittedGraphItem->setData(Qt::UserRole, uncommittedGraphData);
+    }
+
+    for (int i = 0; i < m_commits.size(); ++i)
+    {
+        const int tableRow = i + offset;
+        const QList<QVariant> graphData = computeGraphData(m_commits.at(i), hashIndex);
+        QTableWidgetItem *graphItem = item(tableRow, 0);
         if (!graphItem) {
             graphItem = new QTableWidgetItem();
-            setItem(row, 0, graphItem);
+            setItem(tableRow, 0, graphItem);
         }
         graphItem->setData(Qt::UserRole, graphData);
     }
@@ -274,6 +412,7 @@ void QLogHistoryTableWidget::syncCommits(const QList<QGitCommit> &commits)
         return;
     }
 
+    const int offset = commitRowOffset();
     int oldPrefixCount = static_cast<int>(m_commits.size());
     if (columnCount() != 4) {
         QHash<QString, int> oldIndexById;
@@ -298,10 +437,11 @@ void QLogHistoryTableWidget::syncCommits(const QList<QGitCommit> &commits)
         }
     }
 
-    QString selectedHash;
     const int prevRow = currentRow();
-    if (prevRow >= 0 && prevRow < m_commits.size()) {
-        selectedHash = m_commits.at(prevRow).id();
+    const bool uncommittedWasSelected = (m_hasUncommittedRow && prevRow == 0);
+    QString selectedHash;
+    if (!uncommittedWasSelected && prevRow >= offset && (prevRow - offset) < m_commits.size()) {
+        selectedHash = m_commits.at(prevRow - offset).id();
     }
 
     const QSignalBlocker blocker(this);
@@ -314,7 +454,7 @@ void QLogHistoryTableWidget::syncCommits(const QList<QGitCommit> &commits)
 
     for (int r = oldPrefixCount - 1; r >= 0; --r) {
         if (!newIds.contains(m_commits.at(r).id().toLower())) {
-            removeRow(r);
+            removeRow(r + offset);
             m_commits.removeAt(r);
             --oldPrefixCount;
         }
@@ -337,19 +477,19 @@ void QLogHistoryTableWidget::syncCommits(const QList<QGitCommit> &commits)
                 QList<QTableWidgetItem *> rowItems;
                 rowItems.reserve(columnCount());
                 for (int c = 0; c < columnCount(); ++c) {
-                    rowItems.append(takeItem(matchIdx, c));
+                    rowItems.append(takeItem(matchIdx + offset, c));
                 }
-                removeRow(matchIdx);
-                insertRow(i);
+                removeRow(matchIdx + offset);
+                insertRow(i + offset);
                 for (int c = 0; c < columnCount(); ++c) {
-                    setItem(i, c, rowItems.at(c));
+                    setItem(i + offset, c, rowItems.at(c));
                 }
                 m_commits.move(matchIdx, i);
             }
             m_commits[i] = commit;
         } else {
-            insertRow(i);
-            populateCommitRow(i, commit);
+            insertRow(i + offset);
+            populateCommitRow(i + offset, commit);
             m_commits.insert(i, commit);
             ++oldPrefixCount;
         }
@@ -358,10 +498,12 @@ void QLogHistoryTableWidget::syncCommits(const QList<QGitCommit> &commits)
     recalculateGraph();
     refreshRelativeTimes();
 
-    if (!selectedHash.isEmpty()) {
+    if (uncommittedWasSelected && m_hasUncommittedRow) {
+        setCurrentCell(0, 0, QItemSelectionModel::ClearAndSelect | QItemSelectionModel::Rows);
+    } else if (!selectedHash.isEmpty()) {
         for (int r = 0; r < m_commits.size(); ++r) {
             if (m_commits.at(r).id().compare(selectedHash, Qt::CaseInsensitive) == 0) {
-                setCurrentCell(r, 0, QItemSelectionModel::ClearAndSelect | QItemSelectionModel::Rows);
+                setCurrentCell(r + offset, 0, QItemSelectionModel::ClearAndSelect | QItemSelectionModel::Rows);
                 break;
             }
         }
@@ -374,7 +516,7 @@ void QLogHistoryTableWidget::addCommit(const QGitCommit &commit)
 
     if (columnCount() == 4)
     {
-        if (row == 0) {
+        if (m_commits.isEmpty()) {
             m_commits.clear();
         }
         insertRow(row);
@@ -383,21 +525,26 @@ void QLogHistoryTableWidget::addCommit(const QGitCommit &commit)
         return;
     }
 
-    // Reset lane tracking if the table is cleared/empty
-    if (row == 0)
+    if (m_commits.isEmpty())
     {
         m_hashIndex.clear();
-        m_commits.clear();
     }
-
-    const QList<QVariant> graphData = computeGraphData(commit, m_hashIndex);
 
     insertRow(row);
     populateCommitRow(row, commit);
-    if (QTableWidgetItem *graphItem = item(row, 0)) {
-        graphItem->setData(Qt::UserRole, graphData);
-    }
     m_commits.append(commit);
+
+    if (m_hasUncommittedRow && !m_headCommitId.isEmpty() && commit.id().compare(m_headCommitId, Qt::CaseInsensitive) == 0)
+    {
+        recalculateGraph();
+    }
+    else
+    {
+        const QList<QVariant> graphData = computeGraphData(commit, m_hashIndex);
+        if (QTableWidgetItem *graphItem = item(row, 0)) {
+            graphItem->setData(Qt::UserRole, graphData);
+        }
+    }
 }
 
 bool QLogHistoryTableWidget::selectCommit(const QString &hash)

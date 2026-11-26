@@ -3,6 +3,7 @@
 
 #include <QStandardItemModel>
 #include <QAbstractItemView>
+#include <QSignalBlocker>
 #include <QStylePainter>
 #include <QApplication>
 #include <QSvgRenderer>
@@ -62,8 +63,8 @@ QComboBoxGitDiffOptions::QComboBoxGitDiffOptions(QWidget *parent)
     insertSeparator(count());
 
     addHeaderItem(tr("Inline diff"), m_iconUnchecked);
-    addOptionItem(tr("Off"), true, Qt::Checked, m_iconChecked);
-    addOptionItem(tr("Character-level"), true, Qt::Unchecked, m_iconUnchecked);
+    addOptionItem(tr("Off"), true, Qt::Unchecked, m_iconUnchecked);
+    addOptionItem(tr("Character-level"), true, Qt::Checked, m_iconChecked);
     addOptionItem(tr("Word-level"), true, Qt::Unchecked, m_iconUnchecked);
 
     insertSeparator(count());
@@ -222,6 +223,34 @@ bool QComboBoxGitDiffOptions::showWhitespaceChars() const
     if (!items) return false;
 
     return items->data(items->index(ITEM_VISUALIZE_WHITESPACE, 0), Qt::CheckStateRole).toInt() == Qt::Checked;
+}
+
+void QComboBoxGitDiffOptions::syncFrom(const QComboBoxGitDiffOptions *other)
+{
+    if (!other || other == this)
+        return;
+
+    auto *srcItems = qobject_cast<QStandardItemModel *>(other->model());
+    auto *dstItems = qobject_cast<QStandardItemModel *>(model());
+    if (!srcItems || !dstItems || srcItems->rowCount() != dstItems->rowCount())
+        return;
+
+    const QSignalBlocker blocker(this);
+    for (int row = 0; row < dstItems->rowCount(); ++row)
+    {
+        QStandardItem *srcItem = srcItems->item(row, 0);
+        QStandardItem *dstItem = dstItems->item(row, 0);
+        if (!srcItem || !dstItem || !(dstItem->flags() & Qt::ItemIsSelectable))
+            continue;
+
+        const Qt::CheckState st = static_cast<Qt::CheckState>(srcItem->data(Qt::CheckStateRole).toInt());
+        dstItems->setData(dstItems->index(row, 0), st, Qt::CheckStateRole);
+        if (m_showIcons)
+        {
+            dstItem->setIcon(st == Qt::Checked ? m_iconChecked : m_iconUnchecked);
+        }
+    }
+    update();
 }
 
 

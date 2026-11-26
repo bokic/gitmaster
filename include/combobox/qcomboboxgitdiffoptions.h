@@ -25,6 +25,7 @@ public:
     InlineDiffMode inlineDiffMode() const;
     DiffViewMode diffViewMode() const;
     bool showWhitespaceChars() const;
+    void syncFrom(const QComboBoxGitDiffOptions *other);
 
 signals:
     void optionsChanged();
