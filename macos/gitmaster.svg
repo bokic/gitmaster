@@ -6,11 +6,11 @@
       <stop offset="70%" stop-color="#10B981"/>
       <stop offset="100%" stop-color="#047857"/>
     </linearGradient>
-    <linearGradient id="premiumShine" x1="100" y1="100" x2="660" y2="620" gradientUnits="userSpaceOnUse">
-      <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.4"/>
-      <stop offset="55%" stop-color="#FFFFFF" stop-opacity="0"/>
+    <radialGradient id="premiumShine" cx="50%" cy="50%" r="50%" fx="35%" fy="35%">
+      <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.38"/>
+      <stop offset="50%" stop-color="#FFFFFF" stop-opacity="0.12"/>
       <stop offset="100%" stop-color="#FFFFFF" stop-opacity="0"/>
-    </linearGradient>
+    </radialGradient>
     <linearGradient id="topBevel" x1="512" y1="100" x2="512" y2="924" gradientUnits="userSpaceOnUse">
       <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.35"/>
       <stop offset="15%" stop-color="#FFFFFF" stop-opacity="0.05"/>
